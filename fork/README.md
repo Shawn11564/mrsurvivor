@@ -93,6 +93,24 @@ real project is touched, and the real security rules. It checks:
 
 `SHOTS=<folder>` saves screenshots.
 
+`node fork/test-admin.cjs` (same emulator and server) checks the admin menu (`js/fork/admin.js`)
+in a three-player party where the admin is a guest, so every action goes admin → host → everyone:
+- only the admin gets the ADMIN button (bottom left) and the `` ` `` hotkey; typing in the panel
+  doesn't walk your Pokémon; admin messages from anyone else are ignored
+- body swap (Magikarp, any Pokémon, tiny, giant) on the target and on everyone's copy of them,
+  wearing off after the chosen time; reverse controls, ice skates and slow-mo (`G.Admin.steer`,
+  hooked in `Player.update`)
+- fake shiny / legendary / game-over popups and big messages (HTML stays text)
+- spawning a horde or any boss next to the target, made by the host and synced
+- god mode (`Player.hurt`), drops and level-ups; any of these taint the run (`G.Game.taint`), so it
+  isn't sent to the ranking, solo or group
+- save edits: coins, tickets, any Pokémon or shiny
+
+The admin list is `ADMINS` at the top of `js/fork/admin.js` (Firebase Authentication → Users →
+User UID). Everyone's game checks it, so a new admin needs a new release. The ranking's hidden
+moderation screen (`G.Ranking.isAdmin`) uses the same list. The server's copy is `admin()` in
+`firestore.rules` (an upstream file, the one line with the uid): change both, then deploy the rules.
+
 `node fork/test-party-reload.cjs` (same emulator and server) checks that a party survives a
 page reload (`resume`, `away` and `dropAway` in `js/net/social.js`): a guest and then the host
 reload and land back in the same lobby, connected; leaving with the button stays left; someone

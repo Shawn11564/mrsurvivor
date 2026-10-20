@@ -1001,6 +1001,8 @@ G.Game = (() => {
     quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
     /** Para grabar vídeos: abre las cartas de subir de nivel. */
     debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
+    /** Menú de admin del fork (js/fork/admin.js): esta partida no sube al ranking. */
+    taint() { tampered = true; },
     toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; },
     /** Caído en grupo: el compañero que miras ({ uid, name, color, pl }) o null. */

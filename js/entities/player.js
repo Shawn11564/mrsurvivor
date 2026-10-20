@@ -263,7 +263,8 @@ G.Player = class Player {
    */
   /** @param cat  'physical' | 'special': con qué defensa tuya se para (la del enemigo que pega). */
   hurt(amount, type = null, pure = false, cat = null) {
-    if (this.invuln > 0 || this.dead) return;
+    // god: modo dios del menú de admin (js/fork/admin.js).
+    if (this.invuln > 0 || this.dead || this.god) return;
     if (!pure) amount *= G.Stats.taken(this.mon, cat);
     let eff = null;
     if (type) {
@@ -371,7 +372,8 @@ G.Player = class Player {
 
     // --- movimiento con colisiones ---
     // (En cooperativo la pausa no para el juego: sólo te quedas quieto.)
-    const [ax, ay] = this.frozen ? [0, 0] : G.Input.axis();
+    // (G.Admin.steer: bromas del menú de admin del fork, controles al revés, hielo...)
+    const [ax, ay] = this.frozen ? [0, 0] : G.Admin.steer(G.Input.axis(), dt);
     this.walking = ax !== 0 || ay !== 0;
     const s = this.spd;
     // Hielo: resbalas (la velocidad cambia despacio).

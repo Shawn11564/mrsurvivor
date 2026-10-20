@@ -17,7 +17,7 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function me() { return request.auth.uid; }
     // Moderación (pantalla oculta del juego, js/ui/mod-ui.js): sólo esta cuenta.
-    function admin() { return signedIn() && me() in ['rshaa5gKD3fXw6lE4PPXITbowaG2']; }
+    function admin() { return signedIn() && me() in ['TMD8t0i6jic7a1sg824ZP55TqOG3']; }
 
     // ---------- partida guardada ----------
     // Sólo su dueño la lee y la escribe. Ya no se marca a nadie solo (14-10-2026:
