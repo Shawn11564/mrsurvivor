@@ -67,6 +67,11 @@ survive. Run it after changing anything in `fork/`.
 `node fork/test-lab.cjs` and `node fork/test-lab-coop.cjs` (the co-op one also needs the
 Firebase emulator) check Lab mode: see `fork/LAB.md`.
 
+`node fork/test-cloud-backup.cjs` (with the server and the Firebase emulator running) checks the
+cloud saves upstream left to the Save button: an unsaved change goes up by itself after 10 min
+and when the tab is hidden (`js/fork/cloud-backup.js`), and every upload merges with the cloud so
+two devices don't erase each other's progress (`pushNow` in `js/core/db.js`, a transaction again).
+
 `node fork/test-remember.cjs` (with the server running) checks that Settings and
 Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in
