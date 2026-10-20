@@ -364,7 +364,10 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
 /* Centrado vertical que no corta por arriba cuando no cabe. */
 #pull-fx::before, #pull-fx::after { content: ''; margin: auto; }
 #pull-close { position: sticky; bottom: 8px; z-index: 2; flex-shrink: 0; box-shadow: 0 4px 18px rgba(0,0,0,.6); }
-#pull-skip { position: fixed; top: 14px; right: 14px; z-index: 3; }
+/* Saltar, junto a la palanca (x 152-166, y 74-98 de 176×170); sin sitio al lado, debajo. */
+#slot-wrap { position: relative; flex-shrink: 0; line-height: 0; }
+#pull-skip { position: absolute; z-index: 3; left: calc(100% + 10px); top: 52%; transform: translateY(-50%); line-height: normal; }
+@media (max-width: 687px) { #pull-skip { left: auto; right: 0; top: 60%; transform: none; } }
 @media (max-height: 520px) {
   #pull-fx { gap: 10px; }
   .pull-results { gap: 6px; }

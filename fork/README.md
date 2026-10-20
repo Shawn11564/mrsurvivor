@@ -57,7 +57,9 @@ survive. Run it after changing anything in `fork/`.
   `drag`/`mapHeld` in `js/core/touch.js`, `swapSlots`/`handAim` in `js/entities/player.js`)
 - the highlighted "your type" level-up cards (`own` in `js/systems/levelup.js`) and the
   "Good for you" note on stat boosts that match your Pokémon's stronger side (`boost`)
-- the gacha Skip button (`js/ui/gacha-ui.js`, `G.Slots.stop` in `js/ui/slots.js`)
+- the Upgrades screen opening on your current partner (`openUpgrades` in `js/ui/menu.js`)
+- the gacha Skip button beside the slot machine's lever, on any window size (`#slot-wrap` in
+  `css/style.css`, `js/ui/gacha-ui.js`, `G.Slots.stop` in `js/ui/slots.js`)
 - the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`)
 - the solo end-of-run breakdown (`js/fork/run-stats.js`)
 

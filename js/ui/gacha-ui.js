@@ -92,7 +92,7 @@ G.GachaUI = (() => {
     const fx = $('pull-fx'), slot = $('slot'), out = $('pull-results');
     out.innerHTML = '';
     $('pull-close').classList.add('hidden');
-    slot.style.display = '';
+    $('slot-wrap').style.display = '';
     fx.classList.remove('hidden');
     skip = false;
     $('pull-skip').classList.remove('hidden');
@@ -100,7 +100,7 @@ G.GachaUI = (() => {
     // La tragaperras (ui/slots.js) y luego las cartas.
     await G.Slots.play(slot, res);
     G.Audio.sfx(skip ? 'reveal' : 'burst', { rarity: best });
-    slot.style.display = 'none';
+    $('slot-wrap').style.display = 'none';
 
     for (const r of res) {
       const mon = G.DEX_BY[r.dex];

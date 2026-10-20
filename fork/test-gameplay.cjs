@@ -61,6 +61,22 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(pow.firstBst === pow.top, 'the first Pokémon has the highest total of the generation shown');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dex-power.png') });
 
+  console.log('Upgrades: open on the partner');
+  const openUpg = async () => {
+    await page.evaluate(() => G.MenuUI.open());
+    await page.click('#scr-menu [data-go="upgrades"]');
+    await page.waitForSelector('#scr-upgrades', { state: 'visible' });
+    return page.evaluate(() => +document.getElementById('upg-mon').value);
+  };
+  await page.evaluate(() => { for (const d of [1, 7]) G.DB.save.owned[d] = G.DB.save.owned[d] || { at: Date.now() }; });
+  const u1 = await openUpg();
+  await page.selectOption('#upg-mon', '7');                         // look at another Pokémon, then leave
+  const u2 = await openUpg();
+  await page.evaluate(() => { G.DB.save.partner = 1; });            // new partner
+  const u3 = await openUpg();
+  check(u1 === 4 && u2 === 4 && u3 === 1, `Upgrades opens on the current partner every time (got ${u1}, ${u2} after viewing #7, ${u3} after switching partner to #1)`);
+  await page.evaluate(() => { G.DB.save.partner = 4; });
+
   console.log('Gacha: Skip');
   await page.evaluate(() => { G.DB.save.tickets.t1 = 30; G.MenuUI.open(); });
   await page.click('#scr-menu [data-go="gacha"]');
@@ -68,12 +84,24 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.click('#pull-10');
   await page.waitForSelector('#pull-skip', { state: 'visible' });
   await page.waitForTimeout(300);                                   // mid slot-machine
+  // Skip sits by the lever (x 152-166, y 74-98 of the 176×170 canvas): to its right when
+  // the window has room, under it otherwise; always fully on screen.
+  const sp = await page.evaluate(() => {
+    const c = document.getElementById('slot').getBoundingClientRect(), b = document.getElementById('pull-skip').getBoundingClientRect();
+    const k = c.width / 176, lever = { l: c.left + 152 * k, r: c.left + 166 * k, t: c.top + 74 * k, b: c.top + 98 * k };
+    const right = b.left >= lever.r && b.left - c.right < 30 && b.top < lever.b && b.bottom > lever.t;
+    const under = b.top >= lever.b - 1 && b.top - lever.b < 30 && Math.abs(b.right - c.right) < 2;
+    return { right, under, onScreen: b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight };
+  });
+  check((vw >= 688 ? sp.right : sp.under) && sp.onScreen,
+    `Skip is ${vw >= 688 ? 'right of' : 'under'} the slot machine's lever, on screen (${JSON.stringify(sp)})`);
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'gacha-skip.png') });
   const t0 = Date.now();
   await page.click('#pull-skip');
   await page.waitForSelector('#pull-close', { state: 'visible', timeout: 3000 });
   const skipMs = Date.now() - t0;
   const sk = await page.evaluate(() => ({ cards: document.querySelectorAll('#pull-results .pcard').length,
-    slotHidden: document.getElementById('slot').style.display === 'none',
+    slotHidden: document.getElementById('slot-wrap').style.display === 'none',
     skipHidden: document.getElementById('pull-skip').classList.contains('hidden') }));
   check(sk.cards === 10 && sk.slotHidden && sk.skipHidden && skipMs < 1500,
     `Skip goes straight to the 10 results (${skipMs} ms; slot machine hidden, Skip button gone)`);
