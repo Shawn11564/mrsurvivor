@@ -84,6 +84,11 @@ guests to wait. The host runs in a plain Edge over raw CDP, because Playwright m
 drives look visible. `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
 thief says how far it is (`drawHud` in `js/systems/events.js`).
 
+`node fork/test-coop-random.cjs` (server + Firebase emulator) checks "Random Pokémon" in a co-op
+lobby: it rolls one of yours for that room without changing your partner (`js/fork/coop-random.js`,
+`mine()` in `js/net/social.js`, `G.Flow.startCoop` in `js/game.js`), others see it, ready-up works as
+usual (no changing while ready) and you play it in the run.
+
 `node fork/test-remember.cjs` (with the server running) checks that Settings and
 Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in

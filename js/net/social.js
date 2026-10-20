@@ -290,9 +290,14 @@ G.Social = (() => {
 
   // ---------------- salas ----------------
 
+  // Fork (MrSurvivor): el Pokémon al azar de la sala (js/fork/coop-random.js) o, si no, tu compañero.
+  function mine() {
+    const s = G.DB.save, p = G.LobbyPick && G.LobbyPick.get();
+    return p || { dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) };
+  }
+
   function memberInfo() {
-    const s = G.DB.save;
-    return { name: me.name, dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner), at: ts() };
+    return { name: me.name, ...mine(), at: ts() };
   }
 
   /**
@@ -429,10 +434,8 @@ G.Social = (() => {
       const j = await joinRoom(r.id);
       if (!j.ok) { forget(); return; }
     } else {
-      const s = G.DB.save;
       try {
-        await rref.child('m/' + uid).update({ away: null, name: me.name, dex: s.partner,
-          shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) });
+        await rref.child('m/' + uid).update({ away: null, name: me.name, ...mine() });
       } catch (e) { forget(); return; }
       enterRoom(r.id, host);
       // Si se recargó en plena partida, la sala volvió a quedar abierta para la próxima.
@@ -492,8 +495,7 @@ G.Social = (() => {
 
   /** Actualiza tu Pokémon en la sala (si cambias de compañero). */
   function refreshMember() {
-    if (room && me) fb.rtdb.ref('rooms/' + room.id + '/m/' + uid).update(
-      { dex: G.DB.save.partner, shiny: !!G.DB.save.partnerShiny && G.DB.ownsShiny(G.DB.save.partner) }).catch(() => {});
+    if (room && me) fb.rtdb.ref('rooms/' + room.id + '/m/' + uid).update(mine()).catch(() => {});
   }
 
   // ---------------- invitaciones ----------------

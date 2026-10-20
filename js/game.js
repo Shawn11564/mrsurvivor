@@ -1110,6 +1110,6 @@ G.Flow = {
     if (G.Game.state !== 'ui' || !G.Social.room) return;
     G.Social.setReady(false);         // al volver a la sala, cada uno se vuelve a poner listo
     G.LobbyUI.close();
-    G.Game.startRun(cfg);
+    G.Game.startRun(cfg, G.LobbyPick ? G.LobbyPick.get() : null);   // fork: Pokémon al azar de la sala (js/fork/coop-random.js)
   }
 };
