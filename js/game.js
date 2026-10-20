@@ -7,7 +7,7 @@
  *                                          └─ Gacha
  *
  * Estados del bucle: 'ui' (menús, con el mundo de fondo), 'playing',
- * 'levelup', 'paused', 'over'.
+ * 'levelup', 'paused', 'resuming' (cuenta atrás al salir de la pausa), 'over'.
  *
  * Cooperativo (G.Coop.active): el anfitrión lleva enemigos, objetos y
  * experiencia; cada uno su Pokémon. La pausa no para el juego, las cartas de
@@ -41,7 +41,7 @@ G.Game = (() => {
     G.Touch.init(cv);
     // En móvil: al cambiar de app o girarlo en vertical, la partida se pausa.
     document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
-    G.RunUI.wirePause(() => { state = 'playing'; G.UI.hideAll(); }, quitRun);
+    G.RunUI.wirePause(() => { if (state === 'paused') resumeRun(); }, quitRun);
     Backdrop.init();
     last = performance.now();
     requestAnimationFrame(loop);
@@ -81,7 +81,40 @@ G.Game = (() => {
   /** Pausa sola (sólo en solitario: en grupo los demás siguen). */
   function autoPause() {
     G.Touch.reset();
-    if (state === 'playing' && !G.Coop.active) { state = 'paused'; G.RunUI.showPause(); }
+    if ((state === 'playing' || state === 'resuming') && !G.Coop.active) { state = 'paused'; G.RunUI.showPause(); }
+  }
+
+  /**
+   * Al salir de la pausa, una cuenta atrás de RESUME_S segundos con el mundo aún quieto
+   * para volver a situarte. Esc / P (o el botón de pausa) durante ella vuelve a la pausa.
+   */
+  const RESUME_S = 3;
+  let resumeT = 0;
+  function resumeRun() { G.UI.hideAll(); state = 'resuming'; resumeT = RESUME_S; }
+
+  /** La cuenta atrás: fondo algo oscurecido y el número, que salta un poco al cambiar. */
+  function drawResume() {
+    if (state !== 'resuming') return;
+    const n = Math.ceil(resumeT), frac = resumeT - (n - 1);
+    const pop = 1 + 0.3 * Math.max(0, frac - 0.8) / 0.2;
+    ctx.save();
+    ctx.fillStyle = 'rgba(3,6,15,.35)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const y = Math.max(130, Math.round(h * 0.3));     // por encima del jugador (centrado), bajo el reloj
+    ctx.lineJoin = 'round';
+    ctx.font = '700 16px Pixelify, monospace';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.7)';
+    const label = G.T('Reanudando…');
+    G.I18n.rawCanvas(ctx, 'strokeText', label, w / 2, y - 52);
+    ctx.fillStyle = '#eaf2ff';
+    G.I18n.rawCanvas(ctx, 'fillText', label, w / 2, y - 52);
+    ctx.font = `800 ${Math.round(72 * pop)}px Pixelify, monospace`;
+    ctx.lineWidth = 8;
+    G.I18n.rawCanvas(ctx, 'strokeText', String(n), w / 2, y);
+    ctx.fillStyle = '#ffd23f';
+    G.I18n.rawCanvas(ctx, 'fillText', String(n), w / 2, y);
+    ctx.restore();
   }
 
   /** Pausa/continúa (tecla Esc o P, o el botón de pausa del móvil). */
@@ -95,17 +128,20 @@ G.Game = (() => {
       else { G.RunUI.showPause(true); G.Audio.sfx('pause'); }
       return;
     }
-    if (state === 'playing') { state = 'paused'; G.RunUI.showPause(); G.Audio.sfx('pause'); }
-    else if (state === 'paused') { state = 'playing'; G.UI.hideAll(); }
+    if (state === 'playing' || state === 'resuming') { state = 'paused'; G.RunUI.showPause(); G.Audio.sfx('pause'); }
+    else if (state === 'paused') resumeRun();
   }
 
   // ---------------- run ----------------
 
-  /** @param coop  { seed, host, members } para una partida en grupo */
-  function startRun(coop = null) {
+  /**
+   * @param coop  { seed, host, members } para una partida en grupo
+   * @param pick  { dex, shiny } para jugar con otro Pokémon sin cambiar de compañero (al azar)
+   */
+  function startRun(coop = null, pick = null) {
     holdBy = []; awayBy = null;
     const save = G.DB.save;
-    const mon = G.DEX_BY[save.partner];
+    const mon = G.DEX_BY[pick ? pick.dex : save.partner];
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
 
     G.UI.hideAll();
@@ -128,7 +164,7 @@ G.Game = (() => {
     time = 0; pendingLevels = 0;
     runReal = performance.now(); tampered = false;
 
-    pl = new G.Player(mon, perks, !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
+    pl = new G.Player(mon, perks, pick ? !!pick.shiny : !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
     banked = { t1: 0, t10: 0 };
     caught = [];
     // Atajos: movimientos con hueco fijo (save.pbind[dex] = [id del 1, id del 2, ...]),
@@ -629,6 +665,7 @@ G.Game = (() => {
     G.Pad.poll(real);
     handleKeys();
 
+    if (state === 'resuming' && (resumeT -= real) <= 0) state = 'playing';
     if (state === 'playing') update(dt);
     else if (pl && state !== 'ui') { G.FX.update(dt * 0.25); pl.anim.update(dt * 0.25); }
     // La red se atiende siempre (también con las cartas de nivel abiertas).
@@ -841,6 +878,7 @@ G.Game = (() => {
     G.Judgment.drawOverlay(ctx, w, h);
     G.Touch.draw(ctx);
     drawAimMark();
+    drawResume();
     if (G.Settings.get('fps')) {
       ctx.save();
       ctx.font = '700 11px Pixelify, monospace';

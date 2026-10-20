@@ -166,11 +166,17 @@
         const room = G.Social.room;
         if (room) {
           G.Net.open(room.id, room.isHost, room.host);
-          G.Net.syncMembers(room.members.map(m => m.uid));
+          // Los que están fuera (recargando) no cuentan: al volver se conecta de nuevo.
+          G.Net.syncMembers(room.members.filter(m => !m.away).map(m => m.uid));
         } else if (G.Net.open_) G.Net.close();
         if (what === 'room-closed') {
           G.UI.toast('La sala se ha cerrado', 2600);
           if (G.UI.isOpen('scr-lobby')) G.MenuUI.open();
+        }
+        // Tras recargar la página: de vuelta en tu sala.
+        if (what === 'resumed' && room && G.Game.state === 'ui' && G.UI.isOpen('scr-menu')) {
+          G.UI.toast('Has vuelto a tu sala', 2200);
+          open();
         }
         if (G.UI.isOpen('scr-lobby')) render();
       });
@@ -198,6 +204,7 @@
     }
 
     function connText(m, room) {
+      if (m.away) return 'Reconectando…';
       if (m.uid === room.host) return 'Anfitrión';
       if (!room.isHost) return m.uid === G.Social.uid ? 'Tú' : 'En la sala';
       const mode = G.Net.mode(m.uid);
@@ -235,7 +242,7 @@
         if (!m) return;
         const t = connText(m, room);
         el.textContent = t;
-        el.className = 'conn' + (t === 'Conectando…' ? ' wait' : '');
+        el.className = 'conn' + (t === 'Conectando…' || m.away ? ' wait' : '');
       });
       box.querySelectorAll('.rdy').forEach(el => {
         const m = ms.find(x => x.uid === el.dataset.u);
@@ -273,11 +280,13 @@
       btn.classList.toggle('hidden', !room.isHost);
       const connecting = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'connecting');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
-      btn.disabled = !room.isHost || ms.length < 2 || connecting || failed;
-      const nReady = ms.filter(m => m.ready).length, allReady = ms.length >= 2 && nReady === ms.length;
+      const away = ms.find(m => m.away);
+      btn.disabled = !room.isHost || ms.length < 2 || connecting || failed || !!away;
+      const nReady = ms.filter(m => m.ready).length, allReady = ms.length >= 2 && nReady === ms.length && !away;
       // Sin todos listos, el botón del anfitrión es "forzar inicio".
       btn.textContent = allReady ? 'Empezar ya' : G.I18n.f('Forzar inicio ({x}/{x} listos)', nReady, ms.length);
-      $('lobby-note').textContent = !room.isHost ? 'Cuando estéis todos listos, la partida empieza sola.'
+      $('lobby-note').textContent = away ? G.I18n.f('Esperando a que vuelva {x}…', away.name)
+        : !room.isHost ? 'Cuando estéis todos listos, la partida empieza sola.'
         : ms.length < 2 ? 'Necesitas al menos un amigo en la sala.'
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
         : connecting ? 'Conectando con tus amigos…' : 'Cuando estéis todos listos, la partida empieza sola. Puedes forzar el inicio.';

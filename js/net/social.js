@@ -48,6 +48,15 @@ G.Social = (() => {
   const BEAT = 30 * 60 * 1000;
   const ONLINE = 40 * 60 * 1000;        // "en línea" si el último latido es más reciente
   const PRES_TTL = 60 * 1000;           // lo leído de los amigos vale 1 min
+  /*
+   * Fork: la sala sobrevive a recargar la página (F5, o la actualización automática en
+   * la sala). Al desconectarte tu plaza queda "fuera" (away = hora del servidor) en vez
+   * de borrarse, y esta pestaña recuerda la sala (sessionStorage) para volver a entrar.
+   * Quien no vuelve en GRACE ms se quita: el anfitrión quita al invitado; si es el
+   * anfitrión el que no vuelve, un invitado borra la sala (database.rules.json lo deja).
+   */
+  const GRACE = window.__partyGrace || 90 * 1000;
+  const RESUME = 'ps.room';
 
   let fb = null, uid = null;
   let me = null;                    // { uid, name }
@@ -95,6 +104,7 @@ G.Social = (() => {
       if (!r.ok) return 'need-nick';
     } else return 'need-nick';
     online();
+    resume();
     return 'ok';
   }
 
@@ -119,7 +129,7 @@ G.Social = (() => {
     me = { uid, name };
     try { localStorage.setItem('ps.nick.' + uid, name); } catch (e) { /* nada */ }
     G.DB.setName(name);
-    if (started && !beatT) online();
+    if (started && !beatT) { online(); resume(); }
     publishProfile(true);
     return { ok: true };
   }
@@ -340,8 +350,10 @@ G.Social = (() => {
     return { ok: true };
   }
 
+  let rtSkew = 0, awayT = 0;
   function enterRoom(id, host) {
     room = { id, host, isHost: host === uid, members: [], open: true };
+    remember();
     watchRoomDisconnect();
     const mref = fb.rtdb.ref('rooms/' + id + '/m');
     mref.on('value', s => {
@@ -350,33 +362,113 @@ G.Social = (() => {
       // El anfitrión siempre primero; el resto por orden de llegada.
       room.members = Object.keys(m).map(k => Object.assign({ uid: k }, m[k]))
         .sort((a, b) => (a.uid === room.host ? -1 : b.uid === room.host ? 1 : (a.at || 0) - (b.at || 0)));
+      if (room.isHost) watchRoomDisconnect();
       emit('room');
     }, () => closedRoom());
     const href = fb.rtdb.ref('rooms/' + id + '/host');
     href.on('value', s => { if (room && room.id === id && !s.val()) closedRoom(); }, () => closedRoom());
     const oref = fb.rtdb.ref('rooms/' + id + '/open');
     oref.on('value', s => { if (room && room.id === id) { room.open = s.val() === true; emit('room'); } }, () => {});
-    roomRefs = [mref, href, oref];
+    // Hora del servidor (para saber cuánto lleva fuera alguien).
+    const sref = fb.rtdb.ref('.info/serverTimeOffset');
+    sref.on('value', s => { rtSkew = s.val() || 0; });
+    roomRefs = [mref, href, oref, sref];
+    clearInterval(awayT);
+    awayT = setInterval(dropAway, 3000);
     writeStatus();
     emit('room');
   }
 
-  /** Si se cierra el navegador, la sala (anfitrión) o tu plaza (invitado) se borran solas. */
+  /**
+   * Si se cierra o recarga la página, tu plaza queda "fuera" (away) en vez de borrarse.
+   * El anfitrión solo en su sala sí la borra al irse: no hay grupo que guardar.
+   */
+  let armed = '';
   function watchRoomDisconnect() {
     if (!room) return;
-    const ref = room.isHost ? fb.rtdb.ref('rooms/' + room.id) : fb.rtdb.ref('rooms/' + room.id + '/m/' + uid);
-    ref.onDisconnect().remove();
+    const alone = room.isHost && room.members.length <= 1;
+    const key = room.id + (alone ? ':solo' : ':away');
+    if (armed === key) return;
+    armed = key;
+    const rref = fb.rtdb.ref('rooms/' + room.id), mine = rref.child('m/' + uid);
+    if (room.isHost) rref.onDisconnect().cancel().catch(() => {});
+    if (alone) rref.onDisconnect().remove();
+    else mine.onDisconnect().update({ away: firebase.database.ServerValue.TIMESTAMP });
+  }
+
+  /** Quien lleva fuera más de GRACE no vuelve: el anfitrión lo quita; si es el anfitrión, se cierra la sala. */
+  function dropAway() {
+    if (!room || !fb) return;
+    const t = Date.now() + rtSkew, r = room;
+    const late = r.members.filter(m => m.away && t - m.away > GRACE);
+    if (!late.length) return;
+    const rref = fb.rtdb.ref('rooms/' + r.id);
+    if (r.isHost) late.forEach(m => rref.child('m/' + m.uid).remove().catch(() => {}));
+    else if (late.some(m => m.uid === r.host)) {
+      clearInterval(awayT);
+      rref.remove().catch(async () => { if (room === r) { await leaveRoom(); emit('room-closed'); } });
+    }
+  }
+
+  /** Esta pestaña recuerda su sala para volver a entrar tras recargar. */
+  function remember() {
+    try {
+      if (room && uid) sessionStorage.setItem(RESUME, JSON.stringify({ id: room.id, uid, t: Date.now() }));
+      else sessionStorage.removeItem(RESUME);
+    } catch (e) { /* nada */ }
+  }
+  window.addEventListener('pagehide', () => { if (room) remember(); });
+
+  /** Tras recargar: vuelve a la sala en la que estabas (si sigue ahí y no ha pasado GRACE). */
+  async function resume() {
+    let r = null;
+    try { r = JSON.parse(sessionStorage.getItem(RESUME) || 'null'); } catch (e) { /* nada */ }
+    if (!r || r.uid !== uid || room || !me) return;
+    const forget = () => { try { sessionStorage.removeItem(RESUME); } catch (e) { /* nada */ } rtOff(); };
+    rtOn();
+    const rref = fb.rtdb.ref('rooms/' + r.id);
+    const host = await rref.child('host').get().then(s => s.val(), () => null);
+    // Tu plaza (sólo se puede leer si sigue existiendo).
+    const mine = await rref.child('m/' + uid).get().then(s => s.val(), () => null);
+    if (!host || room || !fb) { if (!room) forget(); return; }
+    if (Date.now() - r.t > GRACE) {
+      // Demasiado tarde: ya te han dado por ido (o están a punto).
+      if (host === uid) await rref.remove().catch(() => {});
+      else if (mine) await rref.child('m/' + uid).remove().catch(() => {});
+      forget();
+      return;
+    }
+    if (!mine) {
+      // Ya te habían quitado: se vuelve a entrar como cualquiera (si la sala sigue abierta).
+      const j = await joinRoom(r.id);
+      if (!j.ok) { forget(); return; }
+    } else {
+      const s = G.DB.save;
+      try {
+        await rref.child('m/' + uid).update({ away: null, name: me.name, dex: s.partner,
+          shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) });
+      } catch (e) { forget(); return; }
+      enterRoom(r.id, host);
+      // Si se recargó en plena partida, la sala volvió a quedar abierta para la próxima.
+      if (host === uid) setOpen(true);
+    }
+    emit('resumed');
   }
 
   function detachRoom() {
     for (const r of roomRefs) r.off();
     roomRefs = [];
+    clearInterval(awayT);
+    armed = '';
   }
 
   function closedRoom() {
     if (!room) return;
+    const r = room;
+    fb.rtdb.ref('rooms/' + r.id + '/m/' + uid).onDisconnect().cancel().catch(() => {});
     detachRoom();
     room = null;
+    remember();
     retractInvites();
     writeStatus();
     rtOff();
@@ -388,6 +480,7 @@ G.Social = (() => {
     const r = room;
     detachRoom();
     room = null;
+    remember();
     const ref = r.isHost ? fb.rtdb.ref('rooms/' + r.id) : fb.rtdb.ref('rooms/' + r.id + '/m/' + uid);
     ref.onDisconnect().cancel().catch(() => {});
     await ref.remove().catch(() => {});

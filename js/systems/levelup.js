@@ -53,7 +53,7 @@ G.LevelUp = (() => {
       // Si es de su lado flojo, cuánto rinde (Machamp con Bola Sombra...).
       const fitNote = (mon, cat) => {
         const f = G.Stats.fit(mon, cat);
-        return f < 0.95 ? ` <span class="fit-low">Con ${mon.name} rinde un ${Math.round(f * 100)} %: pega mejor con ataques ${G.Stats.sideOf(mon) === 'special' ? 'especiales' : 'físicos'}.</span>` : '';
+        return f < 0.95 ? ` <span class="fit-low">Peor para ${mon.name}: sólo hace un ${Math.round(f * 100)} % del daño (lo suyo es el ataque ${G.Stats.sideOf(mon) === 'special' ? 'especial' : 'físico'}).</span>` : '';
       };
       const pool = G.Moves.poolFor(pl.mon).filter(id =>
         !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.Moves.BY_ID[id].kind === 'buff'));
@@ -69,7 +69,7 @@ G.LevelUp = (() => {
         const bcat = d.kind === 'buff' && BUFF_CAT[d.stat];
         const boost = !!bcat && G.Stats.sideOf(pl.mon) === bcat;
         const boostNote = boost
-          ? ` <span class="fit-good">${pl.mon.name} pega más fuerte con ataques ${bcat === 'special' ? 'especiales' : 'físicos'}: le viene bien.</span>` : '';
+          ? ` <span class="fit-good">Bueno para ${pl.mon.name}: potencia sus ataques ${bcat === 'special' ? 'especiales' : 'físicos'}, su punto fuerte.</span>` : '';
         out.push({
           w: 10, type: 'new', key: 'new:' + id, own, boost,
           icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],

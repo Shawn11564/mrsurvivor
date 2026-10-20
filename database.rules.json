@@ -5,7 +5,7 @@
     "rooms": {
       "$room": {
         ".read": "auth != null && data.child('m').child(auth.uid).exists()",
-        ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid) || data.child('host').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid) || data.child('host').val() === auth.uid || (!newData.exists() && data.child('m').child(auth.uid).exists() && data.child('m').child(data.child('host').val() + '').child('away').isNumber() && data.child('m').child(data.child('host').val() + '').child('away').val() < now - 5000))",
         "host": {
           ".read": "auth != null"
         },

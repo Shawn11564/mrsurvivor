@@ -82,6 +82,8 @@ G.Player = class Player {
 
   /** Segundos que hay que estar junto a un compañero caído para levantarlo. */
   static get REVIVE_TIME() { return 3; }
+  /** Últimos segundos de un potenciador: su aro late (como el aviso del HUD, hud.js BUFF_WARN). */
+  static get BUFF_WARN() { return 2.5; }
 
   // (×2 y luego ×4 el 2026-10-10: se subía de nivel demasiado rápido.)
   static xpFor(level) {
@@ -347,7 +349,7 @@ G.Player = class Player {
     if (!b) return;
     b.amount = amount;
     b.n = Math.min(maxStacks, b.n + 1);
-    b.t = dur;
+    b.t = b.dur = dur;
   }
 
   // ---------------- ciclo ----------------
@@ -542,19 +544,22 @@ G.Player = class Player {
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
     this.anim.draw(ctx, this.x, this.y, { flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' });
 
-    // Arcos de buff alrededor de los pies.
+    // Arcos de buff alrededor de los pies: el tiempo que le queda (se encoge hacia
+    // delante, donde se ve) sobre un aro tenue; en los últimos segundos late (volver a usarlo).
     const COL = { atk: '#ff6b4d', patk: '#ff6b4d', satk: '#c47bff', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
     let i = 0;
     for (const k in this.buffs) {
       const b = this.buffs[k];
       if (b.n <= 0) continue;
+      const rx = this.r * 1.8 + i * 5, ry = rx * 0.42, frac = G.U.clamp(b.t / (b.dur || b.t || 1), 0, 1);
+      const warn = b.t < Player.BUFF_WARN;
       ctx.save();
-      ctx.globalAlpha = 0.6;
       ctx.strokeStyle = COL[k];
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.r * 1.8 + i * 5, (this.r * 1.8 + i * 5) * 0.42, 0, 0, 6.2832 * (b.n / 5));
-      ctx.stroke();
+      ctx.globalAlpha = 0.14;
+      ctx.beginPath(); ctx.ellipse(this.x, this.y, rx, ry, 0, 0, 6.2832); ctx.stroke();
+      ctx.globalAlpha = !warn ? 0.6 : G.Settings.get('calm') ? 0.9 : 0.55 + 0.4 * Math.sin(performance.now() / 85);
+      ctx.beginPath(); ctx.ellipse(this.x, this.y, rx, ry, 0, Math.PI / 2 - frac * Math.PI, Math.PI / 2 + frac * Math.PI); ctx.stroke();
       ctx.restore();
       i++;
     }

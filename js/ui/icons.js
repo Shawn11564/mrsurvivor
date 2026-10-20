@@ -25,6 +25,10 @@ G.Icons = (() => {
     phone: { pal: { b: '#2c519f', s: '#9fd8ff', w: '#e6f4ff' }, rows: [
       '...kkkkkk...', '...kbbbbk...', '...kssssk...', '...kswssk...', '...kssssk...', '...kssssk...',
       '...kssssk...', '...kssssk...', '...kssssk...', '...kbbbbk...', '...kbwwbk...', '...kkkkkk...'] },
+    // Dado: partida con un Pokémon al azar (menú).
+    dice: { pal: { w: '#f4f8ff', s: '#b9c6e4' }, rows: [
+      '.kkkkkkkkkk.', 'kwwwwwwwwwwk', 'kwkkwwwwwwsk', 'kwkkwwwwwwsk', 'kwwwwwwwwwsk', 'kwwwwkkwwwsk',
+      'kwwwwkkwwwsk', 'kwwwwwwwwwsk', 'kwwwwwwwkksk', 'kwwwwwwwkksk', 'kssssssssssk', '.kkkkkkkkkk.'] },
     // Banderita: reportar una marca del ranking.
     flag: { pal: { r: '#ff5f6d', w: '#c9cfdc' }, rows: [
       '.kk.........', '.kwkkkkkk...', '.kwkrrrrrk..', '.kwkrrrrrrk.', '.kwkrrrrrk..', '.kwkrrrrk...',

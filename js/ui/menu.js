@@ -27,6 +27,8 @@ G.MenuUI = (() => {
         else if (go === 'settings') G.SettingsUI.open();
       };
     });
+    $('rand-go').insertAdjacentHTML('afterbegin', G.Icons.html('dice', 18) + ' ');
+    $('rand-go').onclick = playRandom;
     document.querySelectorAll('[data-back]').forEach(b => { b.onclick = open; });
     G.Social.on(() => { if (G.UI.isOpen('scr-menu')) socialLine(); });
     $('btn-logout').onclick = () => {
@@ -64,6 +66,8 @@ G.MenuUI = (() => {
       };
     });
 
+    renderRandom();
+
     const owned = Object.keys(s.owned).filter(d => G.DEX_BY[d]).length;
     const shinies = Object.keys(s.shiny || {}).length;
     $('menu-dex-count').textContent = `${owned} / ${G.DEX.length}` + (shinies ? ` · ${shinies} shiny` : '');
@@ -90,9 +94,46 @@ G.MenuUI = (() => {
     G.InvitePop.refresh();
   }
 
+  // ---------------- partida con un Pokémon al azar ----------------
+  // Entre los que tienes, con una rareza mínima (1 = todas). La elección se guarda en
+  // este dispositivo (G.Settings 'randMin'); tu compañero no cambia.
+
+  const randPool = min => Object.keys(G.DB.save.owned).map(Number).filter(d => G.DEX_BY[d] && G.DEX_BY[d].rarity >= min);
+  function randMin() {
+    const m = G.Settings.get('randMin') | 0;
+    return m >= 1 && m <= 5 && randPool(m).length ? m : 1;
+  }
+
+  function renderRandom() {
+    const box = $('rand-rar'), min = randMin(), N = G.Gacha.RARITY_NAME;
+    box.innerHTML = '';
+    for (let r = 1; r <= 5; r++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      const n = randPool(r).length;
+      b.innerHTML = r === 1 ? 'Todas' : G.Icons.html(G.Icons.RARITY_BALL[r], 14) + (r < 5 ? '+' : '');
+      b.title = (r === 1 ? G.T('Cualquier rareza') : r < 5 ? G.I18n.f('{x} o más', G.T(N[r])) : G.T(N[r])) + ' · ' + G.I18n.f('{x} Pokémon', n);
+      b.disabled = !n;
+      b.classList.toggle('on', r === min);
+      b.onclick = () => { G.Settings.set('randMin', r); G.Audio.sfx('select'); renderRandom(); };
+      box.appendChild(b);
+    }
+    $('menu-rand').classList.toggle('hidden', !!G.Social.room);
+  }
+
+  function playRandom() {
+    if (G.Social.room) return;
+    const pool = randPool(randMin());
+    if (!pool.length) return;
+    const dex = G.U.pick(pool);
+    G.UI.toast(G.I18n.f('¡Te toca {x}!', G.DEX_BY[dex].name), 2400);
+    G.Game.startRun(null, { dex, shiny: G.DB.ownsShiny(dex) });
+  }
+
   /** Texto bajo "Amigos" y "Jugar": quién está en línea, solicitudes, sala. */
   function socialLine() {
     const room = G.Social.room;
+    $('menu-rand').classList.toggle('hidden', !!room);
     const play = document.querySelector('#scr-menu [data-go=play] small');
     if (play) play.textContent = room ? 'Volver a tu sala (' + room.members.length + '/' + G.Social.MAX_PLAYERS + ')' : 'Entra en la mazmorra';
     const fr = G.Social.friends;

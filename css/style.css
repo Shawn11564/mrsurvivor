@@ -136,6 +136,16 @@ input { font: inherit; }
 .menu-item { display: grid; grid-template-columns: 34px 1fr; column-gap: 8px; align-items: center; }
 .menu-item small { grid-column: 2; }
 .mi-ico { grid-row: span 2; display: flex; }
+/* Pokémon al azar: bajo el compañero, con la rareza mínima al lado. */
+.menu-rand { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;
+  width: max-content; max-width: min(100%, calc(100vw - 24px)); margin: 10px auto 0; padding: 6px 8px; border-radius: 12px;
+  background: rgba(5,10,25,.62); border: 2px solid rgba(244,248,255,.16); }
+.menu-rand .btn { display: inline-flex; align-items: center; gap: 6px; }
+.rand-rar { margin: 0; }
+.rand-rar button { padding: 4px 10px; min-height: 30px; font-size: 13px; color: inherit; }
+.rand-rar button img { display: block; }
+.rand-rar button:disabled { opacity: .45; cursor: default; }
+.rand-rar button.on { background: rgba(255,210,63,.2); color: var(--gold); }
 
 /* ---------- formularios ---------- */
 .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
@@ -812,6 +822,9 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   .menu-item { font-size: 15px; padding: 4px 6px; grid-template-columns: 22px 1fr; column-gap: 6px; }
   .menu-item small { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .menu-item.play { grid-column: span 2; font-size: 21px; }
+  .menu-rand { margin-top: 4px; gap: 4px; }
+  .menu-rand .btn { padding: 3px 8px; font-size: 12px; }
+  .rand-rar button { padding: 2px 7px; min-height: 24px; }
   .menu-item::before { display: none; }
   .mi-ico img { width: 20px; height: 20px; }
   .box.settings { max-height: calc(100dvh - 12px); }

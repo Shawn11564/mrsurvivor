@@ -56,11 +56,18 @@ survive. Run it after changing anything in `fork/`.
 - the HUD tooltips, drag-to-reorder and hold-click aiming (`drawTip` in `js/ui/hud.js`,
   `drag`/`mapHeld` in `js/core/touch.js`, `swapSlots`/`handAim` in `js/entities/player.js`)
 - the highlighted "your type" level-up cards (`own` in `js/systems/levelup.js`) and the
-  "Good for you" note on stat boosts that match your Pokémon's stronger side (`boost`)
+  "Good for you" note on stat boosts that match your Pokémon's stronger side (`boost`); the
+  wording of both card notes: "Good for X: boosts its special moves…" and, for an attack on
+  the weaker side, "Weaker for X: only N % damage (it's a special attacker)" (`fitNote`)
+- the 3 s "Resuming…" countdown after the pause, with the world still frozen; Esc during it
+  goes back to the pause (`resumeRun`/`drawResume` in `js/game.js`)
 - the Upgrades screen opening on your current partner (`openUpgrades` in `js/ui/menu.js`)
+- the random run under the partner card: only owned Pokémon at or above the chosen rarity,
+  partner unchanged (`playRandom`/`renderRandom` in `js/ui/menu.js`, `pick` in `G.Game.startRun`)
 - the gacha Skip button beside the slot machine's lever, on any window size (`#slot-wrap` in
   `css/style.css`, `js/ui/gacha-ui.js`, `G.Slots.stop` in `js/ui/slots.js`)
-- the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`)
+- the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`),
+  and the ring at the player's feet draining with the buff's time left (`Player.draw`)
 - the solo end-of-run breakdown (`js/fork/run-stats.js`)
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
@@ -85,6 +92,13 @@ real project is touched, and the real security rules. It checks:
 - the end-of-run team summary and per-move breakdown (`js/fork/run-stats.js`)
 
 `SHOTS=<folder>` saves screenshots.
+
+`node fork/test-party-reload.cjs` (same emulator and server) checks that a party survives a
+page reload (`resume`, `away` and `dropAway` in `js/net/social.js`): a guest and then the host
+reload and land back in the same lobby, connected; leaving with the button stays left; someone
+who closes the tab for good is dropped after the grace period, and a host who never comes back
+has the room deleted by a guest (the rule for that is in `database.rules.json`; restart the
+emulator, or PUT the rules to it, after changing them).
 
 `node fork/measure-audio.cjs` (with the server running) measures how loud the game is at
 the speakers with the default volume, and fails if any sound effect peaks above -8 dBFS or

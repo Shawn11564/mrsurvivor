@@ -32,7 +32,7 @@ G.HUD = (() => {
    * es el ataque activo, borde dorado que late ("cámbiate a él").
    */
   const BUFF_COL = { atk: '#ff6b4d', patk: '#ff6b4d', satk: '#c47bff', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
-  const BUFF_WARN = 2.5;
+  const BUFF_WARN = G.Player.BUFF_WARN;
   function buffLeft(pl, m) {
     const b = m.kind === 'buff' && pl.buffs[m.stat];
     return b && b.n > 0 ? { b, frac: G.U.clamp(b.t / (m.dur || 7), 0, 1) } : null;

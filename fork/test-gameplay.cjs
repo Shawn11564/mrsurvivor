@@ -120,6 +120,47 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.evaluate(() => G.Game.startRun());
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Game.player.activeMove(), null, { timeout: 30000 });
 
+  // Leaving the pause: 3 s countdown with the world still frozen (js/game.js resumeRun).
+  console.log('Pause: 3 s countdown before resuming');
+  // Text as drawn, after translation (the game paints through G.I18n.rawCanvas).
+  const canvasText = () => page.evaluate(() => new Promise(res => {
+    const seen = [], o = G.I18n.rawCanvas;
+    G.I18n.rawCanvas = function (c, k, t) { if (k === 'fillText') seen.push(String(t)); return o.apply(this, arguments); };
+    setTimeout(() => { G.I18n.rawCanvas = o; res([...new Set(seen)]); }, 250);
+  }));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);                                   // keys are read on the next frame
+  check(await page.evaluate(() => G.Game.state === 'paused' && G.UI.isOpen('scr-pause')), 'Esc pauses');
+  await page.click('#btn-resume');
+  const x0 = await page.evaluate(() => G.Game.player.x);
+  const r0 = Date.now();
+  await page.keyboard.down('KeyD');                                 // walking right is held all along
+  await page.waitForTimeout(1200);
+  let ct = await canvasText();
+  const mid = await page.evaluate(() => ({ st: G.Game.state, x: G.Game.player.x, pause: G.UI.isOpen('scr-pause') }));
+  check(mid.st === 'resuming' && !mid.pause && Math.abs(mid.x - x0) < 0.01 && ct.includes('Resuming…') && ct.some(t => /^[123]$/.test(t)),
+    `Resume: pause screen closes, "Resuming…" with a ${ct.find(t => /^[123]$/.test(t))} counting down, and the Pokémon doesn't move yet (held D): ` + JSON.stringify({ st: mid.st, pause: mid.pause, moved: mid.x - x0, label: ct.includes('Resuming…') }));
+  await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 5000 });
+  const took = (Date.now() - r0) / 1000;
+  await page.waitForTimeout(400);
+  const x1 = await page.evaluate(() => G.Game.player.x);
+  await page.keyboard.up('KeyD');
+  check(took > 2.7 && took < 3.6 && x1 > x0 + 5, `play resumes after ${took.toFixed(1)} s and the Pokémon walks (moved ${Math.round(x1 - x0)} px)`);
+  // Esc during the countdown goes back to the pause; Esc again resumes through the countdown too.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  const back = await page.evaluate(() => ({ st: G.Game.state, pause: G.UI.isOpen('scr-pause') }));
+  check(back.st === 'paused' && back.pause, 'Esc during the countdown goes back to the pause screen');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  check(await page.evaluate(() => G.Game.state === 'resuming'), 'Esc on the pause screen also resumes through the countdown');
+  if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'resume-countdown.png') }); }
+  await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 5000 });
+
   console.log('Enemy arrows');
   const enemies = await page.evaluate(async () => {
     const pl = G.Game.player;
@@ -341,7 +382,27 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   let txt = await hudText();
   check(sd.n >= 2 && txt.includes('×' + sd.n) && txt.some(t => /^\d\.\ds$/.test(t)),
     `Swords Dance slot shows its stacks and time left (×${sd.n}, ${txt.find(t => /^\d\.\ds$/.test(t))})`);
+  // The ring at the player's feet (Player.draw): its arc is the time left, centred in front.
+  const rings = () => page.evaluate(() => new Promise(res => {
+    const pl = G.Game.player, P = CanvasRenderingContext2D.prototype, o = P.ellipse, od = pl.draw, seen = [];
+    let inDraw = false;
+    pl.draw = function () { inDraw = true; try { return od.apply(this, arguments); } finally { inDraw = false; } };
+    P.ellipse = function (x, y, rx, ry, rot, a0, a1) {
+      if (inDraw && this.strokeStyle === '#ff6b4d') seen.push({ sweep: (a1 - a0) / 6.2832, mid: (a0 + a1) / 2, alpha: this.globalAlpha, t: pl.buffs.patk.t, dur: pl.buffs.patk.dur });
+      return o.apply(this, arguments);
+    };
+    setTimeout(() => { P.ellipse = o; pl.draw = od; res(seen); }, 400);
+  }));
+  let rg = await rings();
+  const arc = rg.filter(r => r.sweep < 0.999);
+  const fracOk = arc.length && arc.every(r => Math.abs(r.sweep - r.t / r.dur) < 0.05 && Math.abs(r.mid - Math.PI / 2) < 0.01);
+  check(fracOk && rg.some(r => r.sweep >= 0.999 && r.alpha < 0.2) && arc.every(r => r.alpha === 0.6),
+    `ring at the feet shows the time left: arc ${arc[0] && (arc[0].sweep * 100).toFixed(0)}% for ${arc[0] && arc[0].t.toFixed(1)} of ${arc[0] && arc[0].dur} s, centred in front, over a faint full ring; steady while there's time`);
   await page.waitForFunction(() => G.Game.player.buffs.patk.n > 0 && G.Game.player.buffs.patk.t < 2.2, null, { timeout: 10000 });
+  rg = (await rings()).filter(r => r.sweep < 0.999);
+  const al = rg.map(r => r.alpha);
+  check(rg.length && Math.max(...al) - Math.min(...al) > 0.3, `in the last seconds the ring pulses (alpha ${Math.min(...al).toFixed(2)}–${Math.max(...al).toFixed(2)})`);
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'buff-ring.png'), clip: { x: vw / 2 - 90, y: vh / 2 - 110, width: 180, height: 170 } });
   txt = await hudText();
   check(txt.includes('!'), 'in the last seconds, with another move active, the slot warns ("!")');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'hud-buff-timer.png'), clip: { x: 0, y: vh - 150, width: vw, height: 150 } });
@@ -404,9 +465,28 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   if (boost.dom) boost.dom = await page.evaluate(dom => dom.map((d, i) => Object.assign(d, {
     note: (document.querySelectorAll('#cards .card')[i].querySelector('.fit-good') || {}).textContent || '' })), boost.dom);
   const bc = (boost.dom || []).find(d => d.boost);
-  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /special moves/.test(bc.note),
+  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /^Good for Charmander: boosts its special moves, its strong side\.$/.test(bc.note),
     `rendered: ${bc && bc.key} gets .boost, the "Good for you" chip and "${bc && bc.note}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-boost.png') }); }
+
+  // A new attack on the Pokémon's weaker side: the note says plainly that it's worse for it,
+  // how much damage it does, and why. Charmander is too even (96 %, no note), so the hand is
+  // rolled as Gengar, a clear special attacker.
+  const weak = await page.evaluate(() => {
+    const pl = G.Game.player, mon = pl.mon, max = pl.maxMoves;
+    pl.mon = G.DEX_BY[94]; pl.maxMoves = 99;                     // its 4 slots are full by now
+    const low = c => c.type === 'new' && G.Stats.fit(pl.mon, G.Moves.BY_ID[c.key.slice(4)].cat) < 0.95;
+    let hand;
+    for (let i = 0; i < 600 && !hand; i++) { const h = G.LevelUp.offer(pl); if (h.some(low)) hand = h; }
+    const out = hand && { i: hand.findIndex(low), side: G.Stats.sideOf(pl.mon) };
+    if (hand) { out.key = hand[out.i].key; out.pct = Math.round(G.Stats.fit(pl.mon, G.Moves.BY_ID[out.key.slice(4)].cat) * 100); G.RunUI.showLevelUp(pl.level, hand, () => {}); }
+    pl.mon = mon; pl.maxMoves = max;
+    return out;
+  });
+  await page.waitForTimeout(50);
+  const wn = weak && await page.evaluate(i => (document.querySelectorAll('#cards .card')[i].querySelector('.fit-low') || {}).textContent || '', weak.i);
+  check(!!weak && weak.side === 'special' && wn === `Weaker for Gengar: only ${weak.pct} % damage (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
+  if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
   // Solo run end: no team summary, but your per-move breakdown (js/fork/run-stats.js).
   console.log('Run end: your breakdown');
@@ -421,6 +501,47 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!end.party && end.rows === end.moves && end.moves > 0 && Math.abs(end.sum - end.d) <= end.moves && end.kills === end.k,
     'solo: no team summary; the end screen lists each attack with damage and kills that add up: ' + JSON.stringify(end));
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'solo-breakdown.png') });
+
+  // Random run (js/ui/menu.js playRandom): a random Pokémon you own, at or above the chosen
+  // rarity; your partner stays the same.
+  console.log('Random run');
+  const legend = await page.evaluate(() => {
+    const d = G.DEX.find(p => p.rarity === 5 && p.gen === 1).dex;
+    G.DB.save.owned[d] = { at: Date.now() };
+    G.Settings.set('randMin', 1);
+    G.Flow.goMenu();
+    return d;
+  });
+  await page.waitForSelector('#rand-go', { state: 'visible' });
+  const strip = await page.evaluate(() => {
+    const info = document.getElementById('menu-partner-info').getBoundingClientRect(), r = document.getElementById('menu-rand').getBoundingClientRect();
+    const chips = [...document.querySelectorAll('#rand-rar button')];
+    const owned = r0 => Object.keys(G.DB.save.owned).some(d => G.DEX_BY[d] && G.DEX_BY[d].rarity >= r0);
+    return { under: !!document.querySelector('.partner-card #menu-rand') && r.top >= info.bottom - 1 && r.top - info.bottom < 60 && r.bottom <= innerHeight, n: chips.length, on: chips.findIndex(c => c.classList.contains('on')) + 1,
+             disabledOk: chips.every((c, i) => c.disabled === !owned(i + 1)), label: document.getElementById('rand-go').textContent.trim() };
+  });
+  check(strip.under && strip.n === 5 && strip.on === 1 && strip.disabledOk,
+    `"${strip.label}" sits under the partner card, on screen, with 5 rarity chips ("All" on; chips with nothing owned are disabled)`);
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'menu-random.png') });
+  await page.click('#rand-rar button:nth-child(5)');
+  check(await page.evaluate(() => G.Settings.get('randMin') === 5 && document.querySelector('#rand-rar button:nth-child(5)').classList.contains('on')), 'picking the legendary chip selects it and remembers it');
+  await page.click('#rand-go');
+  await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 15000 });
+  const rr = await page.evaluate(() => ({ dex: G.Game.player.dex, rarity: G.DEX_BY[G.Game.player.dex].rarity, owned: !!G.DB.save.owned[G.Game.player.dex], partner: G.DB.save.partner }));
+  check(rr.rarity === 5 && rr.owned && rr.partner === 4, `legendary only: the run is with #${rr.dex}, an owned legendary; partner still #${rr.partner}`);
+  await page.evaluate(() => { G.Game.debugSpeed(1); G.Game.quit(); });
+  await page.waitForSelector('#scr-over', { state: 'visible', timeout: 10000 });
+  await page.evaluate(() => { G.Settings.set('randMin', 1); G.Flow.goMenu(); });
+  const rolled = new Set();
+  for (let i = 0; i < 12; i++) {
+    await page.evaluate(() => { if (G.Game.state === 'playing') G.Game.quit(); G.Flow.goMenu(); });
+    await page.click('#rand-go');
+    await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 15000 });
+    rolled.add(await page.evaluate(() => G.Game.player.dex));
+  }
+  const ownedAll = await page.evaluate(() => Object.keys(G.DB.save.owned).map(Number).filter(d => G.DEX_BY[d]));
+  check([...rolled].every(d => ownedAll.includes(d)) && rolled.size >= 2, `"All": 12 rolls give only owned Pokémon, and vary (${[...rolled].join(', ')} of ${ownedAll.join(', ')})`);
+  await page.evaluate(() => { G.Game.quit(); });
 
   check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
