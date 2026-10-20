@@ -72,6 +72,11 @@ cloud saves upstream left to the Save button: an unsaved change goes up by itsel
 and when the tab is hidden (`js/fork/cloud-backup.js`), and every upload merges with the cloud so
 two devices don't erase each other's progress (`pushNow` in `js/core/db.js`, a transaction again).
 
+`node fork/test-shiny-gacha.cjs` (server + Firebase emulator) checks shiny by default: a Pokémon
+you have the shiny of shows and plays shiny unless you picked Normal for it, which the save keeps
+(`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
+0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
+
 `node fork/test-remember.cjs` (with the server running) checks that Settings and
 Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in

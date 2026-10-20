@@ -69,6 +69,7 @@ G.MenuUI = (() => {
       b.onclick = () => {
         if ((b.dataset.v === '1') === shiny) return;
         s.partnerShiny = b.dataset.v === '1';
+        if (G.ShinyPref) G.ShinyPref.set(mon.dex, s.partnerShiny);     // fork: se recuerda (js/fork/shiny-pref.js)
         G.DB.commit();
         G.Audio.sfx('confirm');
         open();
@@ -136,7 +137,7 @@ G.MenuUI = (() => {
     if (!pool.length) return;
     const dex = G.U.pick(pool);
     G.UI.toast(G.I18n.f('¡Te toca {x}!', G.DEX_BY[dex].name), 2400);
-    G.Game.startRun(null, { dex, shiny: G.DB.ownsShiny(dex) });
+    G.Game.startRun(null, { dex, shiny: G.ShinyPref ? G.ShinyPref.wants(dex) : G.DB.ownsShiny(dex) });
   }
 
   /** Texto bajo "Amigos" y "Jugar": quién está en línea, solicitudes, sala. */
@@ -329,6 +330,7 @@ G.MenuUI = (() => {
     const isPartner = dex === s.partner;
     if (!hasSh) viewShiny = false;
     else if (isPartner && dex !== showDetail.last) viewShiny = !!s.partnerShiny;
+    else if (dex !== showDetail.last && G.ShinyPref) viewShiny = G.ShinyPref.wants(dex);   // fork: shiny si lo tienes
     showDetail.last = dex;
 
     const max = { hp: 183, atk: 1.55, spd: 137, def: 160 };
@@ -372,7 +374,7 @@ G.MenuUI = (() => {
     $('dex-big').classList.toggle('shiny', own && viewShiny);
     G.UI.sprite($('dex-big'), dex, { lively: own, spin: own, silhouette: !own, scale: 3, hero: true, shiny: own && viewShiny });
     box.querySelectorAll('.seg button').forEach(b => {
-      b.onclick = () => { viewShiny = b.dataset.v === '1'; showDetail(dex); };
+      b.onclick = () => { viewShiny = b.dataset.v === '1'; if (G.ShinyPref) { G.ShinyPref.set(dex, viewShiny); G.DB.commit(); } showDetail(dex); };
     });
     const fav = $('dex-fav');
     if (fav) fav.onclick = () => { G.DB.setFav(dex, !G.DB.isFav(dex)); renderGrid(true); showDetail(dex); };
@@ -380,6 +382,7 @@ G.MenuUI = (() => {
     if (pick) pick.onclick = () => {
       s.partner = dex;
       s.partnerShiny = hasSh && viewShiny;
+      if (G.ShinyPref && hasSh) G.ShinyPref.set(dex, viewShiny);
       G.DB.commit();
       G.UI.toast(p.name + (s.partnerShiny ? ' shiny' : '') + ' es ahora tu compañero');
       renderGrid(true); showDetail(dex);

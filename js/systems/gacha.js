@@ -21,8 +21,9 @@ G.Gacha = (() => {
     if (n === 10 && use === 't10') return t.t10 >= 1 ? { t1: 0, t10: 1 } : null;
     return t.t1 >= n ? { t1: n, t10: 0 } : null;
   }
-  const RATES = [[1, 45], [2, 30], [3, 17], [4, 6.5], [5, 1.5]];
-  const PITY_5 = 70;
+  // Fork (MrSurvivor): Legendaria al 0,15 % (era 1,5 %; lo que sobra va a Común) y pity a 220 (era 70).
+  const RATES = [[1, 46.35], [2, 30], [3, 17], [4, 6.5], [5, 0.15]];
+  const PITY_5 = 220;
   const SHINY_RATE = 1 / 100;
   const REFUND = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 };
   let forceShiny = 0;           // para pruebas y vídeos: las N próximas salen shiny
