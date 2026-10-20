@@ -1,0 +1,50 @@
+# MrSurvivor (fork of PokéSurvivor)
+
+MrSurvivor is a fork of [PokéSurvivor](https://github.com/JPTER78/pokesurvivor) by JPTER78,
+used under the PolyForm Noncommercial License 1.0.0 (`LICENSE`, `LICENSE-NONCOMMERCIAL.md`).
+It must stay free: no ads, no paid anything. The sprites are CC BY-NC 4.0 (`CREDITS.md`).
+
+## The one rule: don't edit upstream files to rebrand
+
+Upstream ships almost daily. Everything that makes this fork MrSurvivor lives in files
+upstream doesn't have, so `git merge upstream/main` never touches it:
+
+| File | What |
+|---|---|
+| `fork/brand.cjs` | name, domain, contact, credit lines, the find→replace rules |
+| `css/brand.css` | mrshawn.dev colours, loaded after upstream's `style.css` |
+| `fork/build.cjs` | runs upstream's build with the branding applied |
+| `fork/sync.cjs` | merges upstream, rebuilds, commits |
+| `.gitattributes` | generated files are `merge=ours`, so merges don't conflict on them |
+| `js/core/firebase-config.js` | the one upstream file we edit (our Firebase project) |
+
+To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
+the edits small, because those lines can conflict when upstream changes them too.
+
+## Commands
+
+```
+node fork/build.cjs          # build (replaces upstream's `node tools/build.js && …`)
+node fork/sync.cjs           # pull upstream's updates, rebuild, commit
+python -m http.server 8123   # play at http://127.0.0.1:8123/
+```
+
+Never run `node tools/build.js` directly: it writes an unbranded `index.html` and
+`app.min.js`. If you do, `node fork/build.cjs` fixes it.
+
+Play `index.html` (the branded build). `dev.html` is upstream's raw source page and still
+says PokéSurvivor.
+
+## When a sync stops
+
+- **Conflict:** you and upstream edited the same lines of a source file. Fix those
+  files, then run `node fork/build.cjs`, `git add -A` and `git commit`. To back out,
+  run `git merge --abort`.
+- **"brand rules no longer match upstream":** upstream reworded a line the credit hooks
+  into. Update that rule's `from` text in `fork/brand.cjs` and re-run the build.
+
+## Check
+
+`node fork/test-sync.cjs` replays a real upstream merge in a throwaway clone. It checks
+that the merge has no conflicts, upstream's change lands, and the branding and credit
+survive. Run it after changing anything in `fork/`.

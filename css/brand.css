@@ -1,0 +1,28 @@
+/* ============ brand.css — MrSurvivor colours (fork-only file) ============
+ * Loaded right after upstream's style.css (fork/build.cjs adds the <link>), so these
+ * win without touching style.css. Palette from mrshawn.dev: navy #0c111b / #151f30,
+ * sky-blue accent #79b8ff, ice #e6f0fb. Currency/rarity golds stay upstream's.
+ */
+:root {
+  --muted: #9db0c9;
+  --box1: #1d2c46;
+  --box2: #121a28;
+  --edge: #e6f0fb;
+  --edge-in: #79b8ff;
+  --edge-out: #0b1626;
+  --shadow: #0c111b;
+}
+
+body { background: #0c111b; }
+
+/* The wordmark: sky blue on a deep-blue drop shadow instead of gold on orange. */
+.logo .t1, .about-logo, .boot-in h1 {
+  color: #8cc6ff;
+  text-shadow: 3px 3px 0 #24508a, 6px 6px 0 var(--shadow);
+}
+.about-logo { text-shadow: 2px 2px 0 #24508a, 4px 4px 0 var(--shadow); }
+
+.field { background: #0c111b; }
+
+.fork-credit { color: var(--muted); }
+p.fork-credit { font-size: 0.9em; }

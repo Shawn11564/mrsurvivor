@@ -1,0 +1,25 @@
+# MrSurvivor fork: files fork/build.cjs regenerates or re-brands from upstream's
+# sources. On `git merge upstream/main` keep ours (never a conflict); fork/sync.cjs
+# then rebuilds them from the merged sources, so upstream's changes still land.
+# Needs `git config merge.ours.driver true` (fork/sync.cjs sets it).
+/index.html merge=ours
+/404.html merge=ours
+/version.json merge=ours
+/robots.txt merge=ours
+/sitemap.xml merge=ours
+/manifest.webmanifest merge=ours
+/CNAME merge=ours
+/js/app.min.js merge=ours
+/js/lang/*.js merge=ours
+/en/** merge=ours
+/guia/** merge=ours
+/pokedex/** merge=ours
+/legendarios/** merge=ours
+/shinies/** merge=ours
+/tipos/** merge=ours
+/movimientos/** merge=ours
+/objetos/** merge=ours
+/logros/** merge=ours
+/novedades/** merge=ours
+/apoyar/** merge=ours
+/contacto/** merge=ours
