@@ -312,9 +312,11 @@ G.Player = class Player {
 
   /** Devuelve cuántos niveles ha subido (pueden ser varios de golpe). */
   gainXp(amount) {
-    this.xp += amount * this.xpMul;
+    const add = amount * this.xpMul;
+    if (!Number.isFinite(add) || add <= 0) return 0;     // una experiencia infinita no acababa nunca de subir niveles
+    this.xp += add;
     let leveled = 0;
-    while (this.xp >= this.xpNext) {
+    while (this.xp >= this.xpNext && leveled < 50) {
       this.xp -= this.xpNext;
       this.level++;
       this.xpNext = Player.xpFor(this.level);
@@ -448,7 +450,8 @@ G.Player = class Player {
     if (this.remote) return null;
     // Clic izquierdo mantenido en el mapa: hacia el cursor, aunque no esté "Apuntar a mano".
     if (G.Touch.mapHeld) return this.cursorAim();
-    if (!G.Settings.get('aimManual')) return null;
+    // En el móvil (táctil) no hay apuntado a mano: siempre apunta solo.
+    if (G.Settings.touch || !G.Settings.get('aimManual')) return null;
     const st = G.Pad.aim();
     if (st) return Math.atan2(st[1], st[0]);
     if (G.Touch.active || !G.Input.mouseMovedAt || G.Input.mouseMovedAt < G.Pad.aimAt) return null;
