@@ -39,10 +39,11 @@ G.Admin = (() => {
 
   // Forma y tamaño: un Animator nuevo con otro Pokémon u otra escala (sólo se
   // ve; los golpes y la velocidad siguen siendo los suyos). Se quita solo.
-  // (También lo usa la megaevolución, js/fork/mega.js: p.megaKey es el sprite de su mega.)
+  // (También lo usa la megaevolución, js/fork/mega.js: p.megaKey es el sprite de su mega;
+  // y el radiante, js/fork/radiant.js: con p.radiant, su hoja radiante.)
   function paint(p) {
     if (!p || !p.anim) return;
-    const L = p.admLook || {}, now = performance.now(), base = p.megaKey || p.dex;
+    const L = p.admLook || {}, now = performance.now(), base = G.Radiant ? G.Radiant.look(p, p.megaKey || p.dex) : p.megaKey || p.dex;
     const dex = L.dexT > now ? L.dex : base;
     const k = L.kT > now ? L.k : 1;
     const sc = G.Sprites.playerScale(dex) * k;

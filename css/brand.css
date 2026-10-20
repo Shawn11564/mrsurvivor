@@ -53,3 +53,26 @@ p.fork-credit { font-size: 0.9em; }
 /* Signature moves in the pause list (gold ring), and the extra lines (evolution, candies, shiny). */
 .lab-pool .lab-sig { border-radius: 50%; box-shadow: 0 0 0 2px #ffd23f; }
 .lab-more { margin-top: 3px; }
+
+/* Radiant forms and the Radiant Ritual (js/fork/radiant.js): warm gold instead of the shiny's ice blue. */
+.stage.radiant { box-shadow: 0 0 0 3px #3a1d00, 0 0 26px rgba(255,179,71,.6), inset 0 0 0 2px rgba(255,255,255,.1); }
+.seg button.rad.on { background: rgba(255,179,71,.24); color: #ffe2b8; }
+.cell .rad-badge { position: absolute; left: 5px; top: 60px; line-height: 0; filter: drop-shadow(0 1px 0 #0c111b); }
+#menu-radiant .mi-ico img { filter: drop-shadow(0 0 4px rgba(255,179,71,.6)); }
+.rad-pool { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
+.rad-prize { line-height: 0; border-radius: 8px; background: rgba(255,179,71,.08); border: 1px solid rgba(255,179,71,.3); }
+.rad-prize.got { opacity: .55; }
+.rad-bar { gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.rad-bar input[type=search] { font: inherit; font-size: 14px; padding: 4px 8px; color: inherit; background: rgba(0,0,0,.3);
+  border: 1px solid rgba(244,248,255,.2); border-radius: 6px; min-width: 0; flex: 1 1 140px; }
+.rad-opt { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.rad-grid .cell.on { border-color: #ffb347; background: rgba(255,179,71,.16); }
+.rad-leg { position: absolute; right: 4px; top: 3px; font-size: 10px; font-weight: 800; padding: 0 5px; border-radius: 999px;
+  color: #ffd6d6; background: rgba(255,95,109,.25); border: 1px solid rgba(255,95,109,.6); }
+.rad-warning { margin-top: 10px; padding: 10px 12px; border-radius: 8px; color: #ffe1e1;
+  background: rgba(255,95,109,.14); border: 1px solid rgba(255,95,109,.55); }
+.rad-reveal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle, rgba(255,179,71,.35), rgba(12,17,27,.92)); }
+.rad-reveal.hidden { display: none; }
+.rad-card { text-align: center; padding: 18px 22px; border-radius: 14px; background: #151f30; border: 2px solid #ffb347; max-width: calc(100vw - 32px); }
+.rad-card h3 { color: #ffd08a; margin: 10px 0 2px; }

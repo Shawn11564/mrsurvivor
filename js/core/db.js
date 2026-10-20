@@ -301,6 +301,7 @@ G.DB = (() => {
     if (r.partner == null || !r.owned[r.partner]) { r.partner = older.partner; r.partnerShiny = older.partnerShiny; }
     r.created = Math.min(a.created || Date.now(), b.created || Date.now());
     r.updated = Math.max(a.updated || 0, b.updated || 0);
+    if (G.forkMerge) G.forkMerge(r, a, b);       // fork: radiantes y shinies sacrificados (js/fork/radiant.js)
     return r;
   }
 

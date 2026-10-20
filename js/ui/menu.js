@@ -75,6 +75,7 @@ G.MenuUI = (() => {
         open();
       };
     });
+    if (G.Radiant) G.Radiant.menu(open);                              // fork: radiante (js/fork/radiant.js)
 
     renderRandom();
 
@@ -309,6 +310,7 @@ G.MenuUI = (() => {
     cell.insertAdjacentHTML('beforeend', G.Mega.badge(p.dex));      // fork: puede megaevolucionar
     const useShiny = sh && p.dex === s.partner && s.partnerShiny;
     cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, silhouette: !own, shadow: own, shiny: useShiny }));
+    if (G.Radiant) G.Radiant.cell(cell, p.dex);                      // fork: radiante (js/fork/radiant.js)
     cell.insertAdjacentHTML('beforeend', `<b>${own ? p.name : '???'}</b>${G.UI.stars(p.rarity, 9)}`);
     cell.onclick = () => {
       dexSel = p.dex;
@@ -387,6 +389,7 @@ G.MenuUI = (() => {
       G.UI.toast(p.name + (s.partnerShiny ? ' shiny' : '') + ' es ahora tu compañero');
       renderGrid(true); showDetail(dex);
     };
+    if (G.Radiant) G.Radiant.detail(dex, () => showDetail(dex), () => renderGrid(true));   // fork: radiante
   }
 
   // ---------------- mejoras ----------------

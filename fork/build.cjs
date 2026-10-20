@@ -30,6 +30,9 @@ fs.readFileSync = function (file, opts) {
   const r = rel(path.resolve(file));
   return r.startsWith('..') || SKIP.test(r) ? out : brand(out, r);
 };
+// The radiant forms on disk (js/fork/radiant-list.js), before the bundle is made.
+// (A checkout from before the file existed, like fork/test-sync.cjs replays, just skips it.)
+if (fs.existsSync(path.join(__dirname, 'radiants.cjs'))) execFileSync(process.execPath, [path.join(__dirname, 'radiants.cjs')], { stdio: 'inherit', cwd: ROOT });
 try {
   require('../tools/build.js');
   require('../tools/export_data.js');

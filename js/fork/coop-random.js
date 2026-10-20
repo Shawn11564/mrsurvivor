@@ -5,6 +5,8 @@
  * Los listos siguen igual: elegir no te pone listo ni empieza nada, y mientras estás listo
  * no se puede cambiar (así nadie cambia de Pokémon en plena cuenta atrás).
  * Dura lo que dure la sala. Lo usan js/net/social.js (mine) y G.Flow.startCoop (js/game.js).
+ * get() lleva `rad: true` si ese Pokémon va radiante (js/fork/radiant.js), y entonces también
+ * sin elegir al azar: así la ficha de la sala dice a los demás que te vean radiante.
  * Lo comprueba fork/test-coop-random.cjs.
  */
 (() => {
@@ -71,5 +73,12 @@
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  G.LobbyPick = { get: () => pick, roll, back };
+  // Fork: con `rad` si va radiante (js/fork/radiant.js), también con tu compañero de siempre.
+  function get() {
+    const s = G.DB.save, p = pick || (G.Radiant && G.Radiant.wants(s.partner)
+      ? { dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) } : null);
+    return p && G.Radiant && G.Radiant.wants(p.dex) ? Object.assign({}, p, { rad: true }) : p;
+  }
+
+  G.LobbyPick = { get, roll, back };
 })();

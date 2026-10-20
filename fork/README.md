@@ -21,7 +21,9 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/fetch-lab.cjs` | downloads PokeAPI's learnsets/abilities/evolutions and SpriteCollab's animation list into `tools/cache/lab/`, writes `js/fork/lab/lab-data.js` for Lab mode (rerun it when upstream adds moves) |
 | `fork/fetch-lab-anims.py` | downloads the extra PMD animations Lab mode's signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
 | `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (Lab mode, phase 8) |
-| `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip, already named for a radiant form (`assets/pokemon/{dex}/r/`, `{dex}/r/lab/`, Mega in `m{dex}/r/`), with `CREDITS.txt`. The game doesn't load `r/` yet |
+| `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip, already named for a radiant form (`assets/pokemon/{dex}/r/`, `{dex}/r/lab/`, Mega in `m{dex}/r/`), with `CREDITS.txt`. Unzip the recoloured sheets in the repo root and build: they become a radiant (below) |
+| `fork/radiants.cjs` | finds the radiant forms in `assets/pokemon/{dex}/r/` (every standard sheet, each the size of the normal one; `r/lab/` and `m{dex}/r/` optional) and writes `js/fork/radiant-list.js`, the ritual's pool. `fork/build.cjs` runs it; it prints what it leaves out (`--strict` fails instead) |
+| `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -81,6 +83,12 @@ you have the shiny of shows and plays shiny unless you picked Normal for it, whi
 `node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type and
 "mega"; the .zip's names and bytes (Charizard with and without its Mega, Bulbasaur); every species'
 list against the sheets on disk.
+
+`node fork/test-radiant.cjs` (server) checks radiants and the ritual on `dev.html` with a stand-in radiant list:
+choosing 10 shinies, the legendary warning and its confirmation, the roll, the warning off, a duplicate,
+no radiants yet; the cloud merge (sacrificed shinies stay gone); the Normal / Shiny / Radiant selector in the
+menu and the collection; radiant in a run (and its Mega) and on the co-op lobby card; and the ritual on the
+built `index.html`.
 
 `node fork/test-coop-background.cjs` (server + Firebase emulator) checks that a co-op run keeps
 going while the host's tab is hidden: the host's frames come from a Worker then
