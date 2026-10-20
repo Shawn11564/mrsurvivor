@@ -67,6 +67,11 @@ survive. Run it after changing anything in `fork/`.
 `node fork/test-lab.cjs` and `node fork/test-lab-coop.cjs` (the co-op one also needs the
 Firebase emulator) check Lab mode: see `fork/LAB.md`.
 
+`node fork/test-remember.cjs` (with the server running) checks that Settings and
+Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
+generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in
+`js/ui/menu.js`; all in this device's localStorage, the search box isn't kept).
+
 `node fork/test-gameplay.cjs` (with the server running) plays the game in headless Edge:
 - the Power sort in the collection (`js/ui/menu.js`)
 - the type-matchup arrows over enemies (`typeMark` in `js/entities/enemy.js`, arrows in

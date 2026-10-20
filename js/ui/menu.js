@@ -7,6 +7,15 @@ G.MenuUI = (() => {
   // shiny, favoritos, tipo y búsqueda; y el orden. Duran mientras no recargas.
   const DEX0 = () => ({ status: 'all', rar: new Set(), shiny: false, fav: false, type: '', q: '', sort: 'num' });
   let dexF = DEX0();
+  // Fork (MrSurvivor): la generación, los filtros y el orden se guardan en este dispositivo
+  // (la búsqueda no). Las pestañas de Ajustes y Misiones, en js/fork/remember.js.
+  const DEX_KEY = 'ms.dex';
+  let dexSaved = false;
+  try {
+    const d = JSON.parse(localStorage.getItem(DEX_KEY) || 'null');
+    if (d) { dexF = Object.assign(DEX0(), d, { rar: new Set(d.rar || []), q: '' }); if (d.gen != null) { dexGen = d.gen; dexSaved = true; } }
+  } catch (e) { /* nada */ }
+  const dexSave = () => { try { localStorage.setItem(DEX_KEY, JSON.stringify({ ...dexF, rar: [...dexF.rar], q: undefined, gen: dexGen })); } catch (e) { /* nada */ } };
   // Poder: la suma de sus stats base (bst), más o menos lo fuerte que es.
   const SORTS = [['num', 'Nº'], ['name', 'Nombre'], ['rar', 'Rareza'], ['pow', 'Poder'], ['new', 'Recién conseguidos'], ['used', 'Más usados']];
 
@@ -149,7 +158,8 @@ G.MenuUI = (() => {
   function openDex() {
     G.UI.show('scr-dex', true);
     const s = G.DB.save;
-    if (dexSel == null) { dexSel = s.partner; dexGen = G.DEX_BY[s.partner].gen; }
+    if (dexSel == null) { dexSel = s.partner; if (!dexSaved) dexGen = G.DEX_BY[s.partner].gen; }
+    dexSave();
     const owned = Object.keys(s.owned).filter(d => G.DEX_BY[d]).length;
     $('dex-total').textContent = `${owned} / ${G.DEX.length}`;
 
