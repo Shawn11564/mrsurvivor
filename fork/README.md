@@ -69,6 +69,9 @@ survive. Run it after changing anything in `fork/`.
 - the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`),
   and the ring at the player's feet draining with the buff's time left (`Player.draw`)
 - the solo end-of-run breakdown (`js/fork/run-stats.js`)
+- the small "Critical" label over a crit's damage number (`tag` in `G.FX.dmgText`, set in
+  `Enemy.showHurt`), so a crit isn't mistaken for a super-effective hit; burn and poison ticks
+  never get it
 - the very rare "Second Nature" level-up card (`js/fork/rare-cards.js`, about 1 hand in 150, only
   if you have a stat-boosting move, once per run): those moves (Swords Dance, Nasty Plot,
   Agility...) cast on their own from any slot, as if always active (`pl.passiveBuffs` in

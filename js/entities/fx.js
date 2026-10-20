@@ -73,13 +73,14 @@ G.FX = (() => {
     }
   }
 
-  function dmgText(x, y, value, color = '#ffffff', big = false) {
+  /** @param tag  rótulo pequeño encima del número (fork: "Crítico", ver Enemy.showHurt) */
+  function dmgText(x, y, value, color = '#ffffff', big = false, tag = null) {
     // Con cientos de golpes por segundo no se leen igual: tope de 70 (los
     // grandes, como "¡Muy eficaz!" o los de jefe, siempre entran).
     // Ajustes → "Números de daño": los números se ocultan; los avisos de texto no.
     if ((typeof value === 'number' || /^-\d/.test(value)) && !G.Settings.get('dmgNumbers')) return;
     if (texts.length >= CAP_TEXTS[q()]) { if (!big) return; texts.shift(); }
-    texts.push({ x: x + G.U.rand(-6, 6), y, vy: -46, t: 0, life: big ? 0.95 : 0.62, s: value, color, big });
+    texts.push({ x: x + G.U.rand(-6, 6), y, vy: -46, t: 0, life: big ? 0.95 : 0.62, s: value, color, big, tag });
   }
 
   /** Anillo de onda (puntos de píxel). */
@@ -261,6 +262,13 @@ G.FX = (() => {
       ctx.strokeText(t.s, t.x, t.y);
       ctx.fillStyle = t.color;
       ctx.fillText(t.s, t.x, t.y);
+      if (t.tag) {
+        ctx.font = '700 8px Pixelify,"Segoe UI",sans-serif';
+        ctx.lineWidth = 2.5;
+        const ty = t.y - (t.big ? 17 : 12);
+        ctx.strokeText(t.tag, t.x, ty);
+        ctx.fillText(t.tag, t.x, ty);
+      }
       ctx.restore();
     }
   }

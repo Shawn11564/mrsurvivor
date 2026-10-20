@@ -488,6 +488,35 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!!weak && weak.side === 'special' && wn === `Weaker for Gengar: only ${weak.pct} % damage (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
+  // Crits: the number keeps its orange, and a small "Critical" label sits above it (fork:
+  // G.FX.dmgText tag, Enemy.showHurt), so it isn't mistaken for a super-effective hit.
+  console.log('Crit indicator');
+  const hits = crit => page.evaluate(crit => new Promise(r => {
+    const pl = G.Game.player, out = [], d = G.FX.dmgText;
+    G.UI.hide('scr-levelup'); pl.god = true; pl.critChance = crit; G.Game.debugSpeed(1);
+    G.FX.dmgText = (x, y, v, color, big, tag) => { if (typeof v === 'number') out.push({ color, big, tag }); return d(x, y, v, color, big, tag); };
+    const e = new G.Enemy(G.Enemies.cast[0].list[0], pl.x + 60, pl.y, G.Enemies.scale(0));
+    e.hp = e.maxHp = 1e7; e.spd = 0; G.EnemyMgr.add(e);
+    setTimeout(() => { G.FX.dmgText = d; e.hp = 0; e.die(); r(out); }, 2500);
+  }), crit);
+  // Burn and poison ticks (damage over time) can't crit: only attack hits count.
+  const DOT = new Set(['#ff9a4d', '#d47cf0']);
+  const on = (await hits(1)).filter(h => !DOT.has(h.color));
+  check(on.length > 0 && on.every(h => h.tag === 'Crítico' && h.color === '#ff9a3c' && h.big),
+    `100 % crit: every attack hit's number is orange with the "Critical" label (${on.length} hits) ` + JSON.stringify(on.filter(h => h.tag !== 'Crítico')));
+  if (SHOTS) {
+    await page.evaluate(() => { G.Game.debugSpeed(1); const pl = G.Game.player, e = new G.Enemy(G.Enemies.cast[0].list[0], pl.x + 60, pl.y, G.Enemies.scale(0));
+      e.hp = e.maxHp = 1e7; e.spd = 0; G.EnemyMgr.add(e); window.__shotE = e; });
+    await page.waitForTimeout(900);
+    const box = await page.evaluate(() => { const pl = G.Game.player, k = G.Camera.scale;
+      return { x: (pl.x - G.Camera.left()) * k - 60, y: (pl.y - G.Camera.top()) * k - 160, width: 260, height: 200 }; });
+    await page.screenshot({ path: path.join(SHOTS, 'crit-label.png'), clip: box });
+    await page.evaluate(() => { window.__shotE.hp = 0; window.__shotE.die(); });
+  }
+  const off = await hits(0);
+  check(off.length > 0 && off.every(h => !h.tag), `0 % crit: no label on any hit (${off.length} hits)`);
+  await page.evaluate(() => { G.Game.debugSpeed(0); G.Game.player.god = false; });
+
   // The very rare "Second Nature" card (js/fork/rare-cards.js): stat-boosting moves cast from
   // any slot, as if always active. Set up a known hand of moves: an attack in slot 1 (active)
   // and Swords Dance in slot 2.

@@ -179,8 +179,9 @@
     showHurt(d, color, dirX = 0, dirY = 0, eff = null) {
       this.flash = 0.09;
       // Muy eficaz: número amarillo y grande. Poco eficaz: gris. Crítico: naranja y grande.
+      // (Fork: el crítico lleva además un rótulo pequeño encima, para no confundirlo con el muy eficaz.)
       G.FX.dmgText(this.x, this.y - this.bodyH - 4, d, eff === 'crit' ? '#ff9a3c' : eff === 'super' ? '#ffe14d' : eff === 'weak' ? '#a3abb8' : color,
-                   this.boss || eff === 'super' || eff === 'crit');
+                   this.boss || eff === 'super' || eff === 'crit', eff === 'crit' ? 'Crítico' : null);
       G.FX.spark(this.x, this.y - this.bodyH * 0.5, color, dirX, dirY, 3);
       if (!this.anim.busy() && this.phase !== 'dash') this.anim.play('Hurt');
       G.Audio.sfx('hit');
