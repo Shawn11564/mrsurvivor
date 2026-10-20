@@ -300,10 +300,46 @@ G.Icons = (() => {
     return cv;
   }
 
+  // Cifras de 3×5 para las flechas de la tabla de tipos.
+  const DIGIT = {
+    x: ['...', '...', '#.#', '.#.', '#.#'], '/': ['..#', '..#', '.#.', '#..', '#..'],
+    0: ['###', '#.#', '#.#', '#.#', '###'], 1: ['.#.', '##.', '.#.', '.#.', '###'],
+    2: ['##.', '..#', '.#.', '#..', '###'], 4: ['#.#', '#.#', '###', '..#', '..#']
+  };
+
+  /**
+   * Flecha de la tabla de tipos ('eff:up:x2', 'eff:down:1/2'...): punta arriba
+   * (amarilla, pega fuerte) o abajo (gris, pega flojo) con el multiplicador dentro.
+   */
+  function effArrow(dir, txt) {
+    const up = dir === 'up', tw = txt.length * 4 - 1, iw = tw + 2, half = (iw - 1) / 2;
+    const head = [];                                  // medio ancho de cada fila de la punta
+    for (let r = 1; r < half; r++) head.push(r);
+    const ih = head.length + 6;                       // punta + 5 de cifras + margen
+    const cv = document.createElement('canvas');
+    cv.width = iw + 2; cv.height = ih + 2;
+    const c = cv.getContext('2d', { willReadFrequently: true });   // se lee en svgOf()
+    const rowY = r => up ? r : ih - 1 - r;            // la de abajo, del revés
+    const inside = (x, r) => r >= head.length || Math.abs(x - half) <= head[r];
+    c.fillStyle = K;
+    for (let r = 0; r < ih; r++) for (let x = 0; x < iw; x++) if (inside(x, r)) c.fillRect(x, rowY(r), 3, 3);
+    c.fillStyle = up ? '#ffe14d' : '#a3abb8';
+    for (let r = 0; r < ih; r++) for (let x = 0; x < iw; x++) if (inside(x, r)) c.fillRect(x + 1, rowY(r) + 1, 1, 1);
+    c.fillStyle = K;
+    const top = up ? head.length + 1 : 2;
+    [...txt].forEach((ch, i) => DIGIT[ch].forEach((row, y) => [...row].forEach((p, x) => {
+      if (p === '#') c.fillRect(2 + i * 4 + x, top + y, 1, 1);
+    })));
+    return cv;
+  }
+
   function canvas(name) {
     let cv = cache.get(name);
     if (cv) return cv;
-    if (name.startsWith('move:')) {
+    if (name.startsWith('eff:')) {
+      const [, dir, txt] = name.split(':');
+      cv = effArrow(dir, txt);
+    } else if (name.startsWith('move:')) {
       const m = G.Moves.BY_ID[name.slice(5)];
       cv = emblem(m ? m.type : 'normal', m ? m.kind : null);
     } else if (name.startsWith('type:')) {
@@ -319,7 +355,7 @@ G.Icons = (() => {
     let u = urls.get(name);
     if (!u) {
       // Los de interfaz, directamente de su dibujo; los emblemas (tipos, movimientos), del canvas.
-      const plain = !name.startsWith('move:') && !name.startsWith('type:');
+      const plain = !name.startsWith('move:') && !name.startsWith('type:') && !name.startsWith('eff:');
       u = plain ? svgOfRows(UI[name] || UI.star) : svgOf(canvas(name));
       urls.set(name, u);
     }

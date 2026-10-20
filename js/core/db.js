@@ -782,6 +782,32 @@ G.DB = (() => {
     return true;
   }
 
+  /**
+   * Trae una partida de otra web (la copia que guarda el navegador allí; ver
+   * js/fork/import-save.js) y la FUSIONA con la tuya como dos copias de la
+   * misma partida: no se pierde nada de ninguna. Se limpia igual que una copia
+   * del navegador (migrate → sanitize). El nombre sigue siendo el tuyo. Lo que
+   * su libreta no explique va al apunte 'imp': importar dos veces no duplica.
+   * → { ok, why?: 'guest'|'bad', added?: { owned, shiny, coins } }
+   * Prueba: fork/test-import.cjs.
+   */
+  function adopt(other) {
+    if (guest || !save) return { ok: false, why: 'guest' };
+    if (!isObj(other) || !isObj(other.owned) || !isObj(other.stats)) return { ok: false, why: 'bad' };
+    const s = migrate(plain(other), save.name);
+    for (const coll of ['owned', 'shiny']) {
+      for (const d of Object.keys(s[coll])) if (!isObj(s[coll][d])) s[coll][d] = { at: Date.now(), from: 'import' };
+    }
+    s.led = ledOf(s, 'imp');
+    const before = { owned: Object.keys(save.owned).length, shiny: Object.keys(save.shiny || {}).length, coins: save.coins };
+    const r = merge(plain(fold(save)), s);
+    r.name = save.name;
+    applyInPlace(r);
+    commit(true);
+    return { ok: true, added: { owned: Object.keys(save.owned).length - before.owned,
+      shiny: Object.keys(save.shiny || {}).length - before.shiny, coins: save.coins - before.coins } };
+  }
+
   /** Funciones que se ejecutan al cerrar sesión o borrar la cuenta (amigos, salas...). */
   const leaveHooks = [];
 
@@ -900,7 +926,7 @@ G.DB = (() => {
 
   return {
     ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow, saveNow,
-    owns, grant, ownsShiny, grantShiny, merge, setName, upgradesOf, isFav, setFav,
+    owns, grant, ownsShiny, grantShiny, merge, adopt, setName, upgradesOf, isFav, setFav,
     onSync(fn) { listeners.add(fn); },
     onLeave(fn) { leaveHooks.push(fn); },
     /** Acceso de bajo nivel para los módulos de red (sólo en modo nube). */

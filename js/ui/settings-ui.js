@@ -160,6 +160,7 @@ G.SettingsUI = (() => {
       + `<div class="set-row"><div class="grow"><b>Tipo de cuenta</b></div><span>${esc(kind)}</span></div>`
       + `<div class="set-row"><div class="grow"><b>Partida</b></div><span>${esc(SYNC[st] || st)}</span></div>`
       + `<div class="row wrap" style="gap:8px;margin-top:12px">
+           ${G.ImportSave ? `<button class="btn" id="set-import">${G.I18n.f('Importar partida de {x}', G.ImportSave.UP_NAME)}</button>` : ''}
            <button class="btn" id="set-logout">Cerrar sesión</button>
            <button class="btn danger" id="set-delete">Borrar cuenta</button>
          </div><p class="note" id="set-msg"></p>`;
@@ -175,6 +176,7 @@ G.SettingsUI = (() => {
     box.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => { if (b.dataset.lang !== G.I18n.lang) G.I18n.set(b.dataset.lang); }; });
     const lo = $('set-login'); if (lo) lo.onclick = () => { close(); leave(); };
     const out = $('set-logout'); if (out) out.onclick = () => { close(); leave(); };
+    const imp = $('set-import'); if (imp) imp.onclick = () => G.ImportSave.open();
     const del = $('set-delete');
     if (del) del.onclick = async () => {
       const ok = await G.UI.confirmDelete();

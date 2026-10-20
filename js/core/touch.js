@@ -9,11 +9,17 @@
  *
  * Joystick fijo (Ajustes > Controles > Colocar los botones): siempre en el
  * mismo sitio; sólo se coge tocando cerca de él.
+ *
+ * Con ratón: un movimiento del HUD se elige al soltar el clic, y si lo
+ * arrastras sobre otro cambian de hueco (`drag`). Mantener el clic izquierdo
+ * en el mapa apunta hacia el cursor (`mapHeld`, ver Player.handAim). Por dónde
+ * va el ratón sobre el juego (`mouseAt`) lo usa el HUD para las descripciones.
  */
 G.Touch = (() => {
   let cv = null, stick = null;
   let active = G.Settings.touch;      // ¿se está usando táctil?
   let buttons = [];
+  let drag = null, mapHeld = false, mouseAt = null;
 
   const R = () => 56 * (G.Settings.get('stick') || 1);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -35,6 +41,9 @@ G.Touch = (() => {
     cv.addEventListener('pointermove', move);
     cv.addEventListener('pointerup', up);
     cv.addEventListener('pointercancel', up);
+    cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') mouseAt = null; });
+    // Fuera del lienzo (sin capturar el puntero: soltar sobre una carta tiene que seguir valiendo).
+    addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0) mapHeld = false; });
     cv.addEventListener('contextmenu', e => e.preventDefault());
     // iPhone: la pulsación larga sobre el juego abría la lupa y el menú de
     // "Copiar / Seleccionar todo". Cortar el toque aquí lo evita (los eventos
@@ -75,7 +84,16 @@ G.Touch = (() => {
     const touchy = e.pointerType !== 'mouse';
     if (touchy && !active) { active = true; document.body.classList.add('touch'); }
     const b = hit(e.clientX, e.clientY);
+    if (b && !touchy && b.slot != null) {
+      // Ratón sobre un movimiento: se elige al soltar, salvo que lo arrastres a otro hueco.
+      e.preventDefault();
+      if (e.button !== 0) return;
+      drag = { id: e.pointerId, slot: b.slot, b, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, moved: false };
+      try { cv.setPointerCapture(e.pointerId); } catch (err) { /* nada */ }
+      return;
+    }
     if (b) { e.preventDefault(); press(b); return; }
+    if (!touchy && e.button === 0 && G.Game && G.Game.state === 'playing') mapHeld = true;
     if (!touchy || stick || !G.Game || G.Game.state !== 'playing') return;
     if (fixed()) {
       // Fijo: sólo si el dedo cae cerca del joystick (si no, no hace nada).
@@ -91,6 +109,13 @@ G.Touch = (() => {
   }
 
   function move(e) {
+    if (e.pointerType === 'mouse') mouseAt = { x: e.clientX, y: e.clientY };
+    else mouseAt = null;
+    if (drag && e.pointerId === drag.id) {
+      drag.x = e.clientX; drag.y = e.clientY;
+      if (Math.hypot(drag.x - drag.x0, drag.y - drag.y0) > 6) drag.moved = true;
+      return;
+    }
     if (!stick || e.pointerId !== stick.id) return;
     stick.x = e.clientX; stick.y = e.clientY;
     if (stick.fixed) return;
@@ -98,8 +123,16 @@ G.Touch = (() => {
     if (d > r) { stick.ox = stick.x - dx / d * r; stick.oy = stick.y - dy / d * r; }
   }
 
-  function up(e) { if (stick && e.pointerId === stick.id) stick = null; }
-  function reset() { stick = null; }
+  function up(e) {
+    if (drag && e.pointerId === drag.id) {
+      const d = drag, t = hit(e.clientX, e.clientY), pl = G.Game && G.Game.player;
+      drag = null;
+      if (!d.moved) press(d.b);
+      else if (t && t.slot != null && t.slot !== d.slot && pl && G.Game.state === 'playing') pl.swapSlots(d.slot, t.slot);
+    }
+    if (stick && e.pointerId === stick.id) stick = null;
+  }
+  function reset() { stick = null; drag = null; mapHeld = false; }
 
   /** Dirección del joystick (con fuerza 0..1), o null si no se usa. */
   function vector() {
@@ -131,7 +164,8 @@ G.Touch = (() => {
 
   /** El HUD vacía y vuelve a registrar sus botones cada fotograma. */
   function clearButtons() { buttons = []; }
-  function addButton(x, y, w, h, fn, pad = 6) { buttons.push({ x, y, w, h, fn, pad }); }
+  /** @param slot  hueco de movimiento (se puede arrastrar sobre otro con el ratón) */
+  function addButton(x, y, w, h, fn, pad = 6, slot = null) { buttons.push({ x, y, w, h, fn, pad, slot }); }
 
   /** Dibuja el joystick (coordenadas de pantalla, CSS px). */
   function draw(ctx) {
@@ -159,5 +193,11 @@ G.Touch = (() => {
   }
 
   return { init, vector, draw, drawStick, clearButtons, addButton, reset, safeArea, resetSafe, spot, stickBase, R, STICK_DEF,
+    /** Arrastrando un movimiento del HUD: { slot, x, y, moved }, o null. */
+    get drag() { return drag; },
+    /** Clic izquierdo mantenido sobre el mapa. */
+    get mapHeld() { return mapHeld; },
+    /** Ratón sobre el juego (px de pantalla), o null (táctil, o fuera). */
+    get mouseAt() { return mouseAt; },
            get active() { return active; }, get stick() { return stick; } };
 })();

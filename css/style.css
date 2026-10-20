@@ -665,6 +665,11 @@ a.plink:hover { color: var(--gold); }
 .ach-pop small { color: var(--muted); }
 .card.evo { border-color: var(--gold); background: linear-gradient(90deg, rgba(255,210,63,.18), rgba(255,210,63,.04)); }
 .card.evo .nm { color: var(--gold); }
+/* Ataque nuevo de tu tipo (--tc = color del tipo, desde run-ui.js) */
+.card.stab { border-color: var(--tc); background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 24%, transparent), color-mix(in srgb, var(--tc) 5%, transparent));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--tc) 45%, transparent); }
+.stab-chip { background: var(--gold); display: inline-flex; gap: 3px; align-items: center; }
+.fit-good { display: block; color: #8ff0a8; font-size: 12px; margin-top: 2px; }
 /* Vínculo (premio de los legendarios): rosa */
 .bond-title { color: #ff8ad8; }
 .card.bond { border-color: #ff8ad8; background: linear-gradient(90deg, rgba(255,138,216,.18), rgba(255,138,216,.04)); }

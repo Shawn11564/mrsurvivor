@@ -168,6 +168,22 @@ G.Player = class Player {
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
   }
 
+  /**
+   * Cambia de sitio dos huecos (arrastrando uno sobre otro en el HUD). El activo
+   * sigue siendo el mismo movimiento. Los atajos de la run pasan a ser este
+   * orden, para que arrange() no lo deshaga al aprender o fusionar.
+   */
+  swapSlots(a, b) {
+    const s = this.slots;
+    if (a === b || !s[a] || !s[b]) return;
+    const cur = s[this.active];
+    [s[a], s[b]] = [s[b], s[a]];
+    this.active = s.indexOf(cur);
+    this.bind = {};
+    s.forEach((g, i) => { for (const m of g) this.bind[m.id] = i; });
+    G.Audio.sfx('select');
+  }
+
   cycle(dir) {
     if (!this.slots.length) return;
     this.setActive((this.active + dir + this.slots.length) % this.slots.length);
@@ -420,10 +436,18 @@ G.Player = class Player {
    * se ha movido después (en PC). Soltar el stick sin tocar el ratón = solo.
    */
   handAim() {
-    if (this.remote || !G.Settings.get('aimManual')) return null;
+    if (this.remote) return null;
+    // Clic izquierdo mantenido en el mapa: hacia el cursor, aunque no esté "Apuntar a mano".
+    if (G.Touch.mapHeld) return this.cursorAim();
+    if (!G.Settings.get('aimManual')) return null;
     const st = G.Pad.aim();
     if (st) return Math.atan2(st[1], st[0]);
     if (G.Touch.active || !G.Input.mouseMovedAt || G.Input.mouseMovedAt < G.Pad.aimAt) return null;
+    return this.cursorAim();
+  }
+
+  /** Ángulo hacia el ratón, o null si está encima del Pokémon. */
+  cursorAim() {
     const w = G.Input.mouseWorld();
     const dx = w.x - this.x, dy = w.y - (this.y - G.LIFT * 0.5);
     return Math.hypot(dx, dy) < 4 ? null : Math.atan2(dy, dx);

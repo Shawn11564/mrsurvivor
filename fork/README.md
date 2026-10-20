@@ -49,6 +49,24 @@ says PokéSurvivor.
 that the merge has no conflicts, upstream's change lands, and the branding and credit
 survive. Run it after changing anything in `fork/`.
 
+`node fork/test-gameplay.cjs` (with the server running) plays the game in headless Edge:
+- the Power sort in the collection (`js/ui/menu.js`)
+- the type-matchup arrows over enemies (`typeMark` in `js/entities/enemy.js`, arrows in
+  `js/ui/icons.js`)
+- the HUD tooltips, drag-to-reorder and hold-click aiming (`drawTip` in `js/ui/hud.js`,
+  `drag`/`mapHeld` in `js/core/touch.js`, `swapSlots`/`handAim` in `js/entities/player.js`)
+- the highlighted "your type" level-up cards (`own` in `js/systems/levelup.js`)
+
+Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
+change the window size.
+
+`node fork/test-import.cjs` (with the server running) checks importing a save from the
+original PokéSurvivor (`js/fork/import-save.js`, `G.DB.adopt` in `js/core/db.js`). It uses
+two origins of the local server: `localhost` plays the original site and `127.0.0.1` plays
+MrSurvivor, both with Firebase blocked so no real cloud is touched. Set
+`SLOW_FIREBASE=18000` to check it copes with a slow cold start. `fork/pw.cjs` holds the
+helpers both tests share.
+
 `node fork/test-cloud.cjs` (with the server running) is the live check of the Firebase
 project `mrsurvivor`. It signs up a throwaway account on the branded page, saves, reads
 the save back in a fresh browser, then deletes the account. Run it after changing

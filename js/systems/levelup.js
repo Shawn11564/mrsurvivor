@@ -58,11 +58,15 @@ G.LevelUp = (() => {
       const weight = id => { const d = G.Moves.BY_ID[id]; return G.Stats.fit(pl.mon, d.cat) >= 0.999 ? 2 : 1; };
       for (const id of pickWeighted(pool, 6, weight)) {
         const d = G.Moves.BY_ID[id];
+        // De su tipo y de su lado bueno: la carta se resalta (ui: .card.stab).
+        const own = d.kind !== 'buff' && pl.mon.types.includes(d.type) && G.Stats.fit(pl.mon, d.cat) >= 0.95;
+        const mono = own && pl.monoType(d.type)
+          ? ` <span class="fit-good">+${Math.round((G.Player.MONO_K - 1) * 100)} % de daño: es de tu tipo.</span>` : '';
         out.push({
-          w: 10, type: 'new', key: 'new:' + id,
+          w: 10, type: 'new', key: 'new:' + id, own,
           icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
           tag: G.U.TYPE_NAME[d.type] + (d.cat ? ' · ' + G.Stats.NAME[d.cat] : ''),
-          title: G.T(d.name, 'move'), desc: d.desc + fitNote(pl.mon, d.cat),
+          title: G.T(d.name, 'move'), desc: d.desc + fitNote(pl.mon, d.cat) + mono,
           apply: p => p.addMove(id)
         });
       }

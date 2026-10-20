@@ -21,6 +21,29 @@
     return G.U.clamp(Math.round(110 / h * 2) / 2, 1, 2);
   }
 
+  /**
+   * Flecha de la tabla de tipos sobre un enemigo (ui/icons.js, 'eff:...'), con
+   * el mejor ataque del hueco activo del jugador: arriba si le pega fuerte,
+   * abajo si flojo, null si es neutro o el hueco sólo tiene potenciadores.
+   * Lleva el multiplicador de los juegos (×2, ½...), no el suavizado de aquí. Sin el clima: eso
+   * sube o baja a todos los enemigos por igual. Prueba: fork/test-gameplay.cjs.
+   */
+  function typeMark(e) {
+    const pl = G.Game.player;
+    if (!pl || pl.dead) return null;
+    let best = 0, raw = 1;
+    for (const m of pl.activeGroup()) {
+      if (m.kind === 'buff') continue;
+      const k = G.Types.mult(m.type, e.types);
+      if (k <= best) continue;
+      best = k; raw = 1;
+      const row = G.Types.CHART[m.type] || {};
+      for (const t of e.types) if (row[t] != null) raw *= row[t];
+    }
+    return best ? EFF_ICON[raw] || null : null;
+  }
+  const EFF_ICON = { 4: 'eff:up:x4', 2: 'eff:up:x2', 0.5: 'eff:down:1/2', 0.25: 'eff:down:1/4', 0: 'eff:down:x0' };
+
   /*
    * Curas y escudos sobre un jefe (18-10-2026): van con el daño que le estás
    * haciendo, no con su vida (con 3 curanderos y escudos sobre un jefe de
@@ -774,8 +797,16 @@
       const SUP = { healer: 'heart', shielder: 'shield', summoner: 'friends' };
       if (SUP[this.behavior]) G.Icons.draw(ctx, SUP[this.behavior], Math.round(this.x - 6), Math.round(this.y - this.bodyH - (this.hp < this.maxHp ? 26 : 18)), 12);
 
+      // Tabla de tipos: flecha con el multiplicador a la izquierda de la barra
+      // de vida si tu ataque activo le pega fuerte (amarilla) o flojo (gris).
+      const w = this.boss ? 90 : Math.max(22, this.r * 2);
+      const eff = typeMark(this);
+      if (eff) {
+        const cv = G.Icons.canvas(eff);
+        G.Icons.draw(ctx, eff, Math.round(this.x - w / 2 - cv.width - 1), Math.round(this.y - this.bodyH - 8.3 - cv.height / 2), cv.width);
+      }
+
       if (this.boss || this.hp < this.maxHp) {
-        const w = this.boss ? 90 : Math.max(22, this.r * 2);
         const y = this.y - this.bodyH - 10;
         ctx.fillStyle = 'rgba(0,0,0,.6)';
         ctx.fillRect(this.x - w / 2, y, w, 3.4);

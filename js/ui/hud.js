@@ -259,6 +259,10 @@ G.HUD = (() => {
     }
     const BOND = '#ff8ad8';
     const cdOf = m => m.kind === 'orbit' ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
+    // Ratón: lo que hay debajo (descripción) y el hueco que se arrastra.
+    const mo = G.Touch.mouseAt, inBox = (x, y) => mo && mo.x >= x && mo.x <= x + S && mo.y >= y && mo.y <= y + S;
+    const drag = G.Touch.drag && G.Touch.drag.moved && pl.slots[G.Touch.drag.slot] ? G.Touch.drag : null;
+    let tip = null;
 
     for (let i = 0; i < n; i++) {
       const g = pl.slots[i] || [];
@@ -268,8 +272,11 @@ G.HUD = (() => {
       const x = sx + i * (S + GAP);
       const y = on ? sy - 6 : sy;
       // Tocar (o hacer clic en) un icono activa ese movimiento.
-      if (m) G.Touch.addButton(x, y, S, S, () => { if (G.Game.state === 'playing' && pl.active !== i) { pl.setActive(i); G.Audio.sfx('click'); } }, GAP / 2 + 3);
+      if (m) G.Touch.addButton(x, y, S, S, () => { if (G.Game.state === 'playing' && pl.active !== i) { pl.setActive(i); G.Audio.sfx('click'); } }, GAP / 2 + 3, i);
       const col = m ? G.U.TYPE_COLOR[m.type] : '#4a5468';
+      if (m && inBox(x, y)) tip = { cx: x + S / 2, top: y, group: g };
+      ctx.save();
+      if (drag && drag.slot === i) ctx.globalAlpha = 0.35;
 
       // fondo
       roundRect(ctx, x, y, S, S, 12);
@@ -279,8 +286,14 @@ G.HUD = (() => {
       // Vínculo: borde rosa. Evolucionado: dorado.
       ctx.strokeStyle = fused ? BOND : m && m.evolved ? '#ffd23f' : on ? col : 'rgba(140,170,210,.22)';
       ctx.stroke();
+      // Al arrastrar: el hueco donde caería, con borde blanco.
+      if (drag && drag.slot !== i && m && inBox(x, y)) {
+        ctx.lineWidth = 2.5; ctx.strokeStyle = '#f4f8ff'; ctx.setLineDash([5, 4]);
+        roundRect(ctx, x - 3, y - 3, S + 6, S + 6, 14); ctx.stroke();
+        ctx.setLineDash([]);
+      }
 
-      if (!m) continue;
+      if (!m) { ctx.restore(); continue; }
 
       if (fused) {
         // Vínculo: los movimientos en una cuadrícula de 2×2, cada uno con su recarga.
@@ -332,6 +345,7 @@ G.HUD = (() => {
         ctx.fillStyle = fused ? BOND : col;
         ctx.fillText(fused ? G.T(m.name, 'move') + ' +' + (g.length - 1) : G.T(m.name, 'move'), x + S / 2, y - 7);
       }
+      ctx.restore();
     }
 
     // ---------- vínculo guardado (aún no hay dos movimientos sueltos) ----------
@@ -356,6 +370,7 @@ G.HUD = (() => {
       ctx.strokeStyle = pl.item ? '#ffd23f' : 'rgba(140,170,210,.18)';
       ctx.stroke();
       if (pl.item) {
+        if (inBox(ix, iy)) tip = { cx: ix + S / 2, top: iy, item: pl.item };
         G.Icons.draw(ctx, pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
         ctx.font = F(700, 9);
         ctx.textAlign = 'center';
@@ -387,6 +402,117 @@ G.HUD = (() => {
                          : 'WASD moverse  ·  1-4 / Q / E o clic en un ataque para cambiarlo  ·  Esc pausa', w / 2, h - 4);
     }
 
+    // ---------- arrastrando un movimiento: su icono va con el ratón ----------
+    if (drag) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      G.Icons.draw(ctx, 'move:' + pl.slots[drag.slot][0].id, drag.x - 16, drag.y - 16, 32);
+      ctx.restore();
+    }
+
+    // ---------- descripción de lo que hay bajo el ratón ----------
+    if (tip && !drag && G.Game.state === 'playing') drawTip(ctx, w, pl, tip, n > 1);
+
+    ctx.restore();
+  }
+
+  // ---------------- descripción (ratón sobre un movimiento o el objeto) ----------------
+  // Los textos se traducen antes (G.T) y se pintan con rawCanvas: cortados en
+  // líneas, cada trozo suelto no se traduciría bien.
+  const TIP_W = 250, TIP_PAD = 10;
+  const CJK = /[\u2e80-\u9fff\uff00-\uffef]/;
+  const raw = (ctx, k, s, x, y) => G.I18n.rawCanvas(ctx, k, s, x, y);
+  const num = (v, d = 0) => v.toLocaleString(G.I18n.locale, { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  /** Corta `text` (ya traducido) en líneas de `max` px como mucho (el chino, por caracteres). */
+  function wrap(ctx, text, max) {
+    const out = [];
+    let line = '';
+    for (const tk of text.match(/[\u2e80-\u9fff\uff00-\uffef]|[^\s\u2e80-\u9fff\uff00-\uffef]+/g) || []) {
+      const t = line + (line && !CJK.test(tk) && !CJK.test(line.slice(-1)) ? ' ' : '') + tk;
+      if (line && raw(ctx, 'measureText', t).width > max) { out.push(line); line = tk; } else line = t;
+    }
+    if (line) out.push(line);
+    return out;
+  }
+
+  /**
+   * Caja encima del hueco con nombre, tipo, categoría, daño por golpe (con tu
+   * ataque de ahora, antes de la defensa y la tabla de tipos del enemigo),
+   * recarga y descripción; con un vínculo, cada movimiento del grupo.
+   */
+  function drawTip(ctx, w, pl, tip, canDrag) {
+    const inner = TIP_W - TIP_PAD * 2, ops = [];
+    let y = 0;
+    const para = (s, font, col, lh) => {
+      ctx.font = font;
+      for (const l of wrap(ctx, s, inner)) { y += lh; const ly = y; ops.push(o => { ctx.font = font; ctx.fillStyle = col; ctx.textAlign = 'left'; raw(ctx, 'fillText', l, TIP_PAD, o + ly); }); }
+    };
+    const at = f => { const ly = y; ops.push(o => f(o + ly)); };
+    let border = '#ffd23f';
+
+    if (tip.item) {
+      const it = G.Items.BY[tip.item];
+      y += 18;
+      at(o => {
+        G.Icons.draw(ctx, tip.item, TIP_PAD, o - 14, 18);
+        ctx.font = F(800, 13); ctx.fillStyle = '#ffd23f'; ctx.textAlign = 'left';
+        raw(ctx, 'fillText', G.T(it.name), TIP_PAD + 24, o);
+      });
+      y += 2; para(G.T(it.desc), F(500, 11), '#c9d3e6', 15);
+    } else {
+      tip.group.forEach((m, k) => {
+        const col = G.U.TYPE_COLOR[m.type];
+        if (k === 0) border = tip.group.length > 1 ? '#ff8ad8' : col;
+        if (k > 0) { y += 9; at(o => { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(TIP_PAD, o - 4, inner, 1); }); }
+        // nombre y nivel
+        y += 18;
+        at(o => {
+          G.Icons.draw(ctx, 'move:' + m.id, TIP_PAD, o - 14, 16);
+          ctx.font = F(800, 13); ctx.fillStyle = m.evolved ? '#ffd23f' : '#f4f8ff'; ctx.textAlign = 'left';
+          raw(ctx, 'fillText', G.T(m.name, 'move'), TIP_PAD + 22, o);
+          ctx.font = F(700, 10); ctx.fillStyle = '#8fa3c4'; ctx.textAlign = 'right';
+          raw(ctx, 'fillText', G.T('Nv.') + m.lvl + '/' + m.def.maxLvl, TIP_W - TIP_PAD, o);
+        });
+        // tipo (en su color) y categoría
+        y += 18;
+        at(o => {
+          const tn = G.T(G.U.TYPE_NAME[m.type]);
+          ctx.font = F(800, 10);
+          const tw = raw(ctx, 'measureText', tn).width + 12;
+          roundRect(ctx, TIP_PAD, o - 11, tw, 15, 4); ctx.fillStyle = col; ctx.fill();
+          ctx.fillStyle = '#10131a'; ctx.textAlign = 'left'; raw(ctx, 'fillText', tn, TIP_PAD + 6, o);
+          ctx.font = F(700, 10); ctx.fillStyle = '#c9d3e6';
+          raw(ctx, 'fillText', G.T(m.cat ? G.Stats.NAME[m.cat] : 'Mejora'), TIP_PAD + tw + 8, o);
+        });
+        // daño y recarga
+        if (m.cat) {
+          const row = (label, val) => {
+            y += 15;
+            at(o => {
+              ctx.font = F(600, 11); ctx.fillStyle = '#8fa3c4'; ctx.textAlign = 'left'; raw(ctx, 'fillText', G.T(label), TIP_PAD, o);
+              ctx.font = F(800, 11); ctx.fillStyle = '#f4f8ff'; ctx.textAlign = 'right'; raw(ctx, 'fillText', val, TIP_W - TIP_PAD, o);
+            });
+          };
+          y += 2;
+          row('Daño', G.I18n.f('{x} por golpe', num(m.dmg * pl.atkFor(m))));
+          if (m.kind !== 'orbit') row('Recarga', num(m.cd * pl.cdMul, 1) + ' s');
+        }
+        y += 2; para(G.T(m.desc), F(500, 11), '#c9d3e6', 15);
+      });
+      if (canDrag) { y += 4; para(G.T('Arrastra para cambiarlo de hueco'), F(600, 10), '#8fa3c4', 14); }
+    }
+
+    const H = y + TIP_PAD + 2;
+    const tx = G.U.clamp(tip.cx - TIP_W / 2, 6, Math.max(6, w - TIP_W - 6));
+    const ty = Math.max(6, tip.top - 24 - H);
+    ctx.save();
+    ctx.translate(tx, ty);
+    roundRect(ctx, 0, 0, TIP_W, H, 10);
+    ctx.fillStyle = 'rgba(10,16,28,.95)'; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = border; ctx.stroke();
+    ctx.textBaseline = 'alphabetic';
+    for (const op of ops) op(TIP_PAD - 4);
     ctx.restore();
   }
 

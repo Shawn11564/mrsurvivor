@@ -7,7 +7,8 @@ G.MenuUI = (() => {
   // shiny, favoritos, tipo y búsqueda; y el orden. Duran mientras no recargas.
   const DEX0 = () => ({ status: 'all', rar: new Set(), shiny: false, fav: false, type: '', q: '', sort: 'num' });
   let dexF = DEX0();
-  const SORTS = [['num', 'Nº'], ['name', 'Nombre'], ['rar', 'Rareza'], ['new', 'Recién conseguidos'], ['used', 'Más usados']];
+  // Poder: la suma de sus stats base (bst), más o menos lo fuerte que es.
+  const SORTS = [['num', 'Nº'], ['name', 'Nombre'], ['rar', 'Rareza'], ['pow', 'Poder'], ['new', 'Recién conseguidos'], ['used', 'Más usados']];
 
   function init() {
     const ICON = { play: 'ball', dex: 'book', upgrades: 'up', gacha: 'ball4', goals: 'medal3', friends: 'friends', rank: 'trophy', settings: 'gear' };
@@ -196,7 +197,8 @@ G.MenuUI = (() => {
     });
     const at = p => (s.owned[p.dex] && s.owned[p.dex].at) || 0, used = p => +(s.pused || {})[p.dex] || 0;
     const by = { num: (a, b) => a.dex - b.dex, name: (a, b) => G.T(a.name).localeCompare(G.T(b.name), G.I18n.locale),
-                 rar: (a, b) => b.rarity - a.rarity || a.dex - b.dex, new: (a, b) => at(b) - at(a) || a.dex - b.dex,
+                 rar: (a, b) => b.rarity - a.rarity || a.dex - b.dex, pow: (a, b) => (b.bst || 0) - (a.bst || 0) || a.dex - b.dex,
+                 new: (a, b) => at(b) - at(a) || a.dex - b.dex,
                  used: (a, b) => used(b) - used(a) || a.dex - b.dex }[f.sort];
     // Los que no tienes no tienen nombre a la vista: al ordenar por nombre van al final.
     if (f.sort === 'name') list.sort((a, b) => (!s.owned[a.dex]) - (!s.owned[b.dex]) || by(a, b)); else list.sort(by);
