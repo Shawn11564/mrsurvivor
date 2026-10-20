@@ -37,6 +37,9 @@ G.HUD = (() => {
     const b = m.kind === 'buff' && pl.buffs[m.stat];
     return b && b.n > 0 ? { b, frac: G.U.clamp(b.t / (m.dur || 7), 0, 1) } : null;
   }
+  // Segundos que quedan, sin redondear hacia arriba: 10,5 s salía "11s" y medio segundo
+  // después "9.9s" (fork, fork/test-moves.cjs). Con decimal por debajo de 10.
+  const buffSecs = t => t < 10 ? (Math.floor(t * 10) / 10).toFixed(1) : String(Math.floor(t));
 
   function draw(ctx, w, h, pl, st) {
     ctx.save();
@@ -358,11 +361,11 @@ G.HUD = (() => {
           ctx.fillStyle = bc; ctx.fillRect(bx0, y + 3 * K, bw * bl.frac, 4 * K);
           ctx.font = F(800, Math.round(9 * K));
           ctx.textAlign = 'right'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-          const secs = bl.b.t < 10 ? bl.b.t.toFixed(1) : String(Math.ceil(bl.b.t));
+          const secs = buffSecs(bl.b.t);
           ctx.strokeText(secs + 's', x + S - 3 * K, y + S - 12 * K); ctx.fillStyle = '#f4f8ff'; ctx.fillText(secs + 's', x + S - 3 * K, y + S - 12 * K);
           ctx.strokeText('×' + bl.b.n, x + S - 3 * K, y + 17 * K); ctx.fillStyle = bc; ctx.fillText('×' + bl.b.n, x + S - 3 * K, y + 17 * K);
-          // (Con Segunda naturaleza, js/fork/rare-cards.js, se relanza solo: no hace falta avisar.)
-          if (bl.b.t < BUFF_WARN && !on && !pl.passiveBuffs) {
+          // (Con Segunda naturaleza, js/fork/rare-cards.js, o ya evolucionado, se relanza solo: no hace falta avisar.)
+          if (bl.b.t < BUFF_WARN && !on && !pl.passiveBuffs && !m.passive) {
             const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 90);
             ctx.lineWidth = 2.5; ctx.strokeStyle = `rgba(255,210,63,${(0.45 + 0.55 * pulse).toFixed(2)})`;
             roundRect(ctx, x - 2, y - 2, S + 4, S + 4, 13 * K); ctx.stroke();
@@ -526,6 +529,8 @@ G.HUD = (() => {
           ctx.font = F(700, 10); ctx.fillStyle = '#c9d3e6';
           raw(ctx, 'fillText', G.T(m.cat ? G.Stats.NAME[m.cat] : 'Mejora'), TIP_PAD + tw + 8, o);
         });
+        // Con qué pega y qué lo potencia (fork: js/fork/move-text.js).
+        for (const [s, c] of G.MoveText.tipNotes(m, pl)) { y += 2; para(G.T(s), F(600, 10), c, 14); }
         // daño y recarga
         if (m.cat) {
           const row = (label, val) => {

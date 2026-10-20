@@ -18,6 +18,7 @@
  *   invitado -> anfitrión  { k:'f', p:[estado], ev:[eventos] }
  *   anfitrión -> invitado  { k:'f', t, lv, xp, xn, ki, bo, co, p:{uid:[estado]},
  *                            e:[[id,x,y,vida,anim,dir,estados]], ev:[eventos], ra (en la arena: 1/0),
+ *                            (estados, bits: 1 quemado, 2 envenenado, 4 escudo, 8 frenado, 16 aturdido)
  *                            ja:[x,y,anim,dir] (Arceus, sólo en la Sentencia) }
  *   anfitrión -> todos     { k:'start', seed, host, members:[{uid,name,dex,shiny}] }
  */
@@ -171,7 +172,8 @@ G.Coop = (() => {
       if (e.dead || !near.some(n => G.U.dist2(e.x, e.y, n.x, n.y) <= r2n)) continue;
       const a = ANIMS.indexOf(e.anim.cur);
       out.push([e.id, r1(e.x), r1(e.y), Math.ceil(e.hp), a < 0 ? 0 : a, e.anim.dir,
-                (e.burn > 0 ? 1 : 0) | (e.poison > 0 ? 2 : 0) | (e.shield > 0 ? 4 : 0)]);
+                (e.burn > 0 ? 1 : 0) | (e.poison > 0 ? 2 : 0) | (e.shield > 0 ? 4 : 0) |
+                (e.slow > 0 ? 8 : 0) | (e.stunT > 0 ? 16 : 0)]);
     }
     return out;
   }
@@ -347,6 +349,8 @@ G.Coop = (() => {
       n.x = a[1]; n.y = a[2]; n.age = 0; n.last = now;
       e.hp = Math.min(e.maxHp, a[3]);
       n.anim = a[4]; n.dir = a[5]; n.st = a[6];
+      // Aturdido en el anfitrión: la copia también (estrellitas, y no pega al tocarla: combat.js).
+      if (!e.admFrozen) e.stunT = a[6] & 16 ? 0.3 : 0;
     }
   }
 

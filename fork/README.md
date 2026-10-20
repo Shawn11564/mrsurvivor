@@ -17,6 +17,7 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/sync.cjs` | merges upstream, rebuilds, commits |
 | `.gitattributes` | generated files are `merge=ours`, so merges don't conflict on them |
 | `js/core/firebase-config.js` | the one upstream file we edit (our Firebase project) |
+| `fork/fetch-megas.py` | downloads the Mega/Primal sprites from SpriteCollab into `assets/pokemon/m{dex}/`, writes `js/fork/mega-sprites.js` and `CREDITS-MEGAS.md` (rerun it to pick up new Megas) |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -77,9 +78,40 @@ survive. Run it after changing anything in `fork/`.
   Agility...) cast on their own from any slot, as if always active (`pl.passiveBuffs` in
   `Combat.tick`; the HUD stops asking you to switch to them). Purple via `.card.rare` in
   `css/brand.css`
+- Mega Stones (`js/fork/mega.js`): a real rift won with Gengar offers its Mega Stone (a held
+  item, from `won()` in `js/systems/rift.js` through `G.Game.offerItem`); holding it, Gengar
+  Mega Evolves (sprite `m94`, +25 % damage, +10 % speed, +8 % defense, +15 % HP), and taking it
+  off reverts it. Mega Charizard X turns Fire/Dragon only while holding it
+- "can Mega Evolve" out of a run (`badge`/`chip`/`hint` in `js/fork/mega.js`, `js/ui/menu.js`):
+  the stone on Gengar's collection cell, a line in its detail saying how to get it, a chip on
+  the menu's partner; nothing for Charmander
+- the 3 s countdown also after picking a bond or an item (`countIn` in `js/game.js`)
+- stat moves evolving at their top level with no stat card needed (Swords Dance → Belly Drum,
+  `EVO`/`EVO_MODS.buff` in `js/data/moves.js`, texts in `js/fork/buff-evos.js`): evolved, they
+  cast on their own from any slot (`m.passive` in `Combat.tick`)
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.
+
+`node fork/test-moves.cjs` (with the server running) casts moves through the real combat code
+in headless Edge:
+- every move that burns, poisons, slows or stuns really leaves that state on the enemy
+- Hex does ×1.7 to a burned, poisoned, slowed **or stunned** (paralyzed, frozen...) foe
+  (`hasStatus` in `js/systems/combat.js`)
+- every upgrade step changes the stat it names, and "+1 projectile" adds a fanned shot on
+  moves that don't list a `count` (Shadow Sneak, Seed Bomb...: `BASE` in `applyMods`,
+  `js/data/moves.js`); with several shots, one always flies straight at the target and the
+  rest fan out to the sides (`fanOff` in `js/systems/combat.js`, projectiles and boomerangs)
+- the charge ring over your Pokémon for long-wait moves (vortex, turret, charge): fills while
+  it recharges, glows during Hyper Beam/Solar Beam's wind-up, flashes on firing
+  (`js/fork/charge-meter.js`)
+- the buff timer on a slot never shows more than is left and doesn't jump (`buffSecs` in
+  `js/ui/hud.js`); two buffs on one stat don't cut each other's time (`Player.addBuff`)
+- the move tooltip says what it hits with and what boosts it, and the fixed English move
+  descriptions (`js/fork/move-text.js`)
+- with the Firebase emulator up (`NO_COOP=1` skips it): a guest's Hex gets the bonus on a foe
+  the guest slowed, and the guest sees its stuns (status bits 8/16 in `enemyList`,
+  `js/net/coop.js`)
 
 `node fork/test-import.cjs` (with the server running) checks importing a save from the
 original PokéSurvivor (`js/fork/import-save.js`, `G.DB.adopt` in `js/core/db.js`). It uses
@@ -96,7 +128,10 @@ real project is touched, and the real security rules. It checks:
 - spectating while down (`watched` in `js/game.js`, the downed-guest enemy list in
   `js/net/coop.js`)
 - bonds opening for everyone at once (the host-only arena finish, `'af'`/`ra`, in
-  `js/systems/rift.js`)
+  `js/systems/rift.js`), and the 3 s countdown for everyone once the last one has picked
+  (`hold` in `js/game.js`)
+- level-up cards: straight back to playing when picked within 10 s, the countdown for everyone
+  when choosing took longer (`LONG_PICK`, `resume` in `js/game.js`)
 - the end-of-run team summary and per-move breakdown (`js/fork/run-stats.js`)
 
 `SHOTS=<folder>` saves screenshots.
@@ -119,6 +154,8 @@ in a three-player party where the admin is a guest, so every action goes admin �
 - god mode (`Player.hurt`), drops and level-ups; any of these taint the run (`G.Game.taint`), so it
   isn't sent to the ranking, solo or group
 - save edits: coins, tickets, any Pokémon or shiny
+- a Mega Stone dropped next to a friend whose Pokémon has a Mega (Lucario): it Mega Evolves and
+  everyone sees it (`'mega'` messages in `js/fork/mega.js`)
 
 The admin list is `ADMINS` at the top of `js/fork/admin.js` (Firebase Authentication → Users →
 User UID). Everyone's game checks it, so a new admin needs a new release. The ranking's hidden

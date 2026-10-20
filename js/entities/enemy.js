@@ -263,6 +263,7 @@
       if (this.flash > 0) this.flash -= dt;
       if (this.dead) { this.fade -= dt; return; }
       if (this.touchCd > 0) this.touchCd -= dt;
+      if (this.stunT > 0) this.stunT -= dt;        // lo pone coop.js con cada envío del anfitrión
       this.bob += dt * 6;
       if (this.shiny) {
         this.sparkT -= dt;

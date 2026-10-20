@@ -30,3 +30,11 @@ p.fork-credit { font-size: 0.9em; }
 /* Very rare level-up card (js/fork/rare-cards.js): purple, like the ×10 ticket. */
 .card.rare { border-color: #c47bff; background: linear-gradient(90deg, rgba(196,123,255,.24), rgba(196,123,255,.05)); }
 .card.rare .nm { color: #e2c2ff; }
+
+/* Can Mega Evolve (js/fork/mega.js): the Mega Stone on its collection cell, a chip on the
+   menu's partner, a line in its detail panel. */
+.cell .mega-badge { position: absolute; right: 5px; top: 60px; line-height: 0; filter: drop-shadow(0 1px 0 #0c111b); }
+.mega-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; vertical-align: middle;
+  font-size: 12px; font-weight: 800; color: #d9efff; background: rgba(79,180,255,.18); border: 1px solid rgba(79,180,255,.55); }
+.mega-hint { color: #9fd3ff; font-size: 13px; margin: 2px 0 6px; }
+.mega-hint img, .mega-chip img { vertical-align: -2px; }

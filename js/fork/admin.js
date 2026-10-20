@@ -35,13 +35,14 @@ G.Admin = (() => {
 
   // Forma y tamaño: un Animator nuevo con otro Pokémon u otra escala (sólo se
   // ve; los golpes y la velocidad siguen siendo los suyos). Se quita solo.
+  // (También lo usa la megaevolución, js/fork/mega.js: p.megaKey es el sprite de su mega.)
   function paint(p) {
     if (!p || !p.anim) return;
-    const L = p.admLook || {}, now = performance.now();
-    const dex = L.dexT > now ? L.dex : p.dex;
+    const L = p.admLook || {}, now = performance.now(), base = p.megaKey || p.dex;
+    const dex = L.dexT > now ? L.dex : base;
     const k = L.kT > now ? L.k : 1;
     const sc = G.Sprites.playerScale(dex) * k;
-    const a = new G.Sprites.Animator(dex, sc, dex === p.dex && p.shiny);
+    const a = new G.Sprites.Animator(dex, sc, dex === base && p.shiny);
     a.dir = p.anim.dir;
     if (p.dead) a.play('Faint', { hold: true });
     p.anim = a;
@@ -181,7 +182,7 @@ G.Admin = (() => {
     if (!run) { for (const k in ctl) ctl[k] = 0; for (const k of ['freeze', 'disco', 'dark', 'quake', 'skin']) world[k] = 0; }
     const all = run ? G.EnemyMgr.all() : [];
     // Congelados: los de verdad (anfitrión o solitario) aturdidos; las copias de un invitado,
-    // también (no pegan al tocarlas, combat.js), y al acabar se les quita (no lo descuentan).
+    // también, cada vuelta (no pegan al tocarlas, combat.js; coop.js no se lo pisa: admFrozen), y al acabar se les quita.
     const frozen = now < world.freeze;
     for (const e of all) {
       if (frozen) { if (e.remote) { e.stunT = 0.3; e.admFrozen = true; } else e.applyStun(0.3); }
@@ -485,7 +486,8 @@ G.Admin = (() => {
     const dl = panel.querySelector('#adm-dex');
     dl.innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(p.name)} #${p.dex}">`).join('');
     const kinds = [['heal', 'Heal'], ['magnet', 'Magnet'], ['bomb', 'Bomb'], ['xpBig', 'Big XP', 60], ['coin', 'Coins ×25', 25],
-                   ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10']].concat(G.Items.LIST.map(i => ['item', 'Item: ' + i.name, i.id]));
+                   ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10'], ['item', 'Item: Mega Stone', 'megastone']]
+      .concat(G.Items.LIST.map(i => ['item', 'Item: ' + i.name, i.id]));
     panel.querySelector('#adm-drop').innerHTML = kinds.map((k, i) => `<option value="${i}">${esc(k[1])}</option>`).join('');
     panel.dropKinds = kinds;
   }
@@ -615,5 +617,5 @@ G.Admin = (() => {
   }
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', init); else init();
 
-  return { steer, beforeDraw, drawScreen, isAdmin, ADMINS };
+  return { steer, beforeDraw, drawScreen, isAdmin, ADMINS, repaint: paint };
 })();

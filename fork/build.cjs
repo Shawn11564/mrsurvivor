@@ -36,6 +36,17 @@ try {
 } finally {
   fs.readFileSync = realRead;
 }
+// The site pages (make_seo_pages.py) translate with the English dictionary export_data.js
+// captured from upstream's files; add the fork's texts the pages show (the evolved stat moves).
+const FORK_TEXTS = ['js/fork/buff-evos.js'];
+{
+  const vm = require('vm'), data = path.join(ROOT, 'tools', 'cache', 'gamedata.json');
+  const out = JSON.parse(realRead(data, 'utf8'));
+  const G = { I18n: { add(d, language = 'en', context = '') { if (language === 'en' && !context) Object.assign(out.en, d); } } };
+  // (A checkout from before a file existed, like fork/test-sync.cjs replays, just skips it.)
+  for (const f of FORK_TEXTS) if (fs.existsSync(path.join(ROOT, f))) vm.runInNewContext(realRead(path.join(ROOT, f), 'utf8'), { G }, { filename: f });
+  fs.writeFileSync(data, JSON.stringify(out));
+}
 execFileSync(process.platform === 'win32' ? 'python' : 'python3', [path.join(ROOT, 'tools', 'make_seo_pages.py')], { stdio: 'inherit', cwd: ROOT });
 
 // ---------------- in-place pass over what the site serves ----------------

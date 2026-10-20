@@ -195,9 +195,39 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     const mid = await Promise.all([host, g1].map(p => p.evaluate(() => G.Game.state)));
     check(mid.every(s => s === 'held'), `host and g1 have picked and wait for g2 (${mid})`);
     await pick(g2);
+    check((await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'resuming', undefined, 3000)))).every(Boolean),
+      'the last pick starts the 3 s "Resuming…" countdown for everyone');
     await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
     const after = await Promise.all(ALL.map(p => p.evaluate(() => ({ st: G.Game.state, fused: G.Game.player.slots.some(g => g.length > 1), bonds: G.Game.player.bonds }))));
     check(after.every(a => a.st === 'playing' && a.fused && a.bonds === 0), 'after all pick, everyone is fused and playing again: ' + JSON.stringify(after));
+
+    // ---------------- Level-up: countdown only after a long pick ----------------
+    // Everyone's cards close together; if choosing took over 10 s, a 3 s countdown follows.
+    console.log('Level-up cards: countdown after a long pick');
+    const watch = () => Promise.all(ALL.map(p => p.evaluate(() => { window.__counted = false;
+      (function w() { if (G.Game.state === 'resuming') window.__counted = true; if (!window.__stopW) requestAnimationFrame(w); })(); })));
+    const levelUp = async waitMs => {
+      await Promise.all(ALL.map(p => p.evaluate(() => { window.__stopW = false; })));
+      await watch();
+      await host.evaluate(() => G.Game.debugLevelUp());
+      await Promise.all(ALL.map(p => p.waitForFunction(() => G.Game.state === 'levelup', null, { timeout: 8000 })));
+      await host.waitForTimeout(waitMs);
+      for (const p of ALL) await p.evaluate(() => { const c = document.querySelector('#cards .card'); if (c) c.click(); });
+      await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
+      const counted = await Promise.all(ALL.map(p => p.evaluate(() => { window.__stopW = true; return window.__counted; })));
+      // More level-ups may follow (the XP of earlier kills): pick them quickly.
+      for (let i = 0; i < 6; i++) {
+        let any = false;
+        for (const p of ALL) if (await p.evaluate(() => G.Game.state === 'levelup')) { any = true; await p.waitForTimeout(700); await p.evaluate(() => { const c = document.querySelector('#cards .card'); if (c) c.click(); }); }
+        if (!any) break;
+        await host.waitForTimeout(800);
+      }
+      return counted;
+    };
+    const quick = await levelUp(1200);
+    check(quick.every(c => !c), `picked within 10 s: straight back to playing, no countdown (${quick})`);
+    const slow = await levelUp(10600);
+    check(slow.every(Boolean), `picked after more than 10 s: the countdown plays for everyone (${slow})`);
 
     // ---------------- Back in the lobby: ready reset, force start ----------------
     console.log('Back to the lobby; force start');

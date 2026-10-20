@@ -116,7 +116,7 @@ async function pickCards(ms = 20000, calm = 3) {
   try {
     const host = await player(browser, 'hst' + tag, 4);         // a friend hosts (Charmander)
     const adm = await player(browser, 'adm' + tag, 25);         // the admin joins (Pikachu)
-    const frd = await player(browser, 'frd' + tag, 7);          // another friend (Squirtle)
+    const frd = await player(browser, 'frd' + tag, 448);        // another friend (Lucario, which has a Mega)
     const ALL = [host, adm, frd];
     ALL_PAGES = ALL;
     for (const p of ALL) await p.evaluate(u => G.Admin.ADMINS.push(u), adm.uid);
@@ -176,7 +176,7 @@ async function pickCards(ms = 20000, calm = 3) {
     await host.evaluate(() => G.Net.send(G.Coop.mates[0].uid, { k: 'adm', a: 'morph', by: G.DB.fb.uid, x: { to: '*', dex: 129, secs: 20 } }));
     await host.waitForTimeout(800);
     const ign = [await looks(host), await looks(adm), await looks(frd)].map(l => l.dex);
-    check(ign.join() === '4,25,7', 'admin messages from a non-admin (or claiming a non-admin) are ignored: ' + ign);
+    check(ign.join() === '4,25,448', 'admin messages from a non-admin (or claiming a non-admin) are ignored: ' + ign);
 
     // ---------------- 4. Body swap and size ----------------
     console.log('Body swap and size');
@@ -268,8 +268,8 @@ async function pickCards(ms = 20000, calm = 3) {
     // ---------------- Body swap wears off ----------------
     const left = 10500 - (Date.now() - karpAt);
     if (left > 0) await frd.waitForTimeout(left);
-    check(await settle(frd, () => G.Game.player.anim.dex === 7) && await settle(host, u => G.Coop.mate(u).pl.anim.dex === 7, frd.uid),
-      'after 10 s the Magikarp turns back into Squirtle (for itself and for the others)');
+    check(await settle(frd, () => G.Game.player.anim.dex === 448) && await settle(host, u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid),
+      'after 10 s the Magikarp turns back into Lucario (for itself and for the others)');
 
     // ---------------- Whole run (everyone) ----------------
     console.log('Whole run');
@@ -381,6 +381,25 @@ async function pickCards(ms = 20000, calm = 3) {
     check(await settle(host, u => { const p = G.Coop.mate(u).pl;
       return window.__drops.some(d => d.k === 'heal' && Math.hypot(d.x - p.x, d.y - p.y) < 80); }, adm.uid),
       'Drop "Heal" at me: the host drops it next to the admin');
+    // A Mega Stone dropped next to the friend (Lucario): it Mega Evolves, and everyone sees it
+    // (js/fork/mega.js, 'mega' messages). The others step away so only the friend picks it up.
+    await pickCards();
+    for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x += 2500; });
+    await host.waitForTimeout(500);
+    await $(adm, '#adm-to').selectOption(frd.uid);
+    await $(adm, '#adm-drop').selectOption({ label: 'Item: Mega Stone' });
+    await $(adm, '[data-do=drop]').click();
+    for (let i = 0; i < 20 && !(await frd.evaluate(() => G.Game.player.item === 'megastone')); i++) {
+      // Holding an item already: the friend takes the stone in the choice.
+      await frd.evaluate(() => { if (G.UI.isOpen('scr-item')) { const c = [...document.querySelectorAll('#item-cards .card')].find(el => /Mega Stone/.test(el.textContent)); if (c) c.click(); } });
+      await pickCards(3000, 1);
+      await frd.waitForTimeout(400);
+    }
+    check(await settle(frd, () => G.Game.player.item === 'megastone' && G.Game.player.anim.dex === 'm448'), 'Drop "Mega Stone" at the friend: Lucario picks it up and Mega Evolves');
+    check(await settle(host, u => G.Coop.mate(u).pl.anim.dex === 'm448', frd.uid) && await settle(adm, u => G.Coop.mate(u).pl.anim.dex === 'm448', frd.uid),
+      'the host and the admin see Mega Lucario too');
+    if (process.env.SHOTS) await frd.screenshot({ path: require('path').join(process.env.SHOTS, 'mega-lucario.png') });
+    for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x -= 2500; });
     await pickCards();
     const lv0 = await host.evaluate(() => G.Game.player.level);
     await $(adm, '[data-do=rare]').click();

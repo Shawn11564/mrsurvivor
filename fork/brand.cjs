@@ -16,6 +16,7 @@ const BRAND = {
   // Leave empty to point "contact" at the site instead of a mailbox.
   contactEmail: '',
   site: 'https://mrshawn.dev',
+  repo: 'https://github.com/Shawn11564/mrsurvivor',
   upstream: { name: 'PokéSurvivor', author: 'JPTER78', repo: 'https://github.com/JPTER78/pokesurvivor' }
 };
 
@@ -26,6 +27,9 @@ const contact = BRAND.contactEmail
 const CREDIT_EN = `${BRAND.name} is a fan-made fork of Pok&eacute;Survivor by ${BRAND.upstream.author} ` +
   `(<a href="${BRAND.upstream.repo}" target="_blank" rel="noopener">github.com/JPTER78/pokesurvivor</a>), ` +
   'used under the PolyForm Noncommercial License 1.0.0. Required Notice: Copyright 2026 JPTER78 (https://github.com/JPTER78/pokesurvivor)';
+// Mega Evolution sprites (fork/fetch-megas.py): their SpriteCollab artists, CC BY-NC 4.0.
+const MEGA_CREDIT_EN = 'Mega Evolution sprites by the SpriteCollab artists (CC BY-NC 4.0), listed in ' +
+  `<a href="${BRAND.repo}/blob/main/CREDITS-MEGAS.md" target="_blank" rel="noopener">CREDITS-MEGAS.md</a>.`;
 
 // [file suffix, from, to]. `file` is matched against the path with forward slashes.
 const SPECIFIC = [
@@ -35,7 +39,7 @@ const SPECIFIC = [
   // Legal screen: full credit + the license's Required Notice.
   // (Anchors include text the rename changes, so a second pass finds nothing.)
   ['.html', '<p><b>PokéSurvivor</b> es un juego hecho por fans',
-    `<p class="fork-credit">${CREDIT_EN}</p>\n    <p><b>${BRAND.name}</b> es un juego hecho por fans`],
+    `<p class="fork-credit">${CREDIT_EN}</p>\n    <p class="fork-credit">${MEGA_CREDIT_EN}</p>\n    <p><b>${BRAND.name}</b> es un juego hecho por fans`],
   // Footer line on the menu.
   ['.html', 'GAME FREAK · <a href="#" class="legal-link" data-legal>Aviso legal</a></div>',
     `GAME FREAK · <span class="fork-credit">Fork of Pok&eacute;Survivor by ${BRAND.upstream.author}</span> · <a href="#" class="legal-link" data-legal>Aviso legal</a></div>`],

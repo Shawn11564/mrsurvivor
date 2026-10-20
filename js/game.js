@@ -90,7 +90,15 @@ G.Game = (() => {
    */
   const RESUME_S = 3;
   let resumeT = 0;
-  function resumeRun() { G.UI.hideAll(); state = 'resuming'; resumeT = RESUME_S; }
+  function resumeRun() { G.UI.hideAll(); countIn(); }
+  /**
+   * La misma cuenta atrás sin cerrar pantallas (fork): también al terminar de elegir un
+   * vínculo o un objeto (en grupo, cuando el último termina) y, en grupo, al cerrar unas
+   * cartas de nivel que han tardado más de LONG_PICK segundos en elegirse.
+   */
+  function countIn() { state = 'resuming'; resumeT = RESUME_S; }
+  const LONG_PICK = 10;
+  let levelAt = 0;                   // grupo: cuándo se abrieron las cartas de nivel
 
   /** La cuenta atrás: fondo algo oscurecido y el número, que salta un poco al cambiar. */
   function drawResume() {
@@ -256,6 +264,7 @@ G.Game = (() => {
       // (Si tenías abierta la elección de objeto, vuelve al terminar: afterLevelUp.)
       if (state === 'choice' && openItem && G.Coop.active) G.Coop.holdEnd();
       state = 'levelup';
+      levelAt = performance.now();
       G.UI.hide('scr-pause');
       G.Audio.sfx('levelup');
       G.RunUI.showLevelUp(level, G.LevelUp.offer(pl), card => {
@@ -267,7 +276,12 @@ G.Game = (() => {
     waiting(names) { G.RunUI.setWaiting(names); },
     resume() {
       G.RunUI.closeLevelUp();
-      if (state === 'levelup') { state = holdBy.length ? 'held' : 'playing'; afterLevelUp(); }
+      if (state === 'levelup') {
+        if (holdBy.length) state = 'held';
+        else if (performance.now() - levelAt > LONG_PICK * 1000) countIn();
+        else state = 'playing';
+        afterLevelUp();
+      }
     },
     /** ¿Estás eligiendo algo que para la partida (objeto o vínculo)? */
     choosing() { return state === 'choice'; },
@@ -288,13 +302,13 @@ G.Game = (() => {
       holdBy = names || [];
       const mine = G.UI.isOpen('scr-bond');
       if (holdBy.length) {
-        if (state === 'playing') state = 'held';
+        if (state === 'playing' || state === 'resuming') state = 'held';
         if (pl && pl.bonds > 0) offerBond(true);      // si tú también tienes vínculo, eliges a la vez
         const others = holdBy.filter(n => n !== (G.Social.me && G.Social.me.name) && n !== 'Tú');
         if (!mine && others.length) G.Spawner.say('Pausa: ' + others.join(', ') + ' ' + (others.length > 1 ? 'están eligiendo…' : 'está eligiendo…'), 999, true);
         else if (!others.length) G.Spawner.say(awayBy ? awayText() : '', awayBy ? 999 : 0, true);   // sólo tú: sin aviso viejo
       } else {
-        if (state === 'held' && !awayBy) state = 'playing';
+        if (state === 'held' && !awayBy) countIn();     // el último ha elegido: cuenta atrás para todos
         G.Spawner.say(awayBy ? awayText() : '', awayBy ? 999 : 0, true);
       }
     },
@@ -302,7 +316,7 @@ G.Game = (() => {
     away(name) {
       awayBy = name || null;
       if (awayBy) {
-        if (state === 'playing') state = 'held';
+        if (state === 'playing' || state === 'resuming') state = 'held';
         G.Spawner.say(awayText(), 999, true);
       } else if (!holdBy.length) {
         if (state === 'held') state = 'playing';
@@ -465,7 +479,7 @@ G.Game = (() => {
       G.FX.ring(pl.x, pl.y, 8, 130, '#ff8ad8', 0.8, 6);
       G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
       G.Spawner.say('¡Vínculo! ' + group.length + ' movimientos a la vez', 2.6, true);
-      if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
+      if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
       if (G.Coop.active) G.Coop.holdEnd();
     });
   }
@@ -507,7 +521,7 @@ G.Game = (() => {
         G.Progress.event('item', { id: got });
       }
       if (!mine) { afterLevelUp(); return; }
-      if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
+      if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
@@ -994,6 +1008,7 @@ G.Game = (() => {
 
   return {
     init, startRun, everyone, levelXp, flash, offerBond,
+    offerItem,                              // la megapiedra de las grietas (js/fork/mega.js)
     /** Para pruebas: salta el reloj de la run. */
     debugTime(t) { tampered = true; time = t; },
     /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */

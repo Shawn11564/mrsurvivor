@@ -22,9 +22,9 @@ G.Combat = (() => {
     if (pl.dead) return;
     // Vínculos: todos los movimientos del hueco activo, cada uno con su recarga.
     for (const m of pl.activeGroup()) tickMove(dt, pl, m, now);
-    // Segunda naturaleza (carta muy rara del fork, js/fork/rare-cards.js): los que suben
-    // stats se lanzan también desde los demás huecos.
-    if (pl.passiveBuffs) for (const g of pl.slots) if (g !== pl.activeGroup()) for (const m of g) if (m.kind === 'buff') tickMove(dt, pl, m, now);
+    // Los que suben stats se lanzan también desde los demás huecos con Segunda naturaleza
+    // (carta muy rara, js/fork/rare-cards.js) o, cada uno, si ha evolucionado (m.passive).
+    for (const g of pl.slots) if (g !== pl.activeGroup()) for (const m of g) if (m.kind === 'buff' && (pl.passiveBuffs || m.passive)) tickMove(dt, pl, m, now);
   }
 
   function tickMove(dt, pl, m, now) {
@@ -102,13 +102,21 @@ G.Combat = (() => {
   /** Tabla de tipos × clima para un ataque de tipo `type` contra `e`. */
   function typeK(type, e) { return G.Types.mult(type, e.types) * G.Weather.mult(type); }
 
+  /**
+   * Abanico de n disparos separados `gap`: el primero va recto al blanco y los demás se abren a
+   * uno y otro lado. Con un número par, el abanico centrado dejaba el blanco entre dos disparos
+   * y fallaban los dos (fork MrSurvivor, fork/test-moves.cjs). `side` (±1): hacia dónde va el impar.
+   */
+  function fanOff(i, gap, side) { const k = Math.ceil(i / 2); return (i % 2 ? k : -k) * gap * side; }
+
   function fireProjectiles(pl, m) {
     const col = G.U.TYPE_COLOR[m.type];
     const vis = G.VFX.forMove(m);
     const n = Math.max(1, m.count | 0);
     const spread = m.spread || 0;
+    const gap = n === 1 ? 0 : spread * n / (n - 1), side = Math.random() < 0.5 ? 1 : -1;
     for (let i = 0; i < n; i++) {
-      const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * spread * n;
+      const off = fanOff(i, gap, side);
       const a = pl.aim + off + G.U.rand(-0.03, 0.03);
       G.Projectiles.spawn(Object.assign({
         x: pl.x + Math.cos(a) * 3, y: pl.y + Math.sin(a) * 3,
@@ -232,8 +240,9 @@ G.Combat = (() => {
     const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
     const n = Math.max(1, m.count | 0), spread = m.spread || 0.5;
     const out = m.radius / m.speed;                       // segundos de ida
+    const gap = n === 1 ? 0 : spread * Math.min(n, 3) / (n - 1), side = Math.random() < 0.5 ? 1 : -1;
     for (let i = 0; i < n; i++) {
-      const a = pl.aim + (n === 1 ? 0 : (i / (n - 1) - 0.5) * spread * Math.min(n, 3));
+      const a = pl.aim + fanOff(i, gap, side);
       G.Projectiles.spawn(Object.assign({
         x: pl.x, y: pl.y, vx: Math.cos(a) * m.speed, vy: Math.sin(a) * m.speed,
         dmg: m.dmg * pl.atkFor(m), r: m.size, life: out * 4 + 1.5, pierce: 999, color: col,
@@ -241,6 +250,13 @@ G.Combat = (() => {
       }, payload(m)));
     }
   }
+
+  /**
+   * ¿Quemado, envenenado, frenado o aturdido? En la copia de un invitado los estados viven en
+   * el anfitrión, que los manda en bits (coop.js enemyList): 1 quemado, 2 envenenado, 8 frenado,
+   * 16 aturdido. Prueba: fork/test-moves.cjs.
+   */
+  const hasStatus = e => e.burn > 0 || e.poison > 0 || e.slow > 0 || e.stunT > 0 || !!(e.net && e.net.st & 27);
 
   /** Cadena: golpea a un enemigo y salta a los siguientes más cercanos (cada salto, algo menos). */
   function chain(pl, m) {
@@ -255,8 +271,8 @@ G.Combat = (() => {
       const tx = cur.x, ty = cur.y - cur.bodyH * 0.5;
       G.FX.beam(fx, fy, Math.atan2(ty - fy, tx - fx), Math.hypot(tx - fx, ty - fy), 10, col, vis);
       if (!ghost) {
-        // Infortunio: más daño a quien ya sufre un estado.
-        const hex = m.hex && (cur.burn > 0 || cur.poison > 0 || cur.slow > 0) ? m.hex : 1;
+        // Infortunio: más daño a quien ya sufre un estado (también aturdido: paralizado, congelado...).
+        const hex = m.hex && hasStatus(cur) ? m.hex : 1;
         hit(pl, cur, m.dmg * pl.atkFor(m) * k * hex, col, tx - fx, ty - fy, 0, m);
       }
       k *= 0.85;

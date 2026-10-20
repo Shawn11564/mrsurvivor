@@ -656,10 +656,16 @@
                 'pull', 'knock', 'stun', 'charge'];
   const ADD = ['count', 'pierce', 'stacks', 'bounce'];
 
+  // Lo que vale lo que el movimiento no trae: sin `count` el combate dispara uno, así que
+  // "+1 proyectil" (Sombra Vil, Bomba Germen...) cuenta desde 1, no desde 0; y su abanico
+  // sale de 0,3 (no del ×1,3 a secas, que eran 150°). Fork MrSurvivor, fork/test-moves.cjs.
+  const BASE = { count: 1, spread: 0.3 };
+
   function applyMods(s, m) {
     for (const k in m) {
-      if (MULT.includes(k) && s[k] != null) s[k] *= m[k];
-      else if (ADD.includes(k)) s[k] = (s[k] || 0) + m[k];
+      const v = s[k] != null ? s[k] : BASE[k];
+      if (MULT.includes(k) && v != null) s[k] = v * m[k];
+      else if (ADD.includes(k)) s[k] = (v || 0) + m[k];
       else s[k] = m[k];
     }
   }
@@ -695,7 +701,9 @@
   /*
    * Un movimiento al NIVEL MÁXIMO evoluciona si en esa run has cogido alguna
    * vez la mejora de su condición (`needs`, un id de LevelUp.STATS). Sale una
-   * carta dorada. Los potenciadores (buff) no evolucionan.
+   * carta dorada. Los potenciadores (buff) evolucionan sólo con llegar al nivel máximo
+   * (sin condición, `needs` null; fork MrSurvivor): desde entonces se lanzan solos desde
+   * cualquier hueco (m.passive, ver Combat.tick). Traducciones: js/fork/buff-evos.js.
    */
   const NEED_NAME = { hp: 'Vigor', atk: 'Potencia', spd: 'Carrera', cd: 'Reflejos', def: 'Coraza',
                       rgn: 'Síntesis', mag: 'Imán', xp: 'Aprendizaje' };
@@ -749,7 +757,11 @@
     'outrage': ['Dracoflecha', 'hp'],        'draining-kiss': ['Luz Lunar', 'rgn'],
     'play-rough': ['Choque Anímico', 'atk'], 'disarming-voice': ['Encanto', 'def'],
     'mirror-shot': ['Metaláser', 'atk'],     'gyro-ball': ['Cuerpo Pesado', 'def'],
-    'sucker-punch': ['Juego Sucio', 'atk'],  'night-slash': ['Lariat Oscuro', 'spd']
+    'sucker-punch': ['Juego Sucio', 'atk'],  'night-slash': ['Lariat Oscuro', 'spd'],
+    // potenciadores (fork): sin condición
+    'swords-dance': ['Tambor', null],        'nasty-plot': ['Danza Aleteo', null],
+    'agility': ['Pulimento', null],          'harden': ['Defensa Férrea', null],
+    'aqua-ring': ['Arraigo', null],          'dragon-dance': ['Corpulencia', null]
   };
   // Lo que gana al evolucionar, según cómo funcione.
   const EVO_MODS = {
@@ -774,7 +786,8 @@
     quake:      { t: '×1,8 daño, +3 ondas y ondas más grandes', m: { dmg: 1.8, count: 3, radius: 1.25 } },
     vortex:     { t: '×1,8 daño, más radio y atrae más fuerte', m: { dmg: 1.8, radius: 1.3, pull: 1.4 } },
     shove:      { t: '×1,8 daño, más radio y empuja más', m: { dmg: 1.8, radius: 1.25, knock: 1.4 } },
-    stun:       { t: '×1,8 daño, más radio y aturde más rato', m: { dmg: 1.8, radius: 1.3, stun: 1.4 } }
+    stun:       { t: '×1,8 daño, más radio y aturde más rato', m: { dmg: 1.8, radius: 1.3, stun: 1.4 } },
+    buff:       { t: 'Se lanza solo desde cualquier hueco (ya no hace falta cambiar a él) y +1 acumulación', m: { stacks: 1, passive: true } }
   };
 
   /** ¿Puede evolucionar ya? → { name, needs, needName, text, ready } o null */
@@ -782,8 +795,8 @@
     const e = EVO[m.id];
     if (!e || m.evolved || m.lvl < m.def.maxLvl || !EVO_MODS[m.kind]) return null;
     const [name, needs] = e;
-    return { name, needs, needName: NEED_NAME[needs], text: EVO_MODS[m.kind].t,
-             ready: !!(statsTaken && statsTaken[needs]) };
+    return { name, needs, needName: needs ? NEED_NAME[needs] : 'Nivel máximo', text: EVO_MODS[m.kind].t,
+             ready: !needs || !!(statsTaken && statsTaken[needs]) };
   }
 
   /** Evoluciona una instancia (cambia nombre y potencia; sigue siendo del mismo tipo). */

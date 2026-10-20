@@ -348,9 +348,12 @@ G.Player = class Player {
   addBuff(stat, amount, dur, maxStacks) {
     const b = this.buffs[stat];
     if (!b) return;
-    b.amount = amount;
-    b.n = Math.min(maxStacks, b.n + 1);
-    b.t = b.dur = dur;
+    // Dos de la misma stat (Danza Espada y Danza Dragón): el más corto no le recorta el tiempo
+    // al otro, ni el más flojo su potencia o sus cargas (fork, fork/test-moves.cjs).
+    const on = b.n > 0;
+    b.amount = on ? Math.max(b.amount, amount) : amount;
+    b.n = Math.max(b.n, Math.min(maxStacks, b.n + 1));
+    if (!on || dur >= b.t) b.t = b.dur = dur;
   }
 
   // ---------------- ciclo ----------------

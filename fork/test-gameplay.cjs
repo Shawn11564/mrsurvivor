@@ -500,7 +500,9 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     setTimeout(() => { G.FX.dmgText = d; e.hp = 0; e.die(); r(out); }, 2500);
   }), crit);
   // Burn and poison ticks (damage over time) can't crit: only attack hits count.
-  const DOT = new Set(['#ff9a4d', '#d47cf0']);
+  // Nor does a hit a shield soaks up (blue, Enemy.hurt): a shielder that happens to spawn nearby
+  // shields the target now and then.
+  const DOT = new Set(['#ff9a4d', '#d47cf0', '#9fd8ff']);
   const on = (await hits(1)).filter(h => !DOT.has(h.color));
   check(on.length > 0 && on.every(h => h.tag === 'Crítico' && h.color === '#ff9a3c' && h.big),
     `100 % crit: every attack hit's number is orange with the "Critical" label (${on.length} hits) ` + JSON.stringify(on.filter(h => h.tag !== 'Crítico')));
@@ -628,6 +630,141 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const ownedAll = await page.evaluate(() => Object.keys(G.DB.save.owned).map(Number).filter(d => G.DEX_BY[d]));
   check([...rolled].every(d => ownedAll.includes(d)) && rolled.size >= 2, `"All": 12 rolls give only owned Pokémon, and vary (${[...rolled].join(', ')} of ${ownedAll.join(', ')})`);
   await page.evaluate(() => { G.Game.quit(); });
+
+  // ---------------- Mega Stones (js/fork/mega.js) ----------------
+  // A run with Gengar (one of the Megas with SpriteCollab sprites): a real rift, the
+  // legendary beaten, back on the map (after the bond and the countdown) its Mega Stone is
+  // offered; taken, Gengar Mega Evolves.
+  console.log('Mega Stones');
+  // XP (the legendary's, enemies') opens the level-up cards: pick the first, as a player would,
+  // until `cond` holds (or `ms` runs out).
+  const playOn = (cond, ms = 30000) => page.evaluate(([cond, ms]) => new Promise(r => {
+    const end = performance.now() + ms, ok = new Function('return (' + cond + ')()');
+    (function step() {
+      if (G.UI.isOpen('scr-levelup') && !document.getElementById('cards').classList.contains('guard')) G.RunUI.pick(0);
+      if (G.UI.isOpen('scr-bond') && !document.getElementById('bond-cards').classList.contains('guard')) G.RunUI.pickBond(0);
+      // (The legendary also drops an item: holding it, the Mega Stone comes as a choice. Take the stone.)
+      if (G.UI.isOpen('scr-item') && !document.getElementById('item-cards').classList.contains('guard')) {
+        const c = [...document.querySelectorAll('#item-cards .card')].find(el => /Mega Stone/.test(el.textContent)); if (c) c.click();
+      }
+      if (ok()) return r(true);
+      if (performance.now() > end) return r(false);
+      setTimeout(step, 150);
+    })();
+  }), [cond.toString(), ms]);
+  // Out of a run, "can Mega Evolve" shows (G.Mega.badge/chip/hint, js/ui/menu.js): the stone on
+  // Gengar's collection cell and a line in its detail saying how to get it, a chip on the menu's
+  // partner; nothing for Charmander.
+  const prevPartner = await page.evaluate(() => { const s = G.DB.save, was = s.partner;
+    s.owned[94] = s.owned[94] || { at: Date.now() }; s.partner = 94; G.Flow.goMenu(); return was; });
+  await page.waitForSelector('#scr-menu', { state: 'visible' });
+  await page.waitForTimeout(150);
+  const chipTxt = await page.evaluate(() => { const c = document.querySelector('#menu-partner-info .mega-chip'); return c && c.textContent.trim(); });
+  await page.click('#scr-menu [data-go="dex"]');
+  await page.waitForSelector('#scr-dex', { state: 'visible' });
+  const megaCell = async name => {
+    await page.fill('#dex-q', name);
+    await page.waitForTimeout(250);
+    const cell = page.locator('#dex-grid .cell', { hasText: name }).first();
+    const badge = await cell.locator('.mega-badge').count();
+    await cell.click();
+    await page.waitForTimeout(150);
+    const hint = await page.evaluate(() => { const h = document.querySelector('#dex-detail .mega-hint'); return h ? h.textContent.trim() : ''; });
+    return { badge, hint };
+  };
+  const mgG = await megaCell('Gengar'), mgC = await megaCell('Charmander');
+  await page.fill('#dex-q', '');
+  check(chipTxt === 'Mega' && mgG.badge === 1 && mgG.hint === 'Can Mega Evolve: win a rift with it and you’ll get its Mega Stone.',
+    `can Mega Evolve: chip on the partner ("${chipTxt}"), stone on Gengar's cell, detail says "${mgG.hint}"`);
+  check(mgC.badge === 0 && !mgC.hint, "nothing of the kind on Charmander (no Mega)");
+  await page.evaluate(p => { G.DB.save.partner = p; }, prevPartner);
+
+  await page.evaluate(() => { G.Flow.goMenu(); G.Game.startRun(null, { dex: 94, shiny: false }); });
+  await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player.dex === 94, null, { timeout: 15000 });
+  const mg0 = await page.evaluate(() => { const pl = G.Game.player; pl.god = true; G.Game.debugSpeed(1);
+    return { can94: G.Mega.can(94), can4: G.Mega.can(4), atk: pl.atkMul, spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, types: pl.mon.types.join() }; });
+  check(mg0.can94 && !mg0.can4, "Gengar can Mega Evolve (it has Mega sprites); Charmander can't");
+  await page.evaluate(() => G.Rift.enterRequest());
+  await page.waitForFunction(() => G.Rift.inArena && G.Rift.arena && G.EnemyMgr.get(G.Rift.arena.bossId), null, { timeout: 15000 });
+  check(await page.evaluate(() => G.Game.player.item !== 'megastone'), 'no Mega Stone before beating the legendary');
+  await page.evaluate(() => G.EnemyMgr.get(G.Rift.arena.bossId).hurt(1e9, '#fff', 0, 0, 0, null));
+  const got = await playOn(() => !G.Rift.inArena && G.Game.player.item === 'megastone');
+  const mg1 = await page.evaluate(() => { const pl = G.Game.player;
+    return { key: pl.anim.dex, atk: pl.atkMul, spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, types: pl.mon.types.join() }; });
+  const near = (a, b) => Math.abs(a - b) < 1e-6;
+  check(got && mg1.key === 'm94', `beating the rift's legendary gives Gengar its Mega Stone and it Mega Evolves (sprite ${mg1.key})`);
+  if (SHOTS) {
+    await page.waitForTimeout(2500);                 // past the flash of coming back from the rift
+    await page.screenshot({ path: path.join(SHOTS, 'mega-gengar.png') });
+  }
+  const mg2 = await page.evaluate(() => { const pl = G.Game.player; pl.equip('quickclaw');
+    const r = { key: pl.anim.dex, atk: pl.atkMul / 1 , spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, mega: !!pl.mega }; pl.equip(null);
+    r.atkAfter = pl.atkMul; return r; });
+  // (Compared with Gengar right after the stone comes off: the level-up cards picked on the way changed its stats.)
+  check(mg2.key === 94 && !mg2.mega, `swapping the stone for another item turns it back into Gengar (sprite ${mg2.key})`);
+  check(near(mg1.atk, mg2.atkAfter * 1.25) && near(mg1.spd, mg2.spd * 1.1) && near(mg1.red, mg2.red + 0.08) && mg1.maxHp === mg2.maxHp + Math.round(mg2.maxHp * 0.15) && mg1.types === mg0.types,
+    `Mega Gengar: +25 % damage, +10 % speed, +8 % defense, +15 % HP (${mg2.maxHp} -> ${mg1.maxHp}), same types (${mg1.types})`);
+  const zard = await page.evaluate(() => { const p = new G.Player(G.DEX_BY[6]); p.equip('megastone');
+    const on = { key: p.anim.dex, types: p.mon.types.join() }; p.equip(null);
+    return { on, off: p.mon.types.join(), dex: G.DEX_BY[6].types.join() }; });
+  check(zard.on.key === 'm6' && zard.on.types === 'fire,dragon' && zard.off === zard.dex && zard.dex === 'fire,flying',
+    `Mega Charizard X is Fire/Dragon while it holds the stone, Fire/Flying again without it (${JSON.stringify(zard)})`);
+
+  // ---------------- Countdown after a bond or an item choice (solo) ----------------
+  console.log('Countdown after choosing');
+  const resumed = async what => {
+    const st = await page.waitForFunction(() => G.Game.state !== 'choice', null, { timeout: 5000 }).then(() => page.evaluate(() => G.Game.state));
+    const back = await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 6000 }).then(() => true, () => false);
+    check(st === 'resuming' && back, `after ${what}, the 3 s "Resuming…" countdown, then the run goes on (${st})`);
+  };
+  await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
+  await page.evaluate(() => { const pl = G.Game.player; pl.bonds = 1; if (pl.slots.length < 2) pl.addMove('tackle'); G.Game.offerBond(); });
+  check(await page.waitForFunction(() => G.UI.isOpen('scr-bond') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'a bond to pick: the run stops');
+  await page.waitForTimeout(800);
+  for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
+  await resumed('picking the bond');
+  await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
+  await page.evaluate(() => { G.Game.player.equip('leftovers'); G.Game.offerItem('quickclaw'); });
+  check(await page.waitForFunction(() => G.UI.isOpen('scr-item') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'another item while holding one: the run stops to choose');
+  await page.waitForTimeout(800);
+  await page.keyboard.press('Digit2');
+  await resumed('choosing an item');
+
+  // ---------------- Stat moves evolve (js/fork/buff-evos.js) ----------------
+  // Swords Dance at its top level evolves with no other condition into Belly Drum, which
+  // casts on its own from any slot.
+  console.log('Stat moves evolve');
+  await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
+  const evo = await page.evaluate(() => {
+    const pl = G.Game.player;
+    pl.passiveBuffs = false; pl.statsTaken = {};
+    let sd = pl.moves.find(m => m.id === 'swords-dance');
+    if (!sd) { pl.maxMoves = 6; pl.addMove('swords-dance'); sd = pl.moves.find(m => m.id === 'swords-dance'); }
+    while (G.Moves.levelUp(sd)) {}
+    const hand = G.LevelUp.offer(pl), card = hand.find(c => c.key === 'evo:swords-dance');
+    if (card) G.RunUI.showLevelUp(pl.level, hand, () => {});
+    return { has: !!card, title: card && card.title, stacks: sd.stacks, i: hand.indexOf(card) };
+  });
+  check(evo.has && evo.title === 'Swords Dance → Belly Drum', `at its top level, Swords Dance's evolution card comes up with no stat card needed ("${evo.title}")`);
+  await page.waitForTimeout(80);
+  const evoDs = evo.has && await page.evaluate(i => document.querySelectorAll('#cards .card')[i].querySelector('.ds').textContent, evo.i);
+  check(evoDs === 'Casts on its own from any slot (no more switching to it) and +1 max stack', `the card says what it does: "${evoDs}"`);
+  const evo2 = await page.evaluate(() => new Promise(r => {
+    const pl = G.Game.player, sd = pl.moves.find(m => m.id === 'swords-dance');
+    G.Moves.evolve(sd); G.UI.hide('scr-levelup');
+    G.Game.player.god = true;
+    // (No XP during these 2.5 s: new level-up cards would stop the world.)
+    G.Pickups.clear(); pl.xpMul = 0;
+    const own = pl.slots.findIndex(g => g.includes(sd));
+    pl.active = own === 0 ? 1 : 0;                     // another move is the active one
+    pl.buffs.patk.n = 0;
+    const seen = {}; const tk = setInterval(() => { seen[G.Game.state] = (seen[G.Game.state] || 0) + 1; }, 100);
+    setTimeout(() => { clearInterval(tk); r({ passive: !!sd.passive, stacks: sd.stacks, n: pl.buffs.patk.n, active: pl.active, own, name: G.T(sd.name, 'move'),
+      seen, cd: sd.cd, t: sd.t, slots: pl.slots.map(g => g.map(m => m.id).join('+')) }); }, 2500);
+  }));
+  check(evo2.passive && evo2.stacks === evo.stacks + 1 && evo2.n >= 2 && evo2.active !== evo2.own,
+    `evolved (${evo2.name}): it stacks on its own from slot ${evo2.own + 1} while slot ${evo2.active + 1} is active (${evo2.n} stacks, max ${evo2.stacks}) ` + JSON.stringify({ seen: evo2.seen, cd: evo2.cd, t: evo2.t, slots: evo2.slots }));
+  await page.evaluate(() => { G.Game.debugSpeed(1); G.Game.quit(); });
 
   check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
