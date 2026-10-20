@@ -52,9 +52,23 @@ const crc32 = b => (zlib.crc32 ? zlib.crc32(b) : null);
   check(fire.includes('Charmander') && !fire.includes('Squirtle'), 'by type');
   const mega = await names('mega');
   check(mega.includes('Charizard') && !mega.includes('Charmander'), 'by "mega"', mega.length);
+  const epic = await page.evaluate(() => RadiantKit.search('epic'));
+  check(epic.length > 0 && epic.every(p => p.rarity === 4), 'by rarity ("epic")', epic.length);
   await page.fill('#q', 'charizard');
   await page.waitForSelector('#results button');
   check(await page.$$eval('#results button', b => b.length) === 1, 'the result list follows the search');
+
+  console.log('Rarity');
+  // The game's colours (js/systems/gacha.js) and names (Spanish there, English here).
+  const RAR = { 1: ['Common', 'rgb(159, 177, 201)'], 2: ['Uncommon', 'rgb(95, 224, 138)'], 3: ['Rare', 'rgb(79, 180, 255)'],
+                4: ['Epic', 'rgb(196, 123, 255)'], 5: ['Legendary', 'rgb(255, 203, 61)'] };
+  const gacha = require('fs').readFileSync(require('path').join(__dirname, '..', 'js', 'systems', 'gacha.js'), 'utf8')
+    .match(/RARITY_COLOR = (\{[^}]+\})/)[1].replace(/(\d):/g, '"$1":').replace(/'/g, '"');
+  const hex = JSON.parse(gacha), rgb = h => `rgb(${parseInt(h.slice(1, 3), 16)}, ${parseInt(h.slice(3, 5), 16)}, ${parseInt(h.slice(5, 7), 16)})`;
+  check(Object.keys(RAR).every(k => rgb(hex[k]) === RAR[k][1]), 'the page\'s colours match the game\'s', hex);
+  const zard = await page.evaluate(() => G.DEX_BY[6].rarity);
+  const card = await page.$eval('#results button', b => ({ color: getComputedStyle(b.querySelector('.nm')).color, rar: b.querySelector('.rar').textContent }));
+  check(card.color === RAR[zard][1] && card.rar.includes(RAR[zard][0]), `the result card: name in its rarity colour and "${RAR[zard][0]}"`, card);
 
   console.log('Download');
   async function grab() {
@@ -70,6 +84,8 @@ const crc32 = b => (zlib.crc32 ? zlib.crc32(b) : null);
   const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
 
   await page.click('#results button');
+  const head = await page.evaluate(() => ({ color: getComputedStyle(document.querySelector('#p-name span')).color, rar: document.getElementById('p-rar').textContent }));
+  check(head.color === RAR[zard][1] && head.rar.includes(RAR[zard][0]) && head.rar.includes('★'.repeat(zard)), 'the chosen Pokémon: coloured name, stars and rarity', head);
   check(await page.isEnabled('#mega'), 'Charizard: the Mega box can be ticked');
   await page.check('#mega');
   let z = await grab();

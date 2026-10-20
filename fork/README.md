@@ -80,8 +80,8 @@ you have the shiny of shows and plays shiny unless you picked Normal for it, whi
 (`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
 0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
 
-`node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type and
-"mega"; the .zip's names and bytes (Charizard with and without its Mega, Bulbasaur); every species'
+`node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type, rarity and
+"mega"; each Pokémon's rarity (the game's colours); the .zip's names and bytes (Charizard with and without its Mega, Bulbasaur); every species'
 list against the sheets on disk.
 
 `node fork/test-radiant.cjs` (server) checks radiants and the ritual on `dev.html` with a stand-in radiant list:

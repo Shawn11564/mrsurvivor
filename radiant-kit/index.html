@@ -42,6 +42,8 @@ input[type=search]:focus { outline: 2px solid var(--accent); }
 #results canvas, #pick canvas { image-rendering: pixelated; }
 #results .nm { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 #results .no { font-size: 11px; color: var(--muted); }
+#results .rar { font-size: 11px; font-weight: 700; }
+.stars { letter-spacing: 1px; }
 .tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 999px; margin-left: 3px;
   background: rgba(79,180,255,.2); color: #bfe3ff; vertical-align: 1px; }
 .tag.lab { background: rgba(60,200,180,.2); color: #9ff0e2; }
@@ -70,7 +72,7 @@ td.n { white-space: nowrap; color: var(--muted); }
     they're recoloured you unzip them into the game folder as they are.</p>
 
   <div class="box">
-    <input type="search" id="q" placeholder="Name, # number or type (e.g. Charizard, 6, #150, fire, mega)" autocomplete="off" autofocus>
+    <input type="search" id="q" placeholder="Name, # number, type or rarity (e.g. Charizard, 6, #150, fire, epic, mega)" autocomplete="off" autofocus>
     <div id="results"></div>
     <p id="more" class="sub"></p>
   </div>
@@ -80,6 +82,7 @@ td.n { white-space: nowrap; color: var(--muted); }
       <canvas id="face" width="96" height="96"></canvas>
       <div>
         <h2 id="p-name"></h2>
+        <p id="p-rar" style="margin:0 0 4px;font-weight:700"></p>
         <p class="sub" id="p-info"></p>
       </div>
     </div>
@@ -105,6 +108,10 @@ td.n { white-space: nowrap; color: var(--muted); }
 <script>
 (() => {
   const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
+  // The game's rarities (RARITY_NAME / RARITY_COLOR in js/systems/gacha.js, which this page doesn't load).
+  const RARITY = { 1: ['Common', '#9fb1c9'], 2: ['Uncommon', '#5fe08a'], 3: ['Rare', '#4fb4ff'], 4: ['Epic', '#c47bff'], 5: ['Legendary', '#ffcb3d'] };
+  const rar = p => RARITY[p.rarity] || RARITY[1];
+  const stars = p => '★'.repeat(p.rarity || 1);
   const SHOW = 60;
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -142,7 +149,7 @@ td.n { white-space: nowrap; color: var(--muted); }
       return MON.filter(p => p.dex === n).concat(MON.filter(p => p.dex !== n && String(p.dex).startsWith(num)));
     }
     const words = q.split(/\s+/);
-    const hit = (p, w) => p.name.toLowerCase().includes(w) || p.types.includes(w) ||
+    const hit = (p, w) => p.name.toLowerCase().includes(w) || p.types.includes(w) || rar(p)[0].toLowerCase() === w ||
       (w === 'mega' || w === 'primal') && hasMega(p.dex) || w === 'lab' && !!G.LAB_ANIMS[p.dex] ||
       (w === 'legendary' || w === 'legend') && p.leg;
     const found = MON.filter(p => words.every(w => hit(p, w)));
@@ -172,7 +179,7 @@ td.n { white-space: nowrap; color: var(--muted); }
     const all = search($('q').value);
     $('results').innerHTML = all.slice(0, SHOW).map(p =>
       `<button data-dex="${p.dex}"${current && current.dex === p.dex ? ' class="on"' : ''}><canvas width="48" height="48"></canvas>` +
-      `<span class="nm">${esc(p.name)}</span><span class="no">#${p.dex}` +
+      `<span class="nm" style="color:${rar(p)[1]}">${esc(p.name)}</span><span class="rar" style="color:${rar(p)[1]}">${stars(p)} ${rar(p)[0]}</span><span class="no">#${p.dex}` +
       `${hasMega(p.dex) ? '<span class="tag">MEGA</span>' : ''}${G.LAB_ANIMS[p.dex] ? '<span class="tag lab">LAB</span>' : ''}</span></button>`).join('');
     $('results').querySelectorAll('button').forEach(b => face(b.querySelector('canvas'), +b.dataset.dex, 48));
     $('more').textContent = !all.length ? 'No Pokémon matches that.' : all.length > SHOW ? `Showing ${SHOW} of ${all.length}. Type more to narrow it down.` : '';
@@ -183,7 +190,9 @@ td.n { white-space: nowrap; color: var(--muted); }
     current = p;
     $('results').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.dex === p.dex));
     $('pick').style.display = 'block';
-    $('p-name').textContent = `${p.name} #${p.dex}`;
+    $('p-name').innerHTML = `<span style="color:${rar(p)[1]}">${esc(p.name)}</span> #${p.dex}`;
+    $('p-rar').innerHTML = `<span class="stars">${stars(p)}</span> ${rar(p)[0]}`;
+    $('p-rar').style.color = rar(p)[1];
     $('p-info').textContent = p.types.map(t => t[0].toUpperCase() + t.slice(1)).join(' / ');
     face($('face'), p.dex, 96);
     const mega = hasMega(p.dex);
