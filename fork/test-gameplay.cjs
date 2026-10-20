@@ -160,6 +160,21 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(await page.evaluate(() => G.Game.state === 'resuming'), 'Esc on the pause screen also resumes through the countdown');
   if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'resume-countdown.png') }); }
   await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 5000 });
+  // Settings → Graphics → "Countdown after pausing" (pauseCount, fork) turns off only the pause's countdown.
+  await page.evaluate(() => document.getElementById('btn-settings').click());
+  await page.click('#set-tabs [data-t="gfx"]');
+  const pcRow = await page.$('#set-body .switch[data-k="pauseCount"]');
+  const pcText = pcRow && await page.evaluate(el => el.closest('.set-row').querySelector('b').textContent, pcRow);
+  if (pcRow) await pcRow.click();
+  await page.evaluate(() => document.getElementById('set-close').click());
+  check(!!pcRow && pcText === 'Countdown after pausing' && await page.evaluate(() => G.Settings.get('pauseCount') === false),
+    `Settings → Graphics has "${pcText}" (on by default) and clicking it turns it off`);
+  await page.evaluate(() => { if (G.Game.state !== 'paused') G.Game.togglePause(); });
+  await page.waitForTimeout(150);
+  await page.click('#btn-resume');
+  await page.waitForTimeout(80);
+  check(await page.evaluate(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-pause')), 'with it off, leaving the pause goes straight back to playing (no countdown)');
+  await page.evaluate(() => G.Settings.set('pauseCount', true));
 
   console.log('Enemy arrows');
   const enemies = await page.evaluate(async () => {
@@ -488,6 +503,20 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!!weak && weak.side === 'special' && wn === `Weaker for Gengar: only ${weak.pct} % damage (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
+  // The card box keeps its width whatever the cards say (#scr-levelup .box in css/style.css).
+  // It used to size itself to the longest description on one line: Hex's stretched it across
+  // the screen with the cards stuck at the left; short ones made it narrow.
+  const widths = await page.evaluate(() => {
+    const mk = (id, t) => { const d = G.Moves.BY_ID[id]; return { type: 'new', key: 'new:' + id, icon: 'move:' + id, color: '#888', tag: 'x', title: d.name, desc: t || d.desc, apply() {} }; };
+    const measure = (scr, show) => { show(); const box = document.querySelector(scr + ' .box'), c = box.querySelector('.cards');
+      const r = { box: box.getBoundingClientRect(), cards: c.getBoundingClientRect() }; G.UI.hide(scr.slice(1));
+      return { box: Math.round(r.box.width), cards: Math.round(r.cards.width), centred: Math.abs((r.cards.left + r.cards.right) / 2 - (r.box.left + r.box.right) / 2) < 2 }; };
+    const lvl = list => measure('#scr-levelup', () => G.RunUI.showLevelUp(8, list, () => {}));
+    return { vw: innerWidth, long: lvl([mk('substitute'), mk('hex'), mk('tackle')]), short: lvl([mk('tackle', 'Short.'), mk('ember', 'Short.'), mk('bite', 'Short.')]) };
+  });
+  check(widths.long.box === widths.short.box && widths.long.cards === widths.short.cards && widths.long.centred && widths.short.centred && widths.long.box < widths.vw * 0.7,
+    `the level-up box is the same width with Hex's long description and with short ones, cards centred (${JSON.stringify(widths)})`);
+
   // Crits: the number keeps its orange, and a small "Critical" label sits above it (fork:
   // G.FX.dmgText tag, Enemy.showHurt), so it isn't mistaken for a super-effective hit.
   console.log('Crit indicator');
@@ -533,14 +562,14 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     for (let i = 0; i < 3000; i++) if (G.LevelUp.offer(pl).some(c => c.rare)) none++;
     pl.moves = [atk, sd]; pl.slots = [[atk], [sd]]; pl.active = 0;
     let n = 0;
-    for (let i = 0; i < 6000; i++) if (G.LevelUp.offer(pl).some(c => c.rare)) n++;
+    for (let i = 0; i < 20000; i++) if (G.LevelUp.offer(pl).some(c => c.rare)) n++;
     G.RareCards.forceNext();
     window.__hand = G.LevelUp.offer(pl);
     G.RunUI.showLevelUp(pl.level, window.__hand, () => {});
-    return { none, n, last: window.__hand.findIndex(c => c.rare), len: window.__hand.length };
+    return { none, n, rate: G.RareCards.RATE, last: window.__hand.findIndex(c => c.rare), len: window.__hand.length };
   });
   check(rare.none === 0, `never offered without a stat-boosting move (${rare.none} of 3000 hands)`);
-  check(rare.n >= 15 && rare.n <= 85, `with one it is very rare: in ${rare.n} of 6000 hands (expected about 40, 1 in 150)`);
+  check(rare.n >= 15 && rare.n <= 70 && rare.rate === 1 / 500, `with one it is very rare: in ${rare.n} of 20000 hands (expected about 40, 1 in 500)`);
   check(rare.last === rare.len - 1, 'the admin menu\'s "Rare card next" puts it in the next hand, as the last card');
   // The purple look is in the fork's css/brand.css, which only the built pages link (fork/build.cjs).
   await page.addStyleTag({ url: BASE + '/css/brand.css' });
@@ -557,15 +586,19 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   // Swords Dance sits in slot 2 while slot 1 is active: before the card it never casts, after it
   // stacks up on its own and the active slot doesn't change.
   // (The card checks above froze the world with debugSpeed(0): it has to run for this.)
+  // No XP meanwhile: a real level-up in these 2.5 s froze the world on its cards and nothing
+  // could cast (the check failed about one run in four).
   const stacks = () => page.evaluate(() => { const pl = G.Game.player; pl.god = true; G.UI.hide('scr-levelup'); G.Game.debugSpeed(1);
-    return { n: pl.buffs.patk.n, active: pl.active }; });
+    if (window.__saved.xpMul == null) window.__saved.xpMul = pl.xpMul;
+    pl.xpMul = 0;
+    return { n: pl.buffs.patk.n, active: pl.active, st: G.Game.state }; });
   await stacks(); await page.waitForTimeout(2500);
   const pre = await stacks();
   await page.evaluate(() => window.__hand.find(c => c.rare).apply(G.Game.player));
   await page.waitForTimeout(2500);
   const post = await stacks();
   check(pre.n === 0 && post.n >= 2 && post.active === 0,
-    `picking it: Swords Dance in the other slot casts by itself (stacks ${pre.n} -> ${post.n}, active slot still ${post.active + 1})`);
+    `picking it: Swords Dance in the other slot casts by itself (stacks ${pre.n} -> ${post.n}, active slot still ${post.active + 1}, ${pre.st}/${post.st})`);
   const fin = await page.evaluate(() => {
     const pl = G.Game.player;
     G.RareCards.forceNext();
@@ -631,11 +664,11 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check([...rolled].every(d => ownedAll.includes(d)) && rolled.size >= 2, `"All": 12 rolls give only owned Pokémon, and vary (${[...rolled].join(', ')} of ${ownedAll.join(', ')})`);
   await page.evaluate(() => { G.Game.quit(); });
 
-  // ---------------- Mega Stones (js/fork/mega.js) ----------------
-  // A run with Gengar (one of the Megas with SpriteCollab sprites): a real rift, the
-  // legendary beaten, back on the map (after the bond and the countdown) its Mega Stone is
-  // offered; taken, Gengar Mega Evolves.
-  console.log('Mega Stones');
+  // ---------------- Mega Stones only in Lab mode (js/fork/mega.js) ----------------
+  // Mega Evolution is a Lab-mode feature (fork/LAB.md; the full Mega checks are in
+  // fork/test-lab.cjs). Here, with Lab off: no "can Mega Evolve" marks in the menu, a won rift
+  // never offers the stone (even past minute 5 on the luckiest roll), and holding one does nothing.
+  console.log('Mega Stones (not in normal runs)');
   // XP (the legendary's, enemies') opens the level-up cards: pick the first, as a player would,
   // until `cond` holds (or `ms` runs out).
   const playOn = (cond, ms = 30000) => page.evaluate(([cond, ms]) => new Promise(r => {
@@ -652,63 +685,31 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
       setTimeout(step, 150);
     })();
   }), [cond.toString(), ms]);
-  // Out of a run, "can Mega Evolve" shows (G.Mega.badge/chip/hint, js/ui/menu.js): the stone on
-  // Gengar's collection cell and a line in its detail saying how to get it, a chip on the menu's
-  // partner; nothing for Charmander.
   const prevPartner = await page.evaluate(() => { const s = G.DB.save, was = s.partner;
+    G.Settings.set('lab', false);
     s.owned[94] = s.owned[94] || { at: Date.now() }; s.partner = 94; G.Flow.goMenu(); return was; });
   await page.waitForSelector('#scr-menu', { state: 'visible' });
   await page.waitForTimeout(150);
-  const chipTxt = await page.evaluate(() => { const c = document.querySelector('#menu-partner-info .mega-chip'); return c && c.textContent.trim(); });
-  await page.click('#scr-menu [data-go="dex"]');
-  await page.waitForSelector('#scr-dex', { state: 'visible' });
-  const megaCell = async name => {
-    await page.fill('#dex-q', name);
-    await page.waitForTimeout(250);
-    const cell = page.locator('#dex-grid .cell', { hasText: name }).first();
-    const badge = await cell.locator('.mega-badge').count();
-    await cell.click();
-    await page.waitForTimeout(150);
-    const hint = await page.evaluate(() => { const h = document.querySelector('#dex-detail .mega-hint'); return h ? h.textContent.trim() : ''; });
-    return { badge, hint };
-  };
-  const mgG = await megaCell('Gengar'), mgC = await megaCell('Charmander');
-  await page.fill('#dex-q', '');
-  check(chipTxt === 'Mega' && mgG.badge === 1 && mgG.hint === 'Can Mega Evolve: win a rift with it and you’ll get its Mega Stone.',
-    `can Mega Evolve: chip on the partner ("${chipTxt}"), stone on Gengar's cell, detail says "${mgG.hint}"`);
-  check(mgC.badge === 0 && !mgC.hint, "nothing of the kind on Charmander (no Mega)");
+  const marks = await page.evaluate(() => ({ chip: !!document.querySelector('#menu-partner-info .mega-chip'),
+    html: G.Mega.badge(94) + G.Mega.chip(94) + G.Mega.hint(94) }));
+  check(!marks.chip && marks.html === '', 'Lab off: no "can Mega Evolve" chip, badge or hint for Gengar');
   await page.evaluate(p => { G.DB.save.partner = p; }, prevPartner);
 
   await page.evaluate(() => { G.Flow.goMenu(); G.Game.startRun(null, { dex: 94, shiny: false }); });
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player.dex === 94, null, { timeout: 15000 });
-  const mg0 = await page.evaluate(() => { const pl = G.Game.player; pl.god = true; G.Game.debugSpeed(1);
-    return { can94: G.Mega.can(94), can4: G.Mega.can(4), atk: pl.atkMul, spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, types: pl.mon.types.join() }; });
-  check(mg0.can94 && !mg0.can4, "Gengar can Mega Evolve (it has Mega sprites); Charmander can't");
-  await page.evaluate(() => G.Rift.enterRequest());
-  await page.waitForFunction(() => G.Rift.inArena && G.Rift.arena && G.EnemyMgr.get(G.Rift.arena.bossId), null, { timeout: 15000 });
-  check(await page.evaluate(() => G.Game.player.item !== 'megastone'), 'no Mega Stone before beating the legendary');
-  await page.evaluate(() => G.EnemyMgr.get(G.Rift.arena.bossId).hurt(1e9, '#fff', 0, 0, 0, null));
-  const got = await playOn(() => !G.Rift.inArena && G.Game.player.item === 'megastone');
-  const mg1 = await page.evaluate(() => { const pl = G.Game.player;
-    return { key: pl.anim.dex, atk: pl.atkMul, spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, types: pl.mon.types.join() }; });
-  const near = (a, b) => Math.abs(a - b) < 1e-6;
-  check(got && mg1.key === 'm94', `beating the rift's legendary gives Gengar its Mega Stone and it Mega Evolves (sprite ${mg1.key})`);
-  if (SHOTS) {
-    await page.waitForTimeout(2500);                 // past the flash of coming back from the rift
-    await page.screenshot({ path: path.join(SHOTS, 'mega-gengar.png') });
-  }
-  const mg2 = await page.evaluate(() => { const pl = G.Game.player; pl.equip('quickclaw');
-    const r = { key: pl.anim.dex, atk: pl.atkMul / 1 , spd: pl.spdMul, red: pl.dmgReduce, maxHp: pl.maxHp, mega: !!pl.mega }; pl.equip(null);
-    r.atkAfter = pl.atkMul; return r; });
-  // (Compared with Gengar right after the stone comes off: the level-up cards picked on the way changed its stats.)
-  check(mg2.key === 94 && !mg2.mega, `swapping the stone for another item turns it back into Gengar (sprite ${mg2.key})`);
-  check(near(mg1.atk, mg2.atkAfter * 1.25) && near(mg1.spd, mg2.spd * 1.1) && near(mg1.red, mg2.red + 0.08) && mg1.maxHp === mg2.maxHp + Math.round(mg2.maxHp * 0.15) && mg1.types === mg0.types,
-    `Mega Gengar: +25 % damage, +10 % speed, +8 % defense, +15 % HP (${mg2.maxHp} -> ${mg1.maxHp}), same types (${mg1.types})`);
-  const zard = await page.evaluate(() => { const p = new G.Player(G.DEX_BY[6]); p.equip('megastone');
-    const on = { key: p.anim.dex, types: p.mon.types.join() }; p.equip(null);
-    return { on, off: p.mon.types.join(), dex: G.DEX_BY[6].types.join() }; });
-  check(zard.on.key === 'm6' && zard.on.types === 'fire,dragon' && zard.off === zard.dex && zard.dex === 'fire,flying',
-    `Mega Charizard X is Fire/Dragon while it holds the stone, Fire/Flying again without it (${JSON.stringify(zard)})`);
+  const noMega = await page.evaluate(async () => {
+    const pl = G.Game.player; pl.god = true; G.Game.debugSpeed(1);
+    const rnd = Math.random; Math.random = () => 0;
+    try { G.Game.debugTime(400); G.Mega.riftWon(pl); } finally { Math.random = rnd; }
+    await new Promise(r => setTimeout(r, 800));
+    const offered = G.UI.isOpen('scr-item') || pl.item === 'megastone';
+    const atk = pl.atkMul; pl.equip('megastone');
+    const r = { offered, lab: G.Lab.active, mega: !!pl.mega, key: pl.anim.dex, atk: pl.atkMul === atk };
+    pl.equip(null);
+    return r;
+  });
+  check(!noMega.lab && !noMega.offered, 'a normal run: a rift won at 6:40 on the luckiest roll offers no Mega Stone');
+  check(!noMega.mega && noMega.key === 94 && noMega.atk, 'holding a Mega Stone in a normal run does nothing (still Gengar, same damage)');
 
   // ---------------- Countdown after a bond or an item choice (solo) ----------------
   console.log('Countdown after choosing');
@@ -729,6 +730,30 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.waitForTimeout(800);
   await page.keyboard.press('Digit2');
   await resumed('choosing an item');
+
+  // After a rift: the purple flash of coming back fades while you pick the bond (it used to stay
+  // on screen until the countdown ended), and with two bonds the second opens right away, with
+  // one countdown at the end (it used to count down 3 s between them). js/game.js bondBusy.
+  await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
+  const corner = () => page.evaluate(() => { const x = document.getElementById('game').getContext('2d').getImageData(4, 4, 1, 1).data; return [x[0], x[1], x[2]]; });
+  const purple = p => p[0] > 110 && p[2] > 160 && p[2] > p[1] + 25;
+  // (Two loose moves, so both bonds have something to join.)
+  await page.evaluate(() => { const pl = G.Game.player; pl.maxMoves = 8;
+    for (const id of ['bite', 'ember', 'water-gun', 'vine-whip']) if (pl.slots.filter(g => g.length === 1).length < 2) pl.addMove(id);
+    pl.bonds = 2; G.Game.flash('#c9a6ff', 0.8); G.Game.offerBond(); });
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));   // drawn
+  const flashAt = await corner();
+  await page.waitForTimeout(1500);
+  const flashPick = await corner();
+  check(purple(flashAt) && !purple(flashPick), `the rift's flash fades while the bond is open (${flashAt} → ${flashPick})`);
+  for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond') && G.Game.player.bonds === 2); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
+  await page.waitForTimeout(300);
+  const between = await page.evaluate(() => ({ st: G.Game.state, open: G.UI.isOpen('scr-bond'), bonds: G.Game.player.bonds }));
+  check(between.st === 'choice' && between.open && between.bonds === 1, `with a second bond, it opens at once, no countdown in between (${JSON.stringify(between)})`);
+  await page.waitForTimeout(800);
+  for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
+  await resumed('the second bond');
+  check(await page.evaluate(() => G.Game.player.bonds === 0), 'both bonds used');
 
   // ---------------- Stat moves evolve (js/fork/buff-evos.js) ----------------
   // Swords Dance at its top level evolves with no other condition into Belly Drum, which
@@ -765,6 +790,65 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(evo2.passive && evo2.stacks === evo.stacks + 1 && evo2.n >= 2 && evo2.active !== evo2.own,
     `evolved (${evo2.name}): it stacks on its own from slot ${evo2.own + 1} while slot ${evo2.active + 1} is active (${evo2.n} stacks, max ${evo2.stacks}) ` + JSON.stringify({ seen: evo2.seen, cd: evo2.cd, t: evo2.t, slots: evo2.slots }));
   await page.evaluate(() => { G.Game.debugSpeed(1); G.Game.quit(); });
+
+  // ---------------- Markers (js/fork/markers.js) ----------------
+  // On a big screen the arrows to what you can't see sit around your Pokémon (at most RX × RY px
+  // away, in the target's exact direction), not on the far edges; something new off-screen pulls
+  // them right next to it for a moment; F gathers them while held (or toggles, in Settings).
+  console.log('Markers');
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.evaluate(() => { G.Settings.set('markerKey', 'hold'); G.Flow.goMenu(); G.Game.startRun(null, { dex: 4, shiny: false }); });
+  await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Game.player.dex === 4, null, { timeout: 15000 });
+  await page.evaluate(() => { const pl = G.Game.player; pl.god = true; pl.xpMul = 0;
+    // What G.Markers.at hands out, per key, to read where the markers are drawn.
+    window.__mk = {}; const at = G.Markers.at;
+    G.Markers.at = function (key) { const r = at.apply(this, arguments); if (r) window.__mk[key] = r; return r; }; });
+  await page.waitForTimeout(2800);                                   // past the start, when nothing counts as new
+  const mkPos = () => page.evaluate(() => {
+    const pl = G.Game.player, cam = G.Camera, e = G.EnemyMgr.shinies()[0], m = e && window.__mk['shiny:' + e.id];
+    if (!m) return null;
+    const cx = (pl.x - cam.left()) * cam.scale, cy = (pl.y - pl.bodyH * 0.5 - cam.top()) * cam.scale;
+    const ta = Math.atan2((e.y - cam.top()) * cam.scale - cy, (e.x - cam.left()) * cam.scale - cx);
+    return { d: Math.round(Math.hypot(m.x - cx, m.y - cy)), da: Math.abs(Math.atan2(m.y - cy, m.x - cx) - ta), x: Math.round(m.x), y: Math.round(m.y), k: G.Markers.focusK };
+  });
+  await page.evaluate(() => {
+    const pl = G.Game.player, sc = G.Enemies.scale(G.Game.st.time);
+    const e = new G.Enemy(G.U.pick(G.Enemies.bagAt(G.Game.st.time)), pl.x + 2600, pl.y + 900, Object.assign({}, sc, { hp: sc.hp * 1e4 }), false);
+    e.makeShiny(); e.spd = 0; G.EnemyMgr.add(e);
+  });
+  await page.waitForTimeout(400);
+  const near = await mkPos();
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'markers-close.png') });
+  check(!!near && near.k > 0.9 && near.d <= 125 && near.da < 0.02, `a shiny appears off-screen: the markers gather right around your Pokémon (${JSON.stringify(near)})`);
+  await page.waitForTimeout(3200);
+  const far = await mkPos();
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'markers.png') });
+  check(!!far && far.k === 0 && far.d > 200 && far.d <= 445 && far.da < 0.02 && far.x < 1920 - 300,
+    `then back out, but around your Pokémon (at most 440 px, not on the edge of a 1920 px screen) and pointing straight at it (${JSON.stringify(far)})`);
+  await page.keyboard.down('KeyF');
+  await page.waitForTimeout(400);
+  const fHeld = await mkPos();
+  await page.keyboard.up('KeyF');
+  await page.waitForTimeout(900);
+  const let_ = await mkPos();
+  check(fHeld.k > 0.9 && fHeld.d <= 125 && let_.k === 0, `holding F gathers them (${fHeld.d} px), letting go sends them back (${let_.d} px)`);
+  await page.evaluate(() => G.Settings.set('markerKey', 'toggle'));
+  await page.keyboard.press('KeyF');
+  await page.waitForTimeout(1500);
+  const tog = await mkPos();
+  await page.keyboard.press('KeyF');
+  await page.waitForTimeout(900);
+  const tog2 = await mkPos();
+  check(tog.k > 0.9 && tog2.k === 0, `with "Press to switch", F gathers them until pressed again (${tog.k.toFixed(2)} → ${tog2.k.toFixed(2)})`);
+  await page.evaluate(() => { G.Settings.set('markerKey', 'hold'); G.Game.quit(); });
+  await page.setViewportSize({ width: vw, height: vh });
+  await page.evaluate(() => G.Flow.goMenu());
+  await page.evaluate(() => document.getElementById('btn-settings').click());
+  await page.click('#set-tabs [data-t="ctl"]');
+  const mkRow = await page.evaluate(() => { const c = document.querySelectorAll('#set-body .chip[data-k="markerKey"]');
+    return { n: c.length, on: [...c].findIndex(b => b.classList.contains('on')), labels: [...c].map(b => b.textContent) }; });
+  await page.evaluate(() => document.getElementById('set-close').click());
+  check(mkRow.n === 2 && mkRow.on === 0 && mkRow.labels.join() === 'Hold,Press to switch', `Settings → Controls: the F key's "Hold" / "Press to switch" choice (${JSON.stringify(mkRow)})`);
 
   check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();

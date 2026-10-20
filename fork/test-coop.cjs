@@ -16,7 +16,8 @@
 //   2. Spectating while down (js/game.js spectate, HUD): the camera follows an alive teammate,
 //      switches between them, and the host sends a downed guest the enemies near them.
 //   3. Bonds (js/systems/rift.js finish, coop 'af'): after a legendary, every player's bond
-//      screen opens at the same time and the game resumes once all have picked.
+//      screen opens at the same time and the game resumes once all have picked. With two bonds
+//      for one player, nobody counts down until that player's second bond is picked too.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -114,7 +115,17 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await host.evaluate(() => { G.Game.player.x += 2200; });
     await g2.evaluate(() => { const pl = G.Game.player; pl.x -= 1200; pl.y += 300; });
     await host.waitForTimeout(800);
+    // The others hear of it (js/fork/markers.js): "{name} is down!" on screen, and the markers
+    // gather around their Pokémon for a moment (g1's body is off their screens).
+    const spy = p => p.evaluate(() => { window.__drawn = []; const o = G.I18n.rawCanvas;
+      G.I18n.rawCanvas = function (c, k, t) { if (k === 'fillText') window.__drawn.push(String(t)); return o.apply(this, arguments); }; });
+    await spy(host); await spy(g2);
     await down(g1);
+    for (const p of [host, g2]) {
+      const ok = await settle(p, n => G.Markers.notes.includes(n) && G.Markers.focusK > 0.5 && window.__drawn.includes(n + ' is down!'), g1.name, 4000);
+      check(ok, `${p.name} gets "${g1.name} is down!" on screen and the markers gather round`);
+    }
+    if (process.env.SHOTS) await host.screenshot({ path: require('path').join(process.env.SHOTS, 'mate-down.png') });
     await settle(g1, () => G.Game.watching);
     const where = (p, uid) => p.evaluate(u => { const m = G.Coop.mate(u); return { cam: [G.Camera.x, G.Camera.y], at: m ? [m.pl.x, m.pl.y] : null,
       watching: G.Game.watching && G.Game.watching.uid }; }, uid);
@@ -200,6 +211,29 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
     const after = await Promise.all(ALL.map(p => p.evaluate(() => ({ st: G.Game.state, fused: G.Game.player.slots.some(g => g.length > 1), bonds: G.Game.player.bonds }))));
     check(after.every(a => a.st === 'playing' && a.fused && a.bonds === 0), 'after all pick, everyone is fused and playing again: ' + JSON.stringify(after));
+
+    // Two bonds for g2, one for g1 (js/game.js bondBusy): nobody counts down until g2's second
+    // bond is picked too. It used to count down for everyone between g2's two bonds.
+    console.log('Bonds: countdown only once every screen is clear');
+    for (const p of [g1, g2]) await p.evaluate(two => { const pl = G.Game.player; pl.maxMoves = 8;
+      for (const id of ['bite', 'ember', 'water-gun', 'vine-whip']) if (pl.slots.filter(g => g.length === 1).length < 2) pl.addMove(id);
+      pl.bonds = two ? 2 : 1; }, p === g2);
+    const counted = () => Promise.all(ALL.map(p => p.evaluate(() => { window.__counted = false; window.__stopC = false;
+      (function w() { if (G.Game.state === 'resuming') window.__counted = true; if (!window.__stopC) requestAnimationFrame(w); })(); })));
+    await counted();
+    check((await Promise.all([g1, g2].map(p => settle(p, () => G.UI.isOpen('scr-bond'), undefined, 5000)))).every(Boolean), 'g1 and g2 get their bond screens');
+    await host.waitForTimeout(1200);
+    await pick(g1); await pick(g2);
+    await host.waitForTimeout(1000);
+    const between2 = await Promise.all(ALL.map(p => p.evaluate(() => ({ st: G.Game.state, counted: window.__counted }))));
+    const g2open = await g2.evaluate(() => ({ open: G.UI.isOpen('scr-bond'), bonds: G.Game.player.bonds }));
+    check(g2open.open && g2open.bonds === 1 && between2.every(b => !b.counted && b.st !== 'playing'),
+      `g2's second bond opens at once and nobody has counted down yet (${JSON.stringify(between2)}, g2 ${JSON.stringify(g2open)})`);
+    await g2.waitForTimeout(800);
+    await pick(g2);
+    check((await Promise.all(ALL.map(p => settle(p, () => window.__counted, undefined, 4000)))).every(Boolean), 'after g2\'s last bond, the countdown runs for everyone');
+    await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
+    await Promise.all(ALL.map(p => p.evaluate(() => { window.__stopC = true; })));
 
     // ---------------- Level-up: countdown only after a long pick ----------------
     // Everyone's cards close together; if choosing took over 10 s, a 3 s countdown follows.

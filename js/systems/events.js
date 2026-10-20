@@ -302,11 +302,11 @@ G.Events = (() => {
     const cam = G.Camera;
     if (lost) {
       const L = lost, to = L.state === 'wait' ? [L.x, L.y - 10] : [L.tx, L.ty];
-      edgeArrow(ctx, w, h, cam, to[0], to[1], '#7dffb0', (L.state === 'wait' ? L.name : 'Marca') + ' · ' +
+      edgeArrow(ctx, w, h, cam, 'lost:' + L.state, to[0], to[1], '#7dffb0', (L.state === 'wait' ? L.name : 'Marca') + ' · ' +
                 Math.round(G.U.dist(pl.x, pl.y, to[0], to[1]) / 32) + ' m', F);
     }
     for (const e of G.EnemyMgr.all()) {
-      if (e.behavior === 'thief' && !e.dead) edgeArrow(ctx, w, h, cam, e.x, e.y - 10, '#ffd23f', e.name, F);
+      if (e.behavior === 'thief' && !e.dead) edgeArrow(ctx, w, h, cam, 'thief:' + e.id, e.x, e.y - 10, '#ffd23f', e.name, F);
     }
     if (cur && cur.id !== 'lost') {
       const left = Math.max(0, Math.ceil(cur.dur - cur.t));
@@ -321,14 +321,16 @@ G.Events = (() => {
     }
   }
 
-  function edgeArrow(ctx, w, h, cam, x, y, col, label, F) {
+  function edgeArrow(ctx, w, h, cam, key, x, y, col, label, F) {
     const sx = (x - cam.left()) * cam.scale, sy = (y - cam.top()) * cam.scale;
-    if (sx > 0 && sx < w && sy > 0 && sy < h) return;
-    const M = 44, ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 70, h - M - 80);
-    const a = Math.atan2(sy - ey, sx - ex), ca = Math.cos(a), sa = Math.sin(a);
+    // Fork: alrededor de tu Pokémon y con su disco (js/fork/markers.js).
+    const mk = G.Markers.at(key, sx, sy, w, h);
+    if (!mk) return;
+    const a = mk.a, ca = Math.cos(a), sa = Math.sin(a);
     const pulse = 0.65 + Math.sin(performance.now() / 160) * 0.35;
     ctx.save();
-    ctx.translate(ex, ey);
+    ctx.translate(mk.x, mk.y); ctx.scale(mk.k, mk.k);
+    G.Markers.halo(ctx, col, mk);
     ctx.globalAlpha = pulse;
     ctx.beginPath();
     ctx.moveTo(ca * 30, sa * 30);

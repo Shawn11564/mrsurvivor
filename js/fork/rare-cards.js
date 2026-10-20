@@ -9,7 +9,7 @@
  * Prueba: fork/test-gameplay.cjs.
  */
 G.RareCards = (() => {
-  const RATE = 1 / 150;
+  const RATE = 1 / 500;
   const TITLE = 'Segunda naturaleza', TAG = 'Muy rara';
   const DESC = 'Tus movimientos que suben stats se lanzan solos desde cualquier hueco, como si siempre estuvieran activos: ya no hace falta cambiar a ellos.';
   const YOURS = 'Ahora:';

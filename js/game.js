@@ -90,7 +90,20 @@ G.Game = (() => {
    */
   const RESUME_S = 3;
   let resumeT = 0;
-  function resumeRun() { G.UI.hideAll(); countIn(); }
+  // Fork: Ajustes → Gráficos → "Cuenta atrás al quitar la pausa" (pauseCount) la quita, sólo la de la pausa.
+  function resumeRun() { G.UI.hideAll(); if (G.Settings.get('pauseCount') === false) state = 'playing'; else countIn(); }
+  /**
+   * Fork: ¿queda en tu pantalla algo de la grieta o de un vínculo? El fogonazo de la vuelta, la
+   * pantalla del vínculo o un vínculo que aún no se ha podido abrir (detrás de las cartas de nivel,
+   * o el segundo de dos). Mientras lo haya la cuenta atrás no corre y, en grupo, cuentas como
+   * "eligiendo" (choosing): la de todos empieza cuando el último tiene la pantalla despejada.
+   * Prueba: fork/test-gameplay.cjs (solitario) y fork/test-coop.cjs (grupo).
+   */
+  function bondBusy() {
+    if (!pl || pl.dead || state === 'over' || state === 'ui') return false;
+    return G.UI.isOpen('scr-bond') || (state !== 'playing' && flashT > 0)
+      || (pl.bonds > 0 && !G.Rift.inArena && !G.UI.isOpen('scr-pause') && !!pl.bondOptions());
+  }
   /**
    * La misma cuenta atrás sin cerrar pantallas (fork): también al terminar de elegir un
    * vínculo o un objeto (en grupo, cuando el último termina) y, en grupo, al cerrar unas
@@ -283,8 +296,8 @@ G.Game = (() => {
         afterLevelUp();
       }
     },
-    /** ¿Estás eligiendo algo que para la partida (objeto o vínculo)? */
-    choosing() { return state === 'choice'; },
+    /** ¿Estás eligiendo algo que para la partida (objeto o vínculo), o te queda algo del vínculo en pantalla? */
+    choosing() { return state === 'choice' || bondBusy(); },
     inLevelUp() { return state === 'levelup'; },
     shiny(dex) { G.onShinyCaught({ dex, name: (G.DEX_BY[dex] || {}).name || '' }); },
     over(d) {
@@ -462,7 +475,7 @@ G.Game = (() => {
    * @param quiet  no avisar si todavía no se puede
    */
   function offerBond(quiet = false) {
-    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.Rift.inArena) return;
+    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held' && state !== 'resuming') || G.Rift.inArena) return;
     if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
     const opt = pl.bondOptions();
     if (!opt) {
@@ -480,7 +493,8 @@ G.Game = (() => {
       G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
       G.Spawner.say('¡Vínculo! ' + group.length + ' movimientos a la vez', 2.6, true);
       if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
-      if (G.Coop.active) G.Coop.holdEnd();
+      // (Con otro vínculo por abrir sigues "eligiendo": lo suelta G.Coop.holdSync en frame.)
+      if (G.Coop.active && !bondBusy()) G.Coop.holdEnd();
     });
   }
 
@@ -679,7 +693,12 @@ G.Game = (() => {
     G.Pad.poll(real);
     handleKeys();
 
-    if (state === 'resuming' && (resumeT -= real) <= 0) state = 'playing';
+    // El fogonazo se va también con el juego parado (antes seguía en pantalla mientras elegías el
+    // vínculo y durante la cuenta atrás). La cuenta atrás no corre mientras quede algo del vínculo.
+    if (flashT > 0) flashT -= Math.min(1 / 30, real);
+    if ((state === 'held' || state === 'resuming') && pl && pl.bonds > 0) offerBond(true);
+    if (G.Coop.active && pl && state !== 'ui' && state !== 'over') G.Coop.holdSync(state === 'choice' || bondBusy());
+    if (state === 'resuming' && !bondBusy() && (resumeT -= real) <= 0) state = 'playing';
     if (state === 'playing') update(dt);
     else if (pl && state !== 'ui') { G.FX.update(dt * 0.25); pl.anim.update(dt * 0.25); }
     // La red se atiende siempre (también con las cartas de nivel abiertas).
@@ -693,7 +712,6 @@ G.Game = (() => {
 
   function update(dt) {
     const coop = G.Coop.active;
-    if (flashT > 0) flashT -= dt;
     // La Sentencia de Arceus: mientras dura la animación, todo lo demás se para.
     if (G.Judgment.cinematic) {
       G.Judgment.cineTick(dt);

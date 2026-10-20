@@ -38,3 +38,18 @@ p.fork-credit { font-size: 0.9em; }
   font-size: 12px; font-weight: 800; color: #d9efff; background: rgba(79,180,255,.18); border: 1px solid rgba(79,180,255,.55); }
 .mega-hint { color: #9fd3ff; font-size: 13px; margin: 2px 0 6px; }
 .mega-hint img, .mega-chip img { vertical-align: -2px; }
+
+/* Lab mode (js/fork/lab/lab.js, fork/LAB.md): the "LAB" tag, on the HUD during a Lab run, in
+   the co-op lobby, the pause screen and the run summary. Teal, so it doesn't read as a reward. */
+.lab-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; vertical-align: middle;
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #c9fff4; background: rgba(46,196,170,.22); border: 1px solid rgba(46,196,170,.7); }
+.lab-hud { position: fixed; left: 50%; top: 6px; transform: translateX(-50%); z-index: 5; pointer-events: none; letter-spacing: .03em; }
+.lab-note { color: #a8eee0; }
+.lab-pause { margin: 4px 0 10px; padding: 6px 8px; border: 1px solid rgba(46,196,170,.45); border-radius: 8px; background: rgba(46,196,170,.08); }
+.lab-pause small { color: var(--muted); }
+.lab-pool { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.lab-pool small { margin-right: 4px; }
+.lab-over { grid-column: 1 / -1; text-align: center; color: #a8eee0; font-size: 13px; margin-top: 4px; }
+/* Signature moves in the pause list (gold ring), and the extra lines (evolution, candies, shiny). */
+.lab-pool .lab-sig { border-radius: 50%; box-shadow: 0 0 0 2px #ffd23f; }
+.lab-more { margin-top: 3px; }

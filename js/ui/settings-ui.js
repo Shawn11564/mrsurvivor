@@ -87,11 +87,13 @@ G.SettingsUI = (() => {
         + toggle('dmgNumbers', 'Números de daño', 'Los números que salen al golpear y al recibir daño.')
         + toggle('calm', 'Menos sacudidas y destellos', 'La cámara tiembla menos y los fogonazos son suaves.')
         + toggle('fps', 'Mostrar FPS', 'Fotogramas por segundo, en la esquina de abajo.')
+        + toggle('pauseCount', 'Cuenta atrás al quitar la pausa', 'Al volver de la pausa, 3 segundos con todo quieto antes de seguir. Las demás cuentas atrás (vínculos, objetos) no cambian.')
         + `<div class="set-row"><div class="grow"><b>Tamaño de los iconos</b><small>Los ataques y el objeto de abajo, durante la partida.</small></div></div>`
         + choice('hudSize', [[0.8, 'Pequeño'], [1, 'Mediano'], [1.3, 'Grande']])
         + (canFull() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>Sin barras del navegador.</small></div>
              <button class="btn small" id="set-full">${isFull() ? 'Salir' : 'Activar'}</button></div>`
-           : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '');
+           : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '')
+        + (G.Lab ? G.Lab.settingsRow(toggle, section) : '');          // modo Lab del fork (js/fork/lab/lab.js)
     } else if (tab === 'ctl') {
       const pn = G.Pad.name;
       box.innerHTML = section('Con mando', pn
@@ -121,7 +123,8 @@ G.SettingsUI = (() => {
              <div><kbd>Q</kbd> / <kbd>E</kbd></div><span>ataque anterior / siguiente</span>
              <div><kbd>Esc</kbd> o <kbd>P</kbd></div><span>pausa</span>
              <div><kbd>1</kbd>–<kbd>3</kbd></div><span>elegir carta al subir de nivel</span>
-           </div>`;
+           </div>`
+        + (G.Markers ? G.Markers.settingsRow(choice) : '');           // fork: acercar marcadores (js/fork/markers.js)
     } else if (tab === 'a11y') {
       box.innerHTML = section('Apuntado')
         + toggle('aimManual', 'Apuntar a mano', 'Tus ataques van hacia el ratón (o hacia donde empujes el stick derecho del mando) en vez de al enemigo más cercano. Si sueltas el stick y no mueves el ratón, vuelve a apuntar solo. La cadena y los meteoros siguen buscando a los enemigos solos.');

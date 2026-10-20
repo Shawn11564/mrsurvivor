@@ -18,6 +18,9 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `.gitattributes` | generated files are `merge=ours`, so merges don't conflict on them |
 | `js/core/firebase-config.js` | the one upstream file we edit (our Firebase project) |
 | `fork/fetch-megas.py` | downloads the Mega/Primal sprites from SpriteCollab into `assets/pokemon/m{dex}/`, writes `js/fork/mega-sprites.js` and `CREDITS-MEGAS.md` (rerun it to pick up new Megas) |
+| `fork/fetch-lab.cjs` | downloads PokeAPI's learnsets/abilities/evolutions and SpriteCollab's animation list into `tools/cache/lab/`, writes `js/fork/lab/lab-data.js` for Lab mode (rerun it when upstream adds moves) |
+| `fork/fetch-lab-anims.py` | downloads the extra PMD animations Lab mode's signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
+| `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (Lab mode, phase 8) |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -36,6 +39,17 @@ Never run `node tools/build.js` directly: it writes an unbranded `index.html` an
 Play `index.html` (the branded build). `dev.html` is upstream's raw source page and still
 says PokéSurvivor.
 
+## Lab mode
+
+Settings → Graphics → Experimental → **Lab mode** tries moves and abilities still in testing:
+each Pokémon gets the moves it learns in the games and one of its abilities, new kinds of moves
+(Fly, Double-Edge, Protect, Hypnosis, Rain Dance, Surf, Metronome...), signature moves for 70
+lines, evolving during the run, the games' items for weak Pokémon, candies from duplicates, shiny
+move colours, and **Mega Evolution** (Lab only). In co-op the host's setting decides. Lab runs
+keep coins, tickets and shinies, but don't count for leaderboards, missions, achievements or
+records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md). The code is in
+`js/fork/lab/`; `node fork/balance-lab.cjs` compares every move's damage.
+
 ## When a sync stops
 
 - **Conflict:** you and upstream edited the same lines of a source file. Fix those
@@ -50,6 +64,9 @@ says PokéSurvivor.
 that the merge has no conflicts, upstream's change lands, and the branding and credit
 survive. Run it after changing anything in `fork/`.
 
+`node fork/test-lab.cjs` and `node fork/test-lab-coop.cjs` (the co-op one also needs the
+Firebase emulator) check Lab mode: see `fork/LAB.md`.
+
 `node fork/test-gameplay.cjs` (with the server running) plays the game in headless Edge:
 - the Power sort in the collection (`js/ui/menu.js`)
 - the type-matchup arrows over enemies (`typeMark` in `js/entities/enemy.js`, arrows in
@@ -61,7 +78,12 @@ survive. Run it after changing anything in `fork/`.
   wording of both card notes: "Good for X: boosts its special moves…" and, for an attack on
   the weaker side, "Weaker for X: only N % damage (it's a special attacker)" (`fitNote`)
 - the 3 s "Resuming…" countdown after the pause, with the world still frozen; Esc during it
-  goes back to the pause (`resumeRun`/`drawResume` in `js/game.js`)
+  goes back to the pause (`resumeRun`/`drawResume` in `js/game.js`); Settings → Graphics →
+  "Countdown after pausing" (`pauseCount`, texts in `js/fork/settings-text.js`) turns off only
+  that one
+- the level-up box keeping its width whatever the cards say (`#scr-levelup .box` in
+  `css/style.css`): it used to size itself to the longest description on one line, so Hex
+  stretched it across the screen
 - the Upgrades screen opening on your current partner (`openUpgrades` in `js/ui/menu.js`)
 - the random run under the partner card: only owned Pokémon at or above the chosen rarity,
   partner unchanged (`playRandom`/`renderRandom` in `js/ui/menu.js`, `pick` in `G.Game.startRun`)
@@ -73,19 +95,22 @@ survive. Run it after changing anything in `fork/`.
 - the small "Critical" label over a crit's damage number (`tag` in `G.FX.dmgText`, set in
   `Enemy.showHurt`), so a crit isn't mistaken for a super-effective hit; burn and poison ticks
   never get it
-- the very rare "Second Nature" level-up card (`js/fork/rare-cards.js`, about 1 hand in 150, only
+- the very rare "Second Nature" level-up card (`js/fork/rare-cards.js`, about 1 hand in 500, only
   if you have a stat-boosting move, once per run): those moves (Swords Dance, Nasty Plot,
   Agility...) cast on their own from any slot, as if always active (`pl.passiveBuffs` in
   `Combat.tick`; the HUD stops asking you to switch to them). Purple via `.card.rare` in
   `css/brand.css`
-- Mega Stones (`js/fork/mega.js`): a real rift won with Gengar offers its Mega Stone (a held
-  item, from `won()` in `js/systems/rift.js` through `G.Game.offerItem`); holding it, Gengar
-  Mega Evolves (sprite `m94`, +25 % damage, +10 % speed, +8 % defense, +15 % HP), and taking it
-  off reverts it. Mega Charizard X turns Fire/Dragon only while holding it
-- "can Mega Evolve" out of a run (`badge`/`chip`/`hint` in `js/fork/mega.js`, `js/ui/menu.js`):
-  the stone on Gengar's collection cell, a line in its detail saying how to get it, a chip on
-  the menu's partner; nothing for Charmander
-- the 3 s countdown also after picking a bond or an item (`countIn` in `js/game.js`)
+- no Mega Evolution outside Lab mode (`js/fork/mega.js`; the Mega checks are in
+  `fork/test-lab.cjs`): with Lab off, no "can Mega Evolve" marks, a won rift never offers the
+  stone and holding one does nothing
+- the 3 s countdown also after picking a bond or an item (`countIn` in `js/game.js`); after a
+  rift, the purple flash fades while you pick (it used to stay on screen through the
+  countdown) and a second bond opens at once, with one countdown at the end (`bondBusy`)
+- the markers to what you can't see (`js/fork/markers.js`, used by `js/ui/hud.js` and
+  `js/systems/events.js`), on a 1920×1080 window: on an ellipse around your Pokémon (at most
+  440 × 300 px, pointing straight at the target) instead of the far edges; something new off
+  screen (a shiny here) pulls them all next to your Pokémon for 2 s; F (Y on a controller) does
+  the same while held, or toggles it with Settings → Controls → "Press to switch" (`markerKey`)
 - stat moves evolving at their top level with no stat card needed (Swords Dance → Belly Drum,
   `EVO`/`EVO_MODS.buff` in `js/data/moves.js`, texts in `js/fork/buff-evos.js`): evolved, they
   cast on their own from any slot (`m.passive` in `Combat.tick`)
@@ -129,7 +154,10 @@ real project is touched, and the real security rules. It checks:
   `js/net/coop.js`)
 - bonds opening for everyone at once (the host-only arena finish, `'af'`/`ra`, in
   `js/systems/rift.js`), and the 3 s countdown for everyone once the last one has picked
-  (`hold` in `js/game.js`)
+  (`hold` in `js/game.js`); with two bonds for one player, nobody counts down until that
+  player's second is picked too (`bondBusy`/`choosing`, `G.Coop.holdSync`)
+- "{name} is down!" on the others' screens when a teammate falls, with the markers gathering
+  round (`js/fork/markers.js`)
 - level-up cards: straight back to playing when picked within 10 s, the countdown for everyone
   when choosing took longer (`LONG_PICK`, `resume` in `js/game.js`)
 - the end-of-run team summary and per-move breakdown (`js/fork/run-stats.js`)
@@ -149,13 +177,17 @@ in a three-player party where the admin is a guest, so every action goes admin �
   touching them doesn't hurt), disco (colours, spotlights, confetti, everyone dances), lights out,
   earthquake, an invasion (every enemy looks like one Pokémon), Thanos snap and a piñata. Drawn
   through `G.Admin.beforeDraw`/`drawScreen` in `render()` (`js/game.js`)
+- toggles: with "Until I turn it off" (the default), a lasting effect has no end
+  (`G.Admin.ends()` gives `Infinity`); its button stays lit while it's on for the selected target,
+  and clicking it lit turns it off (timed ones too). Run ends still clear everything
 - fake shiny / legendary / game-over popups and big messages (HTML stays text)
 - spawning a horde or any boss next to the target, made by the host and synced
 - god mode (`Player.hurt`), drops and level-ups; any of these taint the run (`G.Game.taint`), so it
   isn't sent to the ranking, solo or group
 - save edits: coins, tickets, any Pokémon or shiny
-- a Mega Stone dropped next to a friend whose Pokémon has a Mega (Lucario): it Mega Evolves and
-  everyone sees it (`'mega'` messages in `js/fork/mega.js`)
+- a Mega Stone dropped next to a friend whose Pokémon has a Mega (Lucario): in a normal run it
+  holds it and stays Lucario for everyone (Mega Evolution is Lab only; the Lab version is in
+  `fork/test-lab-coop.cjs`)
 
 The admin list is `ADMINS` at the top of `js/fork/admin.js` (Firebase Authentication → Users →
 User UID). Everyone's game checks it, so a new admin needs a new release. The ranking's hidden

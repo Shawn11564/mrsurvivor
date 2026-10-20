@@ -131,18 +131,19 @@ G.HUD = (() => {
     const cam = G.Camera, pulse = 0.6 + Math.sin(performance.now() / 160) * 0.4;
     for (const e of G.EnemyMgr.shinies()) {
       const sx = (e.x - cam.left()) * cam.scale, sy = (e.y - cam.top()) * cam.scale;
-      if (sx > 0 && sx < w && sy > 0 && sy < h) continue;
-      const M = 34;
-      const ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 60, h - M - 70);
-      const a = Math.atan2(sy - ey, sx - ex);
+      // Fork: alrededor de tu Pokémon y con su disco (js/fork/markers.js).
+      const mk = G.Markers.at('shiny:' + e.id, sx, sy, w, h);
+      if (!mk) continue;
+      const a = mk.a;
       ctx.save();
+      ctx.translate(mk.x, mk.y); ctx.scale(mk.k, mk.k);
+      G.Markers.halo(ctx, '#9ae6ff', mk);
       ctx.globalAlpha = pulse;
-      ctx.translate(ex, ey);
       ctx.fillStyle = '#9ae6ff';
       ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * 24, Math.sin(a) * 24);
-      ctx.lineTo(Math.cos(a + 2.5) * 12, Math.sin(a + 2.5) * 12);
-      ctx.lineTo(Math.cos(a - 2.5) * 12, Math.sin(a - 2.5) * 12);
+      ctx.moveTo(Math.cos(a) * 31, Math.sin(a) * 31);
+      ctx.lineTo(Math.cos(a + 2.5) * 14, Math.sin(a + 2.5) * 14);
+      ctx.lineTo(Math.cos(a - 2.5) * 14, Math.sin(a - 2.5) * 14);
       ctx.fill();
       ctx.globalAlpha = 1;
       G.Icons.draw(ctx, 'shiny', -12, -12, 24);
@@ -173,10 +174,10 @@ G.HUD = (() => {
       const label = 'GRIETA · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m · ' + Math.ceil(rift.ttl) + ' s';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) {
-        const M = 52, ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 70, h - M - 80);
-        const a = Math.atan2(sy - ey, sx - ex), ca = Math.cos(a), sa = Math.sin(a);
-        ctx.translate(ex, ey);
+      const mk = G.Markers.at('rift', sx, sy, w, h);      // fork: js/fork/markers.js
+      if (off && mk) {
+        const a = mk.a, ca = Math.cos(a), sa = Math.sin(a);
+        ctx.translate(mk.x, mk.y); ctx.scale(mk.k, mk.k);
         // Halo que late.
         ctx.globalAlpha = 0.18 + beat * 0.22;
         ctx.fillStyle = '#b48aff';
@@ -596,14 +597,15 @@ G.HUD = (() => {
       if (!m.connected) continue;
       const o = m.pl;
       const sx = (o.x - cam.left()) * cam.scale, sy = (o.y - o.bodyH * 0.5 - cam.top()) * cam.scale;
-      if (sx > 0 && sx < w && sy > 0 && sy < h) continue;
-      const M = 42;
-      const ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 70, h - M - 80);
-      const a = Math.atan2(sy - ey, sx - ex);
+      // Fork: alrededor de tu Pokémon y con su disco (js/fork/markers.js); caído es otro marcador (se juntan).
+      const mk = G.Markers.at((o.dead ? 'down:' : 'mate:') + m.uid, sx, sy, w, h);
+      if (!mk) continue;
+      const a = mk.a;
       const metres = Math.round(G.U.dist(pl.x, pl.y, o.x, o.y) / 32);
       const col = o.dead ? (Math.sin(t * 8) > 0 ? '#ff5f6d' : '#ffd0d5') : m.color;
       ctx.save();
-      ctx.translate(ex, ey);
+      ctx.translate(mk.x, mk.y); ctx.scale(mk.k, mk.k);
+      G.Markers.halo(ctx, o.dead ? '#ff5f6d' : m.color, mk);
       // Flecha
       ctx.fillStyle = 'rgba(0,0,0,.55)';
       ctx.beginPath(); ctx.arc(0, 0, 17, 0, 6.2832); ctx.fill();

@@ -433,6 +433,10 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
 
 /* ---------- cartas de nivel ---------- */
 .cards { display: flex; flex-direction: column; gap: 10px; width: min(560px, 100%); }
+/* Fork: la caja de las cartas, siempre de su ancho. Sin esto se medía por la descripción más larga
+   en una sola línea (el 100 % de .cards no cuenta al medirla): con Infortunio salía de lado a lado y
+   con descripciones cortas, estrecha. 560 + 2 × 24 de margen + 2 × 3 de borde. Prueba: fork/test-gameplay.cjs. */
+#scr-levelup .box, #scr-bond .box, #scr-item .box { width: min(614px, 100%); }
 .card {
   display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer;
   background: rgba(0,0,0,.2); border: 2px solid rgba(244,248,255,.3); border-radius: 12px;

@@ -504,6 +504,8 @@ G.Coop = (() => {
 
   /** Tú empiezas / terminas de elegir fusión. */
   function holdStart() { if (host) holdOn(me); else { outEv.push(['hs']); flushClient(true); } }
+  /** Anfitrión, cada fotograma (fork, game.js bondBusy): está eligiendo o no. Los invitados lo mandan en su estado (ch). */
+  function holdSync(on) { if (!host) return; if (on && !holds.has(me)) holdOn(me); else if (!on && holds.has(me)) holdOff(me); }
   function holdEnd() { if (host) holdOff(me); else { outEv.push(['he']); flushClient(true); } }
 
   /** Has elegido tu carta. */
@@ -522,7 +524,7 @@ G.Coop = (() => {
   return {
     ANIMS, COLORS, begin, end, leave, tick, players, puppets, xpFactor, scaleRate, scaleHp,
     cast, hit, status, hurtShown, enemyAdded, enemyGone, enemyShot, pickupAdded, pickupGone, say,
-    propBroken, collected, shinyCaught, levelStart, localPicked, over, holdStart, holdEnd,
+    propBroken, collected, shinyCaught, levelStart, localPicked, over, holdStart, holdEnd, holdSync,
     /** Anfitrión: evento para todos. Invitado: evento para el anfitrión. */
     broadcast(ev) { emit(ev); },
     toHost(ev) { if (active && !host) { outEv.push(ev); flushClient(true); } },

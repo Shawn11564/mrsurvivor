@@ -15,6 +15,8 @@
 G.Combat = (() => {
   let ghost = false;
   let fields = [];
+  // Familias de fuera (fork MrSurvivor: el modo Lab, js/fork/lab/kinds.js): kind -> { run(pl, m, ghost), reach(m), target }.
+  const EXTRA = {};
 
   // ---------------- ejecutar el movimiento activo ----------------
 
@@ -71,6 +73,7 @@ G.Combat = (() => {
       case 'vortex':     vortex(pl, m); break;
       case 'shove':      shove(pl, m); break;
       case 'stun':       stunZone(pl, m); break;
+      default:           if (EXTRA[m.kind]) EXTRA[m.kind].run(pl, m, ghost);
     }
   }
 
@@ -79,8 +82,9 @@ G.Combat = (() => {
   // Con "Apuntar a mano" éstos se lanzan hacia donde apuntas aunque no haya
   // nadie (los decide el jugador); la cadena y los meteoros siguen esperando blanco.
   const FREE_AIM = ['melee', 'beam', 'projectile', 'boomerang', 'dash', 'cone', 'homing', 'bounce', 'charge', 'spin', 'quake', 'shove'];
-  function needsTarget(m, pl) { return TARGETED.includes(m.kind) && !(pl && pl.manualAim && FREE_AIM.includes(m.kind)); }
+  function needsTarget(m, pl) { return (TARGETED.includes(m.kind) || !!(EXTRA[m.kind] && EXTRA[m.kind].target)) && !(pl && pl.manualAim && FREE_AIM.includes(m.kind)); }
   function reach(m) {
+    if (EXTRA[m.kind]) return EXTRA[m.kind].reach(m);
     if (m.kind === 'melee') return m.radius + 30;
     if (m.kind === 'beam') return m.radius + 20;
     if (m.kind === 'boomerang') return m.radius + 40;
@@ -903,5 +907,6 @@ G.Combat = (() => {
   }
 
   return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields,
+           EXTRA, run, hit, reach, spotFor, segDist2, inArc,           // fork: para las familias del Lab
            get fieldCount() { return fields.length; } };
 })();

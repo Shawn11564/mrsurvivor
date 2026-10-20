@@ -14,13 +14,15 @@
  *   padRumble   true/false                        que el mando vibre al recibir daño
  *   aimManual   true/false                        apuntar a mano (ratón o stick derecho) en vez de solo
  *   hudSize     0.8 | 1 | 1.3                     tamaño de los ataques y el objeto del HUD (hud.js)
+ *   pauseCount  true/false                        cuenta atrás de 3 s al quitar la pausa (fork; game.js resumeRun)
+ *   markerKey   'hold' | 'toggle'                 la tecla F junta los marcadores: mantenida o para cambiar (fork; js/fork/markers.js)
  *
  *   G.Settings.get('quality')  ·  G.Settings.set('fps', true)  ·  G.Settings.on(fn)
  *   G.Settings.fx   nivel efectivo 0 (bajo) .. 2 (alto), ya resuelto el 'auto'
  */
 G.Settings = (() => {
   const KEY = 'ps.settings';
-  const DEF = { quality: 'auto', dmgNumbers: true, calm: false, fps: false, stick: 1, stickMode: 'float', pad: null, gamepad: true, padRumble: true, aimManual: false, hudSize: 1 };
+  const DEF = { quality: 'auto', dmgNumbers: true, calm: false, fps: false, stick: 1, stickMode: 'float', pad: null, gamepad: true, padRumble: true, aimManual: false, hudSize: 1, pauseCount: true, markerKey: 'hold' };
   let s = Object.assign({}, DEF);
   try { Object.assign(s, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* nada */ }
   const fns = new Set();

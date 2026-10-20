@@ -14,6 +14,7 @@
 //   3. A non-admin sending admin messages is ignored.
 //   4. Body swap and size: the target, and everyone's copy of the target, change, then change back.
 //   5. Reverse controls, ice and slow-mo on the target only.
+//   5b. Toggles: "Until I turn it off" has no end, the lit button turns it off (also timed ones).
 //   6. Fake popups and messages (HTML in a message stays text).
 //   7. Spawning a horde and a chosen boss next to the target (on the host, synced to all).
 //   8. God mode and drops by a guest admin taint the host's run (no ranking); level up for the team.
@@ -359,6 +360,52 @@ async function pickCards(ms = 20000, calm = 3) {
     const dy = host.dy;
     check(Math.abs(dy) > 10, `Drunk: holding D the host wobbles off course (dx ${dx.toFixed(0)}, dy ${dy.toFixed(0)})`);
 
+    // ---------------- Toggles ("Until I turn it off") ----------------
+    // Lasting effects can run with no end (secs 0, G.Admin.ends() gives Infinity); the button
+    // stays lit while it's on for the selected target, and clicking it lit turns it off.
+    console.log('Toggles');
+    const isOn = d => adm.evaluate(d => document.querySelector(`#adm [data-do=${d}]`).classList.contains('on'), d);
+    const ends = (p, k) => p.evaluate(k => G.Admin.ends()[k], k);
+    await $(adm, '#adm-secs').selectOption('0');
+    await $(adm, '#adm-to').selectOption(frd.uid);
+    const n0 = await walk(frd, 'KeyD', 600);
+    await $(adm, '[data-do=rev]').click();
+    await frd.waitForTimeout(500);
+    const r1 = await walk(frd, 'KeyD', 600), rEnd = await ends(frd, 'rev'), rLit = await isOn('rev');
+    check(n0 > 20 && r1 < -20 && rEnd === Infinity && rLit, `until turned off: reverse controls on the friend with no end (${rEnd}), button lit ${rLit} (D walks ${n0.toFixed(0)} -> ${r1.toFixed(0)})`);
+    await $(adm, '#adm-to').selectOption(host.uid);
+    const hostLit = await isOn('rev');
+    await $(adm, '#adm-to').selectOption(frd.uid);
+    check(!hostLit && await isOn('rev'), 'the lit button follows the target: off for the host, on again for the friend');
+    await $(adm, '[data-do=rev]').click();
+    await frd.waitForTimeout(500);
+    const r2 = await walk(frd, 'KeyD', 600);
+    check(r2 > 20 && await ends(frd, 'rev') === 0 && !(await isOn('rev')), `clicking the lit button turns it off: D walks right again (${r2.toFixed(0)})`);
+    await $(adm, '[data-do=karp]').click();
+    check(await settle(frd, () => G.Game.player.anim.dex === 129 && G.Game.player.admLook.dexT === Infinity) && await settle(host, u => G.Coop.mate(u).pl.anim.dex === 129, frd.uid) && await isOn('karp'),
+      'Magikarp until turned off, seen by the host too');
+    await $(adm, '[data-do=karp]').click();
+    check(await settle(frd, () => G.Game.player.anim.dex === 448) && await settle(host, u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid) && !(await isOn('karp')),
+      'clicked again: Lucario again, for itself and for the host');
+    await $(adm, '[data-do=disco]').click();
+    check((await Promise.all(ALL.map(p => settle(p, () => /hue-rotate/.test(document.getElementById('game').style.filter) && G.Admin.ends().disco === Infinity)))).every(Boolean) && await isOn('disco'),
+      'Disco until turned off, on all three screens');
+    await $(adm, '[data-do=disco]').click();
+    check((await Promise.all(ALL.map(p => settle(p, () => !document.getElementById('game').style.filter && G.Admin.ends().disco === 0)))).every(Boolean) && !(await isOn('disco')),
+      'clicked again: the disco is over everywhere');
+    // A timed one can be stopped early too.
+    await $(adm, '#adm-secs').selectOption('30');
+    await $(adm, '[data-do=flip]').click();
+    check(await settle(frd, () => document.getElementById('game').style.transform === 'rotate(180deg)') && await isOn('flip'), 'Upside down for 30 s: the button is lit');
+    await $(adm, '[data-do=flip]').click();
+    check(await settle(frd, () => !document.getElementById('game').style.transform) && !(await isOn('flip')), 'clicked again before the 30 s: it stops');
+    // Left on (until turned off) for the end of the run, below.
+    await $(adm, '#adm-secs').selectOption('0');
+    await $(adm, '#adm-to').selectOption(host.uid);
+    await $(adm, '[data-do=flip]').click();
+    check(await settle(host, () => /rotate\(180deg\)/.test(document.getElementById('game').style.transform)), 'Upside down on the host until turned off');
+    await $(adm, '#adm-secs').selectOption('10');
+
     // ---------------- 8. Powers ----------------
     console.log('Powers');
     const t0 = await host.evaluate(() => window.__taints);
@@ -381,13 +428,15 @@ async function pickCards(ms = 20000, calm = 3) {
     check(await settle(host, u => { const p = G.Coop.mate(u).pl;
       return window.__drops.some(d => d.k === 'heal' && Math.hypot(d.x - p.x, d.y - p.y) < 80); }, adm.uid),
       'Drop "Heal" at me: the host drops it next to the admin');
-    // A Mega Stone dropped next to the friend (Lucario): it Mega Evolves, and everyone sees it
-    // (js/fork/mega.js, 'mega' messages). The others step away so only the friend picks it up.
+    // A Mega Stone dropped next to the friend (Lucario). This is a normal run and Mega Evolution
+    // only exists in Lab runs (js/fork/mega.js), so it holds the stone and stays Lucario, for
+    // everyone. (The Lab version, with everyone seeing Mega Lucario, is in fork/test-lab-coop.cjs.)
+    // The others step away so only the friend picks it up.
     await pickCards();
     for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x += 2500; });
     await host.waitForTimeout(500);
     await $(adm, '#adm-to').selectOption(frd.uid);
-    await $(adm, '#adm-drop').selectOption({ label: 'Item: Mega Stone' });
+    await $(adm, '#adm-drop').selectOption({ label: 'Item: Mega Stone (Lab runs only)' });
     await $(adm, '[data-do=drop]').click();
     for (let i = 0; i < 20 && !(await frd.evaluate(() => G.Game.player.item === 'megastone')); i++) {
       // Holding an item already: the friend takes the stone in the choice.
@@ -395,10 +444,11 @@ async function pickCards(ms = 20000, calm = 3) {
       await pickCards(3000, 1);
       await frd.waitForTimeout(400);
     }
-    check(await settle(frd, () => G.Game.player.item === 'megastone' && G.Game.player.anim.dex === 'm448'), 'Drop "Mega Stone" at the friend: Lucario picks it up and Mega Evolves');
-    check(await settle(host, u => G.Coop.mate(u).pl.anim.dex === 'm448', frd.uid) && await settle(adm, u => G.Coop.mate(u).pl.anim.dex === 'm448', frd.uid),
-      'the host and the admin see Mega Lucario too');
-    if (process.env.SHOTS) await frd.screenshot({ path: require('path').join(process.env.SHOTS, 'mega-lucario.png') });
+    await frd.waitForTimeout(800);
+    check(await frd.evaluate(() => G.Game.player.item === 'megastone' && G.Game.player.anim.dex === 448 && !G.Game.player.mega),
+      'Drop "Mega Stone" at the friend in a normal run: Lucario holds it but does not Mega Evolve (Lab runs only)');
+    check(await host.evaluate(u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid) && await adm.evaluate(u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid),
+      'the host and the admin still see plain Lucario');
     for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x -= 2500; });
     await pickCards();
     const lv0 = await host.evaluate(() => G.Game.player.level);
@@ -425,7 +475,7 @@ async function pickCards(ms = 20000, calm = 3) {
     await host.waitForTimeout(500);
     check(await host.evaluate(() => window.__subs) === 0, 'the tainted group run is not sent to the ranking');
     check(await host.waitForFunction(() => !document.getElementById('game').style.transform, null, { timeout: 3000 }).then(() => true, () => false),
-      'when the run ends, a screen effect still running (60 s Mirror) is undone (the menu uses the same canvas)');
+      'when the run ends, screen effects still running (60 s Mirror, Upside down until turned off) are undone (the menu uses the same canvas)');
 
     for (const p of ALL) check(p.errs.length === 0, `no page errors (${p.name})` + (p.errs.length ? ': ' + p.errs.slice(0, 3).join(' | ') : ''));
   } finally {
