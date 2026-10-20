@@ -21,6 +21,7 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/fetch-lab.cjs` | downloads PokeAPI's learnsets/abilities/evolutions and SpriteCollab's animation list into `tools/cache/lab/`, writes `js/fork/lab/lab-data.js` for Lab mode (rerun it when upstream adds moves) |
 | `fork/fetch-lab-anims.py` | downloads the extra PMD animations Lab mode's signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
 | `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (Lab mode, phase 8) |
+| `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip, already named for a radiant form (`assets/pokemon/{dex}/r/`, `{dex}/r/lab/`, Mega in `m{dex}/r/`), with `CREDITS.txt`. The game doesn't load `r/` yet |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -76,6 +77,10 @@ two devices don't erase each other's progress (`pushNow` in `js/core/db.js`, a t
 you have the shiny of shows and plays shiny unless you picked Normal for it, which the save keeps
 (`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
 0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
+
+`node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type and
+"mega"; the .zip's names and bytes (Charizard with and without its Mega, Bulbasaur); every species'
+list against the sheets on disk.
 
 `node fork/test-coop-background.cjs` (server + Firebase emulator) checks that a co-op run keeps
 going while the host's tab is hidden: the host's frames come from a Worker then

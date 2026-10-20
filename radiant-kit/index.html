@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Radiant Sprite Kit</title>
+<!--
+  radiant-kit/ — fork-only tool page (MrSurvivor). Search a Pokémon and download its DEFAULT
+  sprite sheets in one .zip, already named where a radiant form's sheets will go:
+    assets/pokemon/{dex}/r/{Anim}.png        the 7 standard sheets (Idle, Walk, Attack...)
+    assets/pokemon/{dex}/r/lab/{Anim}.png    its Lab signature-move sheet, if it has one
+    assets/pokemon/m{dex}/r/{Anim}.png       its Mega/Primal form (checkbox), if it has one
+  Unzip the .zip in the repo root after recolouring. "r/" mirrors the shiny's "s/".
+  The list of sheets comes from the same data the game uses (sprites-meta.js, mega-sprites.js,
+  lab-anims.js), so it never misses a sheet. Check: node fork/test-radiant-kit.cjs.
+-->
+<style>
+@font-face { font-family: Pixelify; src: url(../assets/fonts/PixelifyPS-400.ttf); }
+@font-face { font-family: Pixelify; src: url(../assets/fonts/PixelifyPS-700.ttf); font-weight: 700; }
+:root {
+  --bg: #0c111b; --box: #151f30; --box2: #1d2c46; --text: #e6f0fb; --muted: #9db0c9;
+  --accent: #79b8ff; --edge: #2f4466; --gold: #ffd23f; --radiant: #ffb347;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 Pixelify, "Segoe UI", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { margin: 0 0 4px; font-size: 30px; color: var(--radiant); text-shadow: 2px 2px 0 #5a2f00; }
+h2 { font-size: 18px; margin: 0 0 8px; }
+p { margin: 0 0 10px; }
+.sub { color: var(--muted); }
+a { color: var(--accent); }
+code { background: var(--box2); padding: 0 4px; border-radius: 3px; font-size: 13px; word-break: break-all; }
+.box { background: var(--box); border: 1px solid var(--edge); border-radius: 8px; padding: 14px; margin-top: 14px; }
+input[type=search] { width: 100%; font: inherit; font-size: 17px; padding: 8px 10px; color: var(--text);
+  background: var(--bg); border: 1px solid var(--edge); border-radius: 6px; }
+input[type=search]:focus { outline: 2px solid var(--accent); }
+#results { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin-top: 10px; }
+#results button { font: inherit; color: var(--text); background: var(--box2); border: 1px solid var(--edge); border-radius: 6px;
+  padding: 6px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+#results button:hover, #results button.on { border-color: var(--radiant); }
+#results canvas, #pick canvas { image-rendering: pixelated; }
+#results .nm { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+#results .no { font-size: 11px; color: var(--muted); }
+.tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 999px; margin-left: 3px;
+  background: rgba(79,180,255,.2); color: #bfe3ff; vertical-align: 1px; }
+.tag.lab { background: rgba(60,200,180,.2); color: #9ff0e2; }
+#more { margin-top: 8px; font-size: 13px; }
+#pick { display: none; }
+.head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.head canvas { background: var(--bg); border-radius: 6px; }
+label.opt { display: inline-flex; gap: 6px; align-items: center; margin: 10px 0; cursor: pointer; }
+label.opt.off { opacity: .45; cursor: default; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0 12px; }
+td, th { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--edge); vertical-align: top; }
+th { color: var(--muted); font-weight: 400; }
+td.n { white-space: nowrap; color: var(--muted); }
+.wrap { overflow-x: auto; }
+#dl { font: inherit; font-size: 17px; font-weight: 700; padding: 9px 18px; border-radius: 6px; cursor: pointer;
+  color: #2a1500; background: var(--radiant); border: 0; }
+#dl:disabled { opacity: .5; cursor: wait; }
+#status { margin-left: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Radiant Sprite Kit</h1>
+  <p class="sub">Download a Pokémon's default sprite sheets to recolour into a radiant form. The files in the .zip
+    already have the names and folders the radiant form uses (<code>assets/pokemon/{dex}/r/</code>), so once
+    they're recoloured you unzip them into the game folder as they are.</p>
+
+  <div class="box">
+    <input type="search" id="q" placeholder="Name, # number or type (e.g. Charizard, 6, #150, fire, mega)" autocomplete="off" autofocus>
+    <div id="results"></div>
+    <p id="more" class="sub"></p>
+  </div>
+
+  <div class="box" id="pick">
+    <div class="head">
+      <canvas id="face" width="96" height="96"></canvas>
+      <div>
+        <h2 id="p-name"></h2>
+        <p class="sub" id="p-info"></p>
+      </div>
+    </div>
+    <label class="opt" id="mega-opt"><input type="checkbox" id="mega"> <span id="mega-text">Include the Mega files</span></label>
+    <div class="wrap"><table>
+      <thead><tr><th>Sheet</th><th>File in the .zip</th><th>Size (px)</th><th>Frames</th></tr></thead>
+      <tbody id="files"></tbody>
+    </table></div>
+    <button id="dl">Download .zip</button><span id="status" class="sub"></span>
+    <p class="sub" style="margin-top:12px">Keep every sheet the same size: one column per frame, 8 rows (directions:
+      down, down-right, right, up-right, up, up-left, left, down-left). The game reads frame sizes from the
+      normal sheet. <code>CREDITS.txt</code> in the .zip lists the original artists. The sprites are
+      <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> (from
+      <a href="https://github.com/PMDCollab/SpriteCollab">SpriteCollab</a>), so a recolour has to credit them and stay non-commercial.</p>
+  </div>
+</main>
+
+<script>window.G = {};</script>
+<script src="../js/data/pokedex.js"></script>
+<script src="../js/data/sprites-meta.js"></script>
+<script src="../js/fork/mega-sprites.js"></script>
+<script src="../js/fork/lab/lab-anims.js"></script>
+<script>
+(() => {
+  const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
+  const SHOW = 60;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const MON = G.DEX.filter(p => G.SPRITE_META[p.dex]);
+  const hasMega = dex => !!(G.MEGA_FORMS[dex] && G.SPRITE_META['m' + dex]);
+  const megaName = (p) => {
+    const f = G.MEGA_FORMS[p.dex] || '';
+    return f === 'Primal' ? 'Primal ' + p.name : 'Mega ' + p.name + (f.startsWith('Mega_') ? ' ' + f.slice(5) : '');
+  };
+  const lab = dex => (G.LAB_ANIMS[dex] && G.LAB_ANIMS[dex].a) || {};
+
+  /** Every sheet to recolour: [label, source path, path in the .zip, geometry]. */
+  function sheets(p, withMega) {
+    const out = [], m = G.SPRITE_META[p.dex];
+    // The 7 standard sheets, in the game's order, then any other the data has.
+    const names = ANIMS.filter(a => m.a[a]).concat(Object.keys(m.a).filter(a => !ANIMS.includes(a)));
+    for (const a of names) out.push([a, `assets/pokemon/${p.dex}/${a}.png`, `assets/pokemon/${p.dex}/r/${a}.png`, m.a[a]]);
+    for (const [a, g] of Object.entries(lab(p.dex)))
+      out.push([a + ' (Lab)', `assets/pokemon/${p.dex}/lab/${a}.png`, `assets/pokemon/${p.dex}/r/lab/${a}.png`, g]);
+    if (withMega && hasMega(p.dex)) {
+      const mm = G.SPRITE_META['m' + p.dex];
+      for (const a of ANIMS.filter(a => mm.a[a]).concat(Object.keys(mm.a).filter(a => !ANIMS.includes(a))))
+        out.push([a + ' (Mega)', `assets/pokemon/m${p.dex}/${a}.png`, `assets/pokemon/m${p.dex}/r/${a}.png`, mm.a[a]]);
+    }
+    return out;
+  }
+
+  // ---------------- search ----------------
+  function search(q) {
+    q = q.trim().toLowerCase();
+    if (!q) return MON;
+    const num = q.replace(/^#/, '');
+    if (/^\d+$/.test(num)) {
+      const n = +num;
+      return MON.filter(p => p.dex === n).concat(MON.filter(p => p.dex !== n && String(p.dex).startsWith(num)));
+    }
+    const words = q.split(/\s+/);
+    const hit = (p, w) => p.name.toLowerCase().includes(w) || p.types.includes(w) ||
+      (w === 'mega' || w === 'primal') && hasMega(p.dex) || w === 'lab' && !!G.LAB_ANIMS[p.dex] ||
+      (w === 'legendary' || w === 'legend') && p.leg;
+    const found = MON.filter(p => words.every(w => hit(p, w)));
+    // Names that start with the search first.
+    return found.filter(p => p.name.toLowerCase().startsWith(q)).concat(found.filter(p => !p.name.toLowerCase().startsWith(q)));
+  }
+
+  // First frame of the Idle sheet (row 0 = facing down), scaled up.
+  const imgs = new Map();
+  function img(src) {
+    if (!imgs.has(src)) imgs.set(src, new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = '../' + src; }));
+    return imgs.get(src);
+  }
+  function face(cv, dex, size) {
+    const g = G.SPRITE_META[dex].a.Idle || Object.values(G.SPRITE_META[dex].a)[0];
+    const name = G.SPRITE_META[dex].a.Idle ? 'Idle' : Object.keys(G.SPRITE_META[dex].a)[0];
+    img(`assets/pokemon/${dex}/${name}.png`).then(i => {
+      const x = cv.getContext('2d'), s = Math.max(1, Math.floor(size / Math.max(g.w, g.h)));
+      x.imageSmoothingEnabled = false;
+      x.clearRect(0, 0, cv.width, cv.height);
+      x.drawImage(i, 0, 0, g.w, g.h, (cv.width - g.w * s) / 2, (cv.height - g.h * s) / 2, g.w * s, g.h * s);
+    }, () => {});
+  }
+
+  let current = null;
+  function list() {
+    const all = search($('q').value);
+    $('results').innerHTML = all.slice(0, SHOW).map(p =>
+      `<button data-dex="${p.dex}"${current && current.dex === p.dex ? ' class="on"' : ''}><canvas width="48" height="48"></canvas>` +
+      `<span class="nm">${esc(p.name)}</span><span class="no">#${p.dex}` +
+      `${hasMega(p.dex) ? '<span class="tag">MEGA</span>' : ''}${G.LAB_ANIMS[p.dex] ? '<span class="tag lab">LAB</span>' : ''}</span></button>`).join('');
+    $('results').querySelectorAll('button').forEach(b => face(b.querySelector('canvas'), +b.dataset.dex, 48));
+    $('more').textContent = !all.length ? 'No Pokémon matches that.' : all.length > SHOW ? `Showing ${SHOW} of ${all.length}. Type more to narrow it down.` : '';
+  }
+
+  // ---------------- the chosen Pokémon ----------------
+  function choose(p) {
+    current = p;
+    $('results').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.dex === p.dex));
+    $('pick').style.display = 'block';
+    $('p-name').textContent = `${p.name} #${p.dex}`;
+    $('p-info').textContent = p.types.map(t => t[0].toUpperCase() + t.slice(1)).join(' / ');
+    face($('face'), p.dex, 96);
+    const mega = hasMega(p.dex);
+    $('mega').disabled = !mega;
+    if (!mega) $('mega').checked = false;
+    $('mega-opt').classList.toggle('off', !mega);
+    $('mega-text').textContent = mega ? `Include the Mega files (${megaName(p)})` : 'Include the Mega files (no Mega for this Pokémon)';
+    $('status').textContent = '';
+    table();
+    history.replaceState(null, '', '#' + p.dex);
+  }
+  function table() {
+    $('files').innerHTML = sheets(current, $('mega').checked).map(([label, , out, g]) =>
+      `<tr><td>${esc(label)}</td><td><code>${esc(out)}</code></td><td class="n">${g.w * g.n} × ${g.h * g.r}</td>` +
+      `<td class="n">${g.n} × ${g.r} of ${g.w}×${g.h}</td></tr>`).join('');
+  }
+
+  // ---------------- credits (CC BY-NC: name the artists) ----------------
+  const texts = {};
+  const text = f => texts[f] || (texts[f] = fetch('../' + f).then(r => r.ok ? r.text() : '', () => ''));
+  const rows = md => md.split('\n').filter(l => /^\|/.test(l) && !/^\|\s*-/.test(l))
+    .map(l => l.split('|').slice(1, -1).map(c => c.trim()));
+  async function credits(p, withMega) {
+    const lines = [];
+    const base = rows(await text('CREDITS.md')).filter(r => r.length >= 3 && r[2].split(/,\s*/).includes(String(p.dex)));
+    lines.push(`${p.name} (#${p.dex}), from SpriteCollab (https://github.com/PMDCollab/SpriteCollab), CC BY-NC 4.0.`, '', 'Sprites:');
+    lines.push(...(base.length ? base.map(r => `  ${r[0]}${r[1] ? ' (' + r[1] + ')' : ''}`) : ['  see CREDITS.md']));
+    if (G.LAB_ANIMS[p.dex]) {
+      const r = rows(await text('CREDITS-LAB.md')).find(r => r[0] === String(p.dex));
+      lines.push('', 'Lab animations:', '  ' + (r ? r[2] : 'see CREDITS-LAB.md'));
+    }
+    if (withMega && hasMega(p.dex)) {
+      const r = rows(await text('CREDITS-MEGAS.md')).find(r => r[0] === String(p.dex));
+      lines.push('', megaName(p) + ':', '  ' + (r ? r[2] : 'see CREDITS-MEGAS.md'));
+    }
+    lines.push('', 'A recolour of these sprites must credit these artists and stay non-commercial.',
+      'Unzip in the game folder: the sheets land in assets/pokemon/{dex}/r/ (and m{dex}/r/ for the Mega).');
+    return lines.join('\n') + '\n';
+  }
+
+  // ---------------- .zip (stored, no compression: PNGs are already compressed) ----------------
+  const CRC = new Uint32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c; });
+  const crc32 = b => { let c = ~0; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return ~c >>> 0; };
+  function zip(files) {                            // [{ name, data: Uint8Array }]
+    const enc = new TextEncoder(), parts = [], dir = [];
+    const d = new Date(), time = d.getHours() << 11 | d.getMinutes() << 5 | d.getSeconds() >> 1;
+    const date = (d.getFullYear() - 1980) << 9 | (d.getMonth() + 1) << 5 | d.getDate();
+    let off = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), crc = crc32(f.data), n = f.data.length;
+      const head = (sig, extra) => {
+        const h = new DataView(new ArrayBuffer(extra ? 46 : 30));
+        let i = 0; const u32 = v => { h.setUint32(i, v, true); i += 4; }, u16 = v => { h.setUint16(i, v, true); i += 2; };
+        u32(sig); if (extra) u16(20); u16(20); u16(0x0800); u16(0); u16(time); u16(date); u32(crc); u32(n); u32(n); u16(name.length); u16(0);
+        if (extra) { u16(0); u16(0); u16(0); u32(0); u32(off); }
+        return new Uint8Array(h.buffer);
+      };
+      dir.push(head(0x02014b50, true), name);
+      parts.push(head(0x04034b50, false), name, f.data);
+      off += 30 + name.length + n;
+    }
+    const size = dir.reduce((s, b) => s + b.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, size, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...dir, new Uint8Array(end.buffer)], { type: 'application/zip' });
+  }
+
+  async function download() {
+    const p = current, withMega = $('mega').checked, list = sheets(p, withMega);
+    $('dl').disabled = true;
+    try {
+      const files = [];
+      for (const [, src, name] of list) {
+        $('status').textContent = `Getting ${files.length + 1} of ${list.length}…`;
+        const r = await fetch('../' + src);
+        if (!r.ok) throw new Error(`${src}: ${r.status}`);
+        files.push({ name, data: new Uint8Array(await r.arrayBuffer()) });
+      }
+      files.push({ name: 'CREDITS.txt', data: new TextEncoder().encode(await credits(p, withMega)) });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zip(files));
+      a.download = `radiant-${p.dex}-${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}${withMega ? '-mega' : ''}.zip`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      $('status').textContent = `${list.length} sheets downloaded.`;
+    } catch (e) {
+      $('status').textContent = `Couldn't download: ${e.message}`;
+    } finally {
+      $('dl').disabled = false;
+    }
+  }
+
+  $('q').addEventListener('input', list);
+  $('q').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const first = search($('q').value)[0];
+    if (first) choose(first);
+  });
+  $('results').addEventListener('click', e => { const b = e.target.closest('button'); if (b) choose(G.DEX_BY[+b.dataset.dex]); });
+  $('mega').addEventListener('change', table);
+  $('dl').addEventListener('click', download);
+  window.RadiantKit = { search, sheets, zip, credits, choose };   // for fork/test-radiant-kit.cjs
+  list();
+  const start = G.DEX_BY[+location.hash.slice(1)];
+  if (start && G.SPRITE_META[start.dex]) choose(start);
+})();
+</script>
+</body>
+</html>

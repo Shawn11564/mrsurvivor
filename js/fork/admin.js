@@ -468,7 +468,9 @@ G.Admin = (() => {
 <h3>My save</h3>
 <div class="row"><input id="adm-amt" type="number" min="1" value="1000"><button data-do="coins">+ coins</button><button data-do="t1">+ tickets</button><button data-do="t10">+ ×10 tickets</button></div>
 <div class="row"><button data-do="own">Unlock Pokémon</button><button data-do="ownshiny">Unlock shiny</button></div>
-<div class="row"><button data-do="ownall">Unlock all</button><button data-do="shinyall">All shinies</button></div>`;
+<div class="row"><button data-do="ownall">Unlock all</button><button data-do="shinyall">All shinies</button></div>
+<h3>Tools</h3>
+<div class="row"><a href="/radiant-kit/" target="_blank" rel="noopener" style="color:#79b8ff">Radiant sprite kit</a><span class="sub">default sheets to recolour, named for the radiant form</span></div>`;
 
   let btn = null, panel = null, polls = 0;
 

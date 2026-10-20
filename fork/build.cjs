@@ -60,7 +60,7 @@ try { base = execFileSync('git', ['rev-parse', '-q', '--verify', 'MERGE_HEAD'], 
 catch (e) { /* not mid-merge */ }
 function pristine(r) {
   if (!base) return null;
-  try { return execFileSync('git', ['show', `${base}:${r}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }); }
+  try { return execFileSync('git', ['show', `${base}:${r}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20, stdio: ['ignore', 'pipe', 'ignore'] }); }
   catch (e) { return null; }                   // not an upstream file
 }
 
