@@ -5,7 +5,7 @@
 //   node fork/test-lab.cjs [base-url] [screenshot-dir]
 //
 // Solo, as a guest (in-memory save):
-//   1. The setting: Settings → Graphics has the Lab row and its switch flips G.Settings 'lab'.
+//   1. The setting: Settings → Experimental has the Lab row and its switch flips G.Settings 'lab'.
 //   2. Lab off: a run is not a Lab run, the level-up cards only offer the normal pool
 //      (types + Normal), the Lab-only move (Swift) never shows, no ability, and the run is
 //      sent to the leaderboard as usual.
@@ -72,8 +72,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   console.log('Setting');
   await page.evaluate(() => document.getElementById('btn-settings').click());
   await page.click('#set-tabs [data-t="gfx"]');
-  const row = await page.$('#set-body .switch[data-k="lab"]');
-  check(!!row, 'Settings → Graphics has the Lab mode switch');
+  const inGfx = await page.$('#set-body .switch[data-k="lab"]');
+  await page.click('#set-tabs [data-t="lab"]');
+  const row = inGfx ? null : await page.$('#set-body .switch[data-k="lab"]');
+  check(!!row, 'Settings → Experimental has the Lab mode switch (and Graphics no longer does)');
   if (row) await row.click();
   check(await page.evaluate(() => G.Settings.get('lab') === true), 'clicking it turns Lab on (G.Settings lab)');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'lab-setting.png') });
@@ -755,9 +757,9 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await built.click('#res-ok');
   await built.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
   await built.click('#btn-settings');
-  await built.click('#set-tabs [data-t="gfx"]');
+  await built.click('#set-tabs [data-t="lab"]');
   const sw = built.locator('#set-body .switch[data-k="lab"]');
-  check(await sw.count() === 1, 'the built game has the Lab switch in Settings → Graphics');
+  check(await sw.count() === 1, 'the built game has the Lab switch in Settings → Experimental');
   await sw.click();
   await built.click('#set-close');
   await built.click('#scr-menu [data-go="play"]');

@@ -41,7 +41,7 @@ says PokéSurvivor.
 
 ## Lab mode
 
-Settings → Graphics → Experimental → **Lab mode** tries moves and abilities still in testing:
+Settings → Experimental → **Lab mode** tries moves and abilities still in testing:
 each Pokémon gets the moves it learns in the games and one of its abilities, new kinds of moves
 (Fly, Double-Edge, Protect, Hypnosis, Rain Dance, Surf, Metronome...), signature moves for 70
 lines, evolving during the run, the games' items for weak Pokémon, candies from duplicates, shiny

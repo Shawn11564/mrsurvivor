@@ -92,8 +92,9 @@ G.SettingsUI = (() => {
         + choice('hudSize', [[0.8, 'Pequeño'], [1, 'Mediano'], [1.3, 'Grande']])
         + (canFull() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>Sin barras del navegador.</small></div>
              <button class="btn small" id="set-full">${isFull() ? 'Salir' : 'Activar'}</button></div>`
-           : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '')
-        + (G.Lab ? G.Lab.settingsRow(toggle, section) : '');          // modo Lab del fork (js/fork/lab/lab.js)
+           : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '');
+    } else if (tab === 'lab' && G.Lab) {
+      box.innerHTML = G.Lab.settingsRow(toggle, section);             // pestaña Experimental del fork (js/fork/lab/lab.js)
     } else if (tab === 'ctl') {
       const pn = G.Pad.name;
       box.innerHTML = section('Con mando', pn

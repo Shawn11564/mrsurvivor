@@ -8,7 +8,8 @@ status table as work lands.
 
 | Date | Decision |
 |---|---|
-| 2026-10-20 | Lab is a normal **Settings** option, visible to everyone (Settings → Graphics → Experimental). |
+| 2026-10-20 | Lab is a normal **Settings** option, visible to everyone (Settings → Experimental). |
+| 2026-10-20 | Experimental is its own Settings tab (before Account); `lab.js` adds the tab button. |
 | 2026-10-20 | In co-op the **host's** setting decides for the whole run; guests don't need it on. |
 | 2026-10-20 | Lab runs give **coins, tickets and shinies** as usual, but don't count for **leaderboards, missions, achievements or personal records/stats**. |
 | 2026-10-20 | Phases go in the listed order. |
@@ -49,7 +50,7 @@ status table as work lands.
 | `fork/balance-lab.cjs` | the balance check (phase 8); writes `fork/BALANCE-LAB.md` |
 | `css/brand.css` | the teal "LAB" tag, the pause/summary blocks, the gold ring on signature moves |
 
-Upstream touches: the `G.Lab.settingsRow` line in `js/ui/settings-ui.js`, the script tags in
+Upstream touches: the `tab === 'lab'` branch (`G.Lab.settingsRow`) in `js/ui/settings-ui.js`, the script tags in
 `dev.html`, the family registry in `js/systems/combat.js` (`EXTRA`: one line each in `run`,
 `needsTarget` and `reach`, plus `run`/`hit`/`reach`/`spotFor`/`segDist2`/`inArc` exported) and
 `KIND_GLYPH` exported from `js/ui/icons.js`. Everything else wraps functions the game already calls

@@ -1,8 +1,8 @@
 /* ============ lab.js — modo Lab: movimientos y habilidades en pruebas (fork MrSurvivor) ============
  * Plan, decisiones y estado: fork/LAB.md. Pruebas: fork/test-lab.cjs y fork/test-lab-coop.cjs (grupo).
  *
- * Ajuste: Ajustes → Gráficos → Experimental (G.Settings 'lab', de este dispositivo; la fila
- * la pinta settingsRow desde js/ui/settings-ui.js). Cada partida decide al empezar (begin):
+ * Ajuste: Ajustes → Experimental (G.Settings 'lab', de este dispositivo; la pestaña la añade
+ * este archivo y su contenido lo pinta settingsRow desde js/ui/settings-ui.js). Cada partida decide al empezar (begin):
  *   - solo: tu ajuste
  *   - grupo: el del ANFITRIÓN, que va en su mensaje 'start' (lab, labV); el de los invitados
  *     no cuenta. Si su labV no es el tuyo, aviso de recargar.
@@ -267,7 +267,7 @@ G.Lab = (() => {
       : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It won\'t count for leaderboards, missions, achievements or records.');
   }
 
-  /** La fila de Ajustes → Gráficos (la pinta settings-ui.js con sus propias piezas). */
+  /** La pestaña Ajustes → Experimental (la pinta settings-ui.js con sus propias piezas). */
   function settingsRow(toggle, section) {
     return section('Experimental')
       + toggle('lab', 'Lab mode', 'Try moves and abilities that are still being tested: each Pokémon gets the moves it learns in the games and one of its abilities. '
@@ -316,6 +316,16 @@ G.Lab = (() => {
     if (on) hud.textContent = 'LAB' + (info ? ' · ' + info.name : '');
   }
   setInterval(badge, 400);
+  // La pestaña Experimental de Ajustes, antes de Cuenta.
+  const acc = document.querySelector('#set-tabs [data-t="acc"]');
+  if (acc) {
+    const b = document.createElement('button');
+    b.className = 'gen-tab';
+    b.dataset.t = 'lab';
+    b.textContent = 'Experimental';
+    b.onclick = () => G.SettingsUI.open('lab');
+    acc.before(b);
+  }
   // El aviso de la sala, debajo de su nota.
   const ln = $('lobby-note');
   if (ln) ln.insertAdjacentHTML('afterend', '<p id="lab-lobby" class="note lab-note hidden"></p>');
