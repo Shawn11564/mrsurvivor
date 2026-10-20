@@ -306,7 +306,9 @@ G.Events = (() => {
                 Math.round(G.U.dist(pl.x, pl.y, to[0], to[1]) / 32) + ' m', F);
     }
     for (const e of G.EnemyMgr.all()) {
-      if (e.behavior === 'thief' && !e.dead) edgeArrow(ctx, w, h, cam, 'thief:' + e.id, e.x, e.y - 10, '#ffd23f', e.name, F);
+      // Fork (MrSurvivor): con la distancia, como el Pokémon perdido.
+      if (e.behavior === 'thief' && !e.dead) edgeArrow(ctx, w, h, cam, 'thief:' + e.id, e.x, e.y - 10, '#ffd23f',
+        e.name + ' · ' + Math.round(G.U.dist(pl.x, pl.y, e.x, e.y) / 32) + ' m', F);
     }
     if (cur && cur.id !== 'lost') {
       const left = Math.max(0, Math.ceil(cur.dur - cur.t));

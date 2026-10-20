@@ -77,6 +77,13 @@ you have the shiny of shows and plays shiny unless you picked Normal for it, whi
 (`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
 0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
 
+`node fork/test-coop-background.cjs` (server + Firebase emulator) checks that a co-op run keeps
+going while the host's tab is hidden: the host's frames come from a Worker then
+(`js/fork/coop-background.js`, `js/fork/tick-worker.js`) and `js/net/coop.js` no longer tells the
+guests to wait. The host runs in a plain Edge over raw CDP, because Playwright makes every page it
+drives look visible. `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
+thief says how far it is (`drawHud` in `js/systems/events.js`).
+
 `node fork/test-remember.cjs` (with the server running) checks that Settings and
 Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in

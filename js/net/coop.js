@@ -319,8 +319,9 @@ G.Coop = (() => {
 
   // Anfitrión: al irse de la pestaña avisa a todos al momento (después ya no
   // podrá mandar nada) y al volver, que sigue.
+  // Fork (MrSurvivor): si la partida sigue con la pestaña oculta (js/fork/coop-background.js), no se avisa.
   document.addEventListener('visibilitychange', () => {
-    if (!active || !host) return;
+    if (!active || !host || (G.CoopBackground && G.CoopBackground.keepsRunning)) return;
     emit(['ha', document.hidden ? 1 : 0]);
     flushAll();
   });
