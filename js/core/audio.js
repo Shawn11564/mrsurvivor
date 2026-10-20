@@ -12,7 +12,8 @@
 G.Audio = (() => {
   const KEY = 'ps.audio';
   let ctx = null, master, outNode, musicBus, sfxBus, reverb, wet;
-  let settings = { music: 0.55, sfx: 0.7, muted: false };
+  // Por defecto más bajo (20-10-2026): con 0,55 / 0,7 sonaba muy fuerte (ver fork/measure-audio.cjs).
+  let settings = { music: 0.3, sfx: 0.35, muted: false };
   try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* nada */ }
   let noiseBuf = null;
 
@@ -27,8 +28,14 @@ G.Audio = (() => {
     ctx = new AC();
     master = ctx.createDynamicsCompressor();
     master.threshold.value = -14; master.ratio.value = 4;
-    const out = outNode = ctx.createGain(); out.gain.value = 0.9;
-    master.connect(out).connect(ctx.destination);
+    // Limitador al final: algunos sonidos de evento (land, toll, boss, legend...) pasaban
+    // de 0 dBFS y saturaban; así ninguno sube de unos -10 dBFS.
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -10; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.2;
+    // Salida 0,9 -> 0,45 (-6 dB, 20-10-2026): el compresor deja casi igual de fuerte la mezcla
+    // aunque se bajen los volumenes, asi que el nivel general se baja aqui, despues de el.
+    const out = outNode = ctx.createGain(); out.gain.value = 0.45;
+    master.connect(lim).connect(out).connect(ctx.destination);
 
     musicBus = ctx.createGain(); sfxBus = ctx.createGain();
     musicBus.connect(master); sfxBus.connect(master);

@@ -144,6 +144,7 @@ G.Game = (() => {
       pl.setActive(0);
     }
 
+    G.RunStats.reset();
     if (coop) {
       G.Coop.begin(coop, pl, coopApi);
       G.Social.setPlaying(true);
@@ -181,7 +182,8 @@ G.Game = (() => {
   function teamState() {
     return { time, level: pl.level, xp: pl.xp, xpNext: pl.xpNext, kills: pl.kills, bosses: pl.bosses, coins: pl.coins, t1: pl.t1, t10: pl.t10 };
   }
-  function summary() { return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level, t1: pl.t1, t10: pl.t10 }; }
+  // rs: estadísticas de todo el equipo para el resumen del final (js/fork/run-stats.js).
+  function summary() { return { t: time, ki: pl.kills, bo: pl.bosses, co: pl.coins, lv: pl.level, t1: pl.t1, t10: pl.t10, rs: G.RunStats.all() }; }
 
   /** Lo que el cooperativo necesita del juego. */
   /**
@@ -236,6 +238,7 @@ G.Game = (() => {
     inLevelUp() { return state === 'levelup'; },
     shiny(dex) { G.onShinyCaught({ dex, name: (G.DEX_BY[dex] || {}).name || '' }); },
     over(d) {
+      if (d) G.RunStats.setFinal(d.rs);
       if (d) Object.assign(pl, { kills: d.ki, bosses: d.bo, coins: d.co, level: Math.max(pl.level, d.lv || 1), t1: d.t1 || pl.t1, t10: d.t10 || pl.t10 });
       if (d && d.t) time = d.t;
       if (d && d.why === 'host') G.UI.toast('El anfitrión ha terminado la partida', 3200);
@@ -302,6 +305,7 @@ G.Game = (() => {
     const coop = !!pl.uid;                    // sólo las partidas en grupo le ponen uid
     const wasHost = !!pl.coopHost;
     const team = coop ? G.Coop.members.slice() : [];
+    const party = G.RunStats.party();                  // antes de cerrar el grupo (js/fork/run-stats.js)
     if (G.Coop.active) G.Coop.end();
     if (coop) G.Social.setPlaying(false);
     state = 'over';
@@ -346,12 +350,14 @@ G.Game = (() => {
                : ok && wasHost ? G.Ranking.submitGroup(Object.assign(mark, { members: team })) : null;
     if (sent) sent.then(b => { if (b && b.some(p => p !== 'a')) G.DB.commit(true); }).catch(() => {});
 
-    G.RunUI.showOver({
+    const over = () => G.RunUI.showOver({
       dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, judge,
-      moves: pl.moves, caught,
+      moves: pl.moves, caught, mine: G.RunStats.mine(time, party),
       breakdown: Object.entries(parts).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') +
                  (mul > 1 ? ` · ×${mul.toFixed(2)} Fortuna` : '')
     }, () => { pl = null; G.Flow.afterRun(); });
+    // En grupo, primero el resumen del equipo; luego lo tuyo.
+    if (party && party.length > 1) G.RunStats.showParty(party, over); else over();
   }
 
   /*
@@ -569,6 +575,12 @@ G.Game = (() => {
     }
     if (G.Input.tap('escape') || G.Input.tap('keyp')) { togglePause(); return; }
     if (state !== 'playing' || !pl) return;
+    if (pl.dead && G.Coop.active) {
+      // Caído: estas teclas cambian de compañero al que mirar (ver watched()).
+      if (['keyq', 'keya', 'arrowleft'].some(k => G.Input.tap(k))) watchNext(-1);
+      if (['keye', 'keyd', 'arrowright', 'tab'].some(k => G.Input.tap(k))) watchNext(1);
+      return;
+    }
     for (let i = 0; i < 4; i++) {
       if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) pl.setActive(i);
     }
@@ -668,8 +680,11 @@ G.Game = (() => {
     if (coop) {
       for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
       if (pl.dead) reviveTick(dt);
+      G.RunStats.update(dt);
     }
-    G.Camera.follow(pl.x, pl.y, dt);
+    // Caído en grupo: la cámara sigue al compañero que estás mirando.
+    const cam = (watched() || { pl }).pl;
+    G.Camera.follow(cam.x, cam.y, dt);
     G.World.update(dt, G.Camera);
 
     const all = everyone();
@@ -696,11 +711,38 @@ G.Game = (() => {
     if (G.Coop.isHost) checkAllDown(dt);
   }
 
+  /*
+   * Caído en grupo: miras a un compañero vivo (Q/E, A/D o las flechas; en el mando,
+   * LB/RB; en táctil, las flechas de la pantalla). Tu cuerpo sigue donde cayó y te
+   * levantan allí. Si cae al que miras, pasas al siguiente; al levantarte, vuelves a ti.
+   */
+  let watchUid = null;
+  const aliveMates = () => G.Coop.mates.filter(m => m.connected && m.pl && !m.pl.dead);
+  function watched() {
+    if (!G.Coop.active || !pl || !pl.dead) { watchUid = null; return null; }
+    const alive = aliveMates();
+    if (!alive.length) { watchUid = null; return null; }
+    let m = alive.find(x => x.uid === watchUid);
+    if (!m) { m = alive[0]; watchUid = m.uid; }
+    return m;
+  }
+  function watchNext(dir) {
+    const alive = aliveMates();
+    if (!pl || !pl.dead || !alive.length) return;
+    const i = alive.findIndex(x => x.uid === watchUid);
+    watchUid = alive[(i + dir + alive.length) % alive.length].uid;
+    G.Audio.sfx('select');
+  }
+
   /** Caído en grupo: un compañero a tu lado te va levantando. */
   function reviveTick(dt) {
     const helper = G.Coop.puppets().some(p => !p.dead && G.U.dist2(p.x, p.y, pl.x, pl.y) < 56 * 56);
     pl.reviveT = helper ? (pl.reviveT || 0) + dt : Math.max(0, (pl.reviveT || 0) - dt * 0.5);
-    if (pl.reviveT >= G.Player.REVIVE_TIME) pl.revive(0.5);
+    if (pl.reviveT >= G.Player.REVIVE_TIME) {
+      // Rescate: para los compañeros que tenías al lado (estadísticas del final).
+      G.RunStats.revived(G.Coop.mates.filter(m => m.connected && m.pl && !m.pl.dead && G.U.dist2(m.pl.x, m.pl.y, pl.x, pl.y) < 56 * 56).map(m => m.uid));
+      pl.revive(0.5);
+    }
   }
 
   /** Anfitrión: si caéis todos, se acaba (tras ver caer al último). */
@@ -922,7 +964,9 @@ G.Game = (() => {
     /** Para grabar vídeos: abre las cartas de subir de nivel. */
     debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
     toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
-    get state() { return state; }, get player() { return pl; }, st
+    get state() { return state; }, get player() { return pl; },
+    /** Caído en grupo: el compañero que miras ({ uid, name, color, pl }) o null. */
+    get watching() { return watched(); }, watchNext, st
   };
 })();
 
@@ -989,6 +1033,7 @@ G.Flow = {
   /** Empieza la partida en grupo (el anfitrión la manda a todos). */
   startCoop(cfg) {
     if (G.Game.state !== 'ui' || !G.Social.room) return;
+    G.Social.setReady(false);         // al volver a la sala, cada uno se vuelve a poner listo
     G.LobbyUI.close();
     G.Game.startRun(cfg);
   }

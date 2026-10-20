@@ -8,7 +8,8 @@
  *   último rodillo se hace esperar y las luces se vuelven locas.
  *   La ×10 son 10 tiradas rápidas; cada premio cae como una bola a la bandeja.
  *
- * Un clic acelera la animación.
+ * Un clic acelera la animación; stop() la corta (el botón Saltar del gacha) y
+ * play() se resuelve en seguida.
  */
 G.Slots = (() => {
   const W = 176, H = 170, CELL = 30;
@@ -38,7 +39,7 @@ G.Slots = (() => {
     cv = canvas; ctx = cv.getContext('2d');
     fast = false;
     cv.onclick = () => { fast = true; };
-    st = {
+    const run = st = {
       t: 0, lever: 0, reels: REEL_X.map(() => ({ off: Math.random() * 400, spin: false, sym: 'ball', bounce: 0, speed: 0 })),
       ten: results.length === 10, tray: [], led: results.length === 10 ? 'TIRADA ×10' : '¡SUERTE!', ledCol: C.bulbOn, win: null, frenzy: 0, sparks: []
     };
@@ -47,16 +48,20 @@ G.Slots = (() => {
     raf = requestAnimationFrame(frame);
 
     const ten = results.length === 10;
+    const gone = () => st !== run;           // stop() (Saltar) o una tirada nueva
     for (let i = 0; i < results.length; i++) {
       const r = results[i];
       if (ten) st.led = 'TIRADA ' + (i + 1) + '/10';
       // Palanca.
       G.Audio.sfx('ball');
       await tween(v => { st.lever = v; }, 0, 1, ten ? 0.12 : 0.22);
+      if (gone()) return;
       for (const rl of st.reels) { rl.spin = true; rl.speed = 520; }
       await tween(v => { st.lever = v; }, 1, 0, ten ? 0.1 : 0.2);
+      if (gone()) return;
       st.win = null;
       await wait(ten ? 0.18 : 0.6);
+      if (gone()) return;
       const big = r.rarity >= 4 || r.shiny;
       for (let k = 0; k < 3; k++) {
         if (k === 2 && big) {
@@ -65,10 +70,12 @@ G.Slots = (() => {
           st.led = r.shiny ? '¡¿SHINY?!' : r.rarity === 5 ? '¡¿LEGENDARIO?!' : '¡¿ÉPICO?!';
           st.ledCol = colOf(r);
           await tween(v => { st.reels[2].speed = v; }, 520, 120, ten ? 0.5 : 1.1);
+          if (gone()) return;
         }
         stopReel(st.reels[k], symOf(r));
         G.Audio.sfx('shake');
         await wait(ten ? 0.08 : 0.32);
+        if (gone()) return;
       }
       st.frenzy = 0;
       // Premio.
@@ -81,9 +88,10 @@ G.Slots = (() => {
       if (big) burst(colOf(r), r.rarity === 5 || r.shiny ? 60 : 30);
       st.tray.push({ sym: symOf(r), y: 104, vy: 0, done: false });
       await wait(ten ? (big ? 0.7 : 0.28) : 1.0);
+      if (gone()) return;
     }
     await wait(0.4);
-    stopAll();
+    if (!gone()) stopAll();
   }
 
   function stopAll() { cancelAnimationFrame(raf); st = null; if (cv) cv.onclick = null; }
@@ -92,6 +100,7 @@ G.Slots = (() => {
     return new Promise(res => {
       const t0 = performance.now(), d = dur * 1000 * (fast ? 0.25 : 1);
       (function step() {
+        if (!st) { res(); return; }          // stop() entre dos fotogramas
         const k = Math.min(1, (performance.now() - t0) / d);
         set(a + (b - a) * k);
         if (k < 1 && st) requestAnimationFrame(step); else res();

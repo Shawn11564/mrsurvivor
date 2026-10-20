@@ -143,6 +143,10 @@
 
   G.LobbyUI = (() => {
     let membersKey = '';
+    // Listos: con todos listos, cuenta atrás y la partida empieza sola (la lanza el
+    // anfitrión); el anfitrión también puede forzar el inicio con el botón de siempre.
+    const COUNTDOWN = 3;
+    let cd = null;                       // { end, iv } mientras dura la cuenta atrás
 
     function init() {
       $('lobby-leave').onclick = async () => {
@@ -153,6 +157,10 @@
       $('lobby-menu').onclick = () => G.MenuUI.open();
       $('lobby-start').onclick = start;
       $('lobby-start').dataset.sfx = 'confirm';
+      $('lobby-ready').onclick = () => {
+        const room = G.Social.room, me = room && room.members.find(m => m.uid === G.Social.uid);
+        if (me) G.Social.setReady(!me.ready);
+      };
       // Conecta / desconecta la red al entrar o salir de una sala.
       G.Social.on(what => {
         const room = G.Social.room;
@@ -178,7 +186,16 @@
       render();
     }
 
-    function close() { G.UI.hide('scr-lobby'); }
+    function close() { G.UI.hide('scr-lobby'); stopCountdown(); }
+
+    function stopCountdown() { if (cd) { clearInterval(cd.iv); cd = null; } }
+    function tickCountdown() {
+      const room = G.Social.room;
+      if (!room || !G.UI.isOpen('scr-lobby')) { stopCountdown(); return; }
+      const left = Math.max(0, Math.ceil((cd.end - performance.now()) / 1000));
+      $('lobby-note').textContent = G.I18n.f('Todos listos: empieza en {x}…', left);
+      if (left <= 0 && room.isHost) { stopCountdown(); start(); }
+    }
 
     function connText(m, room) {
       if (m.uid === room.host) return 'Anfitrión';
@@ -208,7 +225,7 @@
           if (m) {
             c.style.setProperty('--pc', G.Coop.COLORS[i]);
             c.appendChild(G.UI.spriteCanvas(m.dex, 120, 96, { scale: 2, lively: true, shiny: !!m.shiny }));
-            c.insertAdjacentHTML('beforeend', `<b translate="no">${esc(m.name)}</b><small>${esc((G.DEX_BY[m.dex] || {}).name || '')}</small><span class="conn" data-u="${m.uid}"></span>`);
+            c.insertAdjacentHTML('beforeend', `<b translate="no">${esc(m.name)}</b><small>${esc((G.DEX_BY[m.dex] || {}).name || '')}</small><span class="conn" data-u="${m.uid}"></span><span class="rdy" data-u="${m.uid}"></span>`);
           } else c.innerHTML = '<span>Libre</span>';
           box.appendChild(c);
         }
@@ -220,6 +237,16 @@
         el.textContent = t;
         el.className = 'conn' + (t === 'Conectando…' ? ' wait' : '');
       });
+      box.querySelectorAll('.rdy').forEach(el => {
+        const m = ms.find(x => x.uid === el.dataset.u);
+        if (!m) return;
+        el.textContent = m.ready ? 'Listo' : 'No listo';
+        el.classList.toggle('on', !!m.ready);
+        el.closest('.lob-card').classList.toggle('ready', !!m.ready);
+      });
+      const meM = ms.find(m => m.uid === G.Social.uid);
+      $('lobby-ready').textContent = meM && meM.ready ? 'No estoy listo' : 'Estoy listo';
+      $('lobby-ready').classList.toggle('gold', !(meM && meM.ready));
 
       // Invitar (sólo el anfitrión y si queda sitio).
       const canInvite = room.isHost && ms.length < G.Social.MAX_PLAYERS;
@@ -247,11 +274,18 @@
       const connecting = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'connecting');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
       btn.disabled = !room.isHost || ms.length < 2 || connecting || failed;
-      btn.textContent = 'Empezar partida (' + ms.length + '/' + G.Social.MAX_PLAYERS + ')';
-      $('lobby-note').textContent = !room.isHost ? 'Cuando el anfitrión empiece, entraréis todos a la vez.'
+      const nReady = ms.filter(m => m.ready).length, allReady = ms.length >= 2 && nReady === ms.length;
+      // Sin todos listos, el botón del anfitrión es "forzar inicio".
+      btn.textContent = allReady ? 'Empezar ya' : G.I18n.f('Forzar inicio ({x}/{x} listos)', nReady, ms.length);
+      $('lobby-note').textContent = !room.isHost ? 'Cuando estéis todos listos, la partida empieza sola.'
         : ms.length < 2 ? 'Necesitas al menos un amigo en la sala.'
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
-        : connecting ? 'Conectando con tus amigos…' : 'La partida empieza para todos a la vez.';
+        : connecting ? 'Conectando con tus amigos…' : 'Cuando estéis todos listos, la partida empieza sola. Puedes forzar el inicio.';
+      // Todos listos (y, el anfitrión, conectado con todos): cuenta atrás. Si alguien deja de estarlo, se para.
+      const go = allReady && (!room.isHost || (!connecting && !failed));
+      if (go && !cd) { cd = { end: performance.now() + COUNTDOWN * 1000, iv: setInterval(tickCountdown, 200) }; tickCountdown(); }
+      else if (!go) stopCountdown();
+      else tickCountdown();
     }
 
     function start() {
@@ -266,7 +300,7 @@
       G.Flow.startCoop(cfg);
     }
 
-    return { init, open, close, render };
+    return { init, open, close, render, get countingDown() { return !!cd; } };
   })();
 
   // ======================= INVITACIONES =======================

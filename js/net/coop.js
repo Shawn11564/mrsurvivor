@@ -17,7 +17,7 @@
  * Mensajes (por net.js, unas 15 veces por segundo; 5 si va por el relé):
  *   invitado -> anfitrión  { k:'f', p:[estado], ev:[eventos] }
  *   anfitrión -> invitado  { k:'f', t, lv, xp, xn, ki, bo, co, p:{uid:[estado]},
- *                            e:[[id,x,y,vida,anim,dir,estados]], ev:[eventos],
+ *                            e:[[id,x,y,vida,anim,dir,estados]], ev:[eventos], ra (en la arena: 1/0),
  *                            ja:[x,y,anim,dir] (Arceus, sólo en la Sentencia) }
  *   anfitrión -> todos     { k:'start', seed, host, members:[{uid,name,dex,shiny}] }
  */
@@ -160,11 +160,15 @@ G.Coop = (() => {
     }
   }
 
+  /**
+   * Enemigos cerca de alguno de los puntos `near`. A un invitado caído le llegan
+   * los de cerca de todos los vivos: puede estar mirando a cualquiera (game.js watched).
+   */
   function enemyList(near) {
     const out = [];
     const r2n = NEAR * NEAR;
     for (const e of G.EnemyMgr.all()) {
-      if (e.dead || G.U.dist2(e.x, e.y, near.x, near.y) > r2n) continue;
+      if (e.dead || !near.some(n => G.U.dist2(e.x, e.y, n.x, n.y) <= r2n)) continue;
       const a = ANIMS.indexOf(e.anim.cur);
       out.push([e.id, r1(e.x), r1(e.y), Math.ceil(e.hp), a < 0 ? 0 : a, e.anim.dir,
                 (e.burn > 0 ? 1 : 0) | (e.poison > 0 ? 2 : 0) | (e.shield > 0 ? 4 : 0)]);
@@ -180,12 +184,13 @@ G.Coop = (() => {
     }
     const ev = m.q; m.q = [];
     const f = { k: 'f', t: r2(st.time), lv: st.level, xp: r2(st.xp), xn: st.xpNext, ki: st.kills, bo: st.bosses, co: st.coins, tk: [st.t1, st.t10],
-                p, e: enemyList(m.pl), ev };
+                p, e: enemyList(m.pl.dead ? [m.pl, ...players().filter(o => !o.dead)] : [m.pl]), ev };
     const ja = G.Judgment.netState();       // Arceus en la Sentencia
     if (ja) f.ja = ja;
     // Siempre: quién está eligiendo y, si hay cartas de nivel, cuáles (ver arriba).
     f.ho = holdNames();
     if (waiting.size) f.lu = [levelSeq, levelNow];
+    f.ra = G.Rift.inArena ? 1 : 0;          // en la arena de la grieta (la vuelta la decide el anfitrión)
     return f;
   }
 
@@ -257,6 +262,7 @@ G.Coop = (() => {
           const e = G.EnemyMgr.get(ev[1]);
           if (!e || e.dead || e.remote) break;
           hitFrom = from;
+          G.RunStats.tagRemote(e, from, ev[7]);
           e.hurt(ev[2], ev[3], ev[4], ev[5], ev[6]);
           hitFrom = null;
           break;
@@ -279,6 +285,7 @@ G.Coop = (() => {
           emit(['pb', ev[1], ev[2]], from);
           break;
         case 'lp': picked(from); break;
+        case 'st': G.RunStats.remote(from, ev[1]); break;     // sus estadísticas (fork)
         case 'hs': holdOn(from); break;
         case 'he': holdOff(from); break;
         case 're': G.Rift.enterRequest(); break;
@@ -320,6 +327,7 @@ G.Coop = (() => {
       if (msg.lu && msg.lu[0] > seenSeq) { seenSeq = msg.lu[0]; api.levelStart(msg.lu[1]); }
       else if (!msg.lu && api.inLevelUp && api.inLevelUp()) api.resume();
     }
+    if (msg.ra === 0 && G.Rift.inArena) G.Rift.hostOutside();
     api.syncTeam({ time: msg.t, level: msg.lv, xp: msg.xp, xpNext: msg.xn, kills: msg.ki, bosses: msg.bo, coins: msg.co,
                    t1: (msg.tk || [])[0], t10: (msg.tk || [])[1] });
     for (const u in msg.p || {}) {
@@ -393,7 +401,8 @@ G.Coop = (() => {
   }
 
   // invitado
-  function hit(e, d, color, dx, dy, knock) { outEv.push(['h', e.id, d, color, r1(dx), r1(dy), knock || 0]); }
+  // El último va el movimiento (derrotados por movimiento, ver js/fork/run-stats.js).
+  function hit(e, d, color, dx, dy, knock) { outEv.push(['h', e.id, d, color, r1(dx), r1(dy), knock || 0, e.lastMove || 0]); }
   function status(e, kind, val) { outEv.push(['s', e.id, kind, val]); }
 
   // anfitrión

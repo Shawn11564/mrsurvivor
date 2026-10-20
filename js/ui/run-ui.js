@@ -70,9 +70,12 @@ G.RunUI = (() => {
       // Ataque nuevo de tu tipo: borde y fondo de su color y chip "Tu tipo".
       if (c.own) { el.classList.add('stab'); el.style.setProperty('--tc', c.color); }
       const own = c.own ? `<span class="tag-chip stab-chip">${G.Icons.html('star', 12)} Tu tipo</span>` : '';
+      // Potenciador de su lado fuerte (Maquinación con un Pokémon especial).
+      if (c.boost) el.classList.add('boost');
+      const boost = c.boost ? `<span class="tag-chip boost-chip">${G.Icons.html('up', 12)} Te viene bien</span>` : '';
       el.innerHTML =
         `<div class="ico" style="background:${c.color}33">${G.Icons.html(c.icon, 32)}</div>
-         <div class="txt"><div class="nm">${c.title} ${tag}${own}</div><div class="ds">${c.desc}</div></div>
+         <div class="txt"><div class="nm">${c.title} ${tag}${own}${boost}</div><div class="ds">${c.desc}</div></div>
          <div class="key">${i + 1}</div>`;
       el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
       el.onclick = () => pick(i);
@@ -137,8 +140,8 @@ G.RunUI = (() => {
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
       ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Tickets del gacha</span><b>
         ${r.t1 ? G.Icons.html('ticket', 22) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ticket10', 22) + ' +' + r.t10 + ' ×10' : ''}</b></div>` : ''}
-      <div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
-        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${G.T(m.name, 'move')} Nv.${m.lvl}`).join(' · ') || '—'}</b></div>
+      ${r.mine ? G.RunStats.mineHTML(r.mine) : `<div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
+        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${G.T(m.name, 'move')} Nv.${m.lvl}`).join(' · ') || '—'}</b></div>`}
       ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies conseguidos</span>
         <div class="caught-row" id="over-caught"></div></div>` : ''}
       ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">¡Nuevo récord de tiempo!</div>' : ''}

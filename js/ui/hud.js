@@ -25,6 +25,19 @@ G.HUD = (() => {
     }
   }
 
+  /*
+   * Potenciadores (Danza Espada, Maquinación...): cuánto les queda. Todas las cargas
+   * caducan a la vez al acabarse el tiempo (Player.addBuff/update), así que se pinta
+   * en su hueco: barra que se vacía, segundos y cargas; en los últimos segundos, si no
+   * es el ataque activo, borde dorado que late ("cámbiate a él").
+   */
+  const BUFF_COL = { atk: '#ff6b4d', patk: '#ff6b4d', satk: '#c47bff', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
+  const BUFF_WARN = 2.5;
+  function buffLeft(pl, m) {
+    const b = m.kind === 'buff' && pl.buffs[m.stat];
+    return b && b.n > 0 ? { b, frac: G.U.clamp(b.t / (m.dur || 7), 0, 1) } : null;
+  }
+
   function draw(ctx, w, h, pl, st) {
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -242,7 +255,9 @@ G.HUD = (() => {
     }
 
     // ---------- ranura de movimientos ----------
-    const S = 54, GAP = 9;
+    // Tamaño de los iconos (Ajustes > Gráficos): todo el bloque escala con K.
+    const K = G.Settings.get('hudSize') || 1, FIT = K !== 1;
+    const S = 54 * K, GAP = 9 * K, IG = 18 * K;
     const n = Math.max(1, pl.slots.length);
     const totalW = n * S + (n - 1) * GAP;
     let sx = (w - totalW) / 2;
@@ -253,8 +268,8 @@ G.HUD = (() => {
     // (layout-ui.js); los ataques nuevos van saliendo hacia la derecha.
     const pb = touch && G.Touch.spot('bar');
     if (pb) {
-      const nAll = Math.max(n, pl.maxMoves), bw = S + 18 + nAll * S + (nAll - 1) * GAP;
-      sx = G.U.clamp(pb[0] * w - bw / 2, 6, Math.max(6, w - bw - 6)) + S + 18;
+      const nAll = Math.max(n, pl.maxMoves), bw = S + IG + nAll * S + (nAll - 1) * GAP;
+      sx = G.U.clamp(pb[0] * w - bw / 2, 6, Math.max(6, w - bw - 6)) + S + IG;
       sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6);
     }
     const BOND = '#ff8ad8';
@@ -270,7 +285,7 @@ G.HUD = (() => {
       const fused = g.length > 1;
       const on = i === pl.active;
       const x = sx + i * (S + GAP);
-      const y = on ? sy - 6 : sy;
+      const y = on ? sy - 6 * K : sy;
       // Tocar (o hacer clic en) un icono activa ese movimiento.
       if (m) G.Touch.addButton(x, y, S, S, () => { if (G.Game.state === 'playing' && pl.active !== i) { pl.setActive(i); G.Audio.sfx('click'); } }, GAP / 2 + 3, i);
       const col = m ? G.U.TYPE_COLOR[m.type] : '#4a5468';
@@ -279,7 +294,7 @@ G.HUD = (() => {
       if (drag && drag.slot === i) ctx.globalAlpha = 0.35;
 
       // fondo
-      roundRect(ctx, x, y, S, S, 12);
+      roundRect(ctx, x, y, S, S, 12 * K);
       ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
       ctx.fill();
       ctx.lineWidth = on ? 2.5 : fused || (m && m.evolved) ? 2 : 1.2;
@@ -289,7 +304,7 @@ G.HUD = (() => {
       // Al arrastrar: el hueco donde caería, con borde blanco.
       if (drag && drag.slot !== i && m && inBox(x, y)) {
         ctx.lineWidth = 2.5; ctx.strokeStyle = '#f4f8ff'; ctx.setLineDash([5, 4]);
-        roundRect(ctx, x - 3, y - 3, S + 6, S + 6, 14); ctx.stroke();
+        roundRect(ctx, x - 3, y - 3, S + 6, S + 6, 14 * K); ctx.stroke();
         ctx.setLineDash([]);
       }
 
@@ -297,13 +312,15 @@ G.HUD = (() => {
 
       if (fused) {
         // Vínculo: los movimientos en una cuadrícula de 2×2, cada uno con su recarga.
-        const C = 22, P = (S - C * 2) / 3;
+        const C = 22 * K, P = (S - C * 2) / 3;
         g.forEach((gm, k) => {
           const cx = x + P + (k % 2) * (C + P), cy = y + P + Math.floor(k / 2) * (C + P);
-          G.Icons.draw(ctx, 'move:' + gm.id, cx, cy, C);
+          G.Icons.draw(ctx, 'move:' + gm.id, cx, cy, C, FIT);
           const f = cdOf(gm);
           if (f > 0) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(cx, cy, C, C * f); }
           if (gm.evolved) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, C - 1, C - 1); }
+          const bl = buffLeft(pl, gm);
+          if (bl) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(cx, cy + C - 3 * K, C, 3 * K); ctx.fillStyle = BUFF_COL[gm.stat] || '#fff'; ctx.fillRect(cx, cy + C - 3 * K, C * bl.frac, 3 * K); }
           // Destello al lanzarse.
           const fl = 1 - (performance.now() - (gm.castAt || 0)) / 180;
           if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (fl * 0.55).toFixed(2) + ')'; ctx.fillRect(cx, cy, C, C); }
@@ -313,57 +330,79 @@ G.HUD = (() => {
         const cdFrac = cdOf(m);
         if (cdFrac > 0) {
           ctx.save();
-          roundRect(ctx, x, y, S, S, 12); ctx.clip();
+          roundRect(ctx, x, y, S, S, 12 * K); ctx.clip();
           ctx.fillStyle = 'rgba(0,0,0,.6)';
           ctx.fillRect(x, y, S, S * cdFrac);
           ctx.restore();
         }
 
         // emblema del tipo + insignia de la familia
-        G.Icons.draw(ctx, 'move:' + m.id, x + (S - 32) / 2, y + (S - 32) / 2 - 2, 32);
+        const I = 32 * K;
+        G.Icons.draw(ctx, 'move:' + m.id, x + (S - I) / 2, y + (S - I) / 2 - 2 * K, I, FIT);
 
         // nivel del movimiento (puntitos)
         const dots = m.def.maxLvl;
-        const dw = 4, dgap = 2;
+        const dw = 4 * K, dgap = 2 * K;
         const tw = dots * dw + (dots - 1) * dgap;
         for (let d = 0; d < dots; d++) {
           ctx.fillStyle = d < m.lvl ? col : 'rgba(255,255,255,.18)';
-          ctx.fillRect(x + (S - tw) / 2 + d * (dw + dgap), y + S - 9, dw, 3);
+          ctx.fillRect(x + (S - tw) / 2 + d * (dw + dgap), y + S - 9 * K, dw, 3 * K);
+        }
+
+        // Potenciador activo: tiempo que le queda (ver buffLeft).
+        const bl = buffLeft(pl, m);
+        if (bl) {
+          // (A la derecha del número de tecla, que va arriba a la izquierda.)
+          const bc = BUFF_COL[m.stat] || '#fff', bx0 = x + 12 * K, bw = S - 16 * K;
+          ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(bx0, y + 3 * K, bw, 4 * K);
+          ctx.fillStyle = bc; ctx.fillRect(bx0, y + 3 * K, bw * bl.frac, 4 * K);
+          ctx.font = F(800, Math.round(9 * K));
+          ctx.textAlign = 'right'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
+          const secs = bl.b.t < 10 ? bl.b.t.toFixed(1) : String(Math.ceil(bl.b.t));
+          ctx.strokeText(secs + 's', x + S - 3 * K, y + S - 12 * K); ctx.fillStyle = '#f4f8ff'; ctx.fillText(secs + 's', x + S - 3 * K, y + S - 12 * K);
+          ctx.strokeText('×' + bl.b.n, x + S - 3 * K, y + 17 * K); ctx.fillStyle = bc; ctx.fillText('×' + bl.b.n, x + S - 3 * K, y + 17 * K);
+          if (bl.b.t < BUFF_WARN && !on) {
+            const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 90);
+            ctx.lineWidth = 2.5; ctx.strokeStyle = `rgba(255,210,63,${(0.45 + 0.55 * pulse).toFixed(2)})`;
+            roundRect(ctx, x - 2, y - 2, S + 4, S + 4, 13 * K); ctx.stroke();
+            ctx.font = F(800, Math.round(16 * K)); ctx.textAlign = 'center';
+            ctx.strokeText('!', x + S / 2, y - 4 * K); ctx.fillStyle = '#ffd23f'; ctx.fillText('!', x + S / 2, y - 4 * K);
+          }
         }
       }
 
       // tecla
-      ctx.font = F(800, 9);
+      ctx.font = F(800, Math.round(9 * K));
       ctx.fillStyle = fused ? BOND : on ? col : 'rgba(180,200,230,.6)';
       ctx.textAlign = 'left';
-      ctx.fillText(String(i + 1), x + 3, y + 10);
+      ctx.fillText(String(i + 1), x + 3 * K, y + 10 * K);
 
       // nombre encima del activo (con un vínculo: "Ascuas +2")
       if (on) {
-        ctx.font = F(700, 10);
+        ctx.font = F(700, Math.round(10 * K));
         ctx.textAlign = 'center';
         ctx.fillStyle = fused ? BOND : col;
-        ctx.fillText(fused ? G.T(m.name, 'move') + ' +' + (g.length - 1) : G.T(m.name, 'move'), x + S / 2, y - 7);
+        ctx.fillText(fused ? G.T(m.name, 'move') + ' +' + (g.length - 1) : G.T(m.name, 'move'), x + S / 2, y - 7 * K);
       }
       ctx.restore();
     }
 
     // ---------- vínculo guardado (aún no hay dos movimientos sueltos) ----------
     if (pl.bonds > 0) {
-      const bx = sx + totalW + 12, by = sy + S / 2 - 12;
-      G.Icons.draw(ctx, 'bond', bx, by, 24);
+      const bx = sx + totalW + 12 * K, by = sy + S / 2 - 12 * K;
+      G.Icons.draw(ctx, 'bond', bx, by, 24 * K, FIT);
       if (pl.bonds > 1) {
-        ctx.font = F(800, 10);
+        ctx.font = F(800, Math.round(10 * K));
         ctx.textAlign = 'left';
         ctx.fillStyle = BOND;
-        ctx.fillText('×' + pl.bonds, bx + 25, by + 20);
+        ctx.fillText('×' + pl.bonds, bx + 25 * K, by + 20 * K);
       }
     }
 
     // ---------- objeto equipado (a la izquierda de los movimientos) ----------
     {
-      const ix = sx - S - 18, iy = sy;
-      roundRect(ctx, ix, iy, S, S, 12);
+      const ix = sx - S - IG, iy = sy;
+      roundRect(ctx, ix, iy, S, S, 12 * K);
       ctx.fillStyle = pl.item ? 'rgba(40,30,10,.9)' : 'rgba(10,16,28,.55)';
       ctx.fill();
       ctx.lineWidth = pl.item ? 2 : 1;
@@ -371,11 +410,11 @@ G.HUD = (() => {
       ctx.stroke();
       if (pl.item) {
         if (inBox(ix, iy)) tip = { cx: ix + S / 2, top: iy, item: pl.item };
-        G.Icons.draw(ctx, pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
-        ctx.font = F(700, 9);
+        G.Icons.draw(ctx, pl.item, ix + (S - 36 * K) / 2, iy + (S - 36 * K) / 2, 36 * K, FIT);
+        ctx.font = F(700, Math.round(9 * K));
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd23f';
-        ctx.fillText(G.Items.BY[pl.item].name, ix + S / 2, iy - 6);
+        ctx.fillText(G.Items.BY[pl.item].name, ix + S / 2, iy - 6 * K);
       }
     }
 
@@ -406,7 +445,8 @@ G.HUD = (() => {
     if (drag) {
       ctx.save();
       ctx.globalAlpha = 0.85;
-      G.Icons.draw(ctx, 'move:' + pl.slots[drag.slot][0].id, drag.x - 16, drag.y - 16, 32);
+      const gi = 32 * (G.Settings.get('hudSize') || 1);
+      G.Icons.draw(ctx, 'move:' + pl.slots[drag.slot][0].id, drag.x - gi / 2, drag.y - gi / 2, gi);
       ctx.restore();
     }
 
@@ -596,6 +636,29 @@ G.HUD = (() => {
       ctx.fillText(msg, w / 2, h * 0.62);
       const f = (pl.reviveT || 0) / G.Player.REVIVE_TIME;
       if (f > 0) bar(ctx, w / 2 - 110, h * 0.62 + 12, 220, 10, f, '#5fe08a');
+      // Mirando a un compañero vivo (game.js watched): su nombre entre flechas que se pueden pulsar.
+      const wm = G.Game.watching;
+      if (wm) {
+        const y = h * 0.62 + 46;
+        ctx.font = F(800, 15);
+        const label = G.I18n.f('Viendo a {x}', wm.name);
+        const lw = G.I18n.rawCanvas(ctx, 'measureText', label).width;
+        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.fillStyle = wm.color || '#f4f8ff';
+        G.I18n.rawCanvas(ctx, 'strokeText', label, w / 2, y);
+        G.I18n.rawCanvas(ctx, 'fillText', label, w / 2, y);
+        for (const dir of [-1, 1]) {
+          const ax = w / 2 + dir * (lw / 2 + 24), S = 30;
+          roundRect(ctx, ax - S / 2, y - 21, S, S, 8);
+          ctx.fillStyle = 'rgba(10,16,28,.75)'; ctx.fill();
+          ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(244,248,255,.8)'; ctx.stroke();
+          ctx.fillStyle = '#f4f8ff';
+          ctx.beginPath(); ctx.moveTo(ax + dir * 6, y - 6); ctx.lineTo(ax - dir * 5, y - 13); ctx.lineTo(ax - dir * 5, y + 1); ctx.closePath(); ctx.fill();
+          G.Touch.addButton(ax - S / 2, y - 21, S, S, () => G.Game.watchNext(dir), 6);
+        }
+        ctx.font = F(600, 11);
+        ctx.fillStyle = 'rgba(200,215,240,.75)';
+        ctx.fillText(G.Touch.active ? 'Toca las flechas para cambiar de compañero' : 'Q/E o A/D: cambiar de compañero', w / 2, y + 22);
+      }
       ctx.restore();
     }
   }

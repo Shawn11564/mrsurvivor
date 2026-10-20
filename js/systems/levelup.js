@@ -27,6 +27,9 @@ G.LevelUp = (() => {
       apply: pl => pl.heal(pl.maxHp * 0.45) }
   ];
 
+  // Qué ataque sube cada potenciador (el resto, velocidad, defensa..., le va bien a cualquiera).
+  const BUFF_CAT = { patk: 'physical', satk: 'special' };
+
   /** n elementos distintos de list, cada uno con probabilidad según weight(x). */
   function pickWeighted(list, n, weight) {
     const rest = list.map(x => [x, weight(x)]), out = [];
@@ -62,11 +65,16 @@ G.LevelUp = (() => {
         const own = d.kind !== 'buff' && pl.mon.types.includes(d.type) && G.Stats.fit(pl.mon, d.cat) >= 0.95;
         const mono = own && pl.monoType(d.type)
           ? ` <span class="fit-good">+${Math.round((G.Player.MONO_K - 1) * 100)} % de daño: es de tu tipo.</span>` : '';
+        // Potenciador del ataque de su lado fuerte (Maquinación con Gengar): se avisa (ui: .card.boost).
+        const bcat = d.kind === 'buff' && BUFF_CAT[d.stat];
+        const boost = !!bcat && G.Stats.sideOf(pl.mon) === bcat;
+        const boostNote = boost
+          ? ` <span class="fit-good">${pl.mon.name} pega más fuerte con ataques ${bcat === 'special' ? 'especiales' : 'físicos'}: le viene bien.</span>` : '';
         out.push({
-          w: 10, type: 'new', key: 'new:' + id, own,
+          w: 10, type: 'new', key: 'new:' + id, own, boost,
           icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
           tag: G.U.TYPE_NAME[d.type] + (d.cat ? ' · ' + G.Stats.NAME[d.cat] : ''),
-          title: G.T(d.name, 'move'), desc: d.desc + fitNote(pl.mon, d.cat) + mono,
+          title: G.T(d.name, 'move'), desc: d.desc + fitNote(pl.mon, d.cat) + mono + boostNote,
           apply: p => p.addMove(id)
         });
       }

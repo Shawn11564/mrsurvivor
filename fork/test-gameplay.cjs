@@ -15,7 +15,9 @@
 //      another swaps them (js/core/touch.js drag, Player.swapSlots) and the order survives
 //      learning a move; a plain click still selects; holding left click on the map aims
 //      at the cursor (Touch.mapHeld, Player.handAim).
-//   3. Level-up cards: a new attack of your Pokémon's type on its good side
+//   3. Gacha: Skip during a ×10 pull goes straight to the results (js/ui/gacha-ui.js, G.Slots.stop),
+//      and the next pull still plays normally.
+//   4. Level-up cards: a new attack of your Pokémon's type on its good side
 //      (physical/special) is flagged `own` (js/systems/levelup.js) and rendered as
 //      .card.stab with the "Tu tipo" chip (js/ui/run-ui.js); other cards are not.
 const path = require('path');
@@ -59,6 +61,34 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(pow.firstBst === pow.top, 'the first Pokémon has the highest total of the generation shown');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'dex-power.png') });
 
+  console.log('Gacha: Skip');
+  await page.evaluate(() => { G.DB.save.tickets.t1 = 30; G.MenuUI.open(); });
+  await page.click('#scr-menu [data-go="gacha"]');
+  await page.waitForSelector('#pull-10:not([disabled])');
+  await page.click('#pull-10');
+  await page.waitForSelector('#pull-skip', { state: 'visible' });
+  await page.waitForTimeout(300);                                   // mid slot-machine
+  const t0 = Date.now();
+  await page.click('#pull-skip');
+  await page.waitForSelector('#pull-close', { state: 'visible', timeout: 3000 });
+  const skipMs = Date.now() - t0;
+  const sk = await page.evaluate(() => ({ cards: document.querySelectorAll('#pull-results .pcard').length,
+    slotHidden: document.getElementById('slot').style.display === 'none',
+    skipHidden: document.getElementById('pull-skip').classList.contains('hidden') }));
+  check(sk.cards === 10 && sk.slotHidden && sk.skipHidden && skipMs < 1500,
+    `Skip goes straight to the 10 results (${skipMs} ms; slot machine hidden, Skip button gone)`);
+  await page.waitForTimeout(600);                                   // their 0.3 s "pop" entry
+  const faded = await page.evaluate(() => [...document.querySelectorAll('#pull-results .pcard')].filter(c => +getComputedStyle(c).opacity < 0.99).length);
+  check(faded === 0, `all skipped-to cards end fully visible (${faded} still faded)`);
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'gacha-skipped.png') });
+  // The slot machine still works after being cut short: a normal pull plays to the end.
+  await page.click('#pull-close');
+  await page.click('#pull-1');
+  await page.waitForSelector('#pull-close', { state: 'visible', timeout: 20000 });
+  const n1 = await page.evaluate(() => document.querySelectorAll('#pull-results .pcard').length);
+  check(n1 === 1, 'a normal pull after a skip still plays through and shows its card');
+  await page.click('#pull-close');
+
   await page.evaluate(() => G.Game.startRun());
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Game.player.activeMove(), null, { timeout: 30000 });
 
@@ -96,16 +126,17 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
 
   // Record what Enemy.draw actually paints over each enemy over a few frames.
   const drawnFor = () => page.evaluate(() => new Promise(res => {
+    // The arrow belongs to the enemy whose draw() is running when it's drawn (matching by
+    // distance picked the neighbour for big Pokémon, whose arrow sits further out).
     const seen = {};
-    const orig = G.Icons.draw;
-    G.Icons.draw = function (ctx, name, x, y, size) {
-      if (name.startsWith('eff:')) {
-        const e = G.EnemyMgr.all().reduce((b, e) => !b || Math.hypot(e.x - x, e.y - y) < Math.hypot(b.x - x, b.y - y) ? e : b, null);
-        if (e) seen[e.id] = name;
-      }
+    const orig = G.Icons.draw, od = G.Enemy.prototype.draw;
+    let cur = null;
+    G.Enemy.prototype.draw = function () { cur = this; try { return od.apply(this, arguments); } finally { cur = null; } };
+    G.Icons.draw = function (ctx, name) {
+      if (name.startsWith('eff:') && cur) seen[cur.id] = name;
       return orig.apply(this, arguments);
     };
-    setTimeout(() => { G.Icons.draw = orig; res(seen); }, 400);
+    setTimeout(() => { G.Icons.draw = orig; G.Enemy.prototype.draw = od; res(seen); }, 400);
   }));
 
   let seen = await drawnFor();
@@ -153,10 +184,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   console.log('HUD: descriptions, drag to reorder, hold to aim');
   // Where hud.js puts slot i (desktop layout) and the item box, in screen px.
   const hud = () => page.evaluate(() => {
-    const pl = G.Game.player, S = 54, GAP = 9, n = Math.max(1, pl.slots.length);
+    const pl = G.Game.player, K = G.Settings.get('hudSize') || 1, S = 54 * K, GAP = 9 * K, n = Math.max(1, pl.slots.length);
     const sx = (innerWidth - (n * S + (n - 1) * GAP)) / 2, sy = innerHeight - S - 18;
     return { slots: pl.slots.map((g, i) => ({ x: sx + i * (S + GAP) + S / 2, y: sy + S / 2 })),
-             item: { x: sx - S - 18 + S / 2, y: sy + S / 2 } };
+             item: { x: sx - S - 18 * K + S / 2, y: sy + S / 2 }, S };
   });
   // Text the tooltip draws (it paints with G.I18n.rawCanvas) over a few frames.
   const tipText = () => page.evaluate(() => new Promise(res => {
@@ -205,6 +236,28 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.mouse.click(pos.slots[tgt].x, pos.slots[tgt].y);
   check(await page.evaluate(t => G.Game.player.active === t, tgt), 'clicking a slot without dragging selects it');
 
+  // Icon size (Settings > Graphics): at each size the slots are where the mouse finds them,
+  // the move icon is drawn at that size, and hover and click still work.
+  for (const k of [0.8, 1.3, 1]) {
+    await page.evaluate(k => G.Settings.set('hudSize', k), k);
+    await page.waitForTimeout(150);
+    pos = await hud();
+    const drawn = await page.evaluate(() => new Promise(res => {
+      const seen = [], o = G.Icons.draw;
+      G.Icons.draw = function (c, name, x, y, size) { if (name.startsWith('move:')) seen.push(size); return o.apply(this, arguments); };
+      setTimeout(() => { G.Icons.draw = o; res(seen); }, 200);
+    }));
+    await page.mouse.move(pos.slots[0].x, pos.slots[0].y);
+    const tk = await tipText();
+    const name0 = await page.evaluate(() => G.T(G.Game.player.slots[0][0].name, 'move'));
+    const target = await page.evaluate(() => G.Game.player.active === 0 ? 1 : 0);
+    await page.mouse.click(pos.slots[target].x, pos.slots[target].y);
+    const sel = await page.evaluate(t => G.Game.player.active === t, target);
+    check(drawn.some(sz => Math.abs(sz - 32 * k) < 0.01) && tk.includes(name0) && sel,
+      `icon size ${k}: slots ${pos.S} px, move icon ${32 * k} px, hover shows "${name0}", click selects`);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `hud-size-${k}.png`), clip: { x: 0, y: vh - 150, width: vw, height: 150 } });
+  }
+
   // Hold left click on the map: the attack aims at the cursor, even with no enemies.
   // World still paused here; old shots (fired at the earlier enemies) are cleared, and only
   // shots created after the press count, so auto-aim before the press can't be miscounted.
@@ -238,6 +291,37 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!(await page.evaluate(() => G.Game.player.manualAim)), 'releasing the click goes back to auto-aim');
   await page.evaluate(() => G.Game.debugSpeed(0));
 
+  // Buff timer on its slot (hud.js buffLeft): stacks and seconds while it lasts, a warning
+  // in the last seconds when it isn't the active move, nothing once it runs out.
+  const hudText = () => page.evaluate(() => new Promise(res => {
+    const seen = [], P = CanvasRenderingContext2D.prototype, o = P.fillText;
+    P.fillText = function (t) { seen.push(String(t)); return o.apply(this, arguments); };
+    setTimeout(() => { P.fillText = o; res([...new Set(seen)]); }, 250);
+  }));
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    G.EnemyMgr.clear();
+    pl.setActive(pl.slots.findIndex(g => g[0].id === 'swords-dance'));
+    G.Game.debugSpeed(1);
+  });
+  await page.waitForTimeout(2600);                                   // casts every ~0.85 s: a few stacks
+  const sd = await page.evaluate(() => {
+    const pl = G.Game.player, m = pl.slots.find(g => g[0].id === 'swords-dance')[0];
+    pl.setActive(pl.slots.findIndex(g => g[0].kind !== 'buff'));     // switch away: the timer runs down
+    return { n: pl.buffs.patk.n, dur: m.dur };
+  });
+  let txt = await hudText();
+  check(sd.n >= 2 && txt.includes('×' + sd.n) && txt.some(t => /^\d\.\ds$/.test(t)),
+    `Swords Dance slot shows its stacks and time left (×${sd.n}, ${txt.find(t => /^\d\.\ds$/.test(t))})`);
+  await page.waitForFunction(() => G.Game.player.buffs.patk.n > 0 && G.Game.player.buffs.patk.t < 2.2, null, { timeout: 10000 });
+  txt = await hudText();
+  check(txt.includes('!'), 'in the last seconds, with another move active, the slot warns ("!")');
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'hud-buff-timer.png'), clip: { x: 0, y: vh - 150, width: vw, height: 150 } });
+  await page.waitForFunction(() => G.Game.player.buffs.patk.n === 0, null, { timeout: 10000 });
+  txt = await hudText();
+  check(!txt.some(t => /^×\d$/.test(t)) && !txt.includes('!'), 'once it runs out, the timer is gone');
+  await page.evaluate(() => G.Game.debugSpeed(0));
+
   console.log('Level-up cards');
   const cards = await page.evaluate(() => {
     const pl = G.Game.player, bad = [];
@@ -266,6 +350,49 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(cards.dom.every(d => d.own === d.stab && d.own === d.chip), 'rendered cards: .stab and chip exactly on own cards');
   console.log('  ' + JSON.stringify(cards.dom));
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-cards.png') }); }
+
+  // Stat-boost moves: "Good for you" only when the boost is for the Pokémon's stronger side
+  // (Nasty Plot for a special Pokémon, Swords/Dragon Dance for a physical one).
+  const boost = await page.evaluate(() => {
+    const pl = G.Game.player, CAT = { patk: 'physical', satk: 'special' }, bad = [], seen = { yes: 0, no: 0 };
+    for (let i = 0; i < 400; i++) for (const c of G.LevelUp.offer(pl)) {
+      if (c.type !== 'new') { if (c.boost) bad.push(c.key); continue; }
+      const d = G.Moves.BY_ID[c.key.slice(4)];
+      const want = d.kind === 'buff' && !!CAT[d.stat] && CAT[d.stat] === G.Stats.sideOf(pl.mon);
+      if (!!c.boost !== want) bad.push(c.key);
+      if (d.kind === 'buff') want ? seen.yes++ : seen.no++;
+    }
+    let hand;
+    for (let i = 0; i < 600 && !hand; i++) { const h = G.LevelUp.offer(pl); if (h.some(c => c.boost)) hand = h; }
+    if (!hand) return { bad, seen, side: G.Stats.sideOf(pl.mon) };
+    G.RunUI.showLevelUp(pl.level, hand, () => {});
+    const els = [...document.querySelectorAll('#cards .card')];
+    return { bad, seen, side: G.Stats.sideOf(pl.mon), dom: els.map((el, i) => ({ key: hand[i].key, boost: !!hand[i].boost,
+      cls: el.classList.contains('boost'), chip: !!el.querySelector('.boost-chip'), note: (el.querySelector('.fit-good') || {}).textContent || '' })) };
+  });
+  check(boost.bad.length === 0 && boost.seen.yes > 0, `boost flag only on the stronger side's attack boost (${boost.side} Pokémon; ${boost.seen.yes} flagged, ${boost.seen.no} other buffs)` + (boost.bad.length ? ' bad: ' + boost.bad.slice(0, 5) : ''));
+  // The game translates new text with a MutationObserver: read the note once it has run.
+  await page.waitForTimeout(50);
+  if (boost.dom) boost.dom = await page.evaluate(dom => dom.map((d, i) => Object.assign(d, {
+    note: (document.querySelectorAll('#cards .card')[i].querySelector('.fit-good') || {}).textContent || '' })), boost.dom);
+  const bc = (boost.dom || []).find(d => d.boost);
+  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /special moves/.test(bc.note),
+    `rendered: ${bc && bc.key} gets .boost, the "Good for you" chip and "${bc && bc.note}"`);
+  if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-boost.png') }); }
+
+  // Solo run end: no team summary, but your per-move breakdown (js/fork/run-stats.js).
+  console.log('Run end: your breakdown');
+  await page.evaluate(() => { G.UI.hide('scr-levelup'); G.Game.debugSpeed(1); G.Game.quit(); });
+  await page.waitForSelector('#scr-over', { state: 'visible', timeout: 10000 });
+  await page.waitForTimeout(700);
+  const end = await page.evaluate(() => {
+    const pl = G.Game.player, s = G.RunStats.mine(0, null), t = G.RunStats.tally.me || { k: 0 };
+    return { party: !!document.getElementById('scr-party'), rows: document.querySelectorAll('#over-stats table tr').length - 1,
+             moves: s.moves.length, sum: s.moves.reduce((a, m) => a + m.d, 0), d: s.d, kills: s.moves.reduce((a, m) => a + m.k, 0), k: t.k };
+  });
+  check(!end.party && end.rows === end.moves && end.moves > 0 && Math.abs(end.sum - end.d) <= end.moves && end.kills === end.k,
+    'solo: no team summary; the end screen lists each attack with damage and kills that add up: ' + JSON.stringify(end));
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'solo-breakdown.png') });
 
   check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();

@@ -7,12 +7,20 @@
  * Las medidas copian las del HUD: si cambian allí, cambiarlas aquí.
  */
 G.LayoutUI = (() => {
-  const S = 54, GAP = 9, ITEM_GAP = 18, N = 4;          // como en hud.js
-  const BAR_W = S + ITEM_GAP + N * S + (N - 1) * GAP;
+  const N = 4;
+  // Como en hud.js, por el tamaño de los iconos (Ajustes > Gráficos): se recalcula al usarlas.
+  let S, GAP, ITEM_GAP, BAR_W;
+  function dims() {
+    const k = G.Settings.get('hudSize') || 1;
+    S = 54 * k; GAP = 9 * k; ITEM_GAP = 18 * k; BAR_W = S + ITEM_GAP + N * S + (N - 1) * GAP;
+    if (el) el.style.setProperty('--hs', k);
+  }
   let el = null, pos = null, moved = null, mode = 'float';
+  dims();
 
   /** Dónde está cada cosa ahora mismo (centro en px), con lo guardado o lo de siempre. */
   function current(k, w, h) {
+    dims();
     const p = G.Touch.spot(k);
     if (k === 'stick') { const b = G.Touch.stickBase(w, h); return [b.x, b.y]; }
     const sa = G.Touch.safeArea();
@@ -28,6 +36,7 @@ G.LayoutUI = (() => {
 
   /** Lo mismo que hace el HUD para que no se salga de la pantalla. */
   function fit(k, x, y, w, h) {
+    dims();
     if (k === 'bar') return [G.U.clamp(x, 6 + BAR_W / 2, Math.max(6 + BAR_W / 2, w - BAR_W / 2 - 6)), G.U.clamp(y, 24 + S / 2, h - S / 2 - 6)];
     if (k === 'pause') return [G.U.clamp(x, 24, w - 24), G.U.clamp(y, 30, h - 24)];
     const r = G.Touch.R();
@@ -105,6 +114,7 @@ G.LayoutUI = (() => {
   }
 
   function paint() {
+    dims();
     const r = G.Touch.R();
     const place = (k, ww, hh) => {
       const n = el.querySelector(`[data-k="${k}"]`);

@@ -138,6 +138,7 @@ test('real Coop.tick frames pass through the codec without changing gameplay fie
     G.Sprites = { preload() {} }; G.U = { dist2: (x, y, a, b) => (x - a) ** 2 + (y - b) ** 2 };
     G.EnemyMgr = { all: () => [{ id: 123, x: 50, y: -10, hp: 125.1, anim: { cur: 'Walk', dir: 3 }, burn: 1 }] };
     G.Judgment = { netState: () => [12, -23, 1, 4] };
+    G.Rift = { inArena: false };
     new Function('G', 'document', source('js/net/coop.js'))(G, { addEventListener() {} });
     const local = { x: 0, y: 0, moveAngle: 1.234, walking: true, hp: 234, maxHp: 300,
       magnet: 78, aim: -1.43, xpMul: 1.2, reviveT: 0, activeGroup: () => [{ id: 'thundershock', lvl: 3 }] };
@@ -146,7 +147,7 @@ test('real Coop.tick frames pass through the codec without changing gameplay fie
     G.Coop.tick(1 / 15);
     assert.equal(sent.length, 1);
     assert.deepEqual(C.decode(C.encode(sent[0])), sent[0]);
-    if (host) { assert.deepEqual(sent[0].e, [[123, 50, -10, 126, 1, 3, 1]]); assert.ok('ho' in sent[0]); }
+    if (host) { assert.deepEqual(sent[0].e, [[123, 50, -10, 126, 1, 3, 1]]); assert.ok('ho' in sent[0]); assert.equal(sent[0].ra, 0); }
     else { assert.equal(sent[0].p.length, 15); }
   }
 });

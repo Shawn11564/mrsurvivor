@@ -195,9 +195,18 @@ G.Rift = (() => {
       if (downT > 1.4 || arena.t > ARENA_TIME) { G.Coop.isHost && G.Coop.broadcast(['al']); lost(); }
       return;
     }
+    // La vuelta al mapa la decide quien manda y la avisa ('af'): cada uno con su
+    // cuenta atrás, el primero en volver abría su vínculo, los demás se quedaban
+    // parados en la arena y elegían de uno en uno (20-10-2026).
     arena.endT -= dt;
-    if (arena.endT <= 0) finish();
+    if (arena.endT <= 0 && authority()) { G.Coop.isHost && G.Coop.broadcast(['af']); finish(); }
   }
+
+  /**
+   * Invitado: el anfitrión ya no está en la arena (va en cada envío, por si se
+   * pierde el 'af'). Tras un segundo dentro, para no adelantarse a su 'arena'.
+   */
+  function hostOutside() { if (arena && arena.t > 1) finish(); }
 
   function won() {
     if (!arena || arena.phase !== 'fight') return;
@@ -277,11 +286,12 @@ G.Rift = (() => {
       case 'arena': begin(ev[1]); break;
       case 'aw': won(); break;
       case 'al': lost(); break;
+      case 'af': if (arena) finish(); break;
     }
   }
 
   return {
-    reset, update, drawable, onEvent, leftBehind, enterRequest() { if (!arena) start(); },
+    reset, update, drawable, onEvent, leftBehind, hostOutside, enterRequest() { if (!arena) start(); },
     get rift() { return rift; }, get arena() { return arena; },
     get inArena() { return !!arena; },
     get timeLeft() { return arena ? Math.max(0, ARENA_TIME - arena.t) : 0; },

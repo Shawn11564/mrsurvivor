@@ -402,6 +402,15 @@ G.Social = (() => {
     if (room && room.isHost) fb.rtdb.ref('rooms/' + room.id + '/open').set(!!open).catch(() => {});
   }
 
+  /**
+   * Listo para empezar (en tu plaza de la sala: las reglas te dejan tocarla
+   * aunque la sala esté cerrada). Con todos listos, la partida empieza sola
+   * (ver LobbyUI); al empezar cada uno vuelve a "no listo".
+   */
+  function setReady(on) {
+    if (room && me) fb.rtdb.ref('rooms/' + room.id + '/m/' + uid).update({ ready: !!on }).catch(() => {});
+  }
+
   /** Actualiza tu Pokémon en la sala (si cambias de compañero). */
   function refreshMember() {
     if (room && me) fb.rtdb.ref('rooms/' + room.id + '/m/' + uid).update(
@@ -533,7 +542,7 @@ G.Social = (() => {
 
   return {
     start, stop, claimNick, request, accept, remove, publishProfile, getProfile, profileData,
-    createRoom, joinRoom, leaveRoom, setOpen, refreshMember, setPlaying, refreshPresence,
+    createRoom, joinRoom, leaveRoom, setOpen, setReady, refreshMember, setPlaying, refreshPresence,
     invite, acceptInvite, declineInvite,
     on(fn) { listeners.add(fn); }, off(fn) { listeners.delete(fn); },
     get me() { return me; },

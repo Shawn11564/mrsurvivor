@@ -77,9 +77,9 @@
   ]
 }
 </script>
-<link rel="stylesheet" href="css/style.css?v=971407ab8a">
+<link rel="stylesheet" href="css/style.css?v=94abd71a04">
 <link rel="stylesheet" href="css/brand.css?v=e61677e6bf">
-<script src="js/core/locales.js?v=60a5908dad"></script>
+<script src="js/core/locales.js?v=6247f8bc48"></script>
 <script src="js/noframe.js"></script>
 </head>
 <body>
@@ -376,7 +376,8 @@
     <div id="lobby-members" class="lobby-members"></div>
     <h3 id="lobby-inv-title" style="margin:14px 0 6px">Invitar amigos</h3>
     <div id="lobby-invite" class="fr-list"></div>
-    <div class="row" style="margin-top:14px">
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button id="lobby-ready" class="btn grow">Estoy listo</button>
       <button id="lobby-start" class="btn gold grow">Empezar partida</button>
     </div>
     <p class="note" id="lobby-note"></p>
@@ -509,6 +510,7 @@
 </section>
 
 <div id="pull-fx" class="hidden">
+  <button id="pull-skip" class="btn small ghost hidden">Saltar</button>
   <canvas id="slot" width="176" height="170" title="Clic para acelerar"></canvas>
   <div class="pull-results" id="pull-results"></div>
   <button id="pull-close" class="btn gold hidden">Continuar</button>
@@ -568,6 +570,6 @@
 </section>
 
 <!-- datos generados -->
-<script defer src="js/app.min.js?v=3e6084d4f4"></script>
+<script defer src="js/app.min.js?v=cff6fedcd3"></script>
 </body>
 </html>

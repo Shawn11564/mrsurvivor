@@ -3,7 +3,7 @@
  */
 G.GachaUI = (() => {
   const $ = G.UI.$;
-  let busy = false;
+  let busy = false, skip = false;
   let gen = 1;
 
   function init() {
@@ -11,6 +11,8 @@ G.GachaUI = (() => {
     $('pull-10').onclick = () => pull(10, 't1');
     $('pull-10b').onclick = () => pull(10, 't10');
     $('pull-close').onclick = close;
+    // Saltar: sin tragaperras ni cartas una a una, directo a lo que ha salido.
+    $('pull-skip').onclick = () => { skip = true; G.Slots.stop(); };
 
     const tabs = $('gacha-gens');
     G.Gacha.BANNERS.forEach(b => {
@@ -92,10 +94,12 @@ G.GachaUI = (() => {
     $('pull-close').classList.add('hidden');
     slot.style.display = '';
     fx.classList.remove('hidden');
+    skip = false;
+    $('pull-skip').classList.remove('hidden');
 
     // La tragaperras (ui/slots.js) y luego las cartas.
     await G.Slots.play(slot, res);
-    G.Audio.sfx('burst', { rarity: best });
+    G.Audio.sfx(skip ? 'reveal' : 'burst', { rarity: best });
     slot.style.display = 'none';
 
     for (const r of res) {
@@ -110,9 +114,11 @@ G.GachaUI = (() => {
         : `Repetido · <span class="coin"></span> +${r.refund}`;
       c.insertAdjacentHTML('beforeend', `<b>${r.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${mon.name}</b><div class="tag">${tag}</div>`);
       out.appendChild(c);
+      if (skip) continue;
       G.Audio.sfx('reveal', { rarity: r.rarity });
       await wait(n === 10 ? 150 : 0);
     }
+    $('pull-skip').classList.add('hidden');
     $('pull-close').classList.remove('hidden');
     busy = false;
   }

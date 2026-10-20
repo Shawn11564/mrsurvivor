@@ -55,7 +55,11 @@ survive. Run it after changing anything in `fork/`.
   `js/ui/icons.js`)
 - the HUD tooltips, drag-to-reorder and hold-click aiming (`drawTip` in `js/ui/hud.js`,
   `drag`/`mapHeld` in `js/core/touch.js`, `swapSlots`/`handAim` in `js/entities/player.js`)
-- the highlighted "your type" level-up cards (`own` in `js/systems/levelup.js`)
+- the highlighted "your type" level-up cards (`own` in `js/systems/levelup.js`) and the
+  "Good for you" note on stat boosts that match your Pokémon's stronger side (`boost`)
+- the gacha Skip button (`js/ui/gacha-ui.js`, `G.Slots.stop` in `js/ui/slots.js`)
+- the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`)
+- the solo end-of-run breakdown (`js/fork/run-stats.js`)
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.
@@ -66,6 +70,24 @@ two origins of the local server: `localhost` plays the original site and `127.0.
 MrSurvivor, both with Firebase blocked so no real cloud is touched. Set
 `SLOW_FIREBASE=18000` to check it copes with a slow cold start. `fork/pw.cjs` holds the
 helpers both tests share.
+
+`node fork/test-coop.cjs` (with the server and the Firebase emulator running:
+`npx firebase-tools emulators:start --project demo-ps --only auth,firestore,database`) plays a
+real three-player party in headless Edge, connected peer to peer. It uses the emulator, so no
+real project is touched, and the real security rules. It checks:
+- Ready Up and force start (`LobbyUI` in `js/ui/social-ui.js`, `G.Social.setReady`)
+- spectating while down (`watched` in `js/game.js`, the downed-guest enemy list in
+  `js/net/coop.js`)
+- bonds opening for everyone at once (the host-only arena finish, `'af'`/`ra`, in
+  `js/systems/rift.js`)
+- the end-of-run team summary and per-move breakdown (`js/fork/run-stats.js`)
+
+`SHOTS=<folder>` saves screenshots.
+
+`node fork/measure-audio.cjs` (with the server running) measures how loud the game is at
+the speakers with the default volume, and fails if any sound effect peaks above -8 dBFS or
+the music or a run averages louder than -24 dBFS. It guards the defaults, the output gain
+and the final limiter in `js/core/audio.js`. Run it after changing any sound.
 
 `node fork/test-cloud.cjs` (with the server running) is the live check of the Firebase
 project `mrsurvivor`. It signs up a throwaway account on the branded page, saves, reads

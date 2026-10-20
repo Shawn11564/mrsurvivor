@@ -364,6 +364,7 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
 /* Centrado vertical que no corta por arriba cuando no cabe. */
 #pull-fx::before, #pull-fx::after { content: ''; margin: auto; }
 #pull-close { position: sticky; bottom: 8px; z-index: 2; flex-shrink: 0; box-shadow: 0 4px 18px rgba(0,0,0,.6); }
+#pull-skip { position: fixed; top: 14px; right: 14px; z-index: 3; }
 @media (max-height: 520px) {
   #pull-fx { gap: 10px; }
   .pull-results { gap: 6px; }
@@ -670,6 +671,18 @@ a.plink:hover { color: var(--gold); }
   box-shadow: 0 0 12px color-mix(in srgb, var(--tc) 45%, transparent); }
 .stab-chip { background: var(--gold); display: inline-flex; gap: 3px; align-items: center; }
 .fit-good { display: block; color: #8ff0a8; font-size: 12px; margin-top: 2px; }
+/* Potenciador del lado fuerte de tu Pokémon (levelup.js: boost) */
+.card.boost { border-color: #5fe08a; background: linear-gradient(90deg, rgba(95,224,138,.16), rgba(95,224,138,.03)); }
+.boost-chip { background: #5fe08a; display: inline-flex; gap: 3px; align-items: center; }
+/* Sala: listo para empezar (social-ui.js LobbyUI) */
+.lob-card .rdy { font-size: 11px; color: var(--muted); }
+.lob-card .rdy.on { color: #5fe08a; font-weight: 700; }
+.lob-card.ready { box-shadow: 0 0 0 2px #5fe08a inset; }
+/* Resumen del equipo al acabar (js/fork/run-stats.js) */
+.party-sum td b { margin-right: 4px; }
+.party-sum td small { display: block; color: var(--muted); }
+.party-sum tr.me td { background: rgba(255,255,255,.05); }
+.party-sum .pdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 /* Vínculo (premio de los legendarios): rosa */
 .bond-title { color: #ff8ad8; }
 .card.bond { border-color: #ff8ad8; background: linear-gradient(90deg, rgba(255,138,216,.18), rgba(255,138,216,.04)); }
@@ -709,10 +722,10 @@ body.touch kbd, body.touch .card .key, body.touch .kbd-hint { display: none !imp
 .lay-thing { position: absolute; z-index: 2; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
 .lay-thing.held { cursor: grabbing; filter: drop-shadow(0 0 8px rgba(255,210,63,.8)); }
 .lay-thing.hidden { display: none; }
-.lay-bar { display: flex; gap: 9px; }
-.lay-slot { position: relative; width: 54px; height: 54px; flex: none; border-radius: 12px; background: rgba(10,16,28,.8); border: 1.2px solid rgba(140,170,210,.4); }
+.lay-bar { display: flex; gap: calc(9px * var(--hs, 1)); }
+.lay-slot { position: relative; width: calc(54px * var(--hs, 1)); height: calc(54px * var(--hs, 1)); flex: none; border-radius: 12px; background: rgba(10,16,28,.8); border: 1.2px solid rgba(140,170,210,.4); }
 .lay-slot.on { border: 2.5px solid var(--gold); }
-.lay-slot.item { margin-right: 9px; background: rgba(10,16,28,.55); }
+.lay-slot.item { margin-right: calc(9px * var(--hs, 1)); background: rgba(10,16,28,.55); }
 .lay-slot i { position: absolute; left: 4px; top: 2px; font-style: normal; font-size: 10px; color: rgba(180,200,230,.7); }
 .lay-tag { position: absolute; left: 50%; top: -18px; transform: translateX(-50%); font-size: 11px; color: var(--gold); white-space: nowrap; pointer-events: none; }
 .lay-pause { border-radius: 10px; background: rgba(10,16,28,.7); border: 2px solid rgba(244,248,255,.8); box-sizing: border-box; }

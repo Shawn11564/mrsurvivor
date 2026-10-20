@@ -423,9 +423,14 @@ G.Icons = (() => {
     return `<img class="pix ${cls}" src="${url(name)}" width="${w}" height="${h}" alt="" draggable="false">`;
   }
 
-  function draw(ctx, name, x, y, size) {
+  /**
+   * @param fit  (tamaño de iconos del HUD, Ajustes) el múltiplo nítido más cercano si se
+   *             aleja menos de un 20 % del tamaño pedido; si no, el tamaño exacto
+   */
+  function draw(ctx, name, x, y, size, fit = false) {
     const cv = canvas(name);
-    const s2 = snap(name, size);
+    let s2 = snap(name, size);
+    if (fit && Math.abs(s2 - size) > size * 0.2) s2 = size;
     x += (size - s2) / 2; y += (size - s2) / 2; size = s2;
     const prev = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = false;

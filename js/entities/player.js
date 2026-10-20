@@ -274,6 +274,7 @@ G.Player = class Player {
     const close = this.activeGroup().some(m => m.kind === 'melee') ? 0.75 : 1;
     const d = pure ? Math.max(1, amount) : Math.max(1, amount * (1 - this.reduction) * close);
     this.hp -= d;
+    if (!this.remote) G.RunStats.taken(Math.min(d, d + this.hp));    // estadísticas del final (fork)
     this.invuln = 0.45;
     this.flash = 0.14;
     G.Audio.sfx('hurt');
@@ -290,6 +291,7 @@ G.Player = class Player {
     }
     if (this.hp <= 0) {
       this.hp = 0; this.dead = true;
+      if (!this.remote) G.RunStats.down();
       this.anim.play('Faint', { hold: true });
       G.Projectiles.clearOrbs(this);
       this.reviveT = 0;

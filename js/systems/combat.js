@@ -735,6 +735,7 @@ G.Combat = (() => {
     const k = typeK(m.type, e) * G.Stats.taken(e.mon, m.cat);
     const crit = isCrit(pl);
     dmg *= k * (crit ? CRIT_MUL : 1);
+    if (!ghost) G.RunStats.tag(e, m);           // último golpe: quién y con qué (estadísticas del final)
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
@@ -844,6 +845,7 @@ G.Combat = (() => {
 
         const crit = isCrit(pl);
         const k = (p.mtype ? typeK(p.mtype, e) : 1) * G.Stats.taken(e.mon, p.mcat) * (crit ? CRIT_MUL : 1);
+        G.RunStats.tag(e, p.src);
         e.hurt(p.dmg * k, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
