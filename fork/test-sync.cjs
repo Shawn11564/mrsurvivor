@@ -69,7 +69,7 @@ try {
   check(read('index.html').includes('upstream-probe-dev'), "upstream's dev.html change is in the built index.html");
   check(bundle.includes('upstream-probe-js'), "upstream's js change is in the bundle");
   check(read('contacto/index.html').includes('upstream-probe-contacto'), "upstream's contacto/ change landed (pristine page re-branded)");
-  check(read('js/core/firebase-config.js').includes('G.FIREBASE_CONFIG = null'), "the fork's firebase-config.js survived");
+  check(read('js/core/firebase-config.js') === fs.readFileSync(path.join(SRC, 'js/core/firebase-config.js'), 'utf8'), "the fork's firebase-config.js survived");
   check(bundle.includes('Fork of Pok&eacute;Survivor by JPTER78'), 'about-box credit is in the bundle');
   check(read('index.html').includes('Required Notice: Copyright 2026 JPTER78'), 'legal credit + Required Notice in index.html');
   check(/css\/brand\.css\?v=/.test(read('index.html')) && /css\/brand\.css\?v=/.test(read('en/index.html')), 'brand.css linked in both game pages');

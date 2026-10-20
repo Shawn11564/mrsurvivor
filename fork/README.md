@@ -48,3 +48,9 @@ says PokéSurvivor.
 `node fork/test-sync.cjs` replays a real upstream merge in a throwaway clone. It checks
 that the merge has no conflicts, upstream's change lands, and the branding and credit
 survive. Run it after changing anything in `fork/`.
+
+`node fork/test-cloud.cjs` (with the server running) is the live check of the Firebase
+project `mrsurvivor`. It signs up a throwaway account on the branded page, saves, reads
+the save back in a fresh browser, then deletes the account. Run it after changing
+`firebase-config.js`, the rules or the auth settings. Rules and indexes deploy with
+`npx firebase-tools deploy --only firestore,database` (`.firebaserc` points at `mrsurvivor`).

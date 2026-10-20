@@ -8,10 +8,17 @@
  *
  * Si se pone a null, el juego funciona en modo local (sólo en el navegador).
  */
-// Fork: upstream's config pointed at JPTER78's own project (pokesurvivor-free), so a
-// local copy would create accounts in THEIR database. Local-only until our own
-// Firebase project exists (docs/FIREBASE.md). Never enable Identity Platform on it.
-G.FIREBASE_CONFIG = null;
+// Fork: MrSurvivor's own Firebase project (mrsurvivor, Spark plan, no billing).
+// Upstream's pointed at JPTER78's project. Never enable Identity Platform on it.
+G.FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyCe9Jj9SbaG_3TQwDnq-uhUI1-YN_v5YIo',
+  authDomain: 'mrsurvivor.firebaseapp.com',
+  projectId: 'mrsurvivor',
+  storageBucket: 'mrsurvivor.firebasestorage.app',
+  messagingSenderId: '180535262999',
+  appId: '1:180535262999:web:3a79485fabdfa0124bc152',
+  databaseURL: 'https://mrsurvivor-default-rtdb.firebaseio.com'
+};
 
 /* Ejemplo de cómo debe quedar:
 G.FIREBASE_CONFIG = {
