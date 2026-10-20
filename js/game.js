@@ -498,8 +498,6 @@ G.Game = (() => {
   function offerItem(id) {
     if (!pl || !G.Items.BY[id]) return;
     if (state === 'levelup' || G.UI.isOpen('scr-levelup')) { laterItems.push(id); return; }
-    // Maestría de objetos (js/fork/rare-cards.js): su mejora ya la tienes sin llevarlo.
-    if (G.RareCards.has(pl, id)) { G.Spawner.say(G.RareCards.HAVE, 2.4, true); return; }
     let mine = false;            // esta elección es la que ha parado el juego
     const take = got => {
       openItem = null;

@@ -361,7 +361,8 @@ G.HUD = (() => {
           const secs = bl.b.t < 10 ? bl.b.t.toFixed(1) : String(Math.ceil(bl.b.t));
           ctx.strokeText(secs + 's', x + S - 3 * K, y + S - 12 * K); ctx.fillStyle = '#f4f8ff'; ctx.fillText(secs + 's', x + S - 3 * K, y + S - 12 * K);
           ctx.strokeText('×' + bl.b.n, x + S - 3 * K, y + 17 * K); ctx.fillStyle = bc; ctx.fillText('×' + bl.b.n, x + S - 3 * K, y + 17 * K);
-          if (bl.b.t < BUFF_WARN && !on) {
+          // (Con Segunda naturaleza, js/fork/rare-cards.js, se relanza solo: no hace falta avisar.)
+          if (bl.b.t < BUFF_WARN && !on && !pl.passiveBuffs) {
             const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 90);
             ctx.lineWidth = 2.5; ctx.strokeStyle = `rgba(255,210,63,${(0.45 + 0.55 * pulse).toFixed(2)})`;
             roundRect(ctx, x - 2, y - 2, S + 4, S + 4, 13 * K); ctx.stroke();

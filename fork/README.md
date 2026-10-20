@@ -69,10 +69,11 @@ survive. Run it after changing anything in `fork/`.
 - the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`),
   and the ring at the player's feet draining with the buff's time left (`Player.draw`)
 - the solo end-of-run breakdown (`js/fork/run-stats.js`)
-- the very rare "Item Mastery" level-up card (`js/fork/rare-cards.js`, about 1 hand in 150, once
-  per run): every stat item's boost without holding it and without its drawback (Choice Band lock,
-  Life Orb cost), a held one put away so it doesn't count twice, and those items not equipped if
-  found later (`offerItem` in `js/game.js`). Purple via `.card.rare` in `css/brand.css`
+- the very rare "Second Nature" level-up card (`js/fork/rare-cards.js`, about 1 hand in 150, only
+  if you have a stat-boosting move, once per run): those moves (Swords Dance, Nasty Plot,
+  Agility...) cast on their own from any slot, as if always active (`pl.passiveBuffs` in
+  `Combat.tick`; the HUD stops asking you to switch to them). Purple via `.card.rare` in
+  `css/brand.css`
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.

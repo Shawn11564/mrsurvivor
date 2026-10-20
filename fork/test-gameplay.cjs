@@ -488,19 +488,28 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!!weak && weak.side === 'special' && wn === `Weaker for Gengar: only ${weak.pct} % damage (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
-  // The very rare "Item Mastery" card (js/fork/rare-cards.js): the stat items' boosts without
-  // holding them, and without their drawbacks.
-  console.log('Very rare card: Item Mastery');
+  // The very rare "Second Nature" card (js/fork/rare-cards.js): stat-boosting moves cast from
+  // any slot, as if always active. Set up a known hand of moves: an attack in slot 1 (active)
+  // and Swords Dance in slot 2.
+  console.log('Very rare card: Second Nature');
   const rare = await page.evaluate(() => {
     const pl = G.Game.player;
+    window.__saved = { moves: pl.moves, slots: pl.slots, active: pl.active };
+    const atk = pl.moves.find(m => m.kind !== 'buff' && m.kind !== 'orbit'), sd = G.Moves.instance('swords-dance', 1);
+    sd.since = G.Game.st.time;
+    pl.moves = [atk]; pl.slots = [[atk]]; pl.active = 0;
+    let none = 0;
+    for (let i = 0; i < 3000; i++) if (G.LevelUp.offer(pl).some(c => c.rare)) none++;
+    pl.moves = [atk, sd]; pl.slots = [[atk], [sd]]; pl.active = 0;
     let n = 0;
     for (let i = 0; i < 6000; i++) if (G.LevelUp.offer(pl).some(c => c.rare)) n++;
     G.RareCards.forceNext();
     window.__hand = G.LevelUp.offer(pl);
     G.RunUI.showLevelUp(pl.level, window.__hand, () => {});
-    return { n, last: window.__hand.findIndex(c => c.rare), len: window.__hand.length };
+    return { none, n, last: window.__hand.findIndex(c => c.rare), len: window.__hand.length };
   });
-  check(rare.n >= 15 && rare.n <= 85, `it is very rare: in ${rare.n} of 6000 hands (expected about 40, 1 in 150)`);
+  check(rare.none === 0, `never offered without a stat-boosting move (${rare.none} of 3000 hands)`);
+  check(rare.n >= 15 && rare.n <= 85, `with one it is very rare: in ${rare.n} of 6000 hands (expected about 40, 1 in 150)`);
   check(rare.last === rare.len - 1, 'the admin menu\'s "Rare card next" puts it in the next hand, as the last card');
   // The purple look is in the fork's css/brand.css, which only the built pages link (fork/build.cjs).
   await page.addStyleTag({ url: BASE + '/css/brand.css' });
@@ -510,37 +519,31 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
       border: getComputedStyle(el).borderColor }; }, rare.last);
   // (Purple, not the exact value: the card fades in, so the border can be mid-transition.)
   const [br, bg, bb] = (rc.border.match(/[\d.]+/g) || []).map(Number);
-  check(rc.cls && bb > 200 && br > bg + 40 && bb > bg + 80 && /^Item Mastery Very rare$/.test(rc.nm) && /^For the rest of the run you get the boost of these items without holding them, and without their drawbacks: Choice Band, Life Orb, Quick Claw, Choice Scarf, Assault Vest, Lucky Egg, Amulet Coin, Leftovers\.$/.test(rc.ds),
+  check(rc.cls && bb > 200 && br > bg + 40 && bb > bg + 80 && /^Second Nature Very rare$/.test(rc.nm)
+    && rc.ds === 'Your stat-boosting moves cast on their own from any slot, as if they were always active: no more switching to them. Now: Swords Dance.',
     `rendered purple (.rare, ${rc.border}) and in English: "${rc.nm}" / "${rc.ds}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-rare.png') }); }
-  const mast = await page.evaluate(() => {
-    const pl = G.Game.player, k = ['atkMul', 'cdMul', 'spdMul', 'dmgReduce', 'xpMul', 'coinMul', 'regenFlat'];
-    pl.equip(null);
-    const b = Object.fromEntries(k.map(x => [x, pl[x]]));
-    pl.equip('choiceband');                          // holding one of them when picking the card
-    window.__hand.find(c => c.rare).apply(pl);
-    const a = Object.fromEntries(k.map(x => [x, pl[x]]));
-    const near = (x, y) => Math.abs(x - y) < 1e-9 * Math.max(1, Math.abs(y));
-    const ok = near(a.atkMul, b.atkMul * 1.4 * 1.3) && near(a.cdMul, b.cdMul * 0.8) && near(a.spdMul, b.spdMul * 1.35) && near(a.dmgReduce, b.dmgReduce + 0.2)
-      && near(a.xpMul, b.xpMul * 1.3) && near(a.coinMul, b.coinMul * 1.5) && near(a.regenFlat, b.regenFlat + pl.maxHp * 0.015);
-    // No Choice Band lock: switching moves works.
-    const from = pl.active, to = (pl.active + 1) % pl.slots.length;
-    pl.setActive(to);
+  // Swords Dance sits in slot 2 while slot 1 is active: before the card it never casts, after it
+  // stacks up on its own and the active slot doesn't change.
+  // (The card checks above froze the world with debugSpeed(0): it has to run for this.)
+  const stacks = () => page.evaluate(() => { const pl = G.Game.player; pl.god = true; G.UI.hide('scr-levelup'); G.Game.debugSpeed(1);
+    return { n: pl.buffs.patk.n, active: pl.active }; });
+  await stacks(); await page.waitForTimeout(2500);
+  const pre = await stacks();
+  await page.evaluate(() => window.__hand.find(c => c.rare).apply(G.Game.player));
+  await page.waitForTimeout(2500);
+  const post = await stacks();
+  check(pre.n === 0 && post.n >= 2 && post.active === 0,
+    `picking it: Swords Dance in the other slot casts by itself (stacks ${pre.n} -> ${post.n}, active slot still ${post.active + 1})`);
+  const fin = await page.evaluate(() => {
+    const pl = G.Game.player;
     G.RareCards.forceNext();
     const again = G.LevelUp.offer(pl).some(c => c.rare);
-    G.UI.hide('scr-levelup');
-    return { ok, a, b, item: pl.item, switched: pl.slots.length < 2 || pl.active === to, again };
+    pl.god = false;
+    Object.assign(pl, window.__saved);
+    return { again };
   });
-  check(mast.ok, 'picking it: every stat item\'s boost, each counted once (the held Choice Band too) ' + JSON.stringify({ before: mast.b, after: mast.a }));
-  check(mast.item === null && mast.switched, `the held Choice Band is put away, so moves can be switched again (item ${mast.item})`);
-  check(!mast.again, 'it is never offered again in that run');
-  const drop = id => page.evaluate(id => { const pl = G.Game.player; pl.invuln = 99; G.Pickups.drop('item', pl.x, pl.y, id); }, id);
-  await drop('choiceband');
-  const have = await page.waitForFunction(t => (G.Spawner.banner() || {}).text === t, await page.evaluate(() => G.RareCards.HAVE), { timeout: 8000 }).then(() => true, () => false);
-  check(have && await page.evaluate(() => G.Game.player.item === null), 'finding a Choice Band afterwards: "You already have its boost", not equipped');
-  await drop('focussash');
-  check(await page.waitForFunction(() => G.Game.player.item === 'focussash', null, { timeout: 8000 }).then(() => true, () => false),
-    'other items (Focus Sash) still go in the free item slot');
+  check(!fin.again, 'it is never offered again in that run');
 
   // Solo run end: no team summary, but your per-move breakdown (js/fork/run-stats.js).
   console.log('Run end: your breakdown');

@@ -22,6 +22,9 @@ G.Combat = (() => {
     if (pl.dead) return;
     // Vínculos: todos los movimientos del hueco activo, cada uno con su recarga.
     for (const m of pl.activeGroup()) tickMove(dt, pl, m, now);
+    // Segunda naturaleza (carta muy rara del fork, js/fork/rare-cards.js): los que suben
+    // stats se lanzan también desde los demás huecos.
+    if (pl.passiveBuffs) for (const g of pl.slots) if (g !== pl.activeGroup()) for (const m of g) if (m.kind === 'buff') tickMove(dt, pl, m, now);
   }
 
   function tickMove(dt, pl, m, now) {
