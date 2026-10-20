@@ -71,7 +71,7 @@ for (const file of walk(ROOT)) {
   const fresh = fs.statSync(file).mtimeMs >= started;
   const src = (!fresh && pristine(r)) || realRead(file, 'utf8');
   let out = brand(src, r);
-  if (r === 'CNAME') out = BRAND.domain + '\n';
+  if (r === 'CNAME') out = BRAND.domain;       // as GitHub Pages writes it (no newline)
   // Game pages (index.html, en/index.html) get the colour layer.
   out = out.replace(/<link rel="stylesheet" href="css\/brand\.css\?v=[^"]*">\n?/g, '');
   out = out.replace(/(<link rel="stylesheet" href="css\/style\.css\?v=[^"]+">)/, `$1\n${BRAND_LINK}`);
