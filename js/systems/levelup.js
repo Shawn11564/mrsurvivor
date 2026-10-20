@@ -152,6 +152,7 @@ G.LevelUp = (() => {
       used.add(c.key);
       picked.push(c);
     }
+    G.RareCards.maybe(pl, picked);          // carta muy rara del fork (js/fork/rare-cards.js)
     return picked;
   }
 

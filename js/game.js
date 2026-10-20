@@ -498,6 +498,8 @@ G.Game = (() => {
   function offerItem(id) {
     if (!pl || !G.Items.BY[id]) return;
     if (state === 'levelup' || G.UI.isOpen('scr-levelup')) { laterItems.push(id); return; }
+    // Maestría de objetos (js/fork/rare-cards.js): su mejora ya la tienes sin llevarlo.
+    if (G.RareCards.has(pl, id)) { G.Spawner.say(G.RareCards.HAVE, 2.4, true); return; }
     let mine = false;            // esta elección es la que ha parado el juego
     const take = got => {
       openItem = null;
@@ -856,6 +858,7 @@ G.Game = (() => {
     ctx.save();
     ctx.scale(G.Camera.scale, G.Camera.scale);
     G.Camera.apply(ctx);
+    G.Admin.beforeDraw();                   // menú de admin del fork (js/fork/admin.js): discoteca
     drawScene(G.Camera, G.Coop.active ? [pl, ...G.Coop.puppets()] : [pl]);
     G.Projectiles.draw(ctx);
     G.Combat.drawAirFields(ctx);
@@ -874,6 +877,7 @@ G.Game = (() => {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
+    G.Admin.drawScreen(ctx, w, h);          // menú de admin del fork: focos, escarcha, apagón
     if (!G.Judgment.cinematic) G.HUD.draw(ctx, w, h, pl, st);
     G.Judgment.drawOverlay(ctx, w, h);
     G.Touch.draw(ctx);

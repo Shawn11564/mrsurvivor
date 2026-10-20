@@ -4,9 +4,14 @@
  *
  *   Bromas        a un compañero, a todos o a ti: convertirlo en otro Pokémon,
  *                 enano o gigante, controles al revés, hielo, a cámara lenta,
- *                 enemigos o un jefe encima, avisos falsos (shiny, legendario,
- *                 fin de partida) y mensajes en grande.
- *   Tú            modo dios, subir de nivel, curarte, soltar objetos del suelo.
+ *                 a toda velocidad, borracho, pantalla del revés o en espejo,
+ *                 traerlo a tu lado o mandarlo lejos, enemigos o un jefe encima,
+ *                 avisos falsos (shiny, legendario, fin de partida) y mensajes.
+ *   Toda la partida  enemigos congelados, discoteca (tono que gira, focos, confeti
+ *                 y todos bailan), apagón, terremoto, invasión (todos los enemigos
+ *                 con la cara de un Pokémon), chasquido de Thanos y piñata.
+ *   Tú            modo dios, subir de nivel, curarte, soltar objetos del suelo,
+ *                 la carta muy rara en la próxima subida (js/fork/rare-cards.js).
  *   Partida       monedas, tickets y Pokémon (normales o shiny) en tu cuenta.
  *
  * Red (cooperativo, estrella como net.js): { k:'adm', a, x, by } va al anfitrión,
@@ -16,7 +21,8 @@
  * del anfitrión con `by` de un admin.
  * La partida en la que el admin se ayuda (dios, nivel, objetos, enemigos) no
  * sube al ranking (G.Game.taint, en el anfitrión). Las bromas que sólo molestan, sí.
- * Ganchos: Player.update (steer) y Player.hurt (god) en js/entities/player.js.
+ * Ganchos: Player.update (steer) y Player.hurt (god) en js/entities/player.js;
+ * beforeDraw y drawScreen en el render de js/game.js.
  * Prueba: fork/test-admin.cjs.
  */
 G.Admin = (() => {
@@ -50,15 +56,20 @@ G.Admin = (() => {
     setTimeout(() => paint(p), secs * 1000 + 50);
   }
 
-  // Controles (sólo el tuyo): hasta cuándo dura cada uno (performance.now).
-  const ctl = { rev: 0, ice: 0, slow: 0 };
+  // Controles y pantalla (sólo los tuyos): hasta cuándo dura cada uno (performance.now).
+  const ctl = { rev: 0, ice: 0, slow: 0, fast: 0, drunk: 0, flip: 0, mirror: 0 };
   let iv = [0, 0];
   /** Player.update: el vector de movimiento, con las bromas que tengas encima. */
   function steer(v, dt) {
     const now = performance.now();
     let [x, y] = v;
     if (now < ctl.rev) { x = -x; y = -y; }
+    if (now < ctl.drunk) {
+      const a = Math.sin(now / 380) * 1.1 + Math.sin(now / 150) * 0.35;
+      [x, y] = [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+    }
     if (now < ctl.slow) { x *= 0.3; y *= 0.3; }
+    if (now < ctl.fast) { x *= 2.2; y *= 2.2; }
     if (now < ctl.ice) {
       iv = [G.U.damp(iv[0], x, 1.3, dt), G.U.damp(iv[1], y, 1.3, dt)];
       // Sin teclas, se acaba parando (si no, "caminaría" para siempre). Arrancando, no:
@@ -112,12 +123,149 @@ G.Admin = (() => {
   const TROLLS = {
     morph(p, local, x) { look(p, { dex: x.dex, dexT: performance.now() + x.secs * 1000 }, x.secs); },
     size(p, local, x) { look(p, { k: x.k, kT: performance.now() + x.secs * 1000 }, x.secs); },
-    rev(p, local, x) { if (local) ctl.rev = performance.now() + x.secs * 1000; },
-    ice(p, local, x) { if (local) ctl.ice = performance.now() + x.secs * 1000; },
-    slow(p, local, x) { if (local) ctl.slow = performance.now() + x.secs * 1000; },
-    fake(p, local, x) { if (local) fake(x); }
+    fake(p, local, x) { if (local) fake(x); },
+    tp(p, local, x) { if (local) teleport(p, x); }
   };
+  // Controles y pantalla: sólo cuentan el tiempo.
+  for (const k of ['rev', 'ice', 'slow', 'fast', 'drunk', 'flip', 'mirror']) {
+    TROLLS[k] = (p, local, x) => { if (local) ctl[k] = performance.now() + x.secs * 1000; };
+  }
   const SEEN = new Set(['morph', 'size']);     // también en el muñeco, para que lo vean los demás
+
+  /** Un punto libre cerca de (x, y) a una distancia entre d0 y d1. */
+  function freeNear(x, y, d0, d1) {
+    for (let i = 0; i < 16; i++) {
+      const a = Math.random() * 6.2832, d = G.U.rand(d0, d1);
+      const px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * 0.9;
+      if (G.World.isFree(px, py, 14)) return [px, py];
+    }
+    return [x, y];
+  }
+  /** Al lado del admin ('me', con su posición en px/py) o lejos de donde estás ('yeet'). */
+  function teleport(p, x) {
+    if (p.dead) return;
+    const [nx, ny] = x.mode === 'me' ? freeNear(x.px, x.py, 30, 60) : freeNear(p.x, p.y, 650, 1000);
+    G.FX.ring(p.x, p.y, 6, 70, '#c47bff', 0.5, 4);
+    p.x = nx; p.y = ny;
+    G.FX.ring(p.x, p.y, 6, 70, '#c47bff', 0.5, 4);
+    G.FX.burst(p.x, p.y - p.bodyH * 0.5, '#e2c2ff', 24, 180);
+    G.Audio.sfx('select');
+  }
+
+  // ---------------- toda la partida (todos, también el admin) ----------------
+
+  // Hasta cuándo dura cada uno (performance.now) y de quién es la invasión.
+  const world = { freeze: 0, disco: 0, dark: 0, quake: 0, skin: 0, skinDex: 129 };
+  const WORLD_SAY = { freeze: 'Everything froze!', disco: 'DISCO TIME!', dark: 'Lights out…', quake: 'EARTHQUAKE!' };
+  function worldFx(x) {
+    world[x.fx] = performance.now() + x.secs * 1000;
+    if (x.fx === 'skin') {
+      world.skinDex = x.dex || 129;
+      G.Sprites.preload([world.skinDex]);
+      G.Spawner.say(G.DEX_BY[world.skinDex].name + ' invasion!', 2.6, true);
+    } else G.Spawner.say(WORLD_SAY[x.fx], 2.6, true);
+    G.Audio.sfx(x.fx === 'disco' ? 'legend' : x.fx === 'quake' ? 'boss' : 'select');
+  }
+
+  const cv = () => document.getElementById('game');
+  const inRun = () => !!G.Game.player && G.Game.state !== 'ui' && G.Game.state !== 'over';
+  const COLORS = ['#ff5f6d', '#ffd23f', '#5fe08a', '#4fb4ff', '#c47bff', '#ff8ad8'];
+
+  /*
+   * Cada 0,1 s: lo que dura mantiene su efecto (también en los enemigos que van
+   * saliendo) y lo que se acaba se deshace. Fuera de una partida se quita todo
+   * (el menú usa el mismo lienzo).
+   */
+  function tick() {
+    const now = performance.now(), run = inRun();
+    if (!run) { for (const k in ctl) ctl[k] = 0; for (const k of ['freeze', 'disco', 'dark', 'quake', 'skin']) world[k] = 0; }
+    const all = run ? G.EnemyMgr.all() : [];
+    // Congelados: los de verdad (anfitrión o solitario) aturdidos; las copias de un invitado,
+    // también (no pegan al tocarlas, combat.js), y al acabar se les quita (no lo descuentan).
+    const frozen = now < world.freeze;
+    for (const e of all) {
+      if (frozen) { if (e.remote) { e.stunT = 0.3; e.admFrozen = true; } else e.applyStun(0.3); }
+      else if (e.admFrozen) { e.stunT = 0; e.admFrozen = false; }
+    }
+    // Invasión: todos los enemigos se ven como otro Pokémon (sólo se ve).
+    const skin = now < world.skin ? world.skinDex : 0;
+    for (const e of all) {
+      if (skin && e.admSkin !== skin) {
+        if (!e.admOrig) e.admOrig = { anim: e.anim, bodyH: e.bodyH };
+        const a = new G.Sprites.Animator(skin, e.scale);
+        a.dir = e.anim.dir;
+        e.anim = a; e.bodyH = G.Sprites.bodyHeight(skin, e.scale); e.admSkin = skin;
+      } else if (!skin && e.admOrig) {
+        e.anim = e.admOrig.anim; e.bodyH = e.admOrig.bodyH; e.admOrig = null; e.admSkin = 0;
+      }
+    }
+    // Terremoto: la sacudida se mantiene retumbando (con "menos sacudidas", a un cuarto, como kick).
+    if (now < world.quake) {
+      const level = (0.6 + 0.35 * Math.abs(Math.sin(now / 180))) * (G.Settings.get('calm') ? 0.25 : 1);
+      G.Camera.shake = Math.max(G.Camera.shake, level);
+    }
+    if (now < world.disco) {
+      for (const p of G.Game.everyone()) {
+        G.FX.burst(p.x + G.U.rand(-120, 120), p.y - G.U.rand(20, 140), G.U.pick(COLORS), 5, 150);
+      }
+    }
+    // Pantalla del revés / en espejo, y la bola de discoteca (tono que va girando).
+    const el = cv();
+    if (el) {
+      const tf = [now < ctl.flip ? 'rotate(180deg)' : '', now < ctl.mirror ? 'scaleX(-1)' : ''].join(' ').trim();
+      if (el.style.transform !== tf) el.style.transform = tf;
+      if (!(now < world.disco) && el.style.filter) el.style.filter = '';
+    }
+  }
+
+  /** game.js render, antes de dibujar el mundo: en la discoteca todos bailan (giran). */
+  function beforeDraw() {
+    const now = performance.now();
+    if (!(now < world.disco) || !inRun()) return;
+    const beat = Math.floor(now / 140);
+    G.EnemyMgr.all().forEach((e, i) => { e.anim.dir = (beat + i) % 8; });
+    G.Game.everyone().forEach((p, i) => { p.anim.dir = (beat + i * 3) % 8; });
+    const el = cv();
+    if (el) el.style.filter = `hue-rotate(${Math.round(now / 6) % 360}deg) saturate(1.5)`;
+  }
+
+  /** game.js render, sobre el mundo y bajo el HUD: focos, escarcha y apagón. */
+  function drawScreen(ctx, w, h) {
+    const now = performance.now(), pl = G.Game.player;
+    if (!pl) return;
+    if (now < world.disco) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const calm = G.Settings.get('calm');
+      for (let i = 0; i < 4; i++) {
+        const a = now / 900 + i * 1.571;
+        const x = w / 2 + Math.cos(a) * w * 0.3, y = h / 2 + Math.sin(a * 1.3) * h * 0.3, r = Math.min(w, h) * 0.32;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, COLORS[(i + Math.floor(now / 600)) % COLORS.length] + (calm ? '22' : '44'));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.restore();
+    }
+    if (now < world.freeze) {
+      const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
+      g.addColorStop(0, 'rgba(170,225,255,0)');
+      g.addColorStop(1, 'rgba(170,225,255,.45)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (now < world.dark) {
+      // Sólo se ve un poco alrededor de tu Pokémon.
+      const k = G.Camera.scale;
+      const x = (pl.x - G.Camera.left()) * k, y = (pl.y - G.LIFT * 0.5 - G.Camera.top()) * k;
+      const g = ctx.createRadialGradient(x, y, 55 * k, x, y, 140 * k);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,.97)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
 
   // ---------------- lo que hace quien manda (anfitrión, o tú en solitario) ----------------
 
@@ -174,7 +322,26 @@ G.Admin = (() => {
       G.Game.taint();
     },
     lvl() { G.Game.debugLevelUp(); },
-    taint() { G.Game.taint(); }
+    taint() { G.Game.taint(); },
+    /** La mitad de los enemigos (no los de la Sentencia de Arceus) se desvanece. */
+    snap() {
+      const live = G.U.pickN(G.EnemyMgr.all().filter(e => !e.dead && !e.remote && !e.judge), Math.ceil(G.EnemyMgr.count / 2));
+      for (const e of live) { G.FX.burst(e.x, e.y - e.bodyH * 0.5, '#b8a080', 14, 120); e.shield = 0; e.hurt(e.hp * 10 + 1e7, '#b8a080', 0, 0, 0); }
+      G.Spawner.say('*snap*', 2.4);
+      G.Game.taint();
+    },
+    /** Lluvia de monedas, experiencia y alguna curación alrededor de todos. */
+    pinata() {
+      for (const p of G.Game.everyone()) {
+        for (let i = 0; i < 24; i++) {
+          const a = i / 24 * 6.2832, d = G.U.rand(60, 150);
+          const kind = i % 12 === 0 ? 'heal' : i % 2 ? 'coin' : 'xp';
+          G.Pickups.drop(kind, p.x + Math.cos(a) * d, p.y + Math.sin(a) * d * 0.9, kind === 'coin' ? 5 : kind === 'xp' ? 8 : 0);
+        }
+      }
+      G.Spawner.say('PIÑATA!', 2.4);
+      G.Game.taint();
+    }
   };
 
   // ---------------- red ----------------
@@ -182,7 +349,10 @@ G.Admin = (() => {
   const VALID = {
     morph: x => G.DEX_BY[x.dex] && G.SPRITE_META[x.dex],
     size: x => x.k >= 0.3 && x.k <= 3,
-    rev: () => true, ice: () => true, slow: () => true,
+    rev: () => true, ice: () => true, slow: () => true, fast: () => true, drunk: () => true, flip: () => true, mirror: () => true,
+    tp: x => x.mode === 'yeet' || (x.mode === 'me' && Number.isFinite(x.px) && Number.isFinite(x.py)),
+    world: x => ['freeze', 'disco', 'dark', 'quake', 'skin'].includes(x.fx) && (!x.dex || G.SPRITE_META[x.dex]),
+    snap: () => true, pinata: () => true,
     fake: x => ['shiny', 'legend', 'over', 'text'].includes(x.kind) && (x.kind !== 'text' || typeof x.text === 'string'),
     spawn: x => (!x.dex || G.DEX_BY[x.dex]) && x.n >= 1 && x.n <= 30,
     drop: x => !!G.Pickups.KIND[x.kind],
@@ -208,13 +378,15 @@ G.Admin = (() => {
     if (!isAdmin(from) || !valid(msg) || !G.Game.player) return;
     msg.by = from;
     if (HOST[msg.a]) { HOST[msg.a](msg.x, from); return; }
+    if (msg.a === 'world' && msg.x.fx === 'freeze') G.Game.taint();     // enemigos que no pegan: ayuda
     if (G.Coop.active) for (const m of G.Coop.mates) if (m.connected) G.Net.send(m.uid, msg);
     apply(msg);
   }
 
-  /** Cada uno: a ti y, si se ve, al muñeco del objetivo. */
+  /** Cada uno: a ti y, si se ve, al muñeco del objetivo. Lo de toda la partida, a todos. */
   function apply(msg) {
     const x = msg.x, f = TROLLS[msg.a], pl = G.Game.player;
+    if (msg.a === 'world' && pl) { worldFx(x); return; }
     if (!f || !pl) return;
     const hit = u => (x.to === '*' ? u !== msg.by : x.to === u);
     if (hit(me())) f(pl, true, x);
@@ -264,14 +436,21 @@ G.Admin = (() => {
   <h3>Body swap</h3>
   <div class="row"><button data-do="morph">Turn into Pokémon</button><button data-do="karp">Magikarp</button><button data-do="tiny">Tiny</button><button data-do="giant">Giant</button></div>
   <h3>Control chaos</h3>
-  <div class="row"><button data-do="rev">Reverse controls</button><button data-do="ice">Ice skates</button><button data-do="slow">Slow-mo</button></div>
+  <div class="row"><button data-do="rev">Reverse controls</button><button data-do="ice">Ice skates</button><button data-do="slow">Slow-mo</button>
+    <button data-do="fast">Zoomies</button><button data-do="drunk">Drunk</button></div>
+  <h3>Screen and place</h3>
+  <div class="row"><button data-do="flip">Upside down</button><button data-do="mirror">Mirror</button><button data-do="tpme">Bring to me</button><button data-do="yeet">Yeet</button></div>
+  <h3>Whole run (everyone)</h3>
+  <div class="row"><button data-do="freeze">Freeze all Pokémon</button><button data-do="disco">Disco</button><button data-do="dark">Lights out</button>
+    <button data-do="quake">Earthquake</button><button data-do="skin">Invasion (Pokémon above)</button><button data-do="snap">Thanos snap</button><button data-do="pinata">Piñata</button></div>
   <h3>Spawn on target</h3>
   <div class="row"><input id="adm-n" type="number" min="1" max="30" value="8"><button data-do="horde">Spawn wild</button><button data-do="boss">Spawn boss</button></div>
   <h3>Fake popups</h3>
   <div class="row"><button data-do="fshiny">Shiny nearby</button><button data-do="flegend">Legendary</button><button data-do="fover">Game over</button></div>
   <div class="row"><input id="adm-text" maxlength="120" placeholder="Big message on their screen" style="flex:1"><button data-do="ftext">Send</button></div>
   <h3>Me (not ranked)</h3>
-  <div class="row"><button data-do="god" id="adm-god">God mode</button><button data-do="lvl">Level up</button><button data-do="heal">Heal / revive</button></div>
+  <div class="row"><button data-do="god" id="adm-god">God mode</button><button data-do="lvl">Level up</button><button data-do="heal">Heal / revive</button>
+    <button data-do="rare">Rare card next</button></div>
   <div class="row"><select id="adm-drop" style="flex:1"></select><button data-do="drop">Drop at target</button></div>
 </div>
 <p class="sub" id="adm-norun">Start a run for trolls and powers (co-op for your friends).</p>
@@ -280,7 +459,7 @@ G.Admin = (() => {
 <div class="row"><button data-do="own">Unlock Pokémon</button><button data-do="ownshiny">Unlock shiny</button></div>
 <div class="row"><button data-do="ownall">Unlock all</button><button data-do="shinyall">All shinies</button></div>`;
 
-  let btn = null, panel = null, tick = 0;
+  let btn = null, panel = null, polls = 0;
 
   function build() {
     const st = document.createElement('style');
@@ -363,7 +542,13 @@ G.Admin = (() => {
       case 'morph': case 'karp': send('morph', { to, secs, dex: what === 'karp' ? 129 : dex || G.U.pick(G.DEX.filter(p => G.SPRITE_META[p.dex])).dex }); break;
       case 'tiny': send('size', { to, secs, k: 0.4 }); break;
       case 'giant': send('size', { to, secs, k: 2.6 }); break;
-      case 'rev': case 'ice': case 'slow': send(what, { to, secs }); break;
+      case 'rev': case 'ice': case 'slow': case 'fast': case 'drunk': case 'flip': case 'mirror': send(what, { to, secs }); break;
+      case 'tpme': { const pl = G.Game.player; send('tp', { to, mode: 'me', px: Math.round(pl.x), py: Math.round(pl.y) }); break; }
+      case 'yeet': send('tp', { to, mode: 'yeet' }); break;
+      case 'freeze': case 'disco': case 'dark': case 'quake': send('world', { fx: what, secs }); break;
+      case 'skin': send('world', { fx: 'skin', secs, dex: dex || 129 }); break;
+      case 'snap': case 'pinata': send(what, {}); break;
+      case 'rare': G.RareCards.forceNext(); G.UI.toast('Your next level-up has the rare card'); break;
       case 'horde': case 'boss': send('spawn', { to, dex, boss: what === 'boss', n: what === 'boss' ? 1 : G.U.clamp(+$('n').value || 8, 1, 30) }); break;
       case 'fshiny': send('fake', { to, kind: 'shiny', dex }); break;
       case 'flegend': send('fake', { to, kind: 'legend', dex }); break;
@@ -423,11 +608,12 @@ G.Admin = (() => {
       const on = isAdmin();
       btn.style.display = on ? '' : 'none';
       if (!on && panel.style.display !== 'none') panel.style.display = 'none';
-      if (++tick % 2 === 0) render();
+      if (++polls % 2 === 0) render();
     }, 500);
     btn.style.display = 'none';
+    setInterval(tick, 100);
   }
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', init); else init();
 
-  return { steer, isAdmin, ADMINS };
+  return { steer, beforeDraw, drawScreen, isAdmin, ADMINS };
 })();

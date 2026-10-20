@@ -70,14 +70,46 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
 const shown = (p, sel) => p.evaluate(s => { const el = document.querySelector(s); return !!el && getComputedStyle(el).display !== 'none'; }, sel);
 /** dex drawn for a player: yours (uid = null) or your copy of someone else. */
 const looks = (p, uid) => p.evaluate(u => { const pl = u ? G.Coop.mate(u).pl : G.Game.player; return { dex: pl.anim.dex, scale: pl.anim.scale, base: G.Sprites.playerScale(pl.anim.dex) }; }, uid);
-/** Holds a key for `ms` and returns how far the player moved in x. */
+/**
+ * Holds a key for `ms` and returns how far the player moved in x (and leaves the y in p.dy).
+ * XP picked up at any moment can open the team's level-up cards, which stops everyone: if that
+ * happens during the walk, the cards are picked and the walk is done again.
+ */
 async function walk(p, key, ms) {
-  // (Keys pressed with focus in the admin panel stay in the panel, by design.)
-  const x0 = await p.evaluate(() => { if (document.activeElement) document.activeElement.blur(); return G.Game.player.x; });
-  await p.keyboard.down(key); await p.waitForTimeout(ms); await p.keyboard.up(key);
-  return (await p.evaluate(() => G.Game.player.x)) - x0;
+  for (let tries = 0; ; tries++) {
+    await pickCards(8000, 1);
+    // (Keys pressed with focus in the admin panel stay in the panel, by design.)
+    const [x0, y0] = await p.evaluate(() => {
+      if (document.activeElement) document.activeElement.blur();
+      window.__stopped = false;
+      (function watch() { if (G.Game.state !== 'playing') window.__stopped = true; if (!window.__walkDone) requestAnimationFrame(watch); })();
+      window.__walkDone = false;
+      return [G.Game.player.x, G.Game.player.y];
+    });
+    await p.keyboard.down(key); await p.waitForTimeout(ms); await p.keyboard.up(key);
+    const [x1, y1, stopped] = await p.evaluate(() => { window.__walkDone = true; return [G.Game.player.x, G.Game.player.y, window.__stopped]; });
+    if (!stopped || tries >= 3) { p.dy = y1 - y0; return x1 - x0; }
+  }
 }
 const xNow = p => p.evaluate(() => G.Game.player.x);
+let ALL_PAGES = [];
+/** Picks the first level-up card on every screen showing them, until none has been open for `calm` checks in a row (0.5 s apart). */
+async function pickCards(ms = 20000, calm = 3) {
+  if (!ALL_PAGES.length) return;
+  const end = Date.now() + ms;
+  let quiet = 0;
+  while (Date.now() < end && quiet < calm) {
+    let any = false;
+    for (const p of ALL_PAGES) {
+      if (!(await p.evaluate(() => G.UI.isOpen('scr-levelup') && !document.getElementById('cards').classList.contains('done')))) continue;
+      any = true;
+      await p.evaluate(() => document.activeElement && document.activeElement.blur());
+      await p.keyboard.press('Digit1');
+    }
+    quiet = any ? 0 : quiet + 1;
+    await ALL_PAGES[0].waitForTimeout(500);
+  }
+}
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });
@@ -86,6 +118,7 @@ const xNow = p => p.evaluate(() => G.Game.player.x);
     const adm = await player(browser, 'adm' + tag, 25);         // the admin joins (Pikachu)
     const frd = await player(browser, 'frd' + tag, 7);          // another friend (Squirtle)
     const ALL = [host, adm, frd];
+    ALL_PAGES = ALL;
     for (const p of ALL) await p.evaluate(u => G.Admin.ADMINS.push(u), adm.uid);
     const $ = (p, sel) => p.locator('#adm ' + sel);
 
@@ -238,15 +271,107 @@ const xNow = p => p.evaluate(() => G.Game.player.x);
     check(await settle(frd, () => G.Game.player.anim.dex === 7) && await settle(host, u => G.Coop.mate(u).pl.anim.dex === 7, frd.uid),
       'after 10 s the Magikarp turns back into Squirtle (for itself and for the others)');
 
+    // ---------------- Whole run (everyone) ----------------
+    console.log('Whole run');
+    const pageAll = fn => Promise.all(ALL.map(p => p.evaluate(fn)));
+    await $(adm, '#adm-secs').selectOption('10');
+    await $(adm, '#adm-mon').fill('Psyduck #54');
+    for (const k of ['freeze', 'skin', 'disco']) await $(adm, `[data-do=${k}]`).click();
+    const fxAt = Date.now();
+    await host.waitForTimeout(700);
+    const fz = await host.evaluate(() => {
+      const es = G.EnemyMgr.all().filter(e => !e.dead), pos = es.map(e => [e.x, e.y]);
+      return new Promise(r => setTimeout(() => r({ n: es.length, stun: es.every(e => e.dead || e.stunT > 0),
+        moved: Math.max(0, ...es.filter(e => !e.dead).map(e => Math.hypot(e.x - pos[es.indexOf(e)][0], e.y - pos[es.indexOf(e)][1]))) }), 1000));
+    });
+    check(fz.n >= 6 && fz.stun && fz.moved < 10, `Freeze all Pokémon: every enemy on the host is stunned and stays put (${fz.n} enemies, moved at most ${fz.moved.toFixed(1)} px in 1 s)`);
+    const copies = await Promise.all([adm, frd].map(p => p.evaluate(() => { const es = G.EnemyMgr.all().filter(e => !e.dead); return es.length > 0 && es.every(e => e.stunT > 0); })));
+    check(copies.every(Boolean), "and on the guests' copies too (touching them doesn't hurt, combat.js)");
+    check(await host.evaluate(() => window.__taints > 0), 'freezing taints the run (enemies that can\'t hit you help)');
+    const skins = await pageAll(() => { const es = G.EnemyMgr.all().filter(e => !e.dead); return es.length > 0 && es.every(e => e.anim.dex === 54); });
+    check(skins.every(Boolean), 'Invasion "Psyduck": every enemy looks like Psyduck, for all three players');
+    const disco = await pageAll(() => /hue-rotate/.test(document.getElementById('game').style.filter));
+    check(disco.every(Boolean), 'Disco: the colours cycle on all three screens');
+    const dirs = await adm.evaluate(() => new Promise(r => { const a = G.EnemyMgr.all()[0], s = new Set();
+      const t = setInterval(() => s.add(a.anim.dir), 50); setTimeout(() => { clearInterval(t); r(s.size); }, 1500); }));
+    check(dirs >= 4, `and everybody dances: an enemy faces ${dirs} different ways in 1.5 s`);
+    if (process.env.SHOTS) await adm.screenshot({ path: require('path').join(process.env.SHOTS, 'admin-disco.png') });
+    // Lights out: dark except around your own Pokémon (read off the canvas on the friend's screen).
+    const lum = p => p.evaluate(() => { const c = document.getElementById('game'), x = c.getContext('2d');
+      const px = (fx, fy) => { const d = x.getImageData(Math.round(c.width * fx), Math.round(c.height * fy), 1, 1).data; return (d[0] + d[1] + d[2]) / 3; };
+      return { edge: Math.max(px(0.82, 0.45), px(0.18, 0.55)) }; });
+    const lit = await lum(frd);
+    await $(adm, '[data-do=dark]').click();
+    await frd.waitForTimeout(600);
+    const dark = await lum(frd);
+    check(lit.edge > 25 && dark.edge < 12, `Lights out: away from your Pokémon the screen goes black (${lit.edge.toFixed(0)} -> ${dark.edge.toFixed(0)})`);
+    if (process.env.SHOTS) await frd.screenshot({ path: require('path').join(process.env.SHOTS, 'admin-lights-out.png') });
+    await $(adm, '[data-do=quake]').click();
+    check((await Promise.all(ALL.map(p => settle(p, () => G.Camera.shake > 0.5, undefined, 2000)))).every(Boolean), 'Earthquake: every screen shakes');
+    // Thanos snap and piñata (made by the host).
+    const live0 = await host.evaluate(() => G.EnemyMgr.all().filter(e => !e.dead).length);
+    await host.evaluate(() => { window.__pin = 0; const d = G.Pickups.drop; G.Pickups.drop = (...a) => { window.__pin++; return d(...a); }; });
+    await $(adm, '[data-do=snap]').click();
+    await host.waitForTimeout(500);
+    const live1 = await host.evaluate(() => G.EnemyMgr.all().filter(e => !e.dead).length);
+    check(live1 <= Math.ceil(live0 * 0.6), `Thanos snap: half the enemies are gone (${live0} -> ${live1})`);
+    await $(adm, '[data-do=pinata]').click();
+    check(await settle(host, () => window.__pin >= 72), 'Piñata: a ring of coins, XP and heals around each of the 3 players (72 drops)');
+    await pickCards();                               // the XP from the snap and the piñata levels the team up
+    // Wearing off: all of them after their 10 s, for everyone.
+    await host.waitForTimeout(Math.max(0, 10600 - (Date.now() - fxAt)));
+    const after = await pageAll(() => { const es = G.EnemyMgr.all().filter(e => !e.dead);
+      return { skin: es.every(e => e.anim.dex === e.dex), frozen: es.filter(e => e.remote ? e.stunT > 0 : e.stunT > 0.35).length, filter: document.getElementById('game').style.filter }; });
+    check(after.every(a => a.skin && !a.frozen && !a.filter), 'after 10 s: enemies look like themselves, move again and the disco is over, everywhere ' + JSON.stringify(after));
+
+    // ---------------- Screen and place ----------------
+    console.log('Screen and place');
+    const tf = p => p.evaluate(() => document.getElementById('game').style.transform);
+    await $(adm, '#adm-to').selectOption(frd.uid);
+    await $(adm, '[data-do=flip]').click();
+    await $(adm, '#adm-to').selectOption(host.uid);
+    await $(adm, '#adm-secs').selectOption('60');
+    await $(adm, '[data-do=mirror]').click();
+    await host.waitForTimeout(500);
+    check(await tf(frd) === 'rotate(180deg)' && await tf(host) === 'scaleX(-1)' && await tf(adm) === '', `Upside down / Mirror: only on the target's screen ("${await tf(frd)}", "${await tf(host)}")`);
+    if (process.env.SHOTS) await frd.screenshot({ path: require('path').join(process.env.SHOTS, 'admin-upside-down.png') });
+    const pos = p => p.evaluate(() => [G.Game.player.x, G.Game.player.y]);
+    const f0 = await pos(frd);
+    await $(adm, '#adm-to').selectOption(frd.uid);
+    await $(adm, '[data-do=yeet]').click();
+    await frd.waitForTimeout(500);
+    const f1 = await pos(frd);
+    check(Math.hypot(f1[0] - f0[0], f1[1] - f0[1]) > 500, `Yeet: the friend lands far away (${Math.round(Math.hypot(f1[0] - f0[0], f1[1] - f0[1]))} px)`);
+    await $(adm, '[data-do=tpme]').click();
+    await frd.waitForTimeout(500);
+    const [a2, f2] = [await pos(adm), await pos(frd)];
+    check(Math.hypot(f2[0] - a2[0], f2[1] - a2[1]) < 100, `Bring to me: the friend is back next to the admin (${Math.round(Math.hypot(f2[0] - a2[0], f2[1] - a2[1]))} px)`);
+    await $(adm, '#adm-secs').selectOption('10');
+    const norm = await walk(frd, 'KeyA', 500);
+    await $(adm, '[data-do=fast]').click();
+    await frd.waitForTimeout(400);
+    const zoom = await walk(frd, 'KeyD', 500);
+    check(Math.abs(zoom) > Math.abs(norm) * 1.6, `Zoomies: the friend runs much faster (${norm.toFixed(0)} -> ${zoom.toFixed(0)} px)`);
+    await $(adm, '#adm-to').selectOption(host.uid);
+    await $(adm, '[data-do=drunk]').click();
+    await host.waitForTimeout(400);
+    const dx = await walk(host, 'KeyD', 1200);
+    const dy = host.dy;
+    check(Math.abs(dy) > 10, `Drunk: holding D the host wobbles off course (dx ${dx.toFixed(0)}, dy ${dy.toFixed(0)})`);
+
     // ---------------- 8. Powers ----------------
     console.log('Powers');
     const t0 = await host.evaluate(() => window.__taints);
     check(t0 > 0, `spawning tainted the host's run (${t0})`);
+    // The admin is the only one without the test's god flag: by now the horde may have downed them.
+    await pickCards();
+    await $(adm, '[data-do=heal]').click();
+    check(await settle(adm, () => !G.Game.player.dead && G.Game.player.hp === G.Game.player.maxHp), 'Heal / revive: the admin is up with full health');
     await host.evaluate(() => { window.__taints = 0; });
     await $(adm, '[data-do=god]').click();
     check(await settle(host, () => window.__taints > 0), "a guest admin's god mode taints the host's run");
-    const hit = await adm.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e9); return pl.dead; });
-    check(!hit, 'god mode as a guest: a huge hit does nothing');
+    const hit = await adm.evaluate(() => { const pl = G.Game.player, hp = pl.hp; pl.invuln = 0; pl.hurt(1e9); return { dead: pl.dead, lost: hp - pl.hp, god: pl.god }; });
+    check(hit.god && !hit.dead && hit.lost === 0, 'god mode as a guest: a huge hit does nothing ' + JSON.stringify(hit));
     // (Spied on: a heal dropped next to someone is picked up almost at once.)
     await host.evaluate(() => { window.__drops = []; const d = G.Pickups.drop;
       G.Pickups.drop = (k, x, y, v) => { window.__drops.push({ k, x, y }); return d(k, x, y, v); }; });
@@ -256,10 +381,14 @@ const xNow = p => p.evaluate(() => G.Game.player.x);
     check(await settle(host, u => { const p = G.Coop.mate(u).pl;
       return window.__drops.some(d => d.k === 'heal' && Math.hypot(d.x - p.x, d.y - p.y) < 80); }, adm.uid),
       'Drop "Heal" at me: the host drops it next to the admin');
+    await pickCards();
     const lv0 = await host.evaluate(() => G.Game.player.level);
+    await $(adm, '[data-do=rare]').click();
     await $(adm, '[data-do=lvl]').click();
     check(await settle(host, l => G.Game.player.level > l, lv0), 'Level up (as a guest): the team levels up');
     check((await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'levelup' || G.UI.isOpen('scr-levelup'))))).every(Boolean), 'everyone gets the level-up cards');
+    check(await adm.evaluate(() => [...document.querySelectorAll('#cards .card')].pop().classList.contains('rare')),
+      '"Rare card next": the admin\'s hand ends with the very rare card (js/fork/rare-cards.js)');
 
     // ---------------- 9. Save ----------------
     console.log('Save');
@@ -276,6 +405,8 @@ const xNow = p => p.evaluate(() => G.Game.player.x);
     await host.evaluate(() => G.Game.quit());
     await host.waitForTimeout(500);
     check(await host.evaluate(() => window.__subs) === 0, 'the tainted group run is not sent to the ranking');
+    check(await host.waitForFunction(() => !document.getElementById('game').style.transform, null, { timeout: 3000 }).then(() => true, () => false),
+      'when the run ends, a screen effect still running (60 s Mirror) is undone (the menu uses the same canvas)');
 
     for (const p of ALL) check(p.errs.length === 0, `no page errors (${p.name})` + (p.errs.length ? ': ' + p.errs.slice(0, 3).join(' | ') : ''));
   } finally {

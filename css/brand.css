@@ -26,3 +26,7 @@ body { background: #0c111b; }
 
 .fork-credit { color: var(--muted); }
 p.fork-credit { font-size: 0.9em; }
+
+/* Very rare level-up card (js/fork/rare-cards.js): purple, like the ×10 ticket. */
+.card.rare { border-color: #c47bff; background: linear-gradient(90deg, rgba(196,123,255,.24), rgba(196,123,255,.05)); }
+.card.rare .nm { color: #e2c2ff; }

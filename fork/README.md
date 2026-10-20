@@ -69,6 +69,10 @@ survive. Run it after changing anything in `fork/`.
 - the icon-size setting (`hudSize`) and the buff timers on their slots (`buffLeft` in `js/ui/hud.js`),
   and the ring at the player's feet draining with the buff's time left (`Player.draw`)
 - the solo end-of-run breakdown (`js/fork/run-stats.js`)
+- the very rare "Item Mastery" level-up card (`js/fork/rare-cards.js`, about 1 hand in 150, once
+  per run): every stat item's boost without holding it and without its drawback (Choice Band lock,
+  Life Orb cost), a held one put away so it doesn't count twice, and those items not equipped if
+  found later (`offerItem` in `js/game.js`). Purple via `.card.rare` in `css/brand.css`
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.
@@ -100,6 +104,12 @@ in a three-player party where the admin is a guest, so every action goes admin �
 - body swap (Magikarp, any Pokémon, tiny, giant) on the target and on everyone's copy of them,
   wearing off after the chosen time; reverse controls, ice skates and slow-mo (`G.Admin.steer`,
   hooked in `Player.update`)
+- zoomies and drunk walking; upside-down and mirrored screens (CSS on the canvas, undone when
+  the run ends); yeet and bring-to-me teleports
+- whole run, for everyone: freeze every enemy (stunned on the host, and on the guests' copies so
+  touching them doesn't hurt), disco (colours, spotlights, confetti, everyone dances), lights out,
+  earthquake, an invasion (every enemy looks like one Pokémon), Thanos snap and a piñata. Drawn
+  through `G.Admin.beforeDraw`/`drawScreen` in `render()` (`js/game.js`)
 - fake shiny / legendary / game-over popups and big messages (HTML stays text)
 - spawning a horde or any boss next to the target, made by the host and synced
 - god mode (`Player.hurt`), drops and level-ups; any of these taint the run (`G.Game.taint`), so it

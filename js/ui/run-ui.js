@@ -67,6 +67,7 @@ G.RunUI = (() => {
           ? `<span class="tag-chip" style="background:${c.color}">${c.tag}</span>`
           : `<span class="tag-chip" style="background:${c.color === '#ffd23f' ? '#ffd23f' : '#9fb1c9'}">${c.tag}</span>`;
       if (c.type === 'evo') el.classList.add('evo');
+      if (c.rare) el.classList.add('rare');       // carta muy rara del fork (js/fork/rare-cards.js)
       // Ataque nuevo de tu tipo: borde y fondo de su color y chip "Tu tipo".
       if (c.own) { el.classList.add('stab'); el.style.setProperty('--tc', c.color); }
       const own = c.own ? `<span class="tag-chip stab-chip">${G.Icons.html('star', 12)} Tu tipo</span>` : '';
