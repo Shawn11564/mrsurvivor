@@ -37,6 +37,7 @@ G.UI = (() => {
     const st = G.DB.guest ? 'guest' : G.DB.syncState;
     const TIP = { ok: 'Guardado en la nube', syncing: 'Guardando…', pending: 'Sin guardar en la nube: pulsa Guardar',
                   offline: 'Sin conexión: pulsa Guardar cuando vuelva', local: 'Guardado sólo en este navegador', guest: 'Invitado: no se guarda' };
+    if (G.GuestSave && G.GuestSave.kept) TIP.guest = 'Invitado: guardado sólo en este navegador';   // fork: js/fork/guest-save.js
     $('user-pill').innerHTML = G.Icons.html(G.DB.guest ? 'user' : 'crown', 18) + ' <span translate="no">' + (G.DB.guest ? G.T('Invitado') : (G.DB.user || '')) + '</span>' +
       `<i class="sync ${st}" title="${TIP[st] || ''}"></i>`;
     $('user-pill').title = TIP[st] || '';

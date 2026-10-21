@@ -157,7 +157,9 @@ G.SettingsUI = (() => {
     const SYNC = { ok: 'Guardado en la nube', syncing: 'Guardando…', pending: 'Pendiente de subir (se sube al salir del juego)',
                    offline: 'Sin conexión: se subirá al volver', local: 'Guardado sólo en este navegador', guest: 'Invitado: no se guarda' };
     if (G.DB.guest) {
-      box.innerHTML = section('Cuenta', 'Estás jugando como <b>invitado</b>: tu progreso no se guarda al salir.')
+      const kept = G.GuestSave && G.GuestSave.kept;                  // fork: js/fork/guest-save.js
+      box.innerHTML = section('Cuenta', kept ? 'Estás jugando como <b>invitado</b>: tu progreso se guarda sólo en este navegador. Crea una cuenta o entra en la tuya y pasará a ella.'
+        : 'Estás jugando como <b>invitado</b>: tu progreso no se guarda al salir.')
         + `<button class="btn gold" id="set-login">Crear cuenta o entrar</button>`;
       return;
     }
@@ -201,7 +203,7 @@ G.SettingsUI = (() => {
 
   /** Cerrar sesión (si estás en una partida, se abandona). */
   function leave() {
-    if (G.DB.guest && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
+    if (G.DB.guest && !(G.GuestSave && G.GuestSave.store()) && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
     if (G.Game.state !== 'ui') G.Game.quit && G.Game.quit();
     G.Audio.music(null);
     G.DB.logout().then(() => G.Flow.toLogin());

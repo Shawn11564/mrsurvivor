@@ -41,7 +41,7 @@ G.MenuUI = (() => {
     document.querySelectorAll('[data-back]').forEach(b => { b.onclick = open; });
     G.Social.on(() => { if (G.UI.isOpen('scr-menu')) socialLine(); });
     $('btn-logout').onclick = () => {
-      if (G.DB.guest && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
+      if (G.DB.guest && !(G.GuestSave && G.GuestSave.store()) && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
       G.Audio.music(null);
       G.DB.logout().then(() => G.Flow.toLogin());
     };
@@ -87,7 +87,7 @@ G.MenuUI = (() => {
     $('menu-stats').innerHTML =
       `Runs <b style="color:#fff">${st.runs}</b> · Mejor tiempo <b style="color:#fff">${G.U.mmss(st.bestTime)}</b><br>` +
       `Mejor nivel <b style="color:#fff">${st.bestLevel}</b> · Derrotados <b style="color:#fff">${st.totalKills.toLocaleString(G.I18n.locale)}</b>` +
-      (G.DB.guest ? '<br><span style="color:#ffb0b8">Modo invitado: no se guarda</span>' : '');
+      (G.DB.guest ? '<br><span style="color:#ffb0b8">' + (G.GuestSave && G.GuestSave.kept ? 'Modo invitado: guardado sólo en este navegador' : 'Modo invitado: no se guarda') + '</span>' : '');
 
     socialLine();
     // Premios de misiones por recoger.

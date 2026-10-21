@@ -754,7 +754,7 @@ G.DB = (() => {
 
   function playAsGuest() {
     user = 'Invitado'; key = null; guest = true; uid = null;
-    save = newSave('Invitado');
+    save = (G.GuestSave && G.GuestSave.load(s => migrate(s, 'Invitado'))) || newSave('Invitado');   // fork: js/fork/guest-save.js
     if (mode === 'local') remove(K_SES);
     return { ok: true, isNew: true };
   }
@@ -765,6 +765,7 @@ G.DB = (() => {
    * MODO NUBE). urgent ya no cambia nada (se queda por si vuelve a hacer falta).
    */
   function commit(urgent = false) {
+    if (guest && save && G.GuestSave) G.GuestSave.store(save);      // fork: se queda en el navegador (js/fork/guest-save.js)
     if (guest || !key || !save) return false;
     save.updated = Date.now();
     fold(save);
