@@ -275,5 +275,6 @@ G.FX = (() => {
   }
 
   return { clear, px, burst, spark, sp, twinkle, trail, dmgText, ring, slash, beam, update, draw,
-           get count() { return parts.length + sprites.length + texts.length; } };
+           get count() { return parts.length + sprites.length + texts.length; },
+           get lists() { return { parts, sprites, texts, rings, slashes, beams }; } };   // fork: js/fork/fx-opacity.js
 })();

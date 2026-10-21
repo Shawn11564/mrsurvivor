@@ -266,6 +266,13 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+**Move effect opacity** (everyone, `js/fork/fx-opacity.js`): Settings → Graphics has "Your move effects"
+(100 %) and "Teammates' move effects" (60 %). Shots and fields go by their `owner`; G.FX particles, hits,
+rings and beams are tagged when born by who is casting (`G.Combat.tick` with your Pokémon, `ghostCast` /
+`ghostOrbit` for teammates; the lists come from a fork getter, `G.FX.lists`). Each group is drawn in its
+own pass with every `globalAlpha` multiplied. `node fork/test-fx-opacity.cjs` (server) reads the alpha
+the canvas really uses for each.
+
 **A secret** (`js/fork/bewear.js`): in every run a Bewear waits about 3000 px south of the start;
 walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the row comes after the radiant
 glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
