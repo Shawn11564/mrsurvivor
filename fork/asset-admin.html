@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Admin</title>
+<!--
+  fork/asset-admin.html — served ONLY by fork/asset-admin.cjs on this PC (127.0.0.1), never part
+  of the site. Tabs: Gallery (every PNG and code-drawn icon: download, upload new versions, apply),
+  Radiants (fork/radiant-admin.html) and the Radiant Sprite Kit (radiant-kit/). Nothing can be
+  changed until the first sync with GitHub is done. The API key comes in the link (#k=...).
+  Check: node fork/test-asset-admin.cjs.
+-->
+<style>
+@font-face { font-family: Pixelify; src: url(/assets/fonts/PixelifyPS-400.ttf); }
+@font-face { font-family: Pixelify; src: url(/assets/fonts/PixelifyPS-700.ttf); font-weight: 700; }
+:root { --bg: #0c111b; --box: #151f30; --box2: #1d2c46; --text: #e6f0fb; --muted: #9db0c9; --accent: #79b8ff;
+  --edge: #2f4466; --radiant: #ffb347; --bad: #ff7b7b; --warn: #ffd23f; --good: #5fe08a; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 Pixelify, "Segoe UI", sans-serif; display: flex; flex-direction: column; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 16px; border-bottom: 1px solid var(--edge); background: var(--box); }
+h1 { margin: 0; font-size: 24px; color: var(--radiant); text-shadow: 2px 2px 0 #5a2f00; }
+.tabs { display: flex; gap: 4px; }
+.tabs button { border-radius: 6px 6px 0 0; }
+.tabs button.on { background: var(--radiant); color: #2a1500; border-color: var(--radiant); font-weight: 700; }
+.spacer { flex: 1; }
+#sync-pill { font-size: 13px; color: var(--muted); }
+#sync-pill.err { color: var(--bad); }
+button, select, input[type=search] { font: inherit; color: var(--text); background: var(--box2); border: 1px solid var(--edge); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+input[type=search] { cursor: text; min-width: 220px; }
+button:disabled { opacity: .45; cursor: default; }
+button.go { font-weight: 700; color: #2a1500; background: var(--radiant); border: 0; padding: 8px 16px; }
+button.small { font-size: 12px; padding: 2px 8px; }
+.sub { color: var(--muted); }
+code { background: var(--box2); padding: 0 4px; border-radius: 3px; font-size: 13px; }
+.banner { padding: 8px 16px; font-size: 14px; border-bottom: 1px solid var(--edge); }
+.banner.warn { background: rgba(255,210,63,.08); color: #ffe9a0; }
+.banner.bad { background: rgba(255,123,123,.1); color: #ffc4c4; }
+main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pane { flex: 1; min-height: 0; display: none; }
+.pane.on { display: flex; flex-direction: column; }
+iframe { flex: 1; border: 0; width: 100%; background: var(--bg); }
+/* gallery */
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chips button.on { border-color: var(--radiant); color: var(--radiant); }
+#scroll { flex: 1; overflow: auto; padding: 0 16px 16px; }
+#drop-hint { margin: 0 16px 8px; border: 2px dashed var(--edge); border-radius: 8px; padding: 10px; text-align: center; color: var(--muted); font-size: 13px; }
+body.dragging #drop-hint { border-color: var(--radiant); color: var(--radiant); background: rgba(255,179,71,.06); }
+#results { margin: 0 16px 8px; font-size: 13px; }
+#results ul { margin: 4px 0; padding-left: 18px; max-height: 140px; overflow: auto; }
+.err { color: var(--bad); } .wrn { color: var(--warn); } .ok { color: var(--good); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.tile { background: var(--box); border: 1px solid var(--edge); border-radius: 8px; padding: 6px; text-align: center; cursor: pointer; position: relative; min-height: 132px; }
+.tile:hover, .tile.open { border-color: var(--accent); }
+.tile canvas, .tile img { image-rendering: pixelated; display: block; margin: 0 auto 4px; max-width: 100%; }
+.tile .nm { font-size: 13px; line-height: 1.2; word-break: break-word; }
+.tile .meta { font-size: 11px; color: var(--muted); }
+.tile .tg { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; }
+.tg span, .tag { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 999px; background: rgba(121,184,255,.18); color: #bfe3ff; }
+.tg .st, .tag.st { background: var(--radiant); color: #2a1500; }
+.tg .cu, .tag.cu { background: rgba(95,224,138,.22); color: #b6f5c9; }
+.thumb { background: repeating-conic-gradient(#1a2538 0 25%, #142033 0 50%) 0 0 / 12px 12px; border-radius: 6px; }
+#detail { margin: 10px 0; background: var(--box); border: 1px solid var(--accent); border-radius: 8px; padding: 12px; }
+#detail h2 { margin: 0 0 6px; font-size: 19px; }
+.files { display: grid; gap: 8px; }
+.file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; background: var(--box2); border: 1px solid var(--edge); border-radius: 8px; padding: 8px; }
+.file.over { border-color: var(--radiant); }
+.file .pics { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.file figure { margin: 0; font-size: 11px; color: var(--muted); text-align: center; }
+.file figure img, .file figure canvas { image-rendering: pixelated; display: block; max-width: 100%; }
+.file .acts { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.group { margin: 8px 0 4px; color: var(--muted); font-size: 13px; }
+/* pending + publish */
+#bar { border-top: 1px solid var(--edge); background: var(--box); padding: 8px 16px; }
+#bar .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#pending { max-height: 32vh; overflow: auto; margin-top: 6px; }
+#pending table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#pending td { padding: 3px 6px; border-bottom: 1px solid var(--edge); vertical-align: middle; }
+#pending img { image-rendering: pixelated; max-height: 40px; max-width: 120px; }
+pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge); border-radius: 6px; padding: 8px; font-size: 12px; margin: 6px 0 0; max-height: 160px; overflow: auto; }
+/* the sync screen */
+#gate { position: fixed; inset: 0; z-index: 50; background: rgba(6,10,18,.92); display: flex; align-items: center; justify-content: center; padding: 16px; }
+#gate[hidden] { display: none; }
+#gate .card { width: min(560px, 100%); background: var(--box); border: 1px solid var(--edge); border-radius: 10px; padding: 18px; }
+#gate h2 { margin: 0 0 4px; }
+#gate ol { list-style: none; padding: 0; margin: 12px 0; }
+#gate li { padding: 3px 0; }
+#gate li::before { display: inline-block; width: 22px; }
+#gate li.run::before { content: '⏳'; } #gate li.done::before { content: '✔'; color: var(--good); }
+#gate li.fail::before { content: '✖'; color: var(--bad); } #gate li.warn::before { content: '⚠'; color: var(--warn); }
+@media (max-width: 640px) { .file { grid-template-columns: 1fr; } input[type=search] { min-width: 0; width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Asset Admin</h1>
+  <div class="tabs" role="tablist">
+    <button data-tab="gallery" class="on">Gallery</button>
+    <button data-tab="radiants">Radiants</button>
+    <button data-tab="kit">Sprite Kit</button>
+  </div>
+  <span class="spacer"></span>
+  <span id="sync-pill">Syncing…</span>
+  <button class="small" id="sync-now">Check GitHub now</button>
+</header>
+<div id="banners"></div>
+
+<main>
+  <section class="pane on" id="pane-gallery">
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search: name, #dex or file (Idle, lb-g, coin…)">
+      <div class="chips" id="cats">
+        <button data-cat="mon" class="on">Pokémon</button>
+        <button data-cat="code">Code icons</button>
+        <button data-cat="app">App icons</button>
+      </div>
+      <div class="chips" id="flt">
+        <button data-f="radiant">has radiant</button>
+        <button data-f="shiny">has shiny</button>
+        <button data-f="staged">staged</button>
+      </div>
+      <span class="spacer"></span>
+      <button id="dl-view">Download this view (.zip)</button>
+      <button id="up">Upload files…</button>
+      <input type="file" id="up-file" accept=".png,.zip,image/*" multiple hidden>
+    </div>
+    <div id="drop-hint">Drop PNGs, a folder or a .zip anywhere: each file goes onto the one with its name (<code>pokemon__150__Idle.png</code>, <code>code-icon__coin@4x.png</code>, the way downloads are named). Or drop any image onto a file below: it takes that file's name, and becomes a PNG if it isn't one.</div>
+    <div id="results" hidden></div>
+    <div id="scroll"><div id="detail" hidden></div><div class="grid" id="grid"></div><p class="sub" id="more" hidden></p></div>
+  </section>
+  <section class="pane" id="pane-radiants"></section>
+  <section class="pane" id="pane-kit"></section>
+</main>
+
+<div id="bar">
+  <div class="row">
+    <b id="pend-n">No changes staged</b>
+    <button class="small" id="pend-toggle" hidden>Show</button>
+    <button class="go" id="apply" disabled>Apply to the game files</button>
+    <button class="small" id="discard" disabled>Discard all</button>
+    <span class="spacer"></span>
+    <span id="pub-n" class="sub"></span>
+    <button class="small" id="ch-toggle" hidden>Show changed files</button>
+    <label id="ahead-ok" hidden><input type="checkbox" id="ahead-box"> <span id="ahead-text"></span></label>
+    <button class="go" id="publish" disabled>Publish to players</button>
+  </div>
+  <div id="pending" hidden></div>
+  <div id="changed" hidden></div>
+  <pre id="pub-out" hidden></pre>
+</div>
+
+<div id="gate">
+  <div class="card">
+    <h2>Getting the latest version from GitHub…</h2>
+    <p class="sub">So you're working on what's live and nothing you publish undoes someone else's work. This takes a few seconds; the tool unlocks when it's done.</p>
+    <ol id="gate-steps"></ol>
+    <p class="err" id="gate-err" hidden></p>
+    <button class="go" id="gate-undo" hidden>Undo my changes to these files and continue</button>
+    <button class="go" id="gate-retry" hidden>Try again</button>
+  </div>
+</div>
+
+<script>window.G = {};</script>
+<script src="/js/core/util.js"></script>
+<script src="/js/data/pokedex.js"></script>
+<script src="/js/data/sprites-meta.js"></script>
+<script src="/js/fork/mega-sprites.js"></script>
+<script src="/js/data/moves.js"></script>
+<script src="/js/fork/lab/lab-moves.js"></script>
+<script src="/js/ui/icons.js"></script>
+<script src="/js/fork/lab/badge-art.js"></script>
+<script>
+(() => {
+  const HASH = new URLSearchParams(location.hash.slice(1));
+  const KEY = HASH.get('k') || '';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const api = async (p, opts = {}) => {
+    const r = await fetch('/api/' + p, Object.assign({}, opts, { headers: Object.assign({ 'x-key': KEY }, opts.headers || {}) }));
+    const j = await r.json().catch(() => ({ error: r.statusText }));
+    if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), { data: j, status: r.status });
+    return j;
+  };
+  const post = (p, b) => api(p, { method: 'POST', body: JSON.stringify(b || {}), headers: { 'Content-Type': 'application/json' } });
+  const DEX = {}; for (const p of G.DEX) DEX[p.dex] = p;
+
+  // Same names as fork/asset-gallery.cjs: a download is called what an upload has to be called.
+  const safe = n => n.replace(/:/g, '.').replace(/\//g, '_');
+  const fileName = rel => rel.replace(/^assets\//, '').split('/').join('__');
+  const iconFile = (n, k = 1) => `code-icon__${safe(n)}${k > 1 ? '@' + k + 'x' : ''}.png`;
+  const stagedUrl = key => '/api/staged/' + key.split('/').map(encodeURIComponent).join('/') + '?k=' + KEY + '&t=' + Date.now();
+
+  let st = null, files = {}, overrides = {}, revs = {};
+  let cat = HASH.get('cat') || 'mon', open = null;
+  const flt = new Set();
+
+  // ---------------- code icons (drawn here by the game's own code) ----------------
+  for (const d of G.LabMoves || []) if (!G.Moves.BY_ID[d.id]) G.Moves.BY_ID[d.id] = d;
+  const CODE = [];
+  const addCode = (n, group) => { try { const c = G.Icons.canvas(n); if (c && c.width) CODE.push({ n, group, w: c.width, h: c.height }); } catch (e) { /* not drawable */ } };
+  for (const n of Object.keys(G.Icons.UI)) addCode(n, /^lb-/.test(n) ? 'Move badges (Lab)' : 'Interface');
+  for (const t of Object.keys(G.Icons.TYPE_GLYPH)) addCode('type:' + t, 'Type emblems');
+  for (const n of ['eff:up:x4', 'eff:up:x2', 'eff:down:1/2', 'eff:down:1/4', 'eff:down:x0']) addCode(n, 'Type chart arrows');
+  for (const id of Object.keys(G.Moves.BY_ID).sort()) addCode('move:' + id, 'Move emblems');
+  const CODE_BY = Object.fromEntries(CODE.map(c => [c.n, c]));
+  const scaled = (n, k) => { const s = G.Icons.canvas(n), c = document.createElement('canvas'); c.width = s.width * k; c.height = s.height * k;
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(s, 0, 0, c.width, c.height); return c; };
+  const pngOf = c => new Promise(ok => c.toBlob(ok, 'image/png'));
+
+  // ---------------- zip (stored, no compression: they're PNGs) ----------------
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  function zip(entries) {                         // [[name, Uint8Array]]
+    const parts = [], dir = []; let off = 0;
+    for (const [n, data] of entries) {
+      const name = new TextEncoder().encode(n), crc = crc32(data), loc = new DataView(new ArrayBuffer(30)), cen = new DataView(new ArrayBuffer(46));
+      loc.setUint32(0, 0x04034b50, true); loc.setUint16(4, 20, true); loc.setUint32(14, crc, true); loc.setUint32(18, data.length, true);
+      loc.setUint32(22, data.length, true); loc.setUint16(26, name.length, true);
+      cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true); cen.setUint32(16, crc, true);
+      cen.setUint32(20, data.length, true); cen.setUint32(24, data.length, true); cen.setUint16(28, name.length, true); cen.setUint32(42, off, true);
+      parts.push(loc, name, data); dir.push(cen, name); off += 30 + name.length + data.length;
+    }
+    const size = dir.reduce((s, p) => s + p.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true);
+    end.setUint32(12, size, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...dir, end], { type: 'application/zip' });
+  }
+  function save(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  const bytes = async url => new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const assetUrl = rel => '/' + rel + '?v=' + (revs[rel] || 0);
+  const overrideUrl = n => overrides[n] ? '/' + overrides[n].file + '?v=' + overrides[n].v : null;
+  /** A code icon as the artist would edit it: the custom PNG if there is one, else the drawing ×k. */
+  async function iconBytes(n, k) {
+    if (overrides[n]) return [iconFile(n, overrides[n].w / CODE_BY[n].w), await bytes(overrideUrl(n))];
+    return [iconFile(n, k), new Uint8Array(await (await pngOf(scaled(n, k))).arrayBuffer())];
+  }
+
+  // ---------------- what's in the gallery ----------------
+  /** Pokémon -> their files: { dex: { name, files: [rel], radiant, shiny } } */
+  function mons() {
+    const out = {};
+    for (const rel of Object.keys(files)) {
+      const m = rel.match(/^assets\/pokemon\/(m?)(\d+)\//);
+      if (!m) continue;
+      const d = +m[2], o = out[d] || (out[d] = { dex: d, name: (DEX[d] || {}).name || '#' + d, files: [], radiant: false, shiny: false });
+      o.files.push(rel);
+      if (/\/r\//.test(rel)) o.radiant = true;
+      if (/\/s\//.test(rel)) o.shiny = true;
+    }
+    return out;
+  }
+  const staged = () => (st && st.staged) || [];
+  const stagedKeys = () => new Set(staged().map(s => s.key));
+  function partOf(rel) {
+    const m = rel.match(/^assets\/pokemon\/(m?)\d+\/(.*)$/), mega = m && m[1], rest = m ? m[2] : rel;
+    const g = /^r\/lab\//.test(rest) ? 'Radiant · Lab' : /^r\//.test(rest) ? 'Radiant' : /^s\//.test(rest) ? 'Shiny' : /^lab\//.test(rest) ? 'Lab' : 'Normal';
+    return (mega ? 'Mega · ' : '') + g;
+  }
+
+  function list() {
+    const q = $('q').value.trim().toLowerCase(), sk = stagedKeys();
+    if (cat === 'mon') {
+      let l = Object.values(mons()).sort((a, b) => a.dex - b.dex);
+      if (q) l = l.filter(m => m.name.toLowerCase().includes(q) || String(m.dex) === q.replace('#', '') || m.files.some(f => f.toLowerCase().includes(q)));
+      if (flt.has('radiant')) l = l.filter(m => m.radiant);
+      if (flt.has('shiny')) l = l.filter(m => m.shiny);
+      if (flt.has('staged')) l = l.filter(m => m.files.some(f => sk.has(f)));
+      return l.map(m => ({ id: 'mon:' + m.dex, kind: 'mon', m, n: m.files.filter(f => sk.has(f)).length }));
+    }
+    if (cat === 'app') {
+      let l = Object.keys(files).filter(f => /^assets\/icons\//.test(f)).sort();
+      if (q) l = l.filter(f => f.toLowerCase().includes(q));
+      if (flt.has('staged')) l = l.filter(f => sk.has(f));
+      return l.map(f => ({ id: f, kind: 'app', f, n: sk.has(f) ? 1 : 0 }));
+    }
+    let l = CODE;
+    if (q) l = l.filter(c => c.n.toLowerCase().includes(q) || c.group.toLowerCase().includes(q));
+    if (flt.has('staged')) l = l.filter(c => sk.has('icon:' + c.n));
+    return l.map(c => ({ id: 'icon:' + c.n, kind: 'code', c, n: sk.has('icon:' + c.n) ? 1 : 0 }));
+  }
+
+  // ---------------- the grid ----------------
+  const SHOWN = 240;
+  let shown = SHOWN;
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); paintThumb(e.target); } }), { root: $('scroll'), rootMargin: '300px' });
+  function grid() {
+    const l = list(), g = $('grid');
+    g.innerHTML = l.slice(0, shown).map(t => {
+      const tags = [];
+      if (t.n) tags.push(`<span class="st">${t.n} staged</span>`);
+      if (t.kind === 'mon') { if (t.m.radiant) tags.push('<span>R</span>'); if (t.m.shiny) tags.push('<span>S</span>'); }
+      if (t.kind === 'code' && overrides[t.c.n]) tags.push('<span class="cu">PNG</span>');
+      const nm = t.kind === 'mon' ? `${esc(t.m.name)} <span class="sub">#${t.m.dex}</span>` : t.kind === 'app' ? esc(t.f.split('/').pop()) : esc(t.c.n);
+      const meta = t.kind === 'mon' ? `${t.m.files.length} files` : t.kind === 'app' ? files[t.f].slice(0, 2).join('×') : `${t.c.w}×${t.c.h} · ${esc(t.c.group)}`;
+      return `<div class="tile${open === t.id ? ' open' : ''}" data-id="${esc(t.id)}"><div class="tg">${tags.join('')}</div><canvas class="thumb" width="96" height="72"></canvas><div class="nm">${nm}</div><div class="meta">${meta}</div></div>`;
+    }).join('');
+    $('more').hidden = l.length <= shown;
+    $('more').innerHTML = `${l.length - shown} more: <button class="small" id="more-btn">Show more</button> or search`;
+    if (!$('more').hidden) $('more-btn').onclick = () => { shown += SHOWN; grid(); };
+    g.querySelectorAll('.tile').forEach(el => { el.onclick = () => toggle(el.dataset.id); io.observe(el); });
+  }
+  const imgCache = new Map();
+  const loadImg = src => imgCache.get(src) || (imgCache.set(src, new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; })), imgCache.get(src));
+  async function paintThumb(el) {
+    const id = el.dataset.id, c = el.querySelector('canvas'), x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    const fit = (w, h) => { const k = Math.min(c.width / w, c.height / h); return k >= 1 ? Math.floor(k) : k; };
+    try {
+      if (id.startsWith('mon:')) {
+        const d = +id.slice(4), meta = G.SPRITE_META[d], a = meta && (meta.a.Idle || Object.values(meta.a)[0]);
+        const name = meta && (meta.a.Idle ? 'Idle' : Object.keys(meta.a)[0]);
+        const rel = `assets/pokemon/${d}/${name}.png`;
+        if (!a || !files[rel]) return;
+        const img = await loadImg(assetUrl(rel)), k = fit(a.w, a.h);
+        x.drawImage(img, 0, 0, a.w, a.h, (c.width - a.w * k) / 2, (c.height - a.h * k) / 2, a.w * k, a.h * k);
+      } else if (id.startsWith('icon:')) {
+        const n = id.slice(5), src = overrides[n] ? await loadImg(overrideUrl(n)) : G.Icons.canvas(n), cw = CODE_BY[n].w, ch = CODE_BY[n].h, k = fit(cw, ch);
+        x.imageSmoothingEnabled = !!overrides[n];
+        x.drawImage(src, (c.width - cw * k) / 2, (c.height - ch * k) / 2, cw * k, ch * k);
+      } else {
+        const img = await loadImg(assetUrl(id)), k = fit(img.width, img.height);
+        x.drawImage(img, (c.width - img.width * k) / 2, (c.height - img.height * k) / 2, img.width * k, img.height * k);
+      }
+    } catch (e) { /* missing image: leave it blank */ }
+  }
+
+  // ---------------- the open tile ----------------
+  function toggle(id) { open = open === id ? null : id; detail(); grid(); if (open) $('detail').scrollIntoView({ block: 'nearest' }); }
+  function fileRow(key, label, sizeTxt, oldSrc, downloadBtn, extra = '') {
+    const s = staged().find(x => x.key === key);
+    return `<div class="file" data-key="${esc(key)}">
+      <div><div><b>${esc(label)}</b> <span class="sub">${esc(sizeTxt)}</span> ${s ? '<span class="tag st">new version staged</span>' : ''} ${extra}</div>
+        <div class="pics"><figure><img src="${esc(oldSrc)}" alt="" loading="lazy" style="max-height:240px">now</figure>
+        ${s ? `<figure><img src="${stagedUrl(key)}" alt="" style="max-height:240px">new · from ${esc(s.from.split('/').pop())}</figure>` : ''}</div></div>
+      <div class="acts">${downloadBtn}<button class="small up1">Upload new version…</button>${s ? '<button class="small un1">Discard new version</button>' : ''}</div></div>`;
+  }
+  function detail() {
+    const box = $('detail');
+    if (!open) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    let html = '';
+    if (open.startsWith('mon:')) {
+      const m = mons()[+open.slice(4)];
+      if (!m) { open = null; return detail(); }
+      const groups = {};
+      for (const f of m.files.sort()) (groups[partOf(f)] = groups[partOf(f)] || []).push(f);
+      html = `<div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h2>${esc(m.name)} <span class="sub">#${m.dex}</span></h2><span class="spacer"></span>
+        <button class="small" id="dl-mon">Download all ${m.files.length} (.zip)</button><button class="small" id="close-d">Close</button></div>` +
+        Object.entries(groups).map(([g, fs]) => `<div class="group">${esc(g)}</div><div class="files">` + fs.map(f =>
+          fileRow(f, f.split('/').pop().replace('.png', ''), files[f].slice(0, 2).join('×') + ' · ' + f, assetUrl(f), `<button class="small dl1" data-rel="${esc(f)}">Download</button>`)).join('') + '</div>').join('');
+    } else if (open.startsWith('icon:')) {
+      const n = open.slice(5), c = CODE_BY[n], o = overrides[n];
+      const big = scaled(n, Math.max(1, Math.floor(96 / Math.max(c.w, c.h)))).toDataURL();
+      html = `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h2>${esc(n)} <span class="sub">${esc(c.group)}</span></h2><span class="spacer"></span><button class="small" id="close-d">Close</button></div>
+        <p class="sub">Drawn by the game's code at ${c.w}×${c.h}. A new version is a PNG of ${c.w}×${c.h} or a whole multiple (×4 = ${c.w * 4}×${c.h * 4}): the game shows it at the same size, and a bigger one stays sharp on big screens.</p>` +
+        `<div class="files">` + fileRow(open, o ? 'Custom PNG' : 'Code drawing', o ? `${o.w}×${o.h}` : `${c.w}×${c.h}`, o ? overrideUrl(n) : big,
+          o ? '<button class="small dlc" data-k="1">Download</button>' : '<button class="small dlc" data-k="1">Download ×1</button><button class="small dlc" data-k="4">Download ×4</button>',
+          o ? '<button class="small unov">Back to the code drawing</button>' : '') + '</div>';
+    } else {
+      const f = open;
+      html = `<div style="display:flex;gap:8px;align-items:center"><h2>${esc(f.split('/').pop())}</h2><span class="spacer"></span><button class="small" id="close-d">Close</button></div><div class="files">` +
+        fileRow(f, f, files[f].slice(0, 2).join('×'), assetUrl(f), `<button class="small dl1" data-rel="${esc(f)}">Download</button>`) + '</div>';
+    }
+    box.innerHTML = html;
+    if ($('close-d')) $('close-d').onclick = () => toggle(open);
+    if ($('dl-mon')) $('dl-mon').onclick = async () => {
+      const m = mons()[+open.slice(4)];
+      save(zip(await Promise.all(m.files.map(async f => [f, await bytes(assetUrl(f))]))), `${String(m.dex).padStart(4, '0')}_${m.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.zip`);
+    };
+    box.querySelectorAll('.dl1').forEach(b => b.onclick = async () => save(new Blob([await bytes(assetUrl(b.dataset.rel))], { type: 'image/png' }), fileName(b.dataset.rel)));
+    box.querySelectorAll('.dlc').forEach(b => b.onclick = async () => { const [nm, d] = await iconBytes(open.slice(5), +b.dataset.k); save(new Blob([d], { type: 'image/png' }), nm); });
+    box.querySelectorAll('.unov').forEach(b => b.onclick = async () => {
+      try { const r = await post('unoverride', { name: open.slice(5) }); overrides = r.overrides; st = r.state; imgCache.clear(); render(); } catch (e) { note(e.message, 'err'); }
+    });
+    box.querySelectorAll('.file').forEach(el => {
+      const key = el.dataset.key, aim = key.startsWith('icon:') ? { icon: key.slice(5) } : { target: key };
+      el.querySelector('.up1').onclick = () => pick(fl => upload(fl, aim));
+      const un = el.querySelector('.un1'); if (un) un.onclick = async () => { st = await post('unstage', { keys: [key] }); render(); };
+      el.ondragover = e => { e.preventDefault(); e.stopPropagation(); el.classList.add('over'); };
+      el.ondragleave = () => el.classList.remove('over');
+      el.ondrop = async e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('over'); document.body.classList.remove('dragging');
+        const fl = await dropped(e.dataTransfer); if (fl.length === 1) upload(fl, aim); else note('Drop one file onto a file (or several anywhere else).', 'err'); };
+    });
+  }
+
+  // ---------------- uploads ----------------
+  // The file picker: "Upload new version…" on a file aims it there (once); otherwise it's matched by name.
+  let aimNext = null;
+  $('up-file').onchange = () => {
+    const i = $('up-file'), fl = [...i.files].map(f => [f, f.name]), cb = aimNext || (l => upload(l));
+    aimNext = null; i.value = ''; cb(fl);
+  };
+  function pick(cb) { aimNext = cb; $('up-file').click(); }
+  /** Every file in a drop, folders included: [[File, path]] */
+  async function dropped(dt) {
+    const out = [], items = [...(dt.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (!items.length) return [...dt.files].map(f => [f, f.name]);
+    const walk = async (e, pre) => {
+      if (e.isFile) out.push([await new Promise((ok, no) => e.file(ok, no)), pre + e.name]);
+      else if (e.isDirectory) {
+        const r = e.createReader(); let batch;
+        do { batch = await new Promise((ok, no) => r.readEntries(ok, no)); for (const c of batch) await walk(c, pre + e.name + '/'); } while (batch.length);
+      }
+    };
+    for (const e of items) await walk(e, '');
+    return out;
+  }
+  function note(html, cls = '') { const r = $('results'); r.hidden = false; r.innerHTML = `<span class="${cls}">${html}</span> <button class="small" id="res-x">OK</button>`; $('res-x').onclick = () => { r.hidden = true; }; }
+  /**
+   * The file as the PNG the game wants: a PNG as it is; anything else the browser can open (JPG,
+   * WebP, GIF, BMP, an interlaced PNG, which the checks can't read) drawn again and saved as PNG,
+   * pixel for pixel. -> { bytes, note } or { error }
+   */
+  async function asPng(f, name) {
+    const buf = new Uint8Array(await f.arrayBuffer());
+    const png = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+    if (png && buf[28] === 0) return { bytes: buf };
+    const ext = (name.match(/\.([a-z0-9]+)$/i) || [, 'file'])[1].toUpperCase();
+    let bmp;
+    try { bmp = await createImageBitmap(new Blob([buf]), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }); }
+    catch (e) { return { error: `couldn't open it as an image (${ext})` }; }
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    c.getContext('2d').drawImage(bmp, 0, 0);
+    const out = new Uint8Array(await (await pngOf(c)).arrayBuffer());
+    return { bytes: out, note: png ? 'saved again without interlacing' : `converted from ${ext} to PNG` + (/^JPE?G$/.test(ext) ? ' (JPG has no transparency: check the edges)' : '') };
+  }
+  /** The name the file gets: the one its target is downloaded as (aimed), or its own with .png. */
+  const properName = (name, aim) => aim && aim.target ? fileName(aim.target) : aim && aim.icon ? iconFile(aim.icon) : name.replace(/\.(jpe?g|webp|gif|bmp|avif|png)$/i, '.png');
+
+  async function upload(list, aim) {
+    const res = [], renamed = [];
+    for (const [f, name] of list) {
+      if (/\.zip$/i.test(name)) {
+        try { const r = await api('stage', { method: 'POST', body: await f.arrayBuffer(), headers: { 'x-name': encodeURIComponent(name) } }); res.push(...r.results); st = r.state; }
+        catch (e) { res.push({ from: name, ok: false, error: e.message }); }
+        continue;
+      }
+      const p = await asPng(f, name);
+      if (p.error) { res.push({ from: name, ok: false, error: p.error }); continue; }
+      const proper = properName(name, aim), base = name.split('/').pop();
+      const h = { 'x-name': encodeURIComponent(name.replace(/[^/]+$/, proper.split('/').pop())) };
+      if (aim && aim.target) h['x-target'] = encodeURIComponent(aim.target);
+      if (aim && aim.icon) h['x-icon'] = encodeURIComponent(aim.icon);
+      try {
+        const r = await api('stage', { method: 'POST', body: p.bytes, headers: h });
+        for (const x of r.results) { x.from = base; if (x.ok && (proper !== base || p.note)) renamed.push(`${base} → saved as ${proper}${p.note ? ', ' + p.note : ''}`); }
+        res.push(...r.results); st = r.state;
+      } catch (e) { res.push({ from: name, ok: false, error: e.message }); }
+    }
+    const good = res.filter(r => r.ok), bad = res.filter(r => !r.ok);
+    $('results').hidden = false;
+    $('results').innerHTML = `<b class="${bad.length ? 'wrn' : 'ok'}">${good.length} new version${good.length === 1 ? '' : 's'} staged${bad.length ? `, ${bad.length} not` : ''}.</b>
+      ${good.length ? '<span class="sub">Check them, then "Apply to the game files" below.</span>' : ''} <button class="small" id="res-x">OK</button>
+      ${renamed.length ? '<ul>' + renamed.map(t => `<li class="ok">${esc(t)}</li>`).join('') + '</ul>' : ''}
+      ${bad.length ? '<ul>' + bad.map(b => `<li class="err">${esc(b.from)}: ${esc(b.error)}</li>`).join('') + '</ul>' : ''}`;
+    $('res-x').onclick = () => { $('results').hidden = true; };
+    render();
+  }
+
+  // drop anywhere on the gallery
+  let depth = 0;
+  addEventListener('dragenter', e => { if (cur === 'gallery' && e.dataTransfer.types.includes('Files')) { depth++; document.body.classList.add('dragging'); } });
+  addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; document.body.classList.remove('dragging'); } });
+  addEventListener('dragover', e => { if (cur === 'gallery') e.preventDefault(); });
+  addEventListener('drop', async e => { if (cur !== 'gallery') return; e.preventDefault(); depth = 0; document.body.classList.remove('dragging'); upload(await dropped(e.dataTransfer)); });
+  $('up').onclick = () => pick(fl => upload(fl));
+
+  $('dl-view').onclick = async () => {
+    const l = list();
+    if (!l.length) return;
+    if (l.length > 60 && !confirmDl(l.length)) return;
+    const entries = [];
+    for (const t of l) {
+      if (t.kind === 'mon') for (const f of t.m.files) entries.push([f, await bytes(assetUrl(f))]);
+      else if (t.kind === 'app') entries.push([t.f, await bytes(assetUrl(t.f))]);
+      else { const [nm, d] = await iconBytes(t.c.n, 4); entries.push(['code-icons/' + nm, d]); }
+    }
+    save(zip(entries), cat === 'code' ? 'code-icons.zip' : cat === 'app' ? 'app-icons.zip' : 'pokemon-sheets.zip');
+  };
+  const confirmDl = n => { $('dl-view').textContent = `Click again to download all ${n}`; const again = $('dl-view').dataset.again === '1'; $('dl-view').dataset.again = '1';
+    setTimeout(() => { $('dl-view').dataset.again = ''; $('dl-view').textContent = 'Download this view (.zip)'; }, 4000); return again; };
+
+  // ---------------- staged, apply, publish ----------------
+  function bar() {
+    const s = staged(), g = st && st.git;
+    $('pend-n').textContent = s.length ? `${s.length} new version${s.length > 1 ? 's' : ''} staged (not in the game files yet)` : 'No changes staged';
+    $('pend-toggle').hidden = !s.length; $('apply').disabled = !s.length || !ready(); $('discard').disabled = !s.length;
+    if (!s.length) $('pending').hidden = true;
+    $('pending').innerHTML = s.length ? '<table>' + s.map(x => `<tr data-key="${esc(x.key)}"><td>${esc(x.icon ? 'icon ' + x.icon : x.target)}</td>
+      <td><img src="${x.icon ? (overrideUrl(x.icon) || scaled(x.icon, 2).toDataURL()) : assetUrl(x.target)}" alt=""> → <img src="${stagedUrl(x.key)}" alt=""></td>
+      <td class="sub">${x.w}×${x.h}${x.k > 1 ? ` (×${x.k})` : ''} · from ${esc(x.from.split('/').pop())}</td><td><button class="small un">Discard</button></td></tr>`).join('') + '</table>' : '';
+    $('pending').querySelectorAll('.un').forEach(b => b.onclick = async () => { st = await post('unstage', { keys: [b.closest('tr').dataset.key] }); render(); });
+    const ch = g && !g.error ? g.changed : [];
+    $('pub-n').textContent = ch.length ? `${ch.length} file${ch.length > 1 ? 's' : ''} changed, not published` : 'Nothing to publish';
+    $('ch-toggle').hidden = !ch.length;
+    if (!ch.length) $('changed').hidden = true;
+    // Applied but not published: each can be undone (back to what's live).
+    $('changed').innerHTML = ch.length ? `<table>${ch.map(p => `<tr data-p="${esc(p)}"><td>${esc(p)}</td><td><button class="small undo1">Undo</button></td></tr>`).join('')}</table>
+      <div class="row"><button class="small" id="undo-all">Undo all ${ch.length}</button><span class="sub">Back to what's live. The version lists follow the files.</span></div>` : '';
+    $('changed').querySelectorAll('.undo1').forEach(b => b.onclick = () => undo([b.closest('tr').dataset.p]));
+    if ($('undo-all')) $('undo-all').onclick = () => undo(ch);
+    const ahead = g && g.ahead;
+    $('ahead-ok').hidden = !ahead;
+    if (ahead) $('ahead-text').textContent = `also push ${ahead} other commit(s): ${g.aheadLog.join('; ')}`;
+    $('publish').disabled = !ch.length || !ready() || (ahead && !$('ahead-box').checked) || (!!st && !!st.sync && st.sync.canPush === false);
+  }
+  $('ahead-box').onchange = bar;
+  $('ch-toggle').onclick = () => { $('changed').hidden = !$('changed').hidden; $('ch-toggle').textContent = $('changed').hidden ? 'Show changed files' : 'Hide changed files'; };
+  async function undo(paths) {
+    try {
+      const r = await post('revert', { paths });
+      st = r.state; imgCache.clear();
+      const ix = await api('index'); files = ix.files; overrides = ix.overrides; revs = ix.revs;
+      note(`${r.done.length} file${r.done.length === 1 ? '' : 's'} back to what's live.`, 'ok');
+      render();
+      return r;
+    } catch (e) { note(e.message, 'err'); }
+  }
+  $('pend-toggle').onclick = () => { $('pending').hidden = !$('pending').hidden; $('pend-toggle').textContent = $('pending').hidden ? 'Show' : 'Hide'; };
+  $('discard').onclick = async () => { st = await post('unstage', { keys: [] }); render(); };
+  $('apply').onclick = async () => {
+    $('apply').disabled = true;
+    try {
+      const r = await post('apply', { keys: [] });
+      files = r.index; overrides = r.overrides; st = r.state; imgCache.clear();
+      const ix = await api('index'); revs = ix.revs;
+      note(`${r.done.length} file${r.done.length === 1 ? '' : 's'} replaced in this copy of the game. "Publish to players" sends ${r.done.length === 1 ? 'it' : 'them'} live.`, 'ok');
+      render();
+    } catch (e) { note(e.message, 'err'); bar(); }
+  };
+  $('publish').onclick = async () => {
+    $('publish').disabled = true; $('pub-out').hidden = false; $('pub-out').textContent = 'Syncing with GitHub, committing and pushing…';
+    try {
+      const r = await post('publish', { allowAhead: $('ahead-box').checked });
+      $('pub-out').textContent = `Published ${r.sha}: ${r.msg}\nPlayers get it once GitHub Pages has deployed (a minute or two).`;
+      st = r.state;
+    } catch (e) { $('pub-out').textContent = e.message; if (e.data && e.data.state) st = e.data.state; }
+    render();
+  };
+
+  // ---------------- sync with GitHub ----------------
+  const ready = () => !!(st && st.sync && st.sync.ready);
+  let lastAt = null;
+  function syncUi(s) {
+    $('gate').hidden = s.ready && !!st;          // and the gallery's data is in
+    $('gate-steps').innerHTML = s.steps.map(x => `<li class="${x.state}">${esc(x.text)}</li>`).join('');
+    $('gate-err').hidden = !s.error; $('gate-err').textContent = s.error || '';
+    $('gate-retry').hidden = !s.error || s.busy;
+    const conflicts = (s.conflicts || []).length && !s.busy;
+    $('gate-undo').hidden = !conflicts;
+    const pill = $('sync-pill');
+    pill.className = s.error ? 'err' : '';
+    pill.textContent = s.busy ? 'Syncing with GitHub…' : s.error ? 'GitHub sync failed' : s.at ? 'Up to date with GitHub · checked ' + new Date(s.at).toLocaleTimeString() : 'Syncing…';
+    const b = [];
+    if (s.ready && s.error) b.push(`<div class="banner bad">The last check with GitHub failed: ${esc(s.error)} ${conflicts ? '<button class="small" id="b-undo">Undo my changes to them</button>' : ''} <button class="small" id="b-retry">Try again</button></div>`);
+    if (s.canPush === false) b.push(`<div class="banner warn">${esc(s.pushNote)} <button class="small" id="b-push">Check again</button></div>`);
+    $('banners').innerHTML = b.join('');
+    if ($('b-retry')) $('b-retry').onclick = () => post('sync');
+    if ($('b-undo')) $('b-undo').onclick = () => undoConflicts(s.conflicts);
+    if ($('b-push')) $('b-push').onclick = () => post('sync', { recheckPush: true });
+  }
+  /** The way out of "changed here AND on GitHub": ours back to HEAD, then sync again. */
+  async function undoConflicts(paths) {
+    $('gate-undo').disabled = true;
+    try { await post('revert', { paths }); await post('sync'); } catch (e) { $('gate-err').textContent = e.message; }
+    $('gate-undo').disabled = false;
+  }
+  $('gate-undo').onclick = () => api('sync').then(s => undoConflicts(s.conflicts));
+  $('gate-retry').onclick = $('sync-now').onclick = () => post('sync').then(syncUi);
+  async function poll() {
+    try {
+      const s = await api('sync');
+      syncUi(s);
+      if (st) st.sync = s;
+      // After a sync brought new files (or the first one finished): read everything again.
+      if (!s.busy && s.at !== lastAt && s.ready) { lastAt = s.at; await load(); }
+    } catch (e) { $('sync-pill').textContent = 'The tool has stopped (its window was closed?)'; $('sync-pill').className = 'err'; }
+    setTimeout(poll, st && st.sync && st.sync.ready && !st.sync.busy ? 3000 : 700);
+  }
+  let natSent = false;
+  async function load() {
+    const [ix, s] = await Promise.all([api('index'), api('state')]);
+    files = ix.files; overrides = ix.overrides; revs = ix.revs; st = s; imgCache.clear();
+    if (!natSent) { await post('icons', { icons: Object.fromEntries(CODE.map(c => [c.n, [c.w, c.h]])) }); natSent = true; }
+    render(); syncUi(st.sync);
+  }
+  // State from the other tabs (a radiant imported there), every few seconds.
+  setInterval(async () => { if (ready() && !document.hidden) { try { st = await api('state'); bar(); } catch (e) { /* stopped */ } } }, 5000);
+
+  // ---------------- tabs ----------------
+  let cur = 'gallery';
+  function tab(t) {
+    cur = t;
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t));
+    const p = $('pane-' + t);
+    if (t !== 'gallery' && !p.firstChild) p.innerHTML = `<iframe src="${t === 'kit' ? '/radiant-kit/' : '/radiants.html#k=' + KEY}" title="${t}"></iframe>`;
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => tab(b.dataset.tab));
+  document.querySelectorAll('#cats button').forEach(b => b.onclick = () => {
+    cat = b.dataset.cat; open = null; shown = SHOWN; $('scroll').scrollTop = 0;
+    document.querySelectorAll('#cats button').forEach(x => x.classList.toggle('on', x === b));
+    $('flt').querySelectorAll('[data-f="radiant"],[data-f="shiny"]').forEach(x => x.hidden = cat !== 'mon');
+    render();
+  });
+  document.querySelectorAll('#flt button').forEach(b => b.onclick = () => { flt.has(b.dataset.f) ? flt.delete(b.dataset.f) : flt.add(b.dataset.f); b.classList.toggle('on'); shown = SHOWN; render(); });
+  let qt; $('q').oninput = () => { clearTimeout(qt); qt = setTimeout(() => { shown = SHOWN; render(); }, 150); };
+
+  function render() { grid(); detail(); bar(); }
+
+  window.AssetAdmin = { state: () => st, files: () => files, overrides: () => overrides, code: () => CODE, tab, ready };
+  if (HASH.get('tab')) tab(HASH.get('tab'));
+  poll();
+})();
+</script>
+</body>
+</html>

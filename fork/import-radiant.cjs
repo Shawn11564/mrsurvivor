@@ -32,16 +32,19 @@ function unzip(buf) {
   while (e >= 0 && buf.readUInt32LE(e) !== 0x06054b50) e--;
   if (e < 0) throw new Error('not a .zip file');
   const n = buf.readUInt16LE(e + 10), out = {};
-  let p = buf.readUInt32LE(e + 16);
+  // Limits (fork/asset-admin.cjs takes zips too): a broken or huge zip is refused, not unpacked.
+  if (n > 20000) throw new Error(`${n} files in one zip: split it`);
+  let p = buf.readUInt32LE(e + 16), total = 0;
   for (let i = 0; i < n; i++) {
     const method = buf.readUInt16LE(p + 10), size = buf.readUInt32LE(p + 20);
+    if ((total += buf.readUInt32LE(p + 24)) > 1 << 30) throw new Error('the zip unpacks to more than 1 GB: split it');
     const nl = buf.readUInt16LE(p + 28), xl = buf.readUInt16LE(p + 30), cl = buf.readUInt16LE(p + 32), off = buf.readUInt32LE(p + 42);
     const name = buf.toString('utf8', p + 46, p + 46 + nl).replace(/\\/g, '/');
     p += 46 + nl + xl + cl;
     if (name.endsWith('/')) continue;
     const at = off + 30 + buf.readUInt16LE(off + 26) + buf.readUInt16LE(off + 28), raw = buf.subarray(at, at + size);
     if (method === 0) out[name] = raw;
-    else if (method === 8) out[name] = zlib.inflateRawSync(raw);
+    else if (method === 8) out[name] = zlib.inflateRawSync(raw, { maxOutputLength: 64 << 20 });
     else throw new Error(`${name}: compression method ${method} isn't supported (re-zip with normal "Deflate")`);
   }
   return out;

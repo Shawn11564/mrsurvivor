@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Radiant Admin</title>
 <!--
-  fork/radiant-admin.html — served ONLY by fork/radiant-admin.cjs on this PC (127.0.0.1), never
+  fork/radiant-admin.html — the Radiants tab of fork/asset-admin.cjs (on this PC only, 127.0.0.1), never
   part of the site. Drop the artists' zips, check and preview every radiant, pick rarities,
   import into the checkout, then publish (commit the radiant files + push). The API key comes
   in the link the server opens (#k=...). Check: node fork/test-radiant-admin.cjs.
@@ -79,7 +79,7 @@ label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
     <pre id="import-out" hidden></pre>
   </div>
 
-  <div class="box">
+  <div class="box" id="pub-box">
     <h2>2. Publish</h2>
     <div id="git"></div>
     <div class="row">
@@ -99,6 +99,8 @@ label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 (() => {
   const KEY = (location.hash.match(/k=([0-9a-f]+)/) || [])[1] || '';
   const $ = id => document.getElementById(id);
+  // Inside the Asset Admin (fork/asset-admin.html) its bottom bar publishes everything, this included.
+  if (window.top !== window) { $('pub-box').hidden = true; document.querySelector('h1').hidden = true; }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const RARITY = { 1: ['Common', '#9fb1c9'], 2: ['Uncommon', '#5fe08a'], 3: ['Rare', '#4fb4ff'], 4: ['Epic', '#c47bff'], 5: ['Legendary', '#ffcb3d'] };
   const DEX = {}; for (const p of G.DEX) DEX[p.dex] = p;

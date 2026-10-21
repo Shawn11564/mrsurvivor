@@ -42,7 +42,11 @@ function sandbox(prefix) {
   const T = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   const copy = rel => { const to = path.join(T, rel); fs.mkdirSync(path.dirname(to), { recursive: true }); fs.cpSync(path.join(REPO, rel), to, { recursive: true }); };
   ['fork/import-radiant.cjs', 'fork/radiants.cjs', 'fork/radiant-admin.cjs', 'fork/radiant-admin.html', 'js/fork/radiant.js',
-   'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/fork/mega-sprites.js', 'js/fork/lab/lab-anims.js'].forEach(copy);
+   'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/fork/mega-sprites.js', 'js/fork/lab/lab-anims.js',
+   // the Asset Admin around it (fork/asset-admin.cjs): its page draws the code icons with the game's own scripts
+   'fork/asset-admin.cjs', 'fork/asset-gallery.cjs', 'fork/asset-admin.html', 'js/core/util.js', 'js/data/moves.js',
+   'js/fork/lab/lab-moves.js', 'js/ui/icons.js', 'js/fork/lab/badge-art.js', 'js/fork/asset-rev.json', 'js/fork/icon-overrides.json',
+   'assets/icons', 'assets/fonts', 'radiant-kit/index.html', 'CREDITS.md', 'CREDITS-LAB.md'].forEach(copy);
   for (const d of ['6', 'm6', '150', 'm150', '1']) for (const f of fs.readdirSync(path.join(REPO, 'assets/pokemon', d))) if (f.endsWith('.png')) copy(`assets/pokemon/${d}/${f}`);
   for (const d of ['6/lab', '150/lab']) copy(`assets/pokemon/${d}`);
   return T;

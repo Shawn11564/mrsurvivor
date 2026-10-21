@@ -23,3 +23,8 @@
 /novedades/** merge=ours
 /apoyar/** merge=ours
 /contacto/** merge=ours
+
+# The Asset Admin's launchers (fork/ARTIST.md): the Mac one only runs with LF line endings,
+# the Windows one wants CRLF, whatever the cloning PC's git does.
+/fork/*.command text eol=lf
+/fork/*.bat text eol=crlf

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// The local radiant admin page (fork/radiant-admin.cjs + fork/radiant-admin.html), in headless Edge:
+// The local radiant admin page (fork/radiant-admin.cjs + fork/radiant-admin.html, the Radiants tab of
+// fork/asset-admin.cjs, which fork/radiant-admin.cjs starts), in headless Edge:
 //
 //   node fork/test-radiant-admin.cjs
 //
@@ -64,7 +65,9 @@ fs.writeFileSync(path.join(Z, '0001_bulbasaur.zip'), zipOf(kit('assets/0001_bulb
     const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
     const errs = [];
     page.on('pageerror', e => errs.push(e.message));
-    await page.goto(url);
+    // Nothing can change until the Asset Admin's first sync with GitHub (here, the bare origin) is done.
+    for (let i = 0; i < 100; i++) { const s = await fetch(base + '/api/sync', { headers: { 'x-key': key } }).then(r => r.json()); if (s.ready) break; await new Promise(r => setTimeout(r, 200)); }
+    await page.goto(base + '/radiants.html#k=' + key);
     await page.waitForFunction(() => window.RadiantAdmin && RadiantAdmin.state());
     check(/None yet/.test(await page.textContent('#current')), 'the game has no radiants yet');
 
