@@ -10,7 +10,7 @@ G.RunUI = (() => {
    * Cambiar las cartas o el 2.º paso del vínculo no lo vuelven a poner: ahí ya
    * estás eligiendo a propósito.
    */
-  const GUARD = 0.6;
+  const GUARD = 1;   // MrSurvivor: 1 s (upstream 0.6); fork/test-pick-guard.cjs
   let guardUntil = 0, guardT = 0;
   function guard(box) {
     guardUntil = performance.now() + GUARD * 1000;

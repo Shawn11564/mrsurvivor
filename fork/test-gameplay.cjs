@@ -725,13 +725,13 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
   await page.evaluate(() => { const pl = G.Game.player; pl.bonds = 1; if (pl.slots.length < 2) pl.addMove('tackle'); G.Game.offerBond(); });
   check(await page.waitForFunction(() => G.UI.isOpen('scr-bond') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'a bond to pick: the run stops');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1200);
   for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
   await resumed('picking the bond');
   await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
   await page.evaluate(() => { G.Game.player.equip('leftovers'); G.Game.offerItem('quickclaw'); });
   check(await page.waitForFunction(() => G.UI.isOpen('scr-item') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'another item while holding one: the run stops to choose');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1200);
   await page.keyboard.press('Digit2');
   await resumed('choosing an item');
 
@@ -754,7 +754,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.waitForTimeout(300);
   const between = await page.evaluate(() => ({ st: G.Game.state, open: G.UI.isOpen('scr-bond'), bonds: G.Game.player.bonds }));
   check(between.st === 'choice' && between.open && between.bonds === 1, `with a second bond, it opens at once, no countdown in between (${JSON.stringify(between)})`);
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1200);
   for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
   await resumed('the second bond');
   check(await page.evaluate(() => G.Game.player.bonds === 0), 'both bonds used');

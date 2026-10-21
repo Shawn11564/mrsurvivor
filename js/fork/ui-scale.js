@@ -15,8 +15,9 @@
  *   Pages   (HTML: menus, cards, top bar, toasts) with CSS zoom: k in --ui-k, on everything
  *           under <body> except the game canvas and the button editor (#scr-layout, which
  *           places its pieces in window px). The style is here and not in css/brand.css because
- *           dev.html doesn't load brand.css.
- * Test: fork/test-ui-scale.cjs.
+ *           dev.html doesn't load brand.css. The zoom would scale viewport units (vh, dvh, vw) too,
+ *           so the rules that use them are divided by --ui-vu (see unzoom below).
+ * Tests: fork/test-ui-scale.cjs, fork/test-settings-fit.cjs (Settings, pause and News fit at 4K).
  */
 G.UIScale = (() => {
   const REF_W = 1400, REF_H = 850, MAX = 3;
@@ -58,7 +59,52 @@ G.UIScale = (() => {
   const css = document.createElement('style');
   css.textContent = 'body > :not(#game):not(#scr-layout) { zoom: var(--ui-k, 1); }';
   document.head.appendChild(css);
-  const page = () => document.documentElement.style.setProperty('--ui-k', String(k(innerWidth, innerHeight)));
+  // The zoom scales viewport units too: under zoom 2.5, 100dvh is 2.5 windows tall, so a box with
+  // max-height: calc(100dvh - 24px) (Settings, pause, News) ran off the top and bottom of a 4K screen,
+  // Close button and all. Every rule that uses one (vh, vw, dvh, vmin...) is rewritten once to divide it
+  // by --ui-vu: what 100vh measures against the window under the zoom (k in Edge and Chrome, 1 in a
+  // browser that doesn't zoom them). The sheets, the <style>s added to <head> later and the inline styles
+  // in the page; not rules for #game or #scr-layout, which aren't zoomed.
+  const VU = /(\d*\.)?\d+[dsl]?v(?:h|w|min|max)\b/g;
+  const unzoom = st => {
+    for (let i = 0; i < st.length; i++) {
+      const p = st[i], v = st.getPropertyValue(p);
+      if (!v || v.includes('--ui-vu') || v.includes('url(')) continue;
+      const nv = v.replace(VU, m => `calc(${m} / var(--ui-vu, 1))`);
+      if (nv !== v) st.setProperty(p, nv, st.getPropertyPriority(p));
+    }
+  };
+  const walk = rules => {
+    for (const r of rules) {
+      if (r.selectorText && /#game\b|#scr-layout\b/.test(r.selectorText)) continue;
+      if (r.style) unzoom(r.style);
+      if (r.cssRules) walk(r.cssRules);
+    }
+  };
+  const done = new WeakSet();
+  const sheets = () => {
+    for (const s of document.styleSheets) {
+      if (done.has(s)) continue;
+      let rules;
+      try { rules = s.cssRules; } catch (e) { done.add(s); continue; }   // another origin's (fonts)
+      done.add(s);
+      walk(rules);
+    }
+  };
+  sheets();
+  document.querySelectorAll('[style*="vh"], [style*="vw"], [style*="vmin"], [style*="vmax"]').forEach(el => unzoom(el.style));
+  new MutationObserver(sheets).observe(document.head, { childList: true });
+  addEventListener('load', sheets);
+
+  const page = () => {
+    const root = document.documentElement.style;
+    root.setProperty('--ui-k', String(k(innerWidth, innerHeight)));
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100vh;visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    root.setProperty('--ui-vu', String(probe.getBoundingClientRect().height / innerHeight || 1));
+    probe.remove();
+  };
   addEventListener('resize', page);
   page();
 

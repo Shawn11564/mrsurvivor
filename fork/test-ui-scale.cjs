@@ -65,7 +65,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     G.Game.debugLevelUp();
     let c = null;
     for (let i = 0; i < 100 && !(c = document.querySelector('#scr-levelup:not(.hidden) .card')); i++) await new Promise(r => setTimeout(r, 50));
-    await new Promise(r => setTimeout(r, 800));                 // past the cards' click guard (run-ui.js GUARD)
+    await new Promise(r => setTimeout(r, 1200));                // past the cards' 1 s click guard (run-ui.js GUARD)
     const r = c.getBoundingClientRect();
     const x = r.x + r.width / 2, y = r.y + r.height / 2;
     return { w: r.width, h: r.height, x, y, hit: c.contains(document.elementFromPoint(x, y)) };

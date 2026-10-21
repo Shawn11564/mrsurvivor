@@ -252,7 +252,7 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
       // More level-ups may follow (the XP of earlier kills): pick them quickly.
       for (let i = 0; i < 6; i++) {
         let any = false;
-        for (const p of ALL) if (await p.evaluate(() => G.Game.state === 'levelup')) { any = true; await p.waitForTimeout(700); await p.evaluate(() => { const c = document.querySelector('#cards .card'); if (c) c.click(); }); }
+        for (const p of ALL) if (await p.evaluate(() => G.Game.state === 'levelup')) { any = true; await p.waitForTimeout(1200); await p.evaluate(() => { const c = document.querySelector('#cards .card'); if (c) c.click(); }); }
         if (!any) break;
         await host.waitForTimeout(800);
       }

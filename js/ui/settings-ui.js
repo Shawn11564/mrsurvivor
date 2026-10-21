@@ -17,6 +17,11 @@ G.SettingsUI = (() => {
     // Al conectar o quitar un mando con Controles abierto, se ve al momento.
     for (const ev of ['gamepadconnected', 'gamepaddisconnected']) addEventListener(ev, () => { if (isOpen() && tab === 'ctl') render(); });
     $('set-close').onclick = close;
+    // MrSurvivor: a click on the dimmed backdrop, outside the box, closes it too. Only when the press
+    // started there as well: dragging a slider out of the box and letting go isn't a click outside. Test: fork/test-settings-fit.cjs.
+    let downOut = false;
+    $('scr-settings').onpointerdown = e => { downOut = e.target === e.currentTarget; };
+    $('scr-settings').onclick = e => { if (downOut && e.target === e.currentTarget) close(); };
     $('btn-settings').innerHTML = G.Icons.html('gear', 20);
     $('btn-settings').onclick = () => open();
     $('btn-pause-settings').onclick = () => open('sound');
