@@ -410,6 +410,16 @@ between). It has ×1.3 HP, ×1.2 damage and ×1.2 XP, its sprite and "Mega" / "P
 (`js/fork/lab/mega-rift.js`, hooked on `G.EnemyMgr.add`; in co-op the host decides and sends
 `{ k:'labmega', id }` for the sprite). `node fork/test-mega-rift.cjs` (server; co-op with the emulator).
 
+## Wild legendaries (2026-10-21, from doofcraft)
+
+In a Lab run, from minute 15 a wild legendary roams the map (not in a rift): one every 75 s while fewer
+than 2 are alive, a random rarity-5 Pokémon with a sprite, 650-850 px from a player. It's a boss (HP
+bar, boss rewards) with its own HP and damage, which grow with the minute (more HP in co-op), but not a
+rift legend (beating it doesn't count as beating that legendary), and not a boss fight
+(`G.EnemyMgr.bossAlive` skips it, or rifts, events and surges would stop for the rest of the run).
+None in a rift or during Arceus. The host decides; guests get it like any enemy
+(`js/fork/lab/wild-legends.js`). `node fork/test-wild-legends.cjs` (server; co-op with the emulator).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -480,8 +490,8 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   damage on the host; the guest's sleep and confusion reach the host's enemies, its Rain Dance is
   rain around the guest on the host's screen (not the arena's weather); its Fly, evolution and Mega Evolution are seen on the host; no group leaderboard. Host
   off / guest on gives a normal run.
-- `node fork/test-gameplay.cjs` checks that a normal run has no Mega Evolution; `test-admin.cjs`
-  that an admin's Mega Stone does nothing in a normal run.
+- `node fork/test-gameplay.cjs` checks Mega Evolution in a normal run; `test-admin.cjs` that an
+  admin's Mega Stone Mega Evolves a friend in a normal co-op run, seen by everyone.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):
