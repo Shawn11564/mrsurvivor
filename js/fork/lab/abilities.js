@@ -28,7 +28,7 @@ G.LabAbilities = (() => {
   const pinch = type => (pl, m) => m.type === type && low(pl) ? 1.5 : 1;
   const own = (pl, m) => pl.mon.types.includes(m.type);
   const power = m => D.POWER[D.MOVES.indexOf(m.id)] || 0;
-  const CONTACT = new Set(['melee', 'dash', 'spin']);
+  const CONTACT = new Set(['melee', 'dash', 'spin', 'grab', 'bind']);
   const SHEER = ['burn', 'poison', 'slow'];
   const boss = e => e.boss || e.judge;
 
@@ -136,8 +136,8 @@ G.LabAbilities = (() => {
 
     // ---- tus ataques ----
     technician:      { out: (pl, m) => !m.evolved && power(m) > 0 && power(m) <= 60 ? 1.5 : 1, desc: 'Moves that are weak in the games (60 power or less) deal 50% more damage.' },
-    'iron-fist':     { out: (pl, m) => /Puño|puño/.test(m.name) ? 1.2 : 1, desc: 'Punching moves deal 20% more damage.' },
-    'strong-jaw':    { out: (pl, m) => /Mordisco|Triturar|colmillo/i.test(m.name) ? 1.5 : 1, desc: 'Biting moves deal 50% more damage.' },
+    'iron-fist':     { out: (pl, m) => /Puño|puño|Punch/.test(m.name) ? 1.2 : 1, desc: 'Punching moves deal 20% more damage.' },
+    'strong-jaw':    { out: (pl, m) => /Mordisco|Triturar|colmillo|Fang/i.test(m.name) ? 1.5 : 1, desc: 'Biting moves deal 50% more damage.' },
     'mega-launcher': { out: (pl, m) => /Esfera Aural|Pulso/.test(m.name) ? 1.5 : 1, desc: 'Aura and pulse moves deal 50% more damage.' },
     sharpness:       { out: (pl, m) => /^(Tajo Aéreo|Tajo Umbrío|Psicocorte|Hoja Afilada|Golpe Aéreo|Tijera X|Cuchilla Solar)$/.test(m.name) ? 1.5 : 1,
                        desc: 'Slicing moves deal 50% more damage.' },

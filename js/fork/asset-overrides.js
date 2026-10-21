@@ -56,17 +56,22 @@ G.AssetOverrides = (() => {
   // que se ve 1:1, o ×2 donde el icono va al doble; el resto del juego mide con G.Icons.canvas).
   const native = n => { const o = icons[n]; return o && o.own ? { width: o.w, height: o.h } : oCanvas.call(I, n); };
   // El ancho en pantalla para `size`: el múltiplo nítido del de código (×1, ×2...), y con own ese mismo
-  // múltiplo del PNG (un 18×18 se ve a 18 donde el de código va a 13, a 36 donde va a 26).
-  const shown = (n, size) => { const o = icons[n], m = Math.max(1, Math.round(size / oCanvas.call(I, n).width)); return (o && o.own ? o.w : oCanvas.call(I, n).width) * m; };
+  // múltiplo del PNG (un 18×18 se ve a 18 donde el de código va a 13, a 36 donde va a 26). Con own, por
+  // debajo de la mitad del de código, ½ o ¼ del PNG (las flechas del Lab, a 9: js/fork/lab/badges.js).
+  const mult = (n, size) => {
+    const k = size / oCanvas.call(I, n).width;
+    return k < 0.75 && icons[n] && icons[n].own ? 2 ** Math.max(-2, Math.round(Math.log2(k))) : Math.max(1, Math.round(k));
+  };
+  const shown = (n, size) => { const o = icons[n]; return (o && o.own ? o.w : oCanvas.call(I, n).width) * mult(n, size); };
   const ready = n => icons[n] && icons[n].ready ? icons[n] : null;
   const CSS = { coin: '--ico-coin', cursor: '--ico-cursor' };   // los de ui/icons.js installCss
 
   /** Los <img> ya pintados con el dibujo de código pasan al PNG (y las variables de CSS). */
   function swapDom(n, o) {
-    const old = oUrl.call(I, n), code = oCanvas.call(I, n);
+    const old = oUrl.call(I, n);
     for (const img of document.querySelectorAll('img.pix')) {
       if (img.getAttribute('src') !== old) continue;
-      if (o.own) { const m = Math.max(1, Math.round(img.width / code.width)); img.width = o.w * m; img.height = o.h * m; }
+      if (o.own) { const m = mult(n, img.width); img.width = o.w * m; img.height = o.h * m; }
       img.setAttribute('src', o.url);
       if (o.w > img.width * (devicePixelRatio || 1)) img.style.imageRendering = 'auto';
     }

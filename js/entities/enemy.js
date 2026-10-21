@@ -803,7 +803,7 @@
       // de vida si tu ataque activo le pega fuerte (amarilla) o flojo (gris).
       const w = this.boss ? 90 : Math.max(22, this.r * 2);
       const eff = typeMark(this);
-      if (eff) {
+      if (eff && !(G.LabBadges && G.LabBadges.enemyMark(ctx, this, eff, w))) {
         const cv = G.Icons.canvas(eff);
         G.Icons.draw(ctx, eff, Math.round(this.x - w / 2 - cv.width - 1), Math.round(this.y - this.bodyH - 8.3 - cv.height / 2), cv.width);
       }

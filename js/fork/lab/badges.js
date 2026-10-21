@@ -11,7 +11,8 @@
  *     lado bueno y amarilla si no. Velocidad, defensa y curación: nada (sirven a todos igual).
  * Dónde: cartas de subir de nivel (sólo las de movimiento nuevo), el recuadro de la barra
  * (gancho de una línea en hud.js drawTip) y las flechas de la tabla de tipos sobre los enemigos
- * (G.Icons.canvas/draw: 'eff:...' se cambia por la nuestra).
+ * (gancho de una línea en enemy.js: enemyMark). Todas a la mitad de su tamaño (el PNG de 18×18,
+ * a 9): a la izquierda de la barra de vida del enemigo, o centradas sobre él si aún no la tiene.
  * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-badges.cjs.
  */
 G.LabBadges = (() => {
@@ -39,10 +40,27 @@ G.LabBadges = (() => {
     return out;
   }
 
+  // Todas a la mitad (21-10-2026: a 18 tapaban al enemigo y al texto). Del lienzo de G.Icons.canvas,
+  // que es el PNG del artista (o el dibujo de código si no ha llegado): suavizado sólo si encoge.
+  const HALF = 0.5;
+  const size = n => { const c = G.Icons.canvas(n); return { c, w: c.width * HALF, h: c.height * HALF }; };
+  function paint(ctx, n, x, y) {
+    const s = size(n), prev = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = s.c.width > s.w * (Math.abs(ctx.getTransform().a) || 1) + 0.5;
+    ctx.drawImage(s.c, x, y, s.w, s.h);
+    ctx.imageSmoothingEnabled = prev;
+    return s;
+  }
+
   // ---------------- cartas de subir de nivel ----------------
   // Dentro del chip, pegadas a cada palabra. El chip es "Nuevo · " + c.tag: "Nuevo · Fuego" se queda
   // en un solo texto (lo traduce i18n como siempre) y " · Especial" va ya traducido y sin traducir otra vez.
-  const img = n => n ? G.Icons.html(n, 13, 'lb-a') : '';
+  // El <img> a mano: G.Icons.html no baja de ×1 (asset-overrides.js lo cambia si el PNG llega después).
+  const img = n => {
+    if (!n) return '';
+    const s = size(n), smooth = s.c.width > s.w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
+    return `<img class="pix lb-a" src="${G.Icons.url(n)}" width="${s.w}" height="${s.h}" alt="" draggable="false"${smooth}>`;
+  };
   function decorate(c, mon) {
     if (c.type !== 'new' || !c.key) return;
     const d = G.Moves.BY_ID[c.key.slice(4)];
@@ -70,8 +88,8 @@ G.LabBadges = (() => {
     const tw = raw(ctx, 'measureText', tn).width + 12;
     ctx.beginPath(); ctx.roundRect(x, o - 11, tw, 15, 4); ctx.fillStyle = G.U.TYPE_COLOR[m.type]; ctx.fill();
     ctx.fillStyle = '#10131a'; ctx.textAlign = 'left'; raw(ctx, 'fillText', tn, x + 6, o);
-    // Cada flecha a su tamaño (13, o el del PNG del artista), centrada en la línea.
-    const arrowAt = (n, ax) => { const c = G.Icons.canvas(n); G.Icons.draw(ctx, n, ax, o - 3.5 - c.height / 2, c.width); return c.width; };
+    // Cada flecha a la mitad, centrada en la línea.
+    const arrowAt = (n, ax) => paint(ctx, n, ax, o - 3.5 - size(n).h / 2).w;
     let cx = x + tw + 3;
     if (mk.type) cx += arrowAt(mk.type, cx) + 3;
     const cn = G.T(m.cat ? G.Stats.NAME[m.cat] : 'Mejora');
@@ -93,5 +111,19 @@ G.LabBadges = (() => {
   G.Icons.canvas = function (n) { return canvas.call(this, effName(n)); };
   G.Icons.draw = function (ctx, n, ...a) { return draw.call(this, ctx, effName(n), ...a); };
 
-  return { marks, tipLine, effName, NAMES };
+  /**
+   * La flecha de e (gancho de enemy.js; true: enemy.js no pinta la suya). w es el ancho de su barra
+   * de vida. Con barra (jefes, o ya herido), a su izquierda y centrada en ella, como la de siempre;
+   * sin barra, centrada sobre él donde irá la barra (o encima del icono de curandero / escudero / invocador).
+   */
+  function enemyMark(ctx, e, eff, w) {
+    if (!on()) return false;
+    const n = effName(eff), s = size(n), bar = e.y - e.bodyH - 10;   // la barra: 3,4 de alto
+    if (e.boss || e.hp < e.maxHp) paint(ctx, n, e.x - w / 2 - s.w - 1, bar + 1.7 - s.h / 2);
+    else paint(ctx, n, e.x - s.w / 2, (SUPPORT[e.behavior] ? e.y - e.bodyH - 18 - 1 : bar + 3.4) - s.h);
+    return true;
+  }
+  const SUPPORT = { healer: 1, shielder: 1, summoner: 1 };   // los que llevan icono encima (enemy.js SUP)
+
+  return { marks, tipLine, effName, enemyMark, NAMES };
 })();

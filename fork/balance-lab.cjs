@@ -20,7 +20,9 @@
 // good at one). Kinds are strong in different places (homing against one, melee against many),
 // so a move is also compared with the normal game's moves of its own kind (×kind; a new kind with
 // the nearest old one, LIKE): over 1.6 is flagged "strong", under 0.6 "weak". Moves that don't
-// deal damage themselves (guard, weather, terrain, buff) are listed as "support".
+// deal damage themselves (guard, weather, terrain, buff, heal, screen, shout, endure) are listed as "support",
+// and the ones that take a share of the HP left (`cut`: Super Fang...) as "HP cut": against dummies
+// with a billion HP their numbers mean nothing (fork/survival-lab.cjs measures those in a real run).
 // Writes fork/BALANCE-LAB.md (the full table) and prints the flagged ones.
 const fs = require('fs'), path = require('path');
 const { chromium, pastStart } = require('./pw.cjs');
@@ -31,7 +33,7 @@ const BASE = args.find(a => /^https?:/.test(a)) || 'http://127.0.0.1:8123';
 const OUT = path.join(__dirname, 'BALANCE-LAB.md');
 const SPEED = 4, STRONG = 1.6, WEAK = 0.6;
 // The new kinds (js/fork/lab/kinds.js) next to the old kind they play most like.
-const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wave: 'beam' };
+const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wave: 'beam', grab: 'melee', bind: 'melee', focus: 'melee' };
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });
@@ -48,7 +50,9 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
   });
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Lab.active, null, { timeout: 30000 });
   const list = await page.evaluate(([speed]) => {
-    for (const k of ['Spawner', 'Events', 'Rift', 'Hazards']) G[k].update = () => {};
+    // Judgment too: Arceus comes at 30 game minutes, which a full report passes (4× speed, 6 s a
+    // move); its arena took the player away from the dummies and the moves after it measured ~0.
+    for (const k of ['Spawner', 'Events', 'Rift', 'Hazards', 'Judgment']) G[k].update = () => {};
     G.Weather.reset(); G.Weather.update = () => {};
     G.LevelUp.offer = () => [];
     G.Game.debugSpeed(speed);
@@ -88,10 +92,10 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
       }, 400 / 4);
     });
     const t = G.Game.st.time - t0;
-    return { dps: (m.dealt || 0) / t, kind: m.kind, type: m.type, name: G.T(m.name, 'move'), evolved: !!m.evolved, lvl: m.lvl, lab: !!m.lab, sig: !!m.sig };
+    return { dps: (m.dealt || 0) / t, cut: !!m.cut, kind: m.kind, type: m.type, name: G.T(m.name, 'move'), evolved: !!m.evolved, lvl: m.lvl, lab: !!m.lab, sig: !!m.sig };
   }, [id, top, crowd, SECS]);
 
-  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain']);
+  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'heal', 'screen', 'shout', 'endure']);
   const levels = flag('--lvl1') ? [true, false] : [true];
   const ids = flag('--lab') ? list.lab : list.normal.concat(list.lab);
   const rows = [];
@@ -117,7 +121,7 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
     for (const r of rows.filter(r => r.top === top && (r.lab || !flag('--lab')))) {
       r.rc = r.crowd / mc; r.rs = r.single / ms; r.sc = score(r);
       r.rk = r.sc / (kindMed[r.kind] || kindMed[LIKE[r.kind]] || allMed);
-      r.flag = SUPPORT.has(r.kind) ? 'support' : r.rk > STRONG ? 'strong' : r.rk < WEAK ? 'weak' : '';
+      r.flag = SUPPORT.has(r.kind) ? 'support' : r.cut ? 'HP cut' : r.rk > STRONG ? 'strong' : r.rk < WEAK ? 'weak' : '';
       out.push(r);
     }
     out.push({ medians: true, top, mc, ms });
@@ -128,7 +132,7 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
     'DPS against typeless dummies with Mew\'s stats; ×crowd / ×single = divided by the median of the normal game\'s damaging moves;',
     'score = √(×crowd · ×single); ×kind = score divided by the median score of the normal game\'s moves of the same kind (new kinds: '
       + Object.entries(LIKE).map(([a, b]) => a + ' as ' + b).join(', ') + '; the others, all moves).',
-    `Flags (on ×kind): strong over ×${STRONG}, weak under ×${WEAK}, support = deals no damage itself.`, ''];
+    `Flags (on ×kind): strong over ×${STRONG}, weak under ×${WEAK}, support = deals no damage itself, HP cut = takes a share of the HP left (not comparable here).`, ''];
   for (const top of levels) {
     const med = out.find(r => r.medians && r.top === top);
     md.push(`## ${top ? 'Top level (evolved when it can)' : 'Level 1'}`, '', `Normal-game medians: crowd ${f1(med.mc)} DPS, single ${f1(med.ms)} DPS.`, '',

@@ -36,7 +36,8 @@
     ["ancient-power", "Pedrada", "Rock Blast", "Boule Roc", "Cadutamassi", "Rock Blast", "岩石爆击", "岩石爆擊"],   // was Diamond Storm ★
     ["freeze-dry", "Vaho Gélido", "Frost Breath", "Souffle Glacé", "Alitogelido", "Frost Breath", "冰息", "冰息"],   // was Sheer Cold ★
     ["outrage", "Vasto Impacto", "Breaking Swipe", "Abattage", "Vastoimpatto", "Breaking Swipe", "广域破坏", "廣域破壞"],   // was Dragon Darts ★
-    ["night-slash", "Giro Vil", "Brutal Swing", "Centrifugifle", "Vorticolpo", "Brutal Swing", "狂舞挥打", "狂舞揮打"]   // was Darkest Lariat ★
+    ["night-slash", "Giro Vil", "Brutal Swing", "Centrifugifle", "Vorticolpo", "Brutal Swing", "狂舞挥打", "狂舞揮打"],   // was Darkest Lariat ★
+    ["dragon-dance", "Estruendo Escama", "Clangorous Soul", "Dracacophonie", "Dracofonia", "Clangorous Soul", "魂舞烈音爆", "魂舞烈音爆"]   // was Bulk Up (Lab, phase 9)
   ];
   const RENAME = Object.fromEntries(ROWS.map(r => [r[0], r[1]]));
   if (G.Moves && G.Moves.EVO) for (const id in RENAME) if (G.Moves.EVO[id]) G.Moves.EVO[id] = [RENAME[id]].concat(G.Moves.EVO[id].slice(1));

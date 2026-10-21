@@ -8,7 +8,7 @@
 //      game asked for it before the list came in (it's asked for again).
 //   2. A code icon in icon-overrides.json: G.Icons.html/url give its PNG, at the code icon's
 //      size; G.Icons.draw draws the PNG at the same place and size; the <img> already on screen
-//      and the CSS variable change; a Lab card's arrow uses it too (an own-size PNG at its own size).
+//      and the CSS variable change; a Lab card's arrow uses it too (an own-size PNG at half its size, 9).
 //   3. Bad entries are ignored: a path out of assets/icons/code/, a bad hash, a path with "..".
 //   4. With the service worker (which keeps art forever): the sheet with ?v= is fetched and
 //      kept as its own entry, so the new version reaches a player who had the old one.
@@ -90,8 +90,10 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
       // Its own size: 18 where the game asks for 13, 36 where it asks for 26, and that's what layouts measure.
       const seen2 = []; x.drawImage = function (img, ...a) { seen2.push(a.map(Math.round)); return od.apply(this, arguments); };
       G.Icons.draw(x, 'lb-g', 0, 0, 13);
+      G.Icons.draw(x, 'lb-g', 0, 0, 6.5);
       const wh = h => h.match(/width="(\d+)" height="(\d+)"/).slice(1).join('x');
-      out.own = { h13: wh(G.Icons.html('lb-g', 13)), h26: wh(G.Icons.html('lb-g', 26)), canvas: G.Icons.canvas('lb-g').width, draw: seen2[0] };
+      out.own = { h13: wh(G.Icons.html('lb-g', 13)), h26: wh(G.Icons.html('lb-g', 26)), h7: wh(G.Icons.html('lb-g', 6.5)),
+        canvas: G.Icons.canvas('lb-g').width, draw: seen2[0], half: seen2[1] };
       out.domOld = [...document.querySelectorAll('img.pix')].filter(i => /code\/coin\.png/.test(i.src)).length;
       return out;
     });
@@ -103,12 +105,13 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
     check(ic.size.join() === '13,12', 'G.Icons.canvas keeps the code icon\'s size (layout doesn\'t move)', ic.size);
     check(ic.own.h13 === '18x18' && ic.own.h26 === '36x36' && ic.own.canvas === 18 && ic.own.draw && ic.own.draw[2] === 18,
       'a PNG with its own size (18×18 for a 13×13 arrow): shown 18 / 36, measured 18', ic.own);
+    check(ic.own.h7 === '9x9' && ic.own.half && ic.own.half[2] === 9, 'and asked for at half the code size (6.5): half the PNG, 9', ic.own);
     await startRun(g.page, 4, true);
     await g.page.evaluate(() => { const p = G.Game.player; G.Game.state = 'levelup';
       // Until a card's chip has a green arrow (Charmander: a Fire or a special move).
       for (let i = 0; i < 60; i++) { G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {}); if ([...document.querySelectorAll('#cards .lb-a')].some(a => /code\/lb-g\.png/.test(a.getAttribute('src')))) break; } });
     const card = await g.page.$$eval('#cards .lb-a', as => as.filter(a => /code\/lb-g\.png/.test(a.getAttribute('src'))).map(a => [a.getAttribute('src').split('/').pop(), a.width, a.height]));
-    check(card.length && card.every(([, w, h]) => w === 18 && h === 18), 'a Lab card\'s green arrow is the PNG, at its own 18×18', card);
+    check(card.length && card.every(([, w, h]) => w === 9 && h === 9), 'a Lab card\'s green arrow is the PNG, at half its 18×18', card);
     check(!g.errs.length, 'no page errors', g.errs);
     await g.ctx.close();
 

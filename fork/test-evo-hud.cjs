@@ -6,7 +6,8 @@
 //   node fork/test-evo-hud.cjs [base-url]
 //
 //   1. Charmander: "→ Charmeleon" and "Lv N" (G.LabGrowth's level for it), the bar from level 1,
-//      counting the XP of the current level; under the buff chips when there are some.
+//      counting the XP of the current level; right under the HP bar, the stat boosts (buffs, altar
+//      power) under it.
 //   2. At that level: "READY" (the evolution card is in the level-up hand).
 //   3. Evolved into Charmeleon: "→ Charizard", its level, the bar from the level it evolved at.
 //   4. Nothing with the Everstone, for a Pokémon that can't evolve (Charizard), or with Lab off.
@@ -60,14 +61,18 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const want = (r.level - 1 + 0.5) / (lv - 1);
     check(r.st && Math.abs(r.st.p - want) < 1e-9 && r.st.base === 1, `the bar from level 1, with this level's XP (${(want * 100).toFixed(0)}%)`, r.st && r.st.p);
     const y0 = drew(r, /^→ Charmeleon$/)[2];
+    // Right under the HP bar, before the stat boosts: the buff chips and the altar power go under it
+    // (G.HUD.belowHp in js/ui/hud.js); it doesn't move when they show up.
     const yb = await page.evaluate(async () => {
-      G.Game.player.buffs.atk = { n: 1, t: 30 };
+      const p = G.Game.player;
+      p.buffs.atk = { n: 1, t: 30 }; p.power = { def: { name: 'Fury', color: '#ff6b4d' }, t: 30 };
       window.__texts.length = 0; await new Promise(r => setTimeout(r, 200));
-      const hit = window.__texts.filter(([t]) => t === '→ Charmeleon').pop();
-      delete G.Game.player.buffs.atk;
-      return hit && hit[2];
+      const last = t => (window.__texts.filter(([s]) => s === t).pop() || [])[2];
+      const r = { evo: last('→ Charmeleon'), buff: last('ATK ×1'), power: last('FURY 30s') };
+      delete p.buffs.atk; delete p.power;
+      return r;
     });
-    check(yb - y0 === 19, 'under the buff chips when there are some', { y0, yb });
+    check(yb.evo === y0 && yb.buff - y0 >= 22 && yb.power === yb.buff, 'right under the HP bar; the buff chips and the altar power under it', { y0, ...yb });
 
     console.log('2. At its level');
     r = await at(lv);

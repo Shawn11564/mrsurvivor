@@ -4,13 +4,14 @@
 //   python -m http.server 8123          (in the repo root, in another terminal)
 //   node fork/test-badges.cjs [base-url]
 //
-//   1. The 4 arrows build (13×13 code drawings).
+//   1. The 4 arrows: 13×13 code drawings, and the artist's 18×18 PNGs over them (js/fork/icon-overrides.json).
 //   2. Which arrows real Pokémon get: Charmander's Ember (type + special, both green), Charizard's
 //      (no type arrow: two types, no bonus), a weak-side move (yellow, red under 65%), buffs.
-//   3. Level-up cards in a Lab run: each arrow in the chip after its word ("New · Fire ▲ · Special ▲");
-//      no switch or button left; nothing with Lab off.
-//   4. The move tooltip, with a real mouse over the slot: each arrow after its word.
-//   5. The enemy arrows: what enemy.js draws over a super-effective enemy is our green arrow.
+//   3. Level-up cards in a Lab run: each arrow in the chip after its word ("New · Fire ▲ · Special ▲"),
+//      at half size (9×9); no switch or button left; nothing with Lab off.
+//   4. The move tooltip, with a real mouse over the slot: each arrow after its word, at 9.
+//   5. The enemy arrows over a super-effective enemy: our green arrow at 9, centred over it at full
+//      health (above the healer's heart if it has one), left of its health bar once it's hurt.
 //   6. The built index.html (node fork/build.cjs): no setting left, and its CSS places the arrows.
 // Set SHOTS=<dir> to save screenshots of the cards, the tooltip and the enemies.
 const path = require('path');
@@ -47,8 +48,13 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     }, [dex, lab, moveId]);
 
     console.log('1. The arrows');
-    const icons = await page.evaluate(() => G.LabBadges.NAMES.map(n => { const c = G.Icons.canvas(n); return [n, c.width, c.height]; }));
-    check(icons.map(i => i[0]).join() === 'lb-g,lb-m,lb-y,lb-r' && icons.every(([, w, h]) => w === 13 && h === 13), 'the 4 arrows, 13×13 code drawings', icons);
+    // The code drawing: 11 rows plus the outline. The PNGs arrive after every script has run (asset-overrides.js).
+    const code = await page.evaluate(() => G.LabBadges.NAMES.map(n => [n, G.Icons.UI[n].rows.length + 2, G.Icons.UI[n].outline]));
+    check(code.map(i => i[0]).join() === 'lb-g,lb-m,lb-y,lb-r' && code.every(([, h, o]) => h === 13 && o), 'the 4 arrows, 13×13 code drawings', code);
+    await page.evaluate(() => G.AssetOverrides.loaded);
+    await page.waitForFunction(() => G.LabBadges.NAMES.every(n => G.Icons.canvas(n).width === 18), null, { timeout: 10000 });
+    const icons = await page.evaluate(() => G.LabBadges.NAMES.map(n => { const c = G.Icons.canvas(n); return [n, c.width, c.height, /\.png\?v=/.test(G.Icons.url(n))]; }));
+    check(icons.every(([, w, h, png]) => w === 18 && h === 18 && png), "the artist's 18×18 PNGs over them", icons);
 
     console.log('2. Which arrows');
     const mk = await page.evaluate(() => {
@@ -91,7 +97,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         cards: [...document.querySelectorAll('#cards .card')].map(c => {
           const chip = c.querySelector('.tag-chip');
           return { name: c.querySelector('.nm').firstChild.textContent.trim(), chip: chip.textContent.trim(), html: chip.innerHTML,
-            a: [...chip.querySelectorAll('.lb-a')].map(i => i.getAttribute('src')) };
+            a: [...chip.querySelectorAll('.lb-a')].map(i => i.getAttribute('src')),
+            size: [...chip.querySelectorAll('.lb-a')].map(i => i.offsetWidth + 'x' + i.offsetHeight) };   // layout size: the cards are scaled
         }),
         btn: !!document.getElementById('lvl-badges')
       };
@@ -111,6 +118,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     // Each after its word: the type arrow right after the type, the other after " · Special".
     check(want && card.chip.replace(/\s+/g, ' ') === want.chip && (want.type ? /^[^<]*<img[^>]*>\s*<span[^>]*> · [^<]*<\/span><img/ : /<span[^>]*> · [^<]*<\/span><img/).test(card.html),
       `chip text stays "${want && want.chip}", each arrow after its word`, card && card.html.slice(0, 160));
+    check(card && card.size.length && card.size.every(x => x === '9x9'), 'at half size: 9×9', card && card.size);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards.png') });
     await start(4, false);
     c = await cards();
@@ -122,12 +130,17 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const sx = (innerWidth - (n * S + (n - 1) * GAP)) / 2, sy = innerHeight - S - 18;
       return { x: sx + S / 2, y: sy + S / 2 };
     });
-    // What the tooltip draws over a few frames: texts (rawCanvas) and icons (G.Icons.draw), with x.
+    // What the tooltip draws over a few frames: texts (rawCanvas) and arrows (their canvases), with x
+    // and the width in CSS pixels (the HUD is drawn with the device pixel ratio in its transform).
     const tip = () => page.evaluate(() => new Promise(res => {
-      const txt = [], ico = [], ot = G.I18n.rawCanvas, oi = G.Icons.draw;
+      const txt = [], ico = [], ot = G.I18n.rawCanvas, od = CanvasRenderingContext2D.prototype.drawImage;
+      const by = new Map(G.LabBadges.NAMES.map(n => [G.Icons.canvas(n), n]));
       G.I18n.rawCanvas = function (ctx, k, s, x) { if (k === 'fillText') txt.push([String(s), Math.round(ctx.getTransform().e + x)]); return ot.apply(this, arguments); };
-      G.Icons.draw = function (ctx, n, x) { if (/^lb-/.test(n)) ico.push([n, Math.round(ctx.getTransform().e + x)]); return oi.apply(this, arguments); };
-      setTimeout(() => { G.I18n.rawCanvas = ot; G.Icons.draw = oi; res({ txt, ico }); }, 300);
+      CanvasRenderingContext2D.prototype.drawImage = function (img, x, y, w) {
+        if (by.has(img)) ico.push([by.get(img), Math.round(this.getTransform().e + x), w * this.getTransform().a / (devicePixelRatio || 1)]);
+        return od.apply(this, arguments);
+      };
+      setTimeout(() => { G.I18n.rawCanvas = ot; CanvasRenderingContext2D.prototype.drawImage = od; res({ txt, ico }); }, 300);
     }));
     await start(4, true, 'ember');
     await page.evaluate(() => { G.UI.hideAll(); G.Game.state = 'playing'; G.Game.debugSpeed(0); });
@@ -141,11 +154,13 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const a1 = Math.min(...arrows), a2 = Math.max(...arrows);
     check(arrows.length >= 2 && fire && spec && fire[1] < a1 && a1 < spec[1] && spec[1] < a2,
       `"${names[0]}" ▲ "${names[1]}" ▲, each arrow after its word`, { fire, spec, arrows: [a1, a2] });
+    const tw = [...new Set(t.ico.map(x => x[2]))];
+    check(tw.length === 1 && tw[0] === 9, 'at half size: 9 wide', tw);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-tip.png') });
     await page.mouse.move(640, 150);
 
     console.log('5. Enemy arrows');
-    // A Grass enemy (Ember: x2), drawn over a few frames; which images enemy.js put on the canvas.
+    // Grass enemies (Ember: x2) at full health, hurt, and a healer; where the green arrow lands, in world units.
     const en = await page.evaluate(async () => {
       const pl = G.Game.player;
       G.EnemyMgr.clear();
@@ -156,15 +171,27 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         const ty = d.types || (G.DEX_BY[d.dex] || {}).types || [];
         if (!def && ty.length === 1 && ty[0] === 'grass') def = d;
       }
-      const e = new G.Enemy(def, pl.x + 60, pl.y - 40, G.Enemies.scale(0));
-      e.spd = 0; G.EnemyMgr.add(e);
-      const seen = new Set(), od = CanvasRenderingContext2D.prototype.drawImage;
-      CanvasRenderingContext2D.prototype.drawImage = function (img) { seen.add(img); return od.apply(this, arguments); };
+      const mk = (dx, dy, f) => { const e = new G.Enemy(def, pl.x + dx, pl.y + dy, G.Enemies.scale(0)); e.spd = 0; f(e); G.EnemyMgr.add(e); return e; };
+      const full = mk(-80, -50, () => {}), hurt = mk(80, -50, e => { e.hp = e.maxHp / 2; }), heal = mk(0, 70, e => { e.behavior = 'healer'; });
+      const green = G.Icons.canvas('lb-g'), seen = [], od = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (img, x, y, w, h) {
+        if (img === green) seen.push({ x, y, w, h });
+        return od.apply(this, arguments);
+      };
       await new Promise(r => setTimeout(r, 300));
       CanvasRenderingContext2D.prototype.drawImage = od;
-      return { name: e.name, green: seen.has(G.Icons.canvas('lb-g')) };
+      // Drawn in the world transform, so x, y, w, h are world units. The last frame's, per enemy (by position).
+      const at = e => {
+        const d = seen.filter(s => Math.abs(s.x + s.w / 2 - e.x) < 40 && Math.abs(s.y - (e.y - e.bodyH)) < 40).pop();
+        return d && { cx: +(d.x + d.w / 2 - e.x).toFixed(2), right: +(d.x + d.w).toFixed(2), bottom: +(d.y + d.h - (e.y - e.bodyH)).toFixed(2), w: d.w, h: d.h };
+      };
+      const w = e => Math.max(22, e.r * 2);
+      return { name: full.name, full: at(full), hurt: at(hurt), hurtBarLeft: +(hurt.x - w(hurt) / 2 - 1).toFixed(2), heal: at(heal) };
     });
-    check(en.green, `${en.name} (Grass, vs Ember) gets the green arrow`, en);
+    check(en.full && en.full.w === 9 && en.full.h === 9, `${en.name} (Grass, vs Ember) gets the green arrow at half size, 9`, en.full);
+    check(en.full && en.full.cx === 0 && en.full.bottom === -6.6, 'full health (no bar yet): centred over it, its bottom where the bar will be', en.full);
+    check(en.hurt && Math.abs(en.hurt.right - en.hurtBarLeft) < 0.01 && Math.abs(en.hurt.bottom - (-8.3 + 4.5)) < 0.01, 'hurt: left of its health bar, centred on it', [en.hurt, en.hurtBarLeft]);
+    check(en.heal && en.heal.cx === 0 && en.heal.bottom === -19, 'a healer at full health: centred, above its heart', en.heal);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy.png') });
 
     console.log('6. Built index.html');
@@ -190,7 +217,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const s = getComputedStyle(d), out = { display: s.display, align: s.verticalAlign }; d.remove(); return out;
     });
     check(rows.includes('lab') && !rows.includes('labPlainArrows'), 'index.html: Settings → Experimental has Lab mode and no arrows switch', rows);
-    check(css.display !== 'none' && css.align === '-3px', 'index.html: its brand.css places the arrows', css);
+    check(css.display !== 'none' && css.align === '-1px', 'index.html: its brand.css places the arrows', css);
     await built.close();
 
     check(errs.length === 0, 'no page errors', errs.slice(0, 3));

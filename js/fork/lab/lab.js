@@ -80,7 +80,7 @@ G.Lab = (() => {
   // ---------------- lista de movimientos de cada especie (fase 2) ----------------
   const MIN_OWN = 4, MIN_TOTAL = 6, MAX_COVER = 2;
   // De apoyo: no cuentan como cobertura (no pegan, o no a lo de otro tipo).
-  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'metronome', 'transform']);
+  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'metronome', 'transform', 'heal', 'screen', 'shout', 'endure']);
   const HOW = ['lv', 'egg', 'tutor', 'tm'];
   const SCORE = { lv: 3, egg: 2, tutor: 2, tm: 1 };
   const learnCache = {}, poolCache = {};

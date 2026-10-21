@@ -1,6 +1,7 @@
 /* ============ evo-hud.js — cuánto falta para evolucionar, en pantalla (Lab, fork MrSurvivor) ============
  * En una partida Lab, si tu Pokémon puede evolucionar en ella (G.LabGrowth.targets, js/fork/lab/growth.js),
- * arriba a la izquierda, debajo de la vida (y de los buffs, si hay): la cara de su evolución, su
+ * arriba a la izquierda, justo debajo de la vida y antes de los buffs y del poder del altar (que
+ * bajan para dejarle sitio: G.HUD.belowHp, js/ui/hud.js): la cara de su evolución, su
  * nombre, "Lv N" (el nivel al que sale la carta de evolución) y una barra dorada del nivel en el
  * que empezó esta forma (1, o el nivel al que evolucionó) hasta ese, contando la experiencia que
  * llevas del nivel actual. Con varias evoluciones (Eevee), la más temprana y "+N more".
@@ -39,12 +40,11 @@ G.LabEvoHud = (() => {
     ctx.restore();
   }
 
-  function draw(ctx, pl) {
+  /** Lo dibuja en (px, y) y devuelve el alto que ocupa (0 si no hay nada), para que lo de debajo baje. */
+  function draw(ctx, pl, px, y) {
     const e = state(pl);
-    if (!e) return;
-    const sa = G.Touch.safeArea(), px = 16 + sa.left, py = 20 + sa.top;
-    const buffs = Object.values(pl.buffs || {}).some(b => b.n > 0);
-    const y = py + 34 + (buffs ? 19 : 0), x = px + FACE + 6, bw = W - FACE - 6;
+    if (!e) return 0;
+    const x = px + FACE + 6, bw = W - FACE - 6;
     const pulse = e.ready ? 0.55 + 0.45 * Math.sin(performance.now() / 160) : 1;
     ctx.save();
     // Fondo oscuro, como el del clima: que se lea encima de la hierba.
@@ -79,13 +79,11 @@ G.LabEvoHud = (() => {
     ctx.fillRect(x, y + 14, Math.round(bw * e.p), 6);
     ctx.globalAlpha = 1;
     ctx.restore();
+    return FACE + 8;
   }
 
-  const hudDraw = G.HUD.draw;
-  G.HUD.draw = function (ctx, w, h, pl) {
-    const r = hudDraw.apply(this, arguments);
-    try { draw(ctx, pl); } catch (e) { /* nunca romper el HUD */ }
-    return r;
+  G.HUD.belowHp = (ctx, pl, px, y) => {
+    try { return draw(ctx, pl, px, y); } catch (e) { return 0; }   // nunca romper el HUD
   };
 
   return { state };

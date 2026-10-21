@@ -19,6 +19,7 @@ status table as work lands.
 | 2026-10-20 | Promotion to the normal game (phase 8) is per move (`promote: true`), and **nothing is promoted yet**: that is the owner's call, after play-testing and the balance report. |
 | 2026-10-21 | **Move badges** in Lab: same-type arrow only when it adds damage (one type); weak side yellow from 65 %, red under; the enemy arrows redrawn in the same colours (x4 magenta). |
 | 2026-10-21 | The badges are the **4 plain arrows only**, drawn by the artist (18×18, own size); the symbols version and its setting are gone. |
+| 2026-10-21 | Every arrow at **half size** (the 18×18 PNGs at 9); over an enemy with no health bar yet (full health, not a boss), **centred above it**. |
 
 ## Status
 
@@ -33,6 +34,7 @@ status table as work lands.
 | 6 | Lower tiers: in-run evolution (and Everstone), Eviolite and species items, underdog XP, duplicate candies | **done** 2026-10-20 |
 | 7 | Shinies: move colours from the shiny sprite, +10% XP and coins, +1 reroll | **done** 2026-10-20 |
 | 8 | Balance script (`fork/balance-lab.cjs`) and the `promote` switch; nothing promoted yet | **done** 2026-10-20 (promotion: owner's call) |
+| 9 | Close range and sustain: 50 official moves, 7 new kinds (grab, bind, focus, heal, screen, shout, endure) and hit effects (drain, revenge, reversal, HP cut...), the survival bot | **done** 2026-10-21 (not play-tested yet) |
 
 ## Files
 
@@ -41,12 +43,13 @@ status table as work lands.
 | `js/fork/lab/lab.js` | `G.Lab`: the setting, per-run flag, Lab pools, signature pools and cards, promotion, protections, co-op messages, badges, the pause block |
 | `js/fork/lab/abilities.js` | `G.LabAbilities`: the ability table and its hooks |
 | `js/fork/lab/kinds.js` | `G.LabKinds`: the new move kinds (phase 4), their ladders and evolutions, sleep and confusion, co-op messages |
+| `js/fork/lab/kinds2.js` | `G.LabKinds2`: phase 9's kinds (grab, bind, focus, heal, screen, shout, endure), the hit effects (leech, seed, revenge, reversal, cut, power, flinch), multi-stat buffs, the close-range damage cut |
 | `js/fork/lab/lab-moves.js` | `G.LabMoves`: moves that only exist in Lab (data only; phases 4 and 5) |
 | `js/fork/lab/anims.js` | `G.LabAnims`: signature moves' own PMD animations (phase 5) |
 | `js/fork/lab/growth.js` | `G.LabGrowth`: in-run evolution, Everstone, items, underdog XP, candies (phase 6) |
 | `js/fork/lab/shiny.js` | `G.LabShiny`: shiny move colours and bonuses (phase 7) |
 | `js/fork/lab/underdog.js` | `G.LabUnderdog`: the underdog XP shown on the XP bar, the ladder before a Lab run and the tag on the Play button (phase 6) |
-| `js/fork/lab/evo-hud.js` | `G.LabEvoHud`: the progress to the next evolution, on screen under the HP bar (phase 6) |
+| `js/fork/lab/evo-hud.js` | `G.LabEvoHud`: the progress to the next evolution, on screen right under the HP bar, before the stat boosts (buffs and altar power move down for it through `G.HUD.belowHp` in `js/ui/hud.js`) (phase 6) |
 | `js/fork/lab/badges.js` | `G.LabBadges`: the move badges (good/bad arrows on level-up cards, the move tooltip and the enemy type arrows) |
 | `js/fork/lab/badge-art.js` | `G.LabBadgeArt`: the 4 arrows' code drawings (`G.Icons.UI`), apart so the Asset Admin's gallery can draw them without the game; the artist's PNGs replace them (`js/fork/asset-overrides.js`) |
 | `js/fork/lab/variant-bonus.js` | `G.VariantBonus`: what the shiny or radiant gives, under the stats in the collection's detail (phase 7) |
@@ -55,6 +58,7 @@ status table as work lands.
 | `fork/fetch-lab.cjs` | downloads PokeAPI's CSVs and SpriteCollab's tracker into `tools/cache/lab/` (gitignored), writes `lab-data.js` |
 | `fork/fetch-lab-anims.py` | downloads the signature moves' extra animations into `assets/pokemon/{dex}/lab/`, writes `lab-anims.js` and `CREDITS-LAB.md` |
 | `fork/balance-lab.cjs` | the balance check (phase 8); writes `fork/BALANCE-LAB.md` |
+| `fork/survival-lab.cjs` | how long a build lasts in a real Lab run, played by a bot (phase 9) |
 | `css/brand.css` | the teal "LAB" tag, the pause/summary blocks, the gold ring on signature moves |
 
 Upstream touches: the `tab === 'lab'` branch (`G.Lab.settingsRow`) in `js/ui/settings-ui.js`, the script tags in
@@ -248,10 +252,82 @@ while it's used.
   with the nearest one: recoil as dash, ramp as melee, leap as meteor, sleep as stun, wave as beam)
   and flagged over ×1.6 or under ×0.6. After the first report, the 23 strongest signatures were
   scaled down to about ×1.45 of their kind. Sleep and confusion moves stay low on damage on purpose.
+  (Fixed 2026-10-21: the script didn't stop the Judgment, and at the default 6 s a move it passes 30
+  game minutes during the signature moves: Arceus's arena took the player away and ~50 signatures
+  measured near 0. The report of 2026-10-20 used 4 s and finished before. Moves with `cut` are flagged
+  "HP cut": against billion-HP dummies their numbers mean nothing. Shell Trap shows 0 because the
+  player there can't be hit.)
 - **Promotion**: `promote: true` on a Lab move puts it in the normal game (its type's pool, the
   start-move picker and the bans; a signature only in its line's pool). New kinds work in normal
   runs as is (`kinds.js` is always loaded). Nothing is promoted yet. Abilities, in-run evolution,
   items and shiny colours have no switch: they'd need a decision about the normal game first.
+
+## Phase 9: close range and sustain
+
+Asked for 2026-10-21: moves that work in more different ways (not more balls, beams and swipes),
+close-range builds that hold up, and longer runs. `fork/survival-lab.cjs` measured the problem
+first: in a real Lab run with a fixed build (results below), close-range builds died well before the
+best ranged one, and the Lab's ramp kind (Fury Cutter) worst of all, because only the old `melee`
+kind got the game's 25% less damage taken while active (`player.js`).
+
+50 official moves in `lab-moves.js` (section "fase 9"), learned through their real learnsets (rerun
+`fork/fetch-lab.cjs` after adding more). New kinds in `js/fork/lab/kinds2.js`:
+
+| Kind | Moves | What it does |
+|---|---|---|
+| grab | Seismic Toss, Circle Throw, Dragon Tail | grab the nearest enemy and throw it (`knock`): it hits every enemy it flies into (`splash` × the damage) and lands stunned. Seismic Toss adds `perLvl` × your level. Bosses aren't thrown |
+| bind | Wrap, Bind, Infestation, Snap Trap, Thunder Cage | hold `count` enemies (2, +1 per count upgrade) for `dur` s (stunned: no moving, no contact damage) and hit them every 0.5 s |
+| focus | Focus Punch, Shell Trap | charge `charge` s. Focus Punch: you brace (30% less damage taken), then a huge punch across your front, 35% weaker for each hit you took while charging (30% at least). Losing it all on any hit made it useless in a swarm (51 s in `survival-lab.cjs`). Shell Trap (`mode: 'trap'`): a blast around you the moment you're hit |
+| heal | Recover, Soft-Boiled, Roost, Morning Sun, Shore Up, Rest, Wish, Strength Sap, Heal Order | from any slot, when HP drops below `below` (50%): heal `amount` × max HP. `wx` ×1.5 in that weather (Morning Sun ×0.5 in others); Rest heals fully but you sleep `rest` s; Wish arrives after `delay`; Strength Sap also weakens the strongest enemy near |
+| screen | Reflect, Light Screen, Aurora Veil | from any slot when enemies are near: `amount` less damage of that category (`screen`; Aurora Veil both, longer in snow) for `dur` s, for you and teammates within `radius` |
+| shout | Growl, Baby-Doll Eyes, Feather Dance, Noble Roar, Leer, Screech, Fake Tears, Metal Sound, Scary Face | from any slot with 2+ enemies near: marks them `dur` s. `meek`: they deal less (their `dmg` is scaled while marked); `weak`: they take more (of `weakCat`); `slow` |
+| endure | Endure | a hit that would knock you out leaves you at 1 HP, untouchable `dur` s; recharges `cd` s |
+
+Hit effects for any kind (applied in `Enemy.hurt` right after Combat's `G.RunStats.tag`, so they
+count in the move's damage and the summary):
+
+| Field | Moves | Effect |
+|---|---|---|
+| `leech` | Drain Punch, Horn Leech, Mega Drain, Bitter Blade (Ceruledge) | heal that share of the damage, at most 5% of max HP a second (`LEECH_CAP`) |
+| `seed` | Leech Seed | the enemy loses HP every 0.5 s for `seed` s and you heal half |
+| `revenge` | Revenge, Payback | × that if you were hit in the last 1.5 s |
+| `reversal` | Reversal, Flail | × (1 + reversal × missing HP share) |
+| `cut` | Super Fang, Nature's Madness, Ruination (Treasures of Ruin) | at least that share of the HP it has left (bosses 8% of it) |
+| `power` | Stored Power, Power Trip | × (1 + power × your stacked boosts) |
+| `flinch` | Fake Out | the first hit on each enemy stuns it that long |
+
+Buffs with `also` raise several stats at once (Bulk Up, Calm Mind, Coil, Shift Gear, Work Up);
+`drum` (Fillet Away) costs that share of HP to fill every stack at once. Bulk Up was Dragon Dance's
+evolved name: Dragon Dance now evolves into Clangorous Soul (`js/fork/evo-names.js`), in every game.
+
+With a grab, bind, focus or ramp move active you take 25% less, like melee (`kinds2.js` `CLOSE`).
+Iron Fist now also matches "Punch", Strong Jaw "Fang", and Tough Claws counts grab and bind as contact.
+Metronome and Transform never call the support kinds or focus.
+
+Survival (`fork/survival-lab.cjs`, 2026-10-21, median seconds of 6 runs, after tuning; the spread
+between runs is ±20-30 s, so small gaps mean nothing):
+
+| Build | Before phase 9 | After |
+|---|---|---|
+| far: Aura Sphere | 196 | 200 |
+| far: Aura Sphere, Recover | | 229 |
+| far: Aura Sphere, Light Screen, Recover, Endure | | 238 |
+| close: Karate Chop | 138 | 144 |
+| close: Fury Cutter (ramp; now with the close-range 25%) | 78 | 111 (3 runs) |
+| close: Drain Punch | | 157 |
+| close: Karate Chop, Recover / Endure / Reflect / Growl | | 172 / 167 / 150 / 142 |
+| close: Drain Punch, Growl, Reflect, Endure | | 205 |
+| close: Focus Punch (before / after the brace change) | | 51 / 111 |
+| close: Circle Throw / Bind alone | | 116 / 101 |
+
+So a close-range kit now lasts as long as the best ranged move alone, though ranged still gains
+just as much from the same support moves. Grab and bind alone stay short: they handle one or two
+enemies while the rest of the crowd keeps hitting, so they're for pairing with a main attack.
+
+Co-op: hits, stuns and slows go through `hit`, `applyStun` and `applySlow`, which a guest forwards.
+Screens and shouts reach teammates as ghost casts: a teammate's Reflect protects you when you're
+near them, and a teammate's Growl marks your copies of the enemies too. Healing is your own. Not
+checked with two players yet.
 
 ## Move badges
 
@@ -259,7 +335,10 @@ In a Lab run, each thing that makes a move better or worse for **your** Pokémon
 next to the word it judges: "New · Fire ▲ · Special ▲" on a level-up card's chip, and the same in
 the move tooltip (`badges.js`). There are 4 arrows (`badge-art.js`, 13×13 code drawings in
 `G.Icons.UI`: `lb-g`, `lb-m`, `lb-y`, `lb-r`); the art players see is the artist's, 18×18 PNGs
-published from the Asset Admin (`js/fork/icon-overrides.json`, shown at their own size).
+published from the Asset Admin (`js/fork/icon-overrides.json`), shown at **half size** (9×9) everywhere.
+Over an enemy the arrow sits left of its health bar; before it has one (full health, not a boss) it is
+centred above it, where the bar will be, or above the heart / shield / friends icon of a support
+enemy (one-line hook in `js/entities/enemy.js`: `G.LabBadges.enemyMark`).
 
 | Arrow | When |
 |---|---|
@@ -278,9 +357,20 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
 - `node fork/test-badges.cjs` (server; `SHOTS=<dir>` for screenshots): the 4 arrows, which ones
   real Pokémon get (Charmander, Charizard, a 65-95 % and the under-65 % case, Gengar's buffs), the
   level-up cards (each arrow in the chip after its word, nothing with Lab off, no setting left),
-  the tooltip with a real mouse (each arrow after its word), the enemy arrow drawn, and the built
+  the tooltip with a real mouse (each arrow after its word), the size (9 on cards, tooltip and
+  enemies), where the enemy arrow lands (centred at full health, above a healer's heart, left of the
+  bar once hurt), and the built
   `index.html` (no setting; its CSS for the arrows).
 
+- `node fork/test-lab-close.cjs` (server): phase 9. Every move registered, real pools get them, no
+  evolution sharing a name; a throw that bowls over the one behind, Seismic Toss by level; Bind
+  holding and hurting, two at level 2; Focus Punch landing or lost, Shell Trap going off; Recover
+  only below half, Rest, Wish, Morning Sun in sun; Reflect ×0.6 physical only; Growl ×0.7 and back,
+  Screech ×1.4; Drain Punch, Leech Seed, Revenge ×2, Reversal ×2.5 at 25% HP, Super Fang half (a
+  boss far less), Power Trip, Fake Out once; Bulk Up, Fillet Away; Endure once then recharging; the
+  close-range 25%; Metronome, a grab's evolution, Iron Fist.
+- `node fork/survival-lab.cjs [--runs 3] [--only name]` (server): seconds a build lasts in a real
+  Lab run (bot, Mew's stats, no XP). Not a pass/fail test: rerun it after tuning phase 9 moves.
 - `node fork/test-lab.cjs` (server on 8123): the setting; Lab off offers only normal pools and
   is sent to the leaderboard; Lab on offers only the Lab pool, Swift casts, ability and HUD tag,
   pause block; protections (no leaderboard, stats/missions/achievements unchanged, coins kept,
@@ -295,7 +385,8 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   dummies in turn (untouchable until the last), only Giratina learns it, and that no evolved move
   is named after a Lab move (`js/fork/evo-names.js`; Fly's Lab evolution is Dual Wingbeat).
 - `node fork/test-evo-hud.cjs` (server): the evolution indicator (next form and its level, the bar
-  from where this form started with the current level's XP, under buff chips, READY at the level,
+  from where this form started with the current level's XP, right under the HP bar with the buff and
+  altar-power chips under it, READY at the level,
   after evolving, nothing with the Everstone, without an evolution or with Lab off, Eevee's "+N more").
 - `node fork/test-variant-bonus.cjs` (server): the shiny and radiant bonus boxes in the collection
   (numbers, bar ends, pips, dimmed, "radiant gives more", Lab off), and the bonuses in Lab runs

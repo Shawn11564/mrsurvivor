@@ -90,6 +90,7 @@ G.SettingsUI = (() => {
         + toggle('pauseCount', 'Cuenta atrás al quitar la pausa', 'Al volver de la pausa, 3 segundos con todo quieto antes de seguir. Las demás cuentas atrás (vínculos, objetos) no cambian.')
         + `<div class="set-row"><div class="grow"><b>Tamaño de los iconos</b><small>Los ataques y el objeto de abajo, durante la partida.</small></div></div>`
         + choice('hudSize', [[0.8, 'Pequeño'], [1, 'Mediano'], [1.3, 'Grande']])
+        + (G.RadiantGlow ? G.RadiantGlow.settingsRow(section) : '')   // fork: brillo de los radiantes (js/fork/radiant-glow.js)
         + (canFull() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>Sin barras del navegador.</small></div>
              <button class="btn small" id="set-full">${isFull() ? 'Salir' : 'Activar'}</button></div>`
            : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '');

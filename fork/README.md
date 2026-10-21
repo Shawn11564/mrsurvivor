@@ -28,6 +28,8 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/import-radiant.cjs` | `node fork/import-radiant.cjs <zip or folder>... [--dry-run] [--strict]` brings the artist's recolours in: reads the dex from the folder name (`0150_…`, any wrapper folder, several Pokémon per zip, the Kit's older `assets/pokemon/{dex}/r/` layout too), checks every sheet against the normal one (missing or wrong-size sheets turn that Pokémon away; a changed outline, with the frame's cell, or an unrecoloured sheet is a warning), copies them to `assets/pokemon/{dex}/r/`, `r/lab/`, `m{dex}/r/` and runs `fork/radiants.cjs`. Then build, try it, commit and push: that is how a radiant ships |
 | `fork/radiants.cjs` | finds the radiant forms in `assets/pokemon/{dex}/r/` (every standard sheet, each the size of the normal one; `r/lab/` and `m{dex}/r/` optional) and writes `js/fork/radiant-list.js` (bundled) and `js/fork/radiants.json` (the same list, which the game also reads when it loads and when the ritual opens, so a published radiant works without a rebuild), each with its rarity (kept from `radiants.json`, else the Pokémon's). `fork/build.cjs` runs it; it prints what it leaves out (`--strict` fails instead) |
 | `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, weighted by each radiant's rarity (`WEIGHT`: Common 40, Uncommon 25, Rare 15, Epic 7, Legendary 3), revealed with the gacha's single-ticket slot machine (`js/ui/slots.js` in `#pull-fx`), its reels stopping on that rarity's ball, then the radiant's card, warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
+| `js/fork/radiant-glow.js` | the **Radiant glow** slider (Settings > Graphics, 0-100 %, 10 % by default; `G.Settings` `radGlow`, with a preview): radiants glow in their standout colour, the one the vibrancy vote picks for their moves (`G.LabShiny.paletteFrom`, `fork/LAB.md` Phase 7). Each radiant sheet gets two blurred masks once (that hue counts fully, the rest of the body a little): a halo under the sprite and additive light over it. Wraps `Animator.draw`, so the run, co-op, menus and the ritual all get it; at 0 % it draws exactly as before. Hook: one line in `js/ui/settings-ui.js` |
+| `js/fork/ui-scale.js` | the interface sized to the screen: scale k = screen ÷ 1400×850 (1 up to that, as before; ≈1.27 at 1080p, ≈1.69 at 1440p, ≈2.5 at 4K, 3 at most). The canvas HUD is drawn with `ctx.scale(k)`, and while it draws, the mouse, drag, safe area and camera map into its coordinates and the touch buttons it registers map back to CSS px. The HTML (menus, cards, top bar, toasts) gets CSS `zoom` (`--ui-k`) on everything under `<body>` except the game canvas and the touch-layout editor (`#scr-layout`, which places its pieces in window px). Wraps `G.HUD.draw` outermost, so it loads after the other HUD wrappers |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -111,6 +113,16 @@ only the radiant files (the unrelated change stays) and pushes, and waits for a 
 `node fork/test-radiant-prefs.cjs` (server) checks that a radiant you own beats its shiny by default (main menu, selector,
 run, co-op card, the collection's detail and partner pick, and a shiny won after the radiant), that picking Shiny or
 Normal is respected and kept, and the **Radiant** filter on the Pokémon screen (only your radiants, kept in `ms.dex`).
+
+`node fork/test-ui-scale.cjs` (server; `SHOTS=<dir>`) checks the interface scale: at 1280×720 nothing changes; at
+2560×1440 the HUD and the pages are ×1.69, the move slots' buttons are where they're drawn (a real hover shows the
+tooltip, a real click switches move), a level-up card is bigger and a real click picks it, and the built `index.html`
+zooms its pages but not the game canvas.
+
+`node fork/test-radiant-glow.cjs` (server; `SHOTS=<dir>` for screenshots) checks the Radiant glow with the real radiant
+Mewtwo: the slider (10% by default, kept after a reload), the glow's hue is the vibrancy vote's, 0% draws exactly the
+plain sprite, 10% a mild halo and 100% far more, a real run's canvas (brighter around a radiant, unchanged around a
+normal Pokémon), and the slider and preview on the built `index.html`.
 
 `node fork/test-radiant-live.cjs` (server) checks the game side on `dev.html` with the built list empty: radiants from
 `radiants.json` are in the pool with their rarities and odds, the roll follows the weights, one published while the game

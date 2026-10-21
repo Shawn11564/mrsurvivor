@@ -54,7 +54,7 @@ p.fork-credit { font-size: 0.9em; }
 .lab-pool .lab-sig { border-radius: 50%; box-shadow: 0 0 0 2px #ffd23f; }
 .lab-more { margin-top: 3px; }
 /* Move badges (js/fork/lab/badges.js): the arrow after each word in a level-up card's chip. */
-.lb-a { vertical-align: -3px; margin-left: 2px; }
+.lb-a { vertical-align: -1px; margin-left: 2px; }
 
 /* Radiant forms and the Radiant Ritual (js/fork/radiant.js): warm gold instead of the shiny's ice blue. */
 .stage.radiant { box-shadow: 0 0 0 3px #3a1d00, 0 0 26px rgba(255,179,71,.6), inset 0 0 0 2px rgba(255,255,255,.1); }
@@ -74,3 +74,7 @@ p.fork-credit { font-size: 0.9em; }
 .rad-warning { margin-top: 10px; padding: 10px 12px; border-radius: 8px; color: #ffe1e1;
   background: rgba(255,95,109,.14); border: 1px solid rgba(255,95,109,.55); }
 .pcard.radiant b { color: #ffd08a; }
+/* Radiant glow setting (js/fork/radiant-glow.js): the preview, the slider and its percentage. */
+.rad-glow-row canvas { flex: none; width: 96px; height: 96px; border-radius: 10px; background: #0c111b; image-rendering: pixelated; }
+.rad-glow-row input[type=range] { flex: 1; }
+.rad-glow-row #set-radglow-v { min-width: 44px; text-align: right; color: #ffd08a; }
