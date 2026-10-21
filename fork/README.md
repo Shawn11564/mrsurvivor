@@ -162,7 +162,13 @@ guests to wait. The host runs in a plain Edge over raw CDP, because Playwright m
 drives look visible. `node fork/test-coop-pause.cjs` (same setup) checks the pause menu's Continue
 button in co-op: the pause doesn't stop a co-op run, so `game.js` (which resumes only from `paused`)
 ignored it and only Esc / P closed the menu; `coop-background.js` wraps `G.RunUI.wirePause` to close
-it. `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
+it. `node fork/test-coop-spectate.cjs` (same setup) checks a downed player's camera
+(`js/fork/spectate-cut.js`): going down cuts straight to the teammate you watch instead of gliding
+across the map, and when the rift opens (~200 000 px away) it never travels between the map and the
+arena: `G.Camera.follow` jumps to a target more than ~1.5 screens away, and a teammate moved by a
+teleport stays put until their own position arrives (`netUpdate` used to send them back to their last
+reported spot, so a downed host's camera went to the map and back, painting ~160 chunks).
+`node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
 thief says how far it is (`drawHud` in `js/systems/events.js`).
 
 `node fork/test-coop-random.cjs` (server + Firebase emulator) checks "Random Pokémon" in a co-op
