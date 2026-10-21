@@ -54,7 +54,7 @@ Settings → Experimental → **Lab mode** tries moves and abilities still in te
 each Pokémon gets the moves it learns in the games and one of its abilities, new kinds of moves
 (Fly, Double-Edge, Protect, Hypnosis, Rain Dance, Surf, Metronome...), signature moves for 70
 lines, evolving during the run, the games' items for weak Pokémon, candies from duplicates, shiny
-move colours, and **Mega Evolution** (Lab only). In co-op the host's setting decides. Lab runs
+move colours, and **Mega Evolution** (in every run since 2026-10-21). In co-op the host's setting decides. Lab runs
 keep coins, tickets and shinies, but don't count for leaderboards, missions, achievements or
 records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md). The code is in
 `js/fork/lab/`; `node fork/balance-lab.cjs` compares every move's damage.
@@ -232,9 +232,9 @@ generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `d
   Agility...) cast on their own from any slot, as if always active (`pl.passiveBuffs` in
   `Combat.tick`; the HUD stops asking you to switch to them). Purple via `.card.rare` in
   `css/brand.css`
-- no Mega Evolution outside Lab mode (`js/fork/mega.js`; the Mega checks are in
-  `fork/test-lab.cjs`): with Lab off, no "can Mega Evolve" marks, a won rift never offers the
-  stone and holding one does nothing
+- Mega Evolution in normal runs too (`js/fork/mega.js`, since 2026-10-21; the full Mega checks
+  are in `fork/test-lab.cjs`): with Lab off, the "can Mega Evolve" marks show, a won rift past
+  minute 5 can offer the stone and holding it Mega Evolves
 - the 3 s countdown also after picking a bond or an item (`countIn` in `js/game.js`); after a
   rift, the purple flash fades while you pick (it used to stay on screen through the
   countdown) and a second bond opens at once, with one countdown at the end (`bondBusy`)
@@ -400,8 +400,8 @@ in a three-player party where the admin is a guest, so every action goes admin �
   isn't sent to the ranking, solo or group
 - save edits: coins, tickets, any Pokémon or shiny
 - a Mega Stone dropped next to a friend whose Pokémon has a Mega (Lucario): in a normal run it
-  holds it and stays Lucario for everyone (Mega Evolution is Lab only; the Lab version is in
-  `fork/test-lab-coop.cjs`)
+  holds it and Mega Evolves, and the host and the admin see Mega Lucario (Mega Evolution is in
+  every run since 2026-10-21)
 
 The admin list is `ADMINS` at the top of `js/fork/admin.js` (Firebase Authentication → Users →
 User UID). Everyone's game checks it, so a new admin needs a new release. The ranking's hidden

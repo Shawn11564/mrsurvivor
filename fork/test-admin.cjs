@@ -72,7 +72,7 @@ const shown = (p, sel) => p.evaluate(s => { const el = document.querySelector(s)
 /** dex drawn for a player: yours (uid = null) or your copy of someone else. */
 const looks = (p, uid) => p.evaluate(u => { const pl = u ? G.Coop.mate(u).pl : G.Game.player; return { dex: pl.anim.dex, scale: pl.anim.scale, base: G.Sprites.playerScale(pl.anim.dex) }; }, uid);
 /**
- * Holds a key for `ms` and returns how far the player moved in x (and leaves the y in p.dy).
+ * Holds a key for `ms` and returns how far the player moved in x (and leaves the y in p.dy, and the sideways distance walked in p.side).
  * XP picked up at any moment can open the team's level-up cards, which stops everyone: if that
  * happens during the walk, the cards are picked and the walk is done again.
  */
@@ -82,14 +82,24 @@ async function walk(p, key, ms) {
     // (Keys pressed with focus in the admin panel stay in the panel, by design.)
     const [x0, y0] = await p.evaluate(() => {
       if (document.activeElement) document.activeElement.blur();
-      window.__stopped = false;
-      (function watch() { if (G.Game.state !== 'playing') window.__stopped = true; if (!window.__walkDone) requestAnimationFrame(watch); })();
-      window.__walkDone = false;
+      // __walkDone is reset BEFORE the watcher starts (it used to be after: from the second walk
+      // on, the watcher saw the last walk's `true` and stopped at once). Each walk has its own id,
+      // so a frame still pending from the last one stops. __side: the sideways distance walked,
+      // frame by frame (the net dy can cancel out).
+      window.__stopped = false; window.__walkDone = false; window.__side = 0;
+      const id = window.__walkId = (window.__walkId || 0) + 1;
+      let y = G.Game.player.y;
+      (function watch() {
+        if (window.__walkDone || window.__walkId !== id) return;
+        if (G.Game.state !== 'playing') window.__stopped = true;
+        window.__side += Math.abs(G.Game.player.y - y); y = G.Game.player.y;
+        requestAnimationFrame(watch);
+      })();
       return [G.Game.player.x, G.Game.player.y];
     });
     await p.keyboard.down(key); await p.waitForTimeout(ms); await p.keyboard.up(key);
-    const [x1, y1, stopped] = await p.evaluate(() => { window.__walkDone = true; return [G.Game.player.x, G.Game.player.y, window.__stopped]; });
-    if (!stopped || tries >= 3) { p.dy = y1 - y0; return x1 - x0; }
+    const [x1, y1, stopped, side] = await p.evaluate(() => { window.__walkDone = true; return [G.Game.player.x, G.Game.player.y, window.__stopped, window.__side]; });
+    if (!stopped || tries >= 3) { p.dy = y1 - y0; p.side = side; return x1 - x0; }
   }
 }
 const xNow = p => p.evaluate(() => G.Game.player.x);
@@ -357,8 +367,10 @@ async function pickCards(ms = 20000, calm = 3) {
     await $(adm, '[data-do=drunk]').click();
     await host.waitForTimeout(400);
     const dx = await walk(host, 'KeyD', 1200);
-    const dy = host.dy;
-    check(Math.abs(dy) > 10, `Drunk: holding D the host wobbles off course (dx ${dx.toFixed(0)}, dy ${dy.toFixed(0)})`);
+    // The wobble swings both ways (a ~2.4 s sine), so the net dy can come out near 0: judge the
+    // sideways distance walked instead (about 0 when walking straight).
+    const side = host.side;
+    check(side > 20, `Drunk: holding D the host wobbles off course (dx ${dx.toFixed(0)}, ${side.toFixed(0)} px sideways)`);
 
     // ---------------- Toggles ("Until I turn it off") ----------------
     // Lasting effects can run with no end (secs 0, G.Admin.ends() gives Infinity); the button
@@ -428,15 +440,14 @@ async function pickCards(ms = 20000, calm = 3) {
     check(await settle(host, u => { const p = G.Coop.mate(u).pl;
       return window.__drops.some(d => d.k === 'heal' && Math.hypot(d.x - p.x, d.y - p.y) < 80); }, adm.uid),
       'Drop "Heal" at me: the host drops it next to the admin');
-    // A Mega Stone dropped next to the friend (Lucario). This is a normal run and Mega Evolution
-    // only exists in Lab runs (js/fork/mega.js), so it holds the stone and stays Lucario, for
-    // everyone. (The Lab version, with everyone seeing Mega Lucario, is in fork/test-lab-coop.cjs.)
+    // A Mega Stone dropped next to the friend (Lucario). Mega Evolution is in every run since
+    // 2026-10-21 (js/fork/mega.js), so it Mega Evolves in this normal run, and everyone sees it.
     // The others step away so only the friend picks it up.
     await pickCards();
     for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x += 2500; });
     await host.waitForTimeout(500);
     await $(adm, '#adm-to').selectOption(frd.uid);
-    await $(adm, '#adm-drop').selectOption({ label: 'Item: Mega Stone (Lab runs only)' });
+    await $(adm, '#adm-drop').selectOption({ label: 'Item: Mega Stone' });
     await $(adm, '[data-do=drop]').click();
     for (let i = 0; i < 20 && !(await frd.evaluate(() => G.Game.player.item === 'megastone')); i++) {
       // Holding an item already: the friend takes the stone in the choice.
@@ -445,10 +456,10 @@ async function pickCards(ms = 20000, calm = 3) {
       await frd.waitForTimeout(400);
     }
     await frd.waitForTimeout(800);
-    check(await frd.evaluate(() => G.Game.player.item === 'megastone' && G.Game.player.anim.dex === 448 && !G.Game.player.mega),
-      'Drop "Mega Stone" at the friend in a normal run: Lucario holds it but does not Mega Evolve (Lab runs only)');
-    check(await host.evaluate(u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid) && await adm.evaluate(u => G.Coop.mate(u).pl.anim.dex === 448, frd.uid),
-      'the host and the admin still see plain Lucario');
+    check(await frd.evaluate(() => G.Game.player.item === 'megastone' && G.Game.player.megaKey === 'm448' && G.Game.player.mega),
+      'Drop "Mega Stone" at the friend in a normal run: Lucario holds it and Mega Evolves');
+    check(await settle(host, u => G.Coop.mate(u).pl.megaKey === 'm448', frd.uid) && await settle(adm, u => G.Coop.mate(u).pl.megaKey === 'm448', frd.uid),
+      'the host and the admin see Mega Lucario');
     for (const p of [host, adm]) await p.evaluate(() => { G.Game.player.x -= 2500; });
     await pickCards();
     const lv0 = await host.evaluate(() => G.Game.player.level);

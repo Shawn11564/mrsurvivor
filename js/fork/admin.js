@@ -513,7 +513,7 @@ G.Admin = (() => {
     const dl = panel.querySelector('#adm-dex');
     dl.innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(p.name)} #${p.dex}">`).join('');
     const kinds = [['heal', 'Heal'], ['magnet', 'Magnet'], ['bomb', 'Bomb'], ['xpBig', 'Big XP', 60], ['coin', 'Coins ×25', 25],
-                   ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10'], ['item', 'Item: Mega Stone (Lab runs only)', 'megastone']]
+                   ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10'], ['item', 'Item: Mega Stone', 'megastone']]
       .concat(G.Items.LIST.map(i => ['item', 'Item: ' + i.name, i.id]));
     panel.querySelector('#adm-drop').innerHTML = kinds.map((k, i) => `<option value="${i}">${esc(k[1])}</option>`).join('');
     panel.dropKinds = kinds;
