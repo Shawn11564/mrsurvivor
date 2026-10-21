@@ -360,6 +360,14 @@ A review of every Lab move against its code (and the normal game's, `fork/test-m
   spores, Dark Void shadows, Feather Dance wind...); Wish shows stars when wished and hearts when it
   heals; Sky Attack's beam is light, not fire.
 
+## Revive card (2026-10-21, from doofcraft)
+
+In a Lab run, from level 5, sometimes (1 in 25 hands) the last level-up card is **Revive**
+(`js/fork/lab/revive-card.js`): a revive kept in its own slot (a heart next to your HP). Solo, it
+fires in the hit that knocks you out: back up with 50% HP, 3 s untouchable, enemies within 150
+thrown back. In co-op you choose: R (or the on-screen button) while down, or wait for a teammate
+as before (then it isn't spent). `node fork/test-revive-card.cjs` (server; co-op part with the emulator).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
