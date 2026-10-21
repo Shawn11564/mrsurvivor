@@ -266,6 +266,15 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+**Prestige** (`js/fork/prestige.js`): with every upgrade of a Pokémon bought, Upgrades offers to prestige
+it (a panel under the list, with a confirm): its upgrades go back to 0 (no coins back) and it gets +5% HP,
+damage, speed and damage cut per level in its runs (`G.Game.startRun`, wrapped once the page has loaded:
+game.js comes after the fork's files), up to 3; at 3, every run starts holding a random item. `save.prest`.
+When two copies of a save merge, the Pokémon's upgrades come from the copy with more prestige
+(`G.forkMerge`; `merge()` alone keeps the highest level of each upgrade and would undo the reset). ★ on
+its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `node fork/test-prestige.cjs`
+(server) checks all of it, the merge both ways round.
+
 `node fork/test-card-rarity.cjs` (server) checks the rarities of the run's upgrade cards
 (`js/fork/card-rarity.js`: Common ×1 60 %, Uncommon ×1.25 25 %, Rare ×1.5 10 %, Epic ×2 4 %, Legendary
 ×3 1 %; the gacha's names and colours): the odds over 8000 real offers, the multiplied text and effect
