@@ -402,6 +402,14 @@ banked when picked up, so they don't count again. The clock is set with `debugTi
 Lab never counts anyway). Co-op can't be resumed: the host runs it. `node fork/test-resume.cjs`
 (server) reloads a real page.
 
+## Mega and Primal rift legendaries (2026-10-21, from doofcraft)
+
+In a Lab run, from minute 15 a rift legendary that has a Mega or Primal sprite (Mewtwo, Latias, Latios,
+Kyogre, Groudon, Rayquaza...) can come in that form: 5% at 15 min, 15% at 30, 30% at 60 (straight lines
+between). It has ×1.3 HP, ×1.2 damage and ×1.2 XP, its sprite and "Mega" / "Primal" in its name
+(`js/fork/lab/mega-rift.js`, hooked on `G.EnemyMgr.add`; in co-op the host decides and sends
+`{ k:'labmega', id }` for the sprite). `node fork/test-mega-rift.cjs` (server; co-op with the emulator).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
