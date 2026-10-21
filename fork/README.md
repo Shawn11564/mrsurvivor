@@ -273,6 +273,11 @@ rings and beams are tagged when born by who is casting (`G.Combat.tick` with you
 own pass with every `globalAlpha` multiplied. `node fork/test-fx-opacity.cjs` (server) reads the alpha
 the canvas really uses for each.
 
+**Stats panel** (everyone, `js/fork/stats-panel.js`): a Settings → Graphics switch (off by default) that
+draws, under the HP bar in a run, your damage, speed, HP, defense, cooldown, regen and crits as they are
+now, and the upgrade cards you've taken (in `G.HUD.belowHp`, after Lab's evolution bar).
+`node fork/test-stats-panel.cjs` (server).
+
 **A secret** (`js/fork/bewear.js`): in every run a Bewear waits about 3000 px south of the start;
 walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the row comes after the radiant
 glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
