@@ -368,6 +368,15 @@ fires in the hit that knocks you out: back up with 50% HP, 3 s untouchable, enem
 thrown back. In co-op you choose: R (or the on-screen button) while down, or wait for a teammate
 as before (then it isn't spent). `node fork/test-revive-card.cjs` (server; co-op part with the emulator).
 
+## Toughness and the speed cap (2026-10-21, from doofcraft)
+
+In a Lab run (`js/fork/lab/toughness.js`), defense from every source is **toughness**: you take
+1 / (1 + toughness) of the damage, +100% is half, capped at +200% (a third); before, it was taken off
+as is, up to 80%, and stacking it made you nearly untouchable. **Speed** stops at ×2.5 of your own
+(upgrades, cards and buffs together; abilities like Swift Swim still on top), and once there the
+speed card no longer comes up. The defense card says "toughness". Hooks: the `reduction` and `spd`
+getters, `G.LevelUp.offer`. `node fork/test-toughness.cjs` (server).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
