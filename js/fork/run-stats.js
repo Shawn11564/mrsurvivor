@@ -1,23 +1,23 @@
-/* ============ run-stats.js — estadísticas de la partida (fork MrSurvivor) ============
- * Al acabar: en grupo, un resumen del equipo (derrotados, caídas, rescates, daño hecho
- * y recibido de cada uno) y luego, para cada jugador, el desglose de sus ataques (daño,
- * % del total, derrotados y daño por segundo) en la pantalla de fin de siempre.
+/* ============ run-stats.js — run stats (MrSurvivor fork) ============
+ * At the end: in a group, a team summary (defeated, downs, revives, damage dealt
+ * and taken by each player) and then, for each player, the breakdown of their attacks (damage,
+ * % of the total, defeated and damage per second) on the usual end screen.
  *
- * Quién sabe qué:
- *   daño hecho      cada uno el suyo (combat.js lo suma en cada movimiento: m.dealt)
- *   daño recibido,  cada uno el suyo (Player.hurt)
- *   caídas
- *   rescates        el que estaba caído: quién tenía al lado al levantarse (game.js reviveTick)
- *   derrotados      quien manda (anfitrión, o tú en solitario): el último golpe de cada
- *                   enemigo y con qué movimiento (tag / tagRemote; el 'h' del invitado
- *                   lleva el movimiento)
- * Los invitados mandan lo suyo al anfitrión cada 3 s y al caer ('st'); el anfitrión lo
- * junta todo en el 'ov' del final (game.js summary → rs).
- * Prueba: fork/test-coop.cjs (grupo) y fork/test-gameplay.cjs (solitario).
+ * Who knows what:
+ *   damage dealt    each player their own (combat.js adds it up on each move: m.dealt)
+ *   damage taken,   each player their own (Player.hurt)
+ *   downs
+ *   revives         the one who was down: who was next to them on getting up (game.js reviveTick)
+ *   defeated        the one in charge (the host, or you in solo): the last hit on each
+ *                   enemy and with which move (tag / tagRemote; the guest's 'h'
+ *                   carries the move)
+ * Guests send theirs to the host every 3 s and on going down ('st'); the host
+ * gathers it all in the final 'ov' (game.js summary → rs).
+ * Test: fork/test-coop.cjs (group) and fork/test-gameplay.cjs (solo).
  */
 G.RunStats = (() => {
-  // Textos de esta pantalla (sólo del fork). Columnas: español, inglés, francés, italiano,
-  // portugués (Brasil), chino simplificado y tradicional.
+  // Text for this screen (fork only). Columns: Spanish, English, French, Italian,
+  // Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Resumen del equipo', 'Team summary', 'Résumé de l’équipe', 'Riepilogo della squadra', 'Resumo da equipe', '队伍总结', '隊伍總結'],
     ['Jugador', 'Player', 'Joueur', 'Giocatore', 'Jogador', '玩家', '玩家'],
@@ -33,22 +33,22 @@ G.RunStats = (() => {
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  let my = null;            // lo de tu Pokémon que sólo sabe tu máquina
-  let tally = {};           // quien manda: uid -> { k, mk: { movimiento: derrotados } }
-  let remotes = {};         // anfitrión: uid -> lo último que ha mandado ese invitado
-  let final = null;         // invitado: el equipo entero, del 'ov' del anfitrión
+  let my = null;            // what only your machine knows about your Pokémon
+  let tally = {};           // the one in charge: uid -> { k, mk: { move: defeated } }
+  let remotes = {};         // host: uid -> the last thing that guest sent
+  let final = null;         // guest: the whole team, from the host's 'ov'
   let sendT = 0;
   const SEND_EVERY = 3;
 
-  // Tu id: el de la cuenta en grupo; también al pintar el final, cuando el grupo ya se ha
-  // cerrado (si no, no se encontraba tu fila y salían 0 derrotados por movimiento).
+  // Your id: the account's in a group; also when drawing the end, when the group has already
+  // closed (otherwise your row wasn't found and it showed 0 defeated per move).
   const me = () => (G.Coop.active || final ? G.Net.uid : 'me');
   const guest = () => G.Coop.active && !G.Coop.isHost;
 
   function reset() { my = { t: 0, dn: 0, rb: {} }; tally = {}; remotes = {}; final = null; sendT = 0; }
   reset();
 
-  /** Lo tuyo, en corto (lo que se manda): daño, recibido, caídas, quién te levantó, daño por movimiento. */
+  /** Your numbers, in short (what gets sent): damage, taken, downs, who revived you, damage per move. */
   function snapshot() {
     const pl = G.Game.player;
     const mv = {};
@@ -57,7 +57,7 @@ G.RunStats = (() => {
   }
   function send() { if (guest()) G.Coop.toHost(['st', snapshot()]); }
 
-  // ---------------- lo que va pasando ----------------
+  // ---------------- what happens as it goes ----------------
   function tag(e, m) { if (e && m) { e.lastBy = me(); e.lastMove = m.id; } }
   function tagRemote(e, from, moveId) { if (e) { e.lastBy = from; e.lastMove = moveId || null; } }
   function kill(e) {
@@ -67,15 +67,15 @@ G.RunStats = (() => {
     if (e.lastMove) t.mk[e.lastMove] = (t.mk[e.lastMove] || 0) + 1;
   }
   function taken(d) { my.t += d; }
-  // Al caer: se manda ya, y otra vez al segundo, cuando han llegado los golpes que ya iban de
-  // camino (si no, su daño faltaba en el resumen: el anfitrión espera 1,6 s antes de acabar).
+  // On going down: sent right away, and again a second later, once the hits already on their
+  // way have arrived (otherwise their damage was missing from the summary: the host waits 1.6 s before ending).
   function down() { my.dn++; send(); sendT = 1; }
   function revived(uids) { for (const u of uids) my.rb[u] = (my.rb[u] || 0) + 1; send(); }
   function remote(from, st) { if (st && typeof st === 'object') remotes[from] = st; }
   function update(dt) { if (guest() && (sendT -= dt) <= 0) { sendT = SEND_EVERY; send(); } }
   function setFinal(rs) { if (Array.isArray(rs)) final = rs; }
 
-  /** Anfitrión (o solitario): el equipo entero, en el orden de la sala. */
+  /** Host (or solo): the whole team, in lobby order. */
   function all() {
     const ms = G.Coop.active ? G.Coop.members : [{ uid: 'me', name: (G.Social.me && G.Social.me.name) || '', dex: G.Game.player && G.Game.player.dex }];
     const mine = me();
@@ -85,22 +85,22 @@ G.RunStats = (() => {
       return { uid: m.uid, name: m.name, dex: m.dex, color: G.Coop.COLORS[i] || '#ffcb3d', d: st.d | 0, t: st.t | 0, dn: st.dn | 0,
                rb: st.rb || {}, mv: st.mv || {}, k: t.k, mk: t.mk };
     });
-    // El anfitrión lo junta al acabar (summary → 'ov'): se guarda, porque cuando se pinta
-    // el final el grupo ya está cerrado.
+    // The host gathers it at the end (summary → 'ov'): it's kept, because when the end
+    // is drawn the group has already closed.
     if (G.Coop.active && G.Coop.isHost) final = rows;
     return rows;
   }
 
   /**
-   * El equipo al acabar: lo que mandó el anfitrión en el 'ov' (o lo que juntó él). null en
-   * solitario o si no llegó (el grupo se cortó).
+   * The team at the end: what the host sent in the 'ov' (or what it gathered itself). null in
+   * solo or if it never arrived (the group dropped).
    */
   function party() {
     if (final) return final;
     return G.Coop.active && G.Coop.isHost ? all() : null;
   }
 
-  /** Tu desglose: por movimiento, daño, %, derrotados y por segundo. */
+  /** Your breakdown: per move, damage, %, defeated and per second. */
   function mine(time, rows) {
     const pl = G.Game.player;
     if (!pl) return null;
@@ -116,11 +116,11 @@ G.RunStats = (() => {
     return { moves, d: Math.round(pl.dmgDealt || 0), t: Math.round(my.t), dn: my.dn, k: kills, rev };
   }
 
-  // ---------------- pantallas ----------------
+  // ---------------- screens ----------------
   const n = v => Math.round(v).toLocaleString(G.I18n.locale);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /** Resumen del equipo; `next` abre tu pantalla de fin. */
+  /** Team summary; `next` opens your end screen. */
   function showParty(rows, next) {
     const revOf = uid => rows.reduce((a, r) => a + ((r.rb || {})[uid] || 0), 0);
     const best = rows.reduce((b, r) => (r.d > b.d ? r : b), rows[0]);
@@ -144,7 +144,7 @@ G.RunStats = (() => {
     el.querySelector('[data-a=next]').onclick = () => { el.remove(); next(); };
   }
 
-  /** Lo de la pantalla de fin (run-ui.js showOver): tus ataques y tus números. */
+  /** The end screen part (run-ui.js showOver): your attacks and your numbers. */
   function mineHTML(s) {
     if (!s) return '';
     const pct = v => Math.round(v * 100) + ' %';

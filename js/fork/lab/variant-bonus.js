@@ -1,22 +1,22 @@
-/* ============ variant-bonus.js — lo que da el shiny o el radiante, en la ficha (Lab, fork MrSurvivor) ============
- * En la ficha de la colección (showDetail de js/ui/menu.js, gancho de una línea), debajo de los
- * stats: los extras de su shiny o su radiante en las partidas Lab (G.LabShiny.BONUS / RBONUS de
- * js/fork/lab/shiny.js), con la misma pinta que los stats: la barra normal y, al final, otro
- * trozo del color del shiny (celeste) o del radiante (naranja) con lo que suma.
- *   Experiencia y monedas   la barra va hasta +25 %; lo normal llena 1/1,25 y el extra el resto.
- *   Cambios de carta        un cuadradito por cambio: los de Mejoras (de ese Pokémon) en gris
- *                           y los del shiny o el radiante en su color.
- * Se enseña el que estás viendo (el radiante si lo usas; si no, el shiny si lo ves). Si ves el
- * normal y tienes su shiny o su radiante, sale atenuado ("Pick ... above to use it"). Viendo el
- * shiny con el radiante también tuyo, una línea dice que el radiante da más.
- * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-variant-bonus.cjs.
+/* ============ variant-bonus.js — what the shiny or the radiant gives, on the detail card (Lab, MrSurvivor fork) ============
+ * On the collection's detail card (showDetail in js/ui/menu.js, a one-line hook), under the
+ * stats: the extras its shiny or radiant gives in Lab runs (G.LabShiny.BONUS / RBONUS in
+ * js/fork/lab/shiny.js), drawn like the stats: the normal bar and, at its end, another
+ * segment in the shiny's colour (light blue) or the radiant's (orange) for what it adds.
+ *   Experience and coins    the bar goes up to +25 %; the normal part fills 1/1.25 and the extra the rest.
+ *   Card rerolls            one small square per reroll: the Upgrades ones (that Pokémon's) in grey
+ *                           and the shiny's or radiant's in its colour.
+ * It shows the one you're looking at (the radiant if you use it; if not, the shiny if you view it). If you
+ * view the normal one and own its shiny or radiant, it shows dimmed ("Pick ... above to use it"). Viewing the
+ * shiny when you also own the radiant, a line says the radiant gives more.
+ * Texts in English only, like the rest of Lab. Test: fork/test-variant-bonus.cjs.
  */
 G.VariantBonus = (() => {
   const C = { shiny: '#9ae6ff', radiant: '#ffb347' };
-  const MAX = 1.25;                                // la barra de XP y monedas llega a +25 %
+  const MAX = 1.25;                                // the XP and coins bar reaches +25 %
   const pct = v => Math.round(v * 100);
 
-  /** Qué extras enseñar para dex: { kind: 'shiny'|'radiant', on } o null. */
+  /** Which extras to show for dex: { kind: 'shiny'|'radiant', on } or null. */
   function which(dex, viewShiny) {
     const rad = !!(G.Radiant && G.Radiant.owns(dex) && G.Radiant.has(dex)), sh = G.DB.ownsShiny(dex);
     if (rad && G.Radiant.wants(dex)) return { kind: 'radiant', on: true };
@@ -48,7 +48,7 @@ G.VariantBonus = (() => {
       <p class="vb-note">${note}</p></div>`;
   }
 
-  // Estilos aquí: dev.html no carga css/brand.css.
+  // Styles here: dev.html doesn't load css/brand.css.
   const CSS = `
 .vb-box { margin: 8px 0 4px; padding: 6px 8px 4px; border-radius: 8px; border: 1px solid var(--vb); background: rgba(0,0,0,.18);
   box-shadow: 0 0 12px -6px var(--vb); }
@@ -65,7 +65,7 @@ G.VariantBonus = (() => {
 .vb-note { margin: 2px 0 0; font-size: 12px; color: var(--muted); }`;
   let styled = false;
 
-  /** Gancho de showDetail (js/ui/menu.js): viewShiny = si la ficha enseña el shiny. */
+  /** Hook for showDetail (js/ui/menu.js): viewShiny = whether the card shows the shiny. */
   function detail(dex, viewShiny) {
     const box = document.getElementById('dex-detail');
     if (!box || !G.DB.save.owned[dex] || !G.LabShiny) return;

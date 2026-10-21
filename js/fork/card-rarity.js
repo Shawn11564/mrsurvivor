@@ -1,19 +1,19 @@
-/* ============ card-rarity.js — rarezas de las cartas de mejora (fork MrSurvivor) ============
- * Las cartas de mejora de la run (Vigor, Potencia, Carrera... G.LevelUp.STATS) salen con una rareza:
- *   Común ×1 (60 %) · Poco común ×1,25 (25 %) · Rara ×1,5 (10 %) · Épica ×2 (4 %) · Legendaria ×3 (1 %)
- * El efecto y su texto van por el multiplicador (Potencia Épica: "+20% de daño"), el chip dice la
- * rareza y la carta lleva su color (los de las rarezas del gacha). Los topes no cambian: una carta
- * cuenta su multiplicador en statsTaken (Potencia tiene 40), y si no cabe entera baja de rareza.
- * Las que piden una evolución (doradas) y las comunes se quedan como estaban.
- * El efecto de cada una se repite aquí (S) con el número de la carta del juego: si upstream cambia
- * una carta (su texto ya no es el de S), esa sale siempre común, así el texto nunca miente.
- * Ganchos: G.LevelUp.offer (las 3 cartas), G.RunUI.showLevelUp y G.RunUI.reroll (el color).
- * Prueba: fork/test-card-rarity.cjs.
+/* ============ card-rarity.js — rarities for the stat upgrade cards (MrSurvivor fork) ============
+ * The run's stat upgrade cards (Vigor, Potencia, Carrera... G.LevelUp.STATS) come with a rarity:
+ *   Common ×1 (60 %) · Uncommon ×1.25 (25 %) · Rare ×1.5 (10 %) · Epic ×2 (4 %) · Legendary ×3 (1 %)
+ * The effect and its text scale by the multiplier (Epic Potencia: "+20% de daño"), the chip names the
+ * rarity and the card wears its colour (the gacha's rarity colours). The caps don't change: a card
+ * counts its multiplier in statsTaken (Potencia has 40), and if it doesn't fit whole it drops a rarity.
+ * Cards that ask for an evolution (gold ones) and common ones stay as they were.
+ * Each card's effect is repeated here (S) with the game card's number: if upstream changes
+ * a card (its text is no longer the one in S), that card always comes common, so the text never lies.
+ * Hooks: G.LevelUp.offer (the 3 cards), G.RunUI.showLevelUp and G.RunUI.reroll (the colour).
+ * Test: fork/test-card-rarity.cjs.
  */
 G.CardRarity = (() => {
   const TIERS = [{ r: 1, k: 1, w: 60 }, { r: 2, k: 1.25, w: 25 }, { r: 3, k: 1.5, w: 10 }, { r: 4, k: 2, w: 4 }, { r: 5, k: 3, w: 1 }];
   const fmt = v => String(+v.toFixed(2));
-  // id: base (el texto del juego), t (el mismo con {x}), n (su número), apply(pl, k)
+  // id: base (the game's text), t (the same with {x}), n (its number), apply(pl, k)
   const S = {
     hp:   { base: '+20 de vida máxima (y la recupera).', t: '+{x} de vida máxima (y la recupera).', n: 20, round: true, apply: (pl, k) => pl.addMaxHp(Math.round(20 * k)) },
     atk:  { base: '+10% de daño con todos los movimientos.', t: '+{x}% de daño con todos los movimientos.', n: 10, apply: (pl, k) => { pl.atkMul *= 1 + 0.10 * k; } },
@@ -25,14 +25,14 @@ G.CardRarity = (() => {
     xp:   { base: '+12% de experiencia ganada.', t: '+{x}% de experiencia ganada.', n: 12, apply: (pl, k) => { pl.xpMul *= 1 + 0.12 * k; } },
     heal: { base: 'Recupera el 45% de tu vida ahora mismo.', t: 'Recupera el {x}% de tu vida ahora mismo.', n: 45, cap: 100, apply: (pl, k) => pl.heal(pl.maxHp * Math.min(1, 0.45 * k)) }
   };
-  const api = { TIERS, S, roll: m => roll(m) };   // las pruebas cambian roll
+  const api = { TIERS, S, roll: m => roll(m) };   // the tests swap roll
   const DEF = Object.fromEntries((G.LevelUp.STATS || []).map(s => [s.id, s]));
   const ok = id => S[id] && DEF[id] && DEF[id].desc === S[id].base;
 
   function roll(maxK) {
     let x = Math.random() * 100, t = TIERS[0];
     for (const c of TIERS) { if ((x -= c.w) < 0) { t = c; break; } }
-    while (t.k > maxK && t.r > 1) t = TIERS[t.r - 2];       // no cabe entera: baja
+    while (t.k > maxK && t.r > 1) t = TIERS[t.r - 2];       // doesn't fit whole: drop one
     return t;
   }
   function value(s, k) { let v = s.n * k; if (s.round) v = Math.round(v); if (s.cap) v = Math.min(s.cap, v); return fmt(v); }
@@ -43,7 +43,7 @@ G.CardRarity = (() => {
     const out = offer.apply(this, arguments);
     if (!Array.isArray(out) || !pl) return out;
     for (const c of out) {
-      if (c.type !== 'stat' || !c.key || c.color === '#ffd23f') continue;   // las doradas piden una evolución
+      if (c.type !== 'stat' || !c.key || c.color === '#ffd23f') continue;   // gold ones ask for an evolution
       const id = c.key.slice(5), s = S[id], d = DEF[id];
       if (!ok(id)) continue;
       const taken = (pl.statsTaken && pl.statsTaken[id]) || 0, t = api.roll(d.max ? d.max - taken : Infinity);
@@ -73,14 +73,14 @@ G.CardRarity = (() => {
   G.RunUI.showLevelUp = function (level, list) {
     const r = show.apply(this, arguments);
     paint(list);
-    const btn = document.getElementById('lvl-reroll');     // run-ui.js lo apunta a su reroll interno
+    const btn = document.getElementById('lvl-reroll');     // run-ui.js points it at its internal reroll
     if (btn) btn.onclick = () => G.RunUI.reroll();
     return r;
   };
   const reroll = G.RunUI.reroll;
   G.RunUI.reroll = function () { const r = reroll.apply(this, arguments); paint(last); return r; };
 
-  // Los textos con el número abierto: el del juego, cambiando su número por {x} (en, fr, it, pt-BR, zh).
+  // The texts with an open number: the game's text, with its number swapped for {x} (en, fr, it, pt-BR, zh).
   const ROWS = [
     [S.hp.t, '+{x} max HP (and heals it).', '+{x} PV max (et les récupère).', '+{x} PS massimi (e li ripristina).', '+{x} de vida máxima (e recupera essa vida).', '最大生命值 +{x}，并恢复等量生命值。', '最大生命值 +{x}，並恢復等量生命值。'],
     [S.atk.t, '+{x}% damage with every move.', '+{x} % de dégâts avec toutes les capacités.', '+{x}% di danno con ogni mossa.', '+{x}% de dano com todos os golpes.', '所有招式伤害 +{x}%。', '所有招式傷害 +{x}%。'],

@@ -1,44 +1,44 @@
-/* ============ kinds2.js — cuerpo a cuerpo y aguante en el modo Lab (fork MrSurvivor) ============
- * Fase 9 de fork/LAB.md. Como kinds.js: familias nuevas en G.Combat.EXTRA y efectos nuevos para
- * cualquier familia, envolviendo funciones que el juego llama como G.X.y. Movimientos en
- * js/fork/lab/lab-moves.js (sección "fase 9"). Textos sólo en inglés.
+/* ============ kinds2.js — close range and sustain in Lab mode (MrSurvivor fork) ============
+ * Phase 9 of fork/LAB.md. Like kinds.js: new families in G.Combat.EXTRA and new effects for
+ * any family, wrapping functions the game calls as G.X.y. Moves in
+ * js/fork/lab/lab-moves.js (section "phase 9"). Texts in English only.
  *
- * Familias:
- *   grab    Sísmico, Llave Giro, Cola Dragón: agarras al más cercano y lo lanzas; al volar golpea
- *           a los que se encuentra (`splash` × el daño). `perLvl`: + daño por nivel tuyo
- *   bind    Constricción, Atadura, Acoso, Cepo, Electrojaula: sujetas a `count` enemigos `dur` s
- *           (no se mueven ni atacan) y les haces `dmg` cada 0,5 s
- *   focus   Puño Certero: cargas `charge` s y, si no te dan, un puñetazo enorme; si te dan, nada.
- *           Coraza Trampa (mode 'trap'): si te dan mientras carga, explota a tu alrededor
- *   heal    Recuperación, Ovocuración, Respiro, Sol Matinal, Recogearena, Descanso, Deseo,
- *           Absorbefuerza, Auxilio: se lanzan solos desde cualquier hueco al bajar de `below`
- *           (50 %) de vida: curan `amount` × tu vida máxima. `wx`: ×1,5 con ese clima
- *           (Sol Matinal con otro clima, ×0,5). `rest`: duermes esos s (ni te mueves ni atacas).
- *           `delay`: llega luego (Deseo). `meek` (Absorbefuerza): debilita al más fuerte cercano
- *   screen  Reflejo, Pantalla de Luz, Velo Aurora: `amount` menos de daño físico, especial o los
- *           dos `dur` s, para ti y los compañeros cerca de ti. Solos desde cualquier hueco
- *   shout   Gruñido, Ojitos Tiernos, Danza Pluma, Rugido de Guerra, Malicioso, Chirrido, Llanto
- *           Falso, Eco Metálico, Cara Susto: un grito que marca a los enemigos cerca `dur` s:
- *           `meek` hacen menos daño, `weak` reciben más (de `weakCat` o de todo), `slow`. Solo
- *           desde cualquier hueco con 2 enemigos cerca. Cada jugador marca sus copias (también
- *           con el grito de un compañero): te protege a ti y a tus golpes
- *   endure  Aguante: cuando un golpe te dejaría KO, te quedas con 1 PS e intocable `dur` s
- * Efectos para cualquier familia (en el golpe):
- *   leech     curas esa parte del daño que haces (como mucho LEECH_CAP de tu vida por segundo)
- *   seed      Drenadoras: el enemigo pierde vida cada 0,5 s `seed` s y tú te curas la mitad
- *   revenge   × si te han dado hace menos de 1,5 s (Desquite, Vendetta)
- *   reversal  × (1 + reversal × la vida que te falta) (Inversión, Azote)
- *   cut       quita esa parte de la vida que le queda (Superdiente; a los jefes, CUT_BOSS de eso)
- *   power     × (1 + power × tus acumulaciones de mejoras) (Poder Reserva, Chulería)
- *   flinch    el primer golpe a cada enemigo lo aturde esos s (Sorpresa)
- * Y en los potenciadores (buff): `also` [{ stat, amount }] sube más stats a la vez (Corpulencia,
- * Paz Mental...); `drum` (Deshoje) cuesta esa parte de tu vida y llena las acumulaciones.
- * Con grab, bind, focus o ramp activos recibes un 25 % menos, como con el cuerpo a cuerpo (player.js).
+ * Families:
+ *   grab    Seismic Toss, Circle Throw, Dragon Tail: you grab the nearest one and throw it; in flight it hits
+ *           whoever it runs into (`splash` × the damage). `perLvl`: + damage per level of yours
+ *   bind    Wrap, Bind, Infestation, Snap Trap, Thunder Cage: you hold `count` enemies for `dur` s
+ *           (they can't move or attack) and deal `dmg` to them every 0.5 s
+ *   focus   Focus Punch: you charge for `charge` s and, if you're not hit, a huge punch; if you are, nothing.
+ *           Shell Trap (mode 'trap'): if you're hit while it charges, it explodes around you
+ *   heal    Recover, Soft-Boiled, Roost, Morning Sun, Shore Up, Rest, Wish,
+ *           Strength Sap, Heal Order: fire on their own from any slot when you fall below `below`
+ *           (50 %) HP: they heal `amount` × your max HP. `wx`: ×1.5 in that weather
+ *           (Morning Sun in another weather, ×0.5). `rest`: you sleep that many s (can't move or attack).
+ *           `delay`: arrives later (Wish). `meek` (Strength Sap): weakens the strongest one nearby
+ *   screen  Reflect, Light Screen, Aurora Veil: `amount` less physical, special or both
+ *           damage for `dur` s, for you and teammates near you. On their own from any slot
+ *   shout   Growl, Baby-Doll Eyes, Feather Dance, Noble Roar, Leer, Screech, Fake
+ *           Tears, Metal Sound, Scary Face: a cry that marks nearby enemies for `dur` s:
+ *           `meek` they deal less damage, `weak` they take more (from `weakCat` or from everything), `slow`. On its own
+ *           from any slot with 2 enemies nearby. Each player marks their own copies (also
+ *           with a teammate's cry): it protects you and your hits
+ *   endure  Endure: when a hit would knock you out, you stay at 1 HP and untouchable for `dur` s
+ * Effects for any family (on hit):
+ *   leech     you heal that share of the damage you deal (at most LEECH_CAP of your HP per second)
+ *   seed      Leech Seed: the enemy loses HP every 0.5 s for `seed` s and you heal half
+ *   revenge   × if you were hit less than 1.5 s ago (Revenge, Payback)
+ *   reversal  × (1 + reversal × the HP you're missing) (Reversal, Flail)
+ *   cut       takes away that share of the HP it has left (Super Fang; for bosses, CUT_BOSS of that)
+ *   power     × (1 + power × your stacked boosts) (Stored Power, Power Trip)
+ *   flinch    the first hit on each enemy stuns it for that many s (Fake Out)
+ * And in boosters (buff): `also` [{ stat, amount }] raises more stats at once (Bulk Up,
+ * Calm Mind...); `drum` (Fillet Away) costs that share of your HP and fills the stacks.
+ * With grab, bind, focus or ramp active you take 25 % less, as with melee (player.js).
  *
- * Cooperativo: lo que les pasa a los enemigos va por hit, applyStun y applySlow (el invitado ya se
- * lo manda al anfitrión). Las pantallas y los gritos de un compañero llegan como fantasma
- * (Combat.ghostCast) y valen igual en tu pantalla. La curación es sólo tuya.
- * Prueba: fork/test-lab-close.cjs. Aguante en partida: fork/survival-lab.cjs.
+ * Co-op: what happens to enemies goes through hit, applyStun and applySlow (the guest already
+ * sends it to the host). A teammate's screens and cries arrive as a ghost
+ * (Combat.ghostCast) and count the same on your screen. Healing is yours only.
+ * Test: fork/test-lab-close.cjs. Survival in a run: fork/survival-lab.cjs.
  */
 G.LabKinds2 = (() => {
   const C = G.Combat, X = C.EXTRA, K = G.LabKinds;
@@ -48,10 +48,10 @@ G.LabKinds2 = (() => {
   const PASSIVE = new Set(['heal', 'screen', 'shout', 'endure']);
   const CLOSE = new Set(['ramp', 'grab', 'bind', 'focus']);
   const LEECH_CAP = 0.05, CUT_BOSS = 0.08, REVENGE_MS = 1500;
-  const FOCUS_HIT = 0.35, FOCUS_MIN = 0.3, FOCUS_BRACE = 0.7;      // Puño Certero: por golpe, mínimo, daño recibido cargando
+  const FOCUS_HIT = 0.35, FOCUS_MIN = 0.3, FOCUS_BRACE = 0.7;      // Focus Punch: per hit, minimum, damage taken while charging
   const MARK = { meek: '#6fa8ff', weak: '#d36bff' };
 
-  // ---------------- mejoras y evoluciones ----------------
+  // ---------------- upgrades and evolutions ----------------
   Object.assign(K.LADDERS, {
     grab: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: 'Throws 30% further', m: { knock: 1.3 } },
@@ -75,7 +75,7 @@ G.LabKinds2 = (() => {
       { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'Untouchable 40% longer', m: { dur: 1.4 } },
       { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'Also heals 25% of your HP', m: { amount: 0.25 } }]
   });
-  // Al evolucionar: multiplica (como LabKinds.EVO, pero aquí también amount; ninguna suma).
+  // On evolving: multiplies (like LabKinds.EVO, but here amount too; nothing is added).
   const EVO = {
     grab:   { t: '×1.8 damage and the thrown enemy hits twice as hard', m: { dmg: 1.8, splash: 2 } },
     bind:   { t: '×1.8 damage and holds them longer', m: { dmg: 1.8, dur: 1.3 } },
@@ -85,7 +85,7 @@ G.LabKinds2 = (() => {
     shout:  { t: '×1.3 stronger and a bigger area', m: { amount: 1.3, radius: 1.3 } },
     endure: { t: 'Half the recharge', m: { cd: 0.5 } }
   };
-  // Un movimiento puede traer su propia evolución (evoMod, js/fork/lab/lab-moves.js): manda sobre la de su familia.
+  // A move can bring its own evolution (evoMod, js/fork/lab/lab-moves.js): it overrides its family's.
   const evoOf = m => m.evoMod || (m.def && m.def.evoMod) || EVO[m.kind];
   const evoInfo = G.Moves.evoInfo;
   G.Moves.evoInfo = function (m, statsTaken) {
@@ -116,11 +116,11 @@ G.LabKinds2 = (() => {
     endure: ['.###.', '#...#', '#.#.#', '#...#', '.###.']
   });
 
-  // ---------------- lo que queda en el mapa ----------------
+  // ---------------- what stays on the map ----------------
   let thrown = [], binds = [], screens = [], wishes = [];
   const marked = new Set(), seeded = new Set();
 
-  /** El enemigo vivo más cercano a (x, y) en r (antes tu blanco, si está), que cumpla ok. */
+  /** The nearest live enemy to (x, y) within r (your target first, if it's there) that passes ok. */
   function nearest(pl, r, ok = () => true) {
     if (pl.target && !pl.target.dead && pl.target.hurt && ok(pl.target) && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= r + pl.target.r) return pl.target;
     let best = null, bd = Infinity;
@@ -145,7 +145,7 @@ G.LabKinds2 = (() => {
       const dmg = (m.dmg + (m.perLvl || 0) * pl.level) * pl.atkFor(m);
       const big = boss(t);
       C.hit(pl, t, dmg, c, ca, sa, big ? 0 : m.knock || 900, m);
-      // Aturdido al caer (enemy.js no mueve a un aturdido, ni con el empujón).
+      // Stunned on landing (enemy.js doesn't move a stunned enemy, not even with the knockback).
       if (!big && !t.dead) {
         thrown.push({ e: t, owner: pl, m, t: 0, dur: 0.5, ca, sa, dmg: dmg * (m.splash || 0.6), hits: new Set([t.id]) });
       }
@@ -210,8 +210,8 @@ G.LabKinds2 = (() => {
       if (!f.fired) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 10, 'No trigger', '#a3abb8');
       return;
     }
-    // Cada golpe que te dan mientras cargas le quita FOCUS_HIT (un enjambre te pega siempre: perderlo
-    // entero lo dejaba en nada, fork/survival-lab.cjs), hasta FOCUS_MIN.
+    // Each hit you take while charging takes FOCUS_HIT off it (a swarm always hits you: losing it
+    // all left it at nothing, fork/survival-lab.cjs), down to FOCUS_MIN.
     const k = Math.max(FOCUS_MIN, 1 - FOCUS_HIT * (f.hurt || 0));
     if (k < 1) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 10, k <= FOCUS_MIN ? 'Lost focus' : 'Shaken', '#a3abb8');
     const half = Math.min(m.arc || 2.4, 6.2832) / 2, dmg = m.dmg * pl.atkFor(m) * k;
@@ -244,10 +244,10 @@ G.LabKinds2 = (() => {
     return w === m.wx ? 1.5 : m.wx === 'sun' ? 0.5 : 1;
   }
   X.heal = {
-    target: true, reach: m => 0,                      // nunca desde Combat.tickMove: lo lanza C.tick (abajo)
+    target: true, reach: m => 0,                      // never from Combat.tickMove: C.tick fires it (below)
     run(pl, m, ghost) {
       G.FX.ring(pl.x, pl.y, pl.r * 3, pl.r, '#5fe08a', 0.4, 3);
-      // Deseo: estrellas al pedirlo; los corazones, cuando cura de verdad (en wishes, abajo).
+      // Wish: stars when it's made; the hearts when it actually heals (in wishes, below).
       for (let i = 0; i < 5; i++) G.FX.sp(m.delay ? 'star' : 'heart', m.delay ? 'fairy' : 'grass', pl.x + G.U.rand(-12, 12), pl.y - G.U.rand(0, pl.bodyH), { vy: -60, life: 0.7 });
       if (ghost) return;
       let amt = pl.maxHp * (m.amount || 0.25) * healK(m);
@@ -261,7 +261,7 @@ G.LabKinds2 = (() => {
       if (m.rest) { pl._labRest = m.rest; G.FX.dmgText(pl.x, pl.y - pl.bodyH - 16, 'Zzz', '#d8e8ff'); }
     }
   };
-  X.endure = { target: true, reach: m => 0, run() {} };     // no se lanza: espera en P.hurt
+  X.endure = { target: true, reach: m => 0, run() {} };     // never fired: waits in P.hurt
 
   // ---------------- screen ----------------
   X.screen = {
@@ -273,7 +273,7 @@ G.LabKinds2 = (() => {
       G.FX.ring(pl.x, pl.y, 8, m.radius || 150, col(m), 0.5, 4);
     }
   };
-  /** Cuánto menos recibe `pl` de un golpe de categoría `cat` (sus pantallas y las de compañeros cerca). */
+  /** How much less `pl` takes from a hit of category `cat` (its screens and those of nearby teammates). */
   function screenK(pl, cat) {
     let k = 0;
     for (const s of screens) {
@@ -289,18 +289,18 @@ G.LabKinds2 = (() => {
     run(pl, m, ghost) {
       const r = m.radius || 120, c = col(m);
       G.FX.ring(pl.x, pl.y - pl.bodyH * 0.4, 6, r, c, 0.35, 3);
-      // Notas para los gritos; las caras y los gestos traen su dibujo (look).
+      // Notes for the cries; the faces and gestures bring their own art (look).
       const v = m.look ? G.VFX.forMove(m) : { proj: 'note', pal: 'normal' };
       for (let i = 0; i < 4; i++) G.FX.sp(v.proj, v.pal, pl.x + G.U.rand(-10, 10), pl.y - pl.bodyH, { vy: -50, vx: G.U.rand(-40, 40), life: 0.5 });
       for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, r)) {
         if (e.dead) continue;
         mark(e, m);
-        // "Más fuerte" (amount, sus mejoras) también frena más (Cara Susto), hasta 0,8.
+        // "Stronger" (amount, its upgrades) also slows more (Scary Face), up to 0.8.
         if (!ghost && m.slow) e.applySlow(Math.min(0.8, m.slow * (m.amount || 1)), m.dur || 6);
       }
     }
   };
-  /** Marca a un enemigo (en esta pantalla): meek = hace menos daño, weak = recibe más. */
+  /** Marks an enemy (on this screen): meek = deals less damage, weak = takes more. */
   function mark(e, m) {
     const s = m.amount || 1, dur = m.dur || 6;
     if (m.meek) {
@@ -326,9 +326,9 @@ G.LabKinds2 = (() => {
     }
   }
 
-  // ---------------- los golpes: efectos para cualquier familia ----------------
-  // G.RunStats.tag(e, m) lo llama Combat en cada golpe tuyo justo antes de e.hurt (hit y
-  // proyectiles): aquí se apunta, y en Enemy.hurt se cambia el daño.
+  // ---------------- hits: effects for any family ----------------
+  // Combat calls G.RunStats.tag(e, m) on each of your hits right before e.hurt (hit and
+  // projectiles): it's noted here, and the damage is changed in Enemy.hurt.
   let pend = null;
   const tag = G.RunStats.tag;
   G.RunStats.tag = function (e, m) {
@@ -336,7 +336,7 @@ G.LabKinds2 = (() => {
     pend = { e, m };
   };
   const stacks = pl => Object.values(pl.buffs).reduce((a, b) => a + (b.n || 0), 0);
-  /** El daño de un golpe de `m` a `e` con los efectos de esta fase. */
+  /** The damage of a hit from `m` on `e` with this phase's effects. */
   function boost(pl, e, m, amount) {
     let k = 1;
     if (m.revenge && now() - (pl._labHurtAt || -1e9) < REVENGE_MS) k *= m.revenge;
@@ -365,7 +365,7 @@ G.LabKinds2 = (() => {
       seeded.add(this);
     }
     const r = ehurt.call(this, out, color, dx, dy, knock, eff);
-    // El resumen y el daño hecho (Combat ya apuntó `amount`): sólo lo que se ha añadido aquí.
+    // The summary and damage dealt (Combat already recorded `amount`): only what was added here.
     const extra = out - amount;
     if (extra) { m.dealt = (m.dealt || 0) + extra; pl.dmgDealt += extra; if (extra > 0) pl.onDealt(extra); }
     if (m.leech) addLeech(pl, (this.remote ? out : Math.min(out, Math.max(0, hp0))) * m.leech);
@@ -399,7 +399,7 @@ G.LabKinds2 = (() => {
     }
   }
 
-  // ---------------- tu Pokémon ----------------
+  // ---------------- your Pokémon ----------------
   const P = G.Player.prototype;
   const phurt = P.hurt;
   P.hurt = function (amount, type = null, pure = false, cat = null) {
@@ -436,7 +436,7 @@ G.LabKinds2 = (() => {
     if (this.hp < hp0) this._labHurtAt = now();
     return r;
   };
-  // Potenciadores de varias stats y Deshoje.
+  // Multi-stat boosters and Fillet Away.
   const pcast = P.cast;
   const KIND_AS = { grab: 'melee', bind: 'melee', focus: 'buff', heal: 'buff', screen: 'buff', shout: 'nova', endure: 'buff' };
   P.cast = function (m) {
@@ -453,7 +453,7 @@ G.LabKinds2 = (() => {
     }
     return r;
   };
-  // Descanso: dormido, ni te mueves (frozen se pone en cada fotograma en game.js, antes de update).
+  // Rest: asleep, you can't even move (game.js sets frozen every frame, before update).
   const pupdate = P.update;
   P.update = function (dt) {
     if (this._labRest > 0) { this._labRest -= dt; this.frozen = true; }
@@ -472,8 +472,8 @@ G.LabKinds2 = (() => {
     }
   };
 
-  // ---------------- cada fotograma ----------------
-  /** ¿Toca lanzar ya este de apoyo? */
+  // ---------------- every frame ----------------
+  /** Is it time to fire this support move? */
   function wants(pl, m) {
     if (m.kind === 'heal') return pl.hp <= pl.maxHp * (m.below || 0.5);
     if (m.kind === 'screen') return G.EnemyMgr.queryCircle(pl.x, pl.y, 260).some(e => !e.dead);
@@ -485,7 +485,7 @@ G.LabKinds2 = (() => {
   }
   const ctick = C.tick;
   C.tick = function (dt, pl) {
-    if (pl && pl._labRest > 0) return;                  // dormido (Descanso): no ataca
+    if (pl && pl._labRest > 0) return;                  // asleep (Rest): doesn't attack
     ctick.apply(this, arguments);
     if (!pl || pl.dead) return;
     for (const grp of pl.slots) for (const m of grp) {
@@ -568,7 +568,7 @@ G.LabKinds2 = (() => {
     }
     ctx.restore();
   };
-  // Pantallas: un brillo sobre quien está dentro.
+  // Screens: a glow on whoever is inside.
   const pdraw2 = P.draw;
   P.draw = function (ctx) {
     pdraw2.apply(this, arguments);

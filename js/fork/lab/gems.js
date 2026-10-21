@@ -1,12 +1,12 @@
-/* ============ gems.js — gemas (Lab primero, fork MrSurvivor) ============
- * Una moneda rara de las partidas Lab (save.gems, en la libreta de monedas y tickets: CUR de
- * js/core/db.js): al derrotar a un enemigo, 0,7 % de las veces una; un jefe, siempre una; un legendario,
- * dos (G.Progress.kill). Con el ajuste Lab encendido, en Mejoras:
- *   - 100 gemas: reiniciar las mejoras del Pokémon devolviendo todas las monedas que costaron
- *     (save.ureset[dex] cuenta los reinicios: la fusión de dos copias se queda con las mejoras de la
- *     que más lleva, como con el prestigio; js/fork/prestige.js);
- *   - 100 gemas: subir de prestigio (lo cobra js/fork/prestige.js).
- * Textos en inglés, como el Lab. Prueba: fork/test-gems.cjs.
+/* ============ gems.js — gems (Lab first, MrSurvivor fork) ============
+ * A rare currency from Lab runs (save.gems, in the coins-and-tickets ledger: CUR in
+ * js/core/db.js): defeating an enemy drops one 0.7 % of the time; a boss, always one; a legendary,
+ * two (G.Progress.kill). With the Lab setting on, in Upgrades:
+ *   - 100 gems: reset the Pokémon's upgrades and get back all the coins they cost
+ *     (save.ureset[dex] counts the resets: merging two copies keeps the upgrades of the one
+ *     with more, as with prestige; js/fork/prestige.js);
+ *   - 100 gems: go up a prestige level (js/fork/prestige.js charges it).
+ * Texts in English, like the Lab. Test: fork/test-gems.cjs.
  */
 G.Gems = (() => {
   const $ = id => document.getElementById(id);
@@ -36,7 +36,7 @@ G.Gems = (() => {
     return r;
   };
 
-  /** Monedas que costaron las mejoras compradas de dex. */
+  /** Coins that dex's bought upgrades cost. */
   function spent(dex) {
     const lv = G.DB.upgradesOf(dex) || {};
     let c = 0;
@@ -55,7 +55,7 @@ G.Gems = (() => {
     return back;
   }
 
-  // ---------------- Mejoras ----------------
+  // ---------------- Upgrades ----------------
   let sure = false;
   const dexNow = () => { const sel = $('upg-mon'); return sel && +sel.value; };
   function render() {

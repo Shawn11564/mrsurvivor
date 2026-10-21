@@ -1,36 +1,36 @@
-/* ============ kinds.js — familias de movimiento nuevas del modo Lab (fork MrSurvivor) ============
- * Fase 4 de fork/LAB.md. Se enganchan en G.Combat.EXTRA (js/systems/combat.js: run, reach y si
- * necesitan blanco); lo demás envuelve funciones que el juego llama como G.X.y. Sus movimientos
- * están en js/fork/lab/lab-moves.js y sólo salen en una partida Lab (G.Lab).
+/* ============ kinds.js — new move families for Lab mode (MrSurvivor fork) ============
+ * Phase 4 of fork/LAB.md. They hook into G.Combat.EXTRA (js/systems/combat.js: run, reach and whether
+ * they need a target); the rest wraps functions the game calls as G.X.y. Their moves
+ * are in js/fork/lab/lab-moves.js and only show up in a Lab run (G.Lab).
  *
- *   leap       Vuelo, Excavar, Bote, Buceo: te vas (no te pueden dar) y caes sobre el blanco
- *   recoil     Doble Filo, Envite Ígneo, Pájaro Osado: una embestida muy fuerte que te quita vida
- *              (`recoil` × el daño hecho, como mucho RECOIL_CAP de tu vida y nunca te deja KO)
- *   ramp       Rodar, Cortefuria, Bola Hielo: cada golpe que da pega más (`step` por golpe, hasta
- *              `stacks`); si falla o tardas, vuelve a empezar
- *   guard      Protección, Detección (protect: nada te hace daño `dur` s), Contraataque, Manto
- *              Espejo, Repr. Metal (counter: recibes la mitad y al acabar lo devuelve en un estallido)
- *   sleep      Hipnosis, Canto, Somnífero: una zona avisa y duerme a los que pilla `stun` s; un
- *              golpe los despierta (no las quemaduras ni el veneno)
- *   weather    Danza Lluvia, Día Soleado, Tormenta Arena, Paisaje Nevado: pone ese clima `dur` s
- *   terrain    Campo Eléctrico, de Hierba, Psíquico, de Niebla: un círculo en el suelo `dur` s que
- *              te ayuda a ti (y a tus compañeros) mientras estéis dentro
- *   wave       Surf, Agua Lodosa, Onda Tóxica: una ola ancha que avanza y arrastra a los enemigos
- *   metronome  Metrónomo: cada vez, un movimiento al azar de todo el juego
- *   transform  Transformación: te conviertes `dur` s en el enemigo más cercano (su aspecto y sus
- *              tipos) y este hueco lanza su movimiento
- * Y un estado para cualquier familia: `conf` (Rayo Confuso, Supersónico...): el enemigo, confuso
- * `conf` s, va dando tumbos, no te ataca y golpea a los que tiene al lado; `sleep` (en un
- * movimiento de otra familia) duerme como la de arriba.
+ *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and land on the target
+ *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP
+ *              (`recoil` × the damage dealt, at most RECOIL_CAP of your HP, and it never KOs you)
+ *   ramp       Rollout, Fury Cutter, Ice Ball: each hit that lands hits harder (`step` per hit, up to
+ *              `stacks`); if it misses or you're slow, it starts over
+ *   guard      Protect, Detect (protect: nothing hurts you for `dur` s), Counter, Mirror
+ *              Coat, Metal Burst (counter: you take half, and at the end it returns it in a blast)
+ *   sleep      Hypnosis, Sing, Sleep Powder: a zone warns, then puts whoever it catches to sleep for `stun` s; a
+ *              hit wakes them (not burns or poison)
+ *   weather    Rain Dance, Sunny Day, Sandstorm, Snowscape: sets that weather for `dur` s
+ *   terrain    Electric, Grassy, Psychic, Misty Terrain: a circle on the ground for `dur` s that
+ *              helps you (and your friends) while you're inside
+ *   wave       Surf, Muddy Water, Sludge Wave: a wide wave that moves forward and drags the enemies
+ *   metronome  Metronome: each time, a random move from the whole game
+ *   transform  Transform: for `dur` s you turn into the nearest enemy (its look and its
+ *              types) and this slot casts its move
+ * And a status for any family: `conf` (Confuse Ray, Supersonic...): the enemy, confused for
+ * `conf` s, stumbles around, doesn't attack you and hits whoever is next to it; `sleep` (on a
+ * move of another family) puts to sleep like the family above.
  *
- * guard, weather y terrain son de apoyo: se lanzan solos desde cualquier hueco (PASSIVE).
+ * guard, weather and terrain are support: they cast on their own from any slot (PASSIVE).
  *
- * Cooperativo (estrella, como coop.js): cada uno ejecuta sus ataques y los demás los ven como
- * fantasma. Lo que les pasa a los enemigos lo decide el anfitrión:
- *   invitado → anfitrión  { k:'labst', id, s:'z'|'c', v }   dormir / confundir a un enemigo suyo
- *   anfitrión → todos     { k:'labes', z:[ids], c:[ids] }   quién duerme y quién está confuso
- * La ola y el remolino arrastran en el anfitrión también con el fantasma de un invitado.
- * Textos sólo en inglés (fork/LAB.md). Prueba: fork/test-lab.cjs y fork/test-lab-coop.cjs.
+ * Co-op (star, like coop.js): each player runs their own attacks and the others see them as
+ * a ghost. What happens to the enemies is decided by the host:
+ *   guest → host       { k:'labst', id, s:'z'|'c', v }   put to sleep / confuse one of its enemies
+ *   host → everyone    { k:'labes', z:[ids], c:[ids] }   who is asleep and who is confused
+ * On the host, the wave and the whirlpool also drag with a guest's ghost.
+ * Text in English only (fork/LAB.md). Test: fork/test-lab.cjs and fork/test-lab-coop.cjs.
  */
 G.LabKinds = (() => {
   const C = G.Combat, X = C.EXTRA;
@@ -38,14 +38,14 @@ G.LabKinds = (() => {
   const now = () => performance.now();
   const boss = e => e.boss || e.judge;
   const authority = () => !G.Coop.active || G.Coop.isHost;
-  const RECOIL_CAP = 0.12;               // de tu vida máxima, por golpe
+  const RECOIL_CAP = 0.12;               // of your max HP, per hit
   const PASSIVE = new Set(['guard', 'weather', 'terrain']);
-  // Colores con los que no se despierta un dormido: quemadura, veneno (enemy.js update) y lava.
+  // Colours that don't wake a sleeping enemy: burn, poison (enemy.js update) and lava.
   const DOT = new Set(['#ff9a4d', '#d47cf0']);
 
-  // ---------------- mejoras y evoluciones de las familias nuevas ----------------
-  // Sólo con las claves que entiende G.Moves (moves.js applyMods: dmg, cd, radius, dur, width,
-  // stun, knock... por; count, stacks... más).
+  // ---------------- upgrades and evolutions of the new families ----------------
+  // Only with the keys G.Moves understands (moves.js applyMods: dmg, cd, radius, dur, width,
+  // stun, knock... times; count, stacks... plus).
   const LADDERS = {
     leap: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+30% landing area', m: { radius: 1.3 } },
@@ -78,7 +78,7 @@ G.LabKinds = (() => {
       { t: 'The copied move is one level higher', m: {} }, { t: '+40% duration', m: { dur: 1.4 } },
       { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'One level higher and +40% duration', m: { dur: 1.4 } }]
   };
-  // Al evolucionar (con su condición, como las demás): { t, m } con multiplicadores (MUL) o sumas (ADD).
+  // On evolving (with its condition, like the others): { t, m } with multipliers (MUL) or additions (ADD).
   const EVO = {
     leap:    { t: '×1.9 damage, bigger landing and less recharge', m: { dmg: 1.9, radius: 1.3, cd: 0.8 } },
     recoil:  { t: '×1.8 damage and half the recoil', m: { dmg: 1.8, recoil: 0.5 } },
@@ -113,7 +113,7 @@ G.LabKinds = (() => {
     return true;
   };
 
-  // Insignias de familia para el icono del movimiento (js/ui/icons.js, 5×5).
+  // Family badges for the move icon (js/ui/icons.js, 5×5).
   Object.assign(G.Icons.KIND_GLYPH, {
     leap:      ['..#..', '.#.#.', '#...#', '.....', '#####'],
     recoil:    ['#..#.', '.#..#', '..###', '.#..#', '#..#.'],
@@ -127,16 +127,16 @@ G.LabKinds = (() => {
     transform: ['##.##', '#...#', '.....', '#...#', '##.##']
   });
 
-  // ---------------- lo que se queda en el mapa ----------------
+  // ---------------- what stays on the map ----------------
   let fields = [];
-  /** Daño a todos los enemigos de un círculo (como Combat.blast). */
+  /** Damage to every enemy in a circle (like Combat.blast). */
   function blast(pl, m, x, y, r, dmg, knock = 0) {
     let n = 0;
     for (const e of G.EnemyMgr.queryCircle(x, y, r)) { C.hit(pl, e, dmg, col(m), e.x - x, e.y - y, knock, m); n++; }
     for (const p of G.World.propsInCircle(x, y, r)) G.World.damageProp(p, dmg, col(m));
     return n;
   }
-  /** Punto libre más lejano de (sx, sy) hacia (tx, ty) (donde caer o hasta donde embestir). */
+  /** Farthest free spot from (sx, sy) towards (tx, ty) (where to land or how far to charge). */
   function freeTo(pl, sx, sy, tx, ty, step = 8, walk = false) {
     const d = Math.hypot(tx - sx, ty - sy), ca = (tx - sx) / (d || 1), sa = (ty - sy) / (d || 1);
     if (!walk) {
@@ -147,7 +147,7 @@ G.LabKinds = (() => {
     for (let k = step; k <= d; k += step) { if (!G.World.isFree(sx + ca * k, sy + sa * k, pl.r * 0.8, true)) break; len = k; }
     return [sx + ca * len, sy + sa * len, len];
   }
-  /** Hacia dónde va un ataque con sitio: el blanco (si llega) o delante de ti. */
+  /** Where an attack with a spot goes: the target (if in reach) or in front of you. */
   function spot(pl, m, far = 140) {
     const t = C.spotFor(pl, m);
     return t ? [t.x, t.y, t] : [pl.x + Math.cos(pl.aim) * far, pl.y + Math.sin(pl.aim) * far, null];
@@ -247,7 +247,7 @@ G.LabKinds = (() => {
         const [ex, ey] = freeTo(pl, pl.x, pl.y, pl.x + Math.cos(pl.aim) * d, pl.y + Math.sin(pl.aim) * d, 8, true);
         pl.x = ex; pl.y = ey; G.World.collide(pl);
       }
-      // Si tarda en volver a lanzarse (cambias de hueco, no hay nadie), empieza de cero.
+      // If it takes too long to cast again (you switch slot, no one is there), it starts from zero.
       if (!ghost && now() - (m._rampAt || 0) > Math.max(1500, m.cd * pl.cdMul * 2500)) m._ramp = 0;
       const n = ghost ? 0 : m._ramp || 0, k = 1 + n * (m.step || 0.35);
       G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius * (1 + n * 0.08), m.arc || 2, c, v);
@@ -269,13 +269,13 @@ G.LabKinds = (() => {
   };
 
   // ---------------- guard ----------------
-  /** ¿Algo a punto de darte? (para que se lance solo desde cualquier hueco). */
+  /** Anything about to hit you? (so it casts on its own from any slot). */
   function threat(pl, r = 110) {
     if (G.EnemyMgr.queryCircle(pl.x, pl.y, r * 0.8).some(e => !e.dead)) return true;
     return G.Projectiles.all().some(p => !p.friendly && G.U.dist2(p.x, p.y, pl.x, pl.y) < r * r);
   }
   X.guard = {
-    target: true, reach: m => 0,                       // nunca desde Combat.tickMove: lo lanza C.tick (abajo) si algo va a darte
+    target: true, reach: m => 0,                       // never from Combat.tickMove: C.tick (below) casts it if something is about to hit you
     run(pl, m, ghost) {
       pl._labGuard = { t: m.dur || 0.9, dur: m.dur || 0.9, m, stored: 0, ghost };
       G.FX.ring(pl.x, pl.y - pl.bodyH * 0.4, pl.r * 3, pl.r * 1.4, col(m), 0.3, 3);
@@ -304,11 +304,11 @@ G.LabKinds = (() => {
   };
 
   // ---------------- weather ----------------
-  // Danza Lluvia, Día Soleado, Tormenta Arena, Paisaje Nevado: antes traían el clima de verdad (el
-  // evento de la arena, 16 s cada 22 s, para todos): casi siempre puesto y demasiado fuerte. Ahora
-  // un rato de su clima a tu alrededor (`wxzone`, te sigue): la lluvia y el sol potencian el Agua y
-  // el Fuego que se usan dentro (×1,3, como los campos), la arena desgasta a los enemigos de dentro
-  // y la nieve los frena. El clima de la arena sigue siendo sólo el que sale al azar.
+  // Rain Dance, Sunny Day, Sandstorm, Snowscape: they used to bring the real weather (the
+  // arena event, 16 s every 22 s, for everyone): on almost all the time and far too strong. Now
+  // a spell of their weather around you (`wxzone`, it follows you): rain and sun boost the Water and
+  // Fire moves used inside (×1.3, like the terrains), sand wears down the enemies inside
+  // and snow slows them. The arena's weather is still only the one that comes at random.
   const WXZ = {
     rain: { boost: 'water', color: '#4fa8ff' },
     sun:  { boost: 'fire', color: '#ffb43d' },
@@ -325,11 +325,11 @@ G.LabKinds = (() => {
       G.FX.ring(pl.x, pl.y, 8, r, WXZ[m.wx].color, 0.5, 4);
     }
   };
-  /** Las zonas de clima en las que está (x, y) (las tuyas y las de tus compañeros). */
+  /** The weather zones (x, y) is in (yours and your friends'). */
   const wxAt = (x, y) => fields.filter(f => f.kind === 'wxzone' && !f.gone && ((x - f.x) / f.r) ** 2 + ((y - f.y) / (f.r * 0.62)) ** 2 <= 1);
   function tickWx(f, dt) {
     if (f.owner.dead) return true;
-    f.x = f.owner.x; f.y = f.owner.y;                     // te sigue
+    f.x = f.owner.x; f.y = f.owner.y;                     // it follows you
     const z = WXZ[f.wx];
     if (G.Camera.sees(f.x, f.y, f.r) && Math.random() < dt * 14) {
       const a = Math.random() * 6.2832, rr = Math.random() * f.r, x = f.x + Math.cos(a) * rr, y = f.y + Math.sin(a) * rr * 0.6;
@@ -358,13 +358,13 @@ G.LabKinds = (() => {
   X.terrain = {
     target: false, reach: m => 999,
     run(pl, m, ghost) {
-      // Uno a la vez por jugador.
+      // One at a time per player.
       for (const f of fields) if (f.kind === 'terrain' && f.owner === pl) f.gone = true;
       fields.push({ kind: 'terrain', owner: pl, ghost, m, t: 0, life: m.dur || 9, x: pl.x, y: pl.y, r: m.radius || 150, terr: m.terr });
       G.FX.ring(pl.x, pl.y, 8, m.radius || 150, TERRAIN[m.terr].color, 0.5, 4);
     }
   };
-  /** Campos en los que está (x, y) (los tuyos y los de tus compañeros). */
+  /** Terrains (x, y) is in (yours and your friends'). */
   const terrainsAt = (x, y) => fields.filter(f => f.kind === 'terrain' && !f.gone && ((x - f.x) / f.r) ** 2 + ((y - f.y) / (f.r * 0.62)) ** 2 <= 1);
 
   // ---------------- wave ----------------
@@ -386,7 +386,7 @@ G.LabKinds = (() => {
       const px = e.x - f.x, py = e.y - f.y, along = px * f.ca + py * f.sa, side = -px * f.sa + py * f.ca;
       if (Math.abs(along - f.d) > 22 + e.r || Math.abs(side) > half + e.r) continue;
       if (!f.ghost && !f.hits.has(e.id)) { f.hits.add(e.id); C.hit(pl, e, f.dmg, col(m), f.ca, f.sa, 0, m); }
-      // La ola los lleva: quien tiene los enemigos de verdad (como el remolino de combat.js).
+      // The wave carries them: whoever has the real enemies (like combat.js's whirlpool).
       if (!e.remote && authority()) { const k = f.sp * dt * (boss(e) ? 0.2 : 0.85); e.x += f.ca * k; e.y += f.sa * k; }
     }
     if (!f.ghost) for (const p of G.World.propsInCircle(fx, fy, half)) if (!f.hits.has('p' + p.id)) { f.hits.add('p' + p.id); G.World.damageProp(p, f.dmg, col(m)); }
@@ -396,13 +396,13 @@ G.LabKinds = (() => {
 
   // ---------------- metronome ----------------
   const NO_CALL = new Set(['orbit', 'buff', 'trail', 'weather', 'terrain', 'guard', 'metronome', 'transform',
-                           'heal', 'screen', 'shout', 'endure', 'focus']);     // las de apoyo de kinds2.js también
+                           'heal', 'screen', 'shout', 'endure', 'focus']);     // kinds2.js's support kinds too
   let callable = null;
   function randomMove() {
     if (!callable) callable = Object.values(G.Moves.BY_ID).filter(d => !NO_CALL.has(d.kind)).map(d => d.id);
     return G.U.pick(callable);
   }
-  /** Una instancia de `id` cuyo daño se apunta en `m` (resumen por movimiento). */
+  /** An instance of `id` whose damage is credited to `m` (per-move summary). */
   function borrowed(id, lvl, m) {
     const d = G.Moves.BY_ID[id];
     const inst = G.Moves.instance(id, Math.max(1, Math.min(lvl, d.maxLvl)));
@@ -420,7 +420,7 @@ G.LabKinds = (() => {
       C.run(pl, inst);
     }
   };
-  // En grupo, los demás ven el movimiento que ha salido (no "Metrónomo", que sacaría otro).
+  // In a group, the others see the move that came out (not "Metronome", which would roll another).
   const coopCast = G.Coop.cast;
   G.Coop.cast = function (pl, m) {
     if (m && m.kind === 'metronome') {
@@ -431,7 +431,7 @@ G.LabKinds = (() => {
   };
 
   // ---------------- transform ----------------
-  /** Lo que lanza transformado en esa especie: su movimiento inicial (si no es una órbita ni de apoyo). */
+  /** What it casts while transformed into that species: its starting move (if it's not an orbit or support). */
   function copiedMove(mon) {
     const ok = id => { const d = G.Moves.BY_ID[id]; return d && !NO_CALL.has(d.kind); };
     const s = G.Moves.startFor(mon);
@@ -470,11 +470,11 @@ G.LabKinds = (() => {
     const tf = p._labTf;
     delete p._labTf;
     if (p.mon === tf.mon1) p.mon = tf.mon0;
-    G.Admin.repaint(p);                                // su aspecto de siempre (o su mega)
+    G.Admin.repaint(p);                                // its usual look (or its Mega)
     G.FX.burst(p.x, p.y - p.bodyH * 0.5, '#ff9ed8', 12, 120);
   }
 
-  // ---------------- estados de los enemigos: dormido y confuso ----------------
+  // ---------------- enemy statuses: asleep and confused ----------------
   function sleep(e, dur) {
     if (!e || e.dead) return;
     dur *= boss(e) ? 0.35 : 1;
@@ -489,8 +489,8 @@ G.LabKinds = (() => {
     if (e.remote) { G.Net.toHost({ k: 'labst', id: e.id, s: 'c', v: Math.round(dur * 10) / 10 }); return; }
     e.labConf = Math.max(e.labConf || 0, dur);
   }
-  // Cualquier golpe de un movimiento con `conf` o `sleep` (G.RunStats.tag lo llama Combat en cada
-  // golpe tuyo, de cualquier familia, justo antes del daño).
+  // Any hit from a move with `conf` or `sleep` (Combat calls G.RunStats.tag on every
+  // hit of yours, from any family, right before the damage).
   const tag = G.RunStats.tag;
   G.RunStats.tag = function (e, m) {
     tag.apply(this, arguments);
@@ -501,7 +501,7 @@ G.LabKinds = (() => {
   const E = G.Enemy.prototype;
   const ehurt = E.hurt;
   E.hurt = function (amount, color) {
-    // Un golpe despierta (no la quemadura ni el veneno, ni el del propio movimiento que duerme).
+    // A hit wakes it (not a burn or poison, nor the hit from the sleep move itself).
     if (!this.remote && this.labSleep > 0 && !DOT.has(color) && now() - (this._sleepAt || 0) > 250) {
       this.labSleep = 0; this.stunT = 0;
     }
@@ -511,8 +511,8 @@ G.LabKinds = (() => {
   E.update = function (dt, pl) {
     if (this.labSleep > 0) { this.labSleep -= dt; if (this.labSleep <= 0) { this.labSleep = 0; this.stunT = 0; } }
     if (!(this.labConf > 0) || this.dead || !pl) return eupdate.apply(this, arguments);
-    // Confuso: va a por un punto al azar en vez de a por ti (dispara allí, si es de los que
-    // disparan), no te ataca al tocarte y golpea a los que tiene al lado.
+    // Confused: it heads for a random spot instead of you (shoots there, if it's one that
+    // shoots), doesn't attack you on touch and hits whoever is next to it.
     this.labConf -= dt;
     this.touchCd = Math.max(this.touchCd, 0.2);
     if (!this._conf || (this._conf.t -= dt) <= 0) {
@@ -530,7 +530,7 @@ G.LabKinds = (() => {
     }
     return eupdate.call(this, dt, { x: this._conf.x, y: this._conf.y, r: 8, level: pl.level, dead: false });
   };
-  // Dormido: "Z" encima en vez de las estrellitas; confuso: pajaritos girando.
+  // Asleep: "Z" above instead of the little stars; confused: little birds circling.
   const edraw = E.draw;
   E.draw = function (ctx) {
     const z = this.labSleep > 0 || this.labSleepNet > 0, c = this.labConf > 0 || this.labConfNet > 0;
@@ -553,13 +553,13 @@ G.LabKinds = (() => {
     } else {
       for (let i = 0; i < 3; i++) {
         const a = t * 4 + i * 2.094;
-        G.VFX.draw(ctx, 'ring', 'psychic', this.x + Math.cos(a) * 10, y0 + Math.sin(a) * 3, { scale: 0.45 });   // confuso (los corazones parecían curar)
+        G.VFX.draw(ctx, 'ring', 'psychic', this.x + Math.cos(a) * 10, y0 + Math.sin(a) * 3, { scale: 0.45 });   // confused (hearts looked like healing)
       }
     }
     ctx.restore();
   };
 
-  // ---------------- tu Pokémon: escudos, salto, transformación ----------------
+  // ---------------- your Pokémon: shields, leap, transform ----------------
   const P = G.Player.prototype;
   const phurt = P.hurt;
   P.hurt = function (amount, type = null, pure = false, cat = null) {
@@ -572,7 +572,7 @@ G.LabKinds = (() => {
       if (g.m.storeAll || !g.m.cat || !cat || g.m.cat === cat) g.stored += amount;
       amount *= 0.5;
     }
-    // Campo de Niebla: menos daño mientras estés dentro.
+    // Misty Terrain: less damage while you're inside.
     if (!pure && terrainsAt(this.x, this.y).some(f => TERRAIN[f.terr].shield)) amount *= 1 - TERRAIN.misty.shield;
     return phurt.call(this, amount, type, pure, cat);
   };
@@ -583,7 +583,7 @@ G.LabKinds = (() => {
     return terrainsAt(this.x, this.y).some(f => TERRAIN[f.terr].boost === m.type)
       || wxAt(this.x, this.y).some(f => WXZ[f.wx].boost === m.type) ? k * 1.3 : k;
   };
-  // Al tocarte con un escudo puesto: Barrera Espinosa daña, Búnker envenena, Escudo Real frena.
+  // On touching you while a shield is up: Spiky Shield hurts, Baneful Bunker poisons, King's Shield slows.
   const strike = E.strike;
   E.strike = function (pl) {
     strike.call(this, pl);
@@ -599,7 +599,7 @@ G.LabKinds = (() => {
   P.cast = function (m) {
     const as = m && KIND_AS[m.kind];
     const r = cast.call(this, as ? { kind: as, cd: m.cd, type: m.type } : m);
-    // Animación propia (firmas, fase 5: G.LabAnims), si la especie la tiene.
+    // Its own animation (signatures, phase 5: G.LabAnims), if the species has it.
     const a = m && m.anim && G.LabAnims && G.LabAnims.pick(this, m.anim);
     if (a) { this.anim.play(a, { speed: Math.max(1, (G.LabAnims.len(this, a) || 0.4) / (Math.max(0.12, m.cd * this.cdMul) * 0.9)) }); this.attackFace = 0.35; }
     return r;
@@ -614,7 +614,7 @@ G.LabKinds = (() => {
         ctx.save(); ctx.translate(0, -Math.sin(k * Math.PI) * 110);
         try { pdraw.apply(this, arguments); } finally { ctx.restore(); }
       } else if (k > 0.12 && k < 0.88) {
-        // Bajo tierra, bajo el agua o en las sombras: sólo se ve por dónde va.
+        // Underground, underwater or in the shadows: you only see where it's going.
         ctx.save();
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = L.style === 'dig' ? '#6e4c1e' : L.style === 'dive' ? '#3d8bff' : '#33256a';
@@ -633,11 +633,11 @@ G.LabKinds = (() => {
     }
   };
 
-  // ---------------- cada fotograma ----------------
-  // Los de apoyo (PASSIVE) se lanzan solos desde los huecos que no son el activo.
+  // ---------------- every frame ----------------
+  // Support moves (PASSIVE) cast on their own from the slots that aren't the active one.
   const ctick = C.tick;
-  // Los escudos (guard), también desde el hueco activo y con su propio reloj (_gt): Combat no los
-  // lanza nunca (reach 0), porque su blanco podía ser una roca o un cofre (pl.target) y se gastaban.
+  // Shields (guard) also from the active slot, with their own clock (_gt): Combat never
+  // casts them (reach 0), because their target could be a rock or a chest (pl.target) and they got wasted.
   C.tick = function (dt, pl) {
     ctick.apply(this, arguments);
     if (!pl || pl.dead) return;
@@ -658,7 +658,7 @@ G.LabKinds = (() => {
     }
   };
 
-  /** Los temporizadores de un jugador (el tuyo o el muñeco de un compañero). */
+  /** A player's timers (yours or a friend's puppet). */
   function tickPlayer(p, dt) {
     if (p._labLeap) p._labLeap.t += dt;
     const g = p._labGuard;
@@ -672,7 +672,7 @@ G.LabKinds = (() => {
     const pl = G.Game.player;
     if (pl) tickPlayer(pl, dt);
     if (G.Coop.active) for (const p of G.Coop.puppets()) tickPlayer(p, dt);
-    // Campo de Hierba: cura mientras estés dentro.
+    // Grassy Terrain: heals while you're inside.
     if (pl && !pl.dead && terrainsAt(pl.x, pl.y).some(f => TERRAIN[f.terr].heal)) pl.hp = Math.min(pl.maxHp, pl.hp + pl.maxHp * TERRAIN.grassy.heal * dt);
     for (let i = fields.length - 1; i >= 0; i--) {
       const f = fields[i];
@@ -684,7 +684,7 @@ G.LabKinds = (() => {
         else if (f.kind === 'wxzone') done = tickWx(f, dt);
         else if (f.kind === 'sleepzone' && f.t >= f.delay) {
           G.FX.ring(f.x, f.y, 4, f.r, col(f.m), 0.4, 3);
-          const v = G.VFX.forMove(f.m);     // su dibujo: notas para cantar, esporas, sombras...
+          const v = G.VFX.forMove(f.m);     // its drawing: notes for singing, spores, shadows...
           for (let k = 0; k < 6; k++) G.FX.sp(v.proj, v.pal, f.x + G.U.rand(-f.r, f.r) * 0.6, f.y - 6, { vy: -50, life: 0.6 });
           if (!f.ghost) for (const e of G.EnemyMgr.queryCircle(f.x, f.y, f.r)) {
             if (e.dead) continue;
@@ -755,9 +755,9 @@ G.LabKinds = (() => {
     if (!owner) netSent = '';
   };
 
-  // ---------------- red ----------------
+  // ---------------- network ----------------
   let netT = 0, netSent = '';
-  /** Anfitrión: cada 0,3 s, quién duerme y quién está confuso (si ha cambiado o aún hay alguno). */
+  /** Host: every 0.3 s, who is asleep and who is confused (if it changed or some still are). */
   function netTick(dt) {
     if (!G.Coop.active || !G.Coop.isHost || (netT -= dt) > 0) return;
     netT = 0.3;
@@ -775,7 +775,7 @@ G.LabKinds = (() => {
       if (msg.k === 'labst') {
         const e = G.EnemyMgr.get(msg.id), v = Math.min(6, Math.max(0, +msg.v || 0));
         if (!e || e.dead || e.remote || !v) return;
-        // Ya viene con lo de los jefes aplicado (en el invitado): aquí se aplica tal cual.
+        // It already comes with the boss reduction applied (on the guest): here it's applied as is.
         if (msg.s === 'z') { e.labSleep = Math.max(e.labSleep || 0, v); e.stunT = Math.max(e.stunT || 0, v); e._sleepAt = now(); }
         else if (msg.s === 'c') e.labConf = Math.max(e.labConf || 0, v);
       }
@@ -785,7 +785,7 @@ G.LabKinds = (() => {
         if (!e.remote) continue;
         e.labSleepNet = z.has(e.id) ? 1 : 0;
         e.labConfNet = c.has(e.id) ? 1 : 0;
-        if (e.labConfNet) e.touchCd = Math.max(e.touchCd, 0.5);    // la copia no te pega (combat.js)
+        if (e.labConfNet) e.touchCd = Math.max(e.touchCd, 0.5);    // the copy doesn't hit you (combat.js)
       }
     }
   });

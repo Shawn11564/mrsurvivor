@@ -1,10 +1,10 @@
-/* ============ stats-panel.js — tus estadísticas bajo la vida (fork MrSurvivor) ============
- * Ajustes → Gráficos, para todos: "Panel de estadísticas" (apagado por defecto). En la run, bajo la
- * barra de vida: daño, velocidad, vida máxima, defensa, recarga, regeneración y críticos tal como
- * están ahora (mejoras, cartas, objetos y potenciadores incluidos), y las cartas de mejora cogidas
- * (Potencia 3 · Carrera 2...). Se dibuja en el hueco de G.HUD.belowHp (js/ui/hud.js), después de lo
- * que ya hubiera (la evolución del Lab), y la escala de la interfaz (ui-scale.js) lo agranda con el
- * resto. Prueba: fork/test-stats-panel.cjs.
+/* ============ stats-panel.js — your stats under your HP (MrSurvivor fork) ============
+ * Settings → Graphics, for everyone: "Panel de estadísticas" (Stats panel, off by default). In a run, under the
+ * HP bar: damage, speed, max HP, defense, cooldown, regeneration and crits as they
+ * stand right now (upgrades, cards, items and boosters included), and the upgrade cards taken
+ * (Potencia 3 · Carrera 2...). It's drawn in the G.HUD.belowHp slot (js/ui/hud.js), after whatever
+ * was already there (Lab's evolution), and the interface scale (ui-scale.js) enlarges it with the
+ * rest. Test: fork/test-stats-panel.cjs.
  */
 G.StatsPanel = (() => {
   const F = (w, s) => `${w} ${s}px Pixelify,"Segoe UI",system-ui,sans-serif`;
@@ -13,7 +13,7 @@ G.StatsPanel = (() => {
   const fx = v => (Math.round(v * 100) / 100).toFixed(2);
   const pct = v => Math.round(v * 100) + '%';
 
-  /** [etiqueta, valor] de lo que tiene pl ahora. */
+  /** [label, value] for what pl has now. */
   function rows(pl) {
     const spd = pl.spdMul * (1 + pl.buffs.spd.n * pl.buffs.spd.amount);
     return [
@@ -37,7 +37,7 @@ G.StatsPanel = (() => {
     const cs = cards(pl).map(([l, n]) => G.T(l) + ' ' + n);
     ctx.save();
     ctx.font = F(700, 9);
-    // En líneas que quepan en W.
+    // In lines that fit in W.
     const lines = [];
     const pack = (items, lead) => {
       let cur = lead || '';
@@ -63,7 +63,7 @@ G.StatsPanel = (() => {
   G.HUD.belowHp = (ctx, pl, px, y) => {
     const h = prev ? prev(ctx, pl, px, y) || 0 : 0;
     if (!on() || !pl || pl.remote) return h;
-    try { return h + draw(ctx, pl, px, y + h); } catch (e) { return h; }   // nunca romper el HUD
+    try { return h + draw(ctx, pl, px, y + h); } catch (e) { return h; }   // never break the HUD
   };
 
   if (G.RadiantGlow) {
@@ -75,7 +75,7 @@ G.StatsPanel = (() => {
     };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Panel de estadísticas', 'Stats panel', 'Panneau de statistiques', 'Pannello statistiche', 'Painel de estatísticas', '属性面板', '屬性面板'],
     ['En la partida, bajo tu vida: tu daño, velocidad, vida, defensa, recarga, regeneración, críticos y las cartas de mejora que llevas.',

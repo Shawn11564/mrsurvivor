@@ -1,14 +1,14 @@
-/* ============ anims.js — animaciones de los movimientos de firma del modo Lab (fork MrSurvivor) ============
- * Fase 5 de fork/LAB.md. Cada firma (js/fork/lab/lab-moves.js) dice qué animaciones de Mundo
- * Misterioso prefiere (anim: ['Kick', 'Attack']). Las 7 de siempre ya están; las demás las baja
- * fork/fetch-lab-anims.py a assets/pokemon/{dex}/lab/ y su geometría va en G.LAB_ANIMS
- * (js/fork/lab/lab-anims.js). Aquí se añaden a G.SPRITE_META como 'lab/{Anim}', así que
- * G.Sprites las carga y las dibuja como cualquier otra (la ruta sale sola: {dex}/lab/Kick.png).
+/* ============ anims.js — animations for Lab mode's signature moves (MrSurvivor fork) ============
+ * Phase 5 of fork/LAB.md. Each signature (js/fork/lab/lab-moves.js) says which Mystery Dungeon
+ * animations it prefers (anim: ['Kick', 'Attack']). The usual 7 are already there; the rest are
+ * downloaded by fork/fetch-lab-anims.py to assets/pokemon/{dex}/lab/ and their geometry is in G.LAB_ANIMS
+ * (js/fork/lab/lab-anims.js). Here they're added to G.SPRITE_META as 'lab/{Anim}', so
+ * G.Sprites loads and draws them like any other (the path follows: {dex}/lab/Kick.png).
  *
- *   pick(pl, prefs)  la primera de prefs que tiene ese Pokémon (con su aspecto de ahora), o null
- *   len(pl, a)       lo que dura, en segundos
- *   preload(pl)      baja las de sus firmas al empezar la partida (que no parpadeen la primera vez)
- * La usa Player.cast (js/fork/lab/kinds.js).
+ *   pick(pl, prefs)  the first of prefs that this Pokémon has (in its current look), or null
+ *   len(pl, a)       how long it lasts, in seconds
+ *   preload(pl)      loads its signatures' sheets when the run starts (so they don't flicker the first time)
+ * Used by Player.cast (js/fork/lab/kinds.js).
  */
 G.LabAnims = (() => {
   const BASE = new Set(G.Sprites.ANIMS);
@@ -22,7 +22,7 @@ G.LabAnims = (() => {
   }
 
   function pick(pl, prefs) {
-    // Con otro aspecto (megaevolución, Transformación, el menú de admin) no: son otras hojas.
+    // Not in another look (Mega Evolution, Transform, the admin menu): those are other sheets.
     if (!prefs || !pl || !pl.anim || pl.anim.dex !== pl.dex) return null;
     const m = G.SPRITE_META[pl.dex];
     if (!m) return null;
@@ -40,7 +40,7 @@ G.LabAnims = (() => {
     return g ? g.d.reduce((s, d) => s + d, 0) / 60 : 0;
   }
 
-  /** Las hojas de las firmas de tu Pokémon (G.Lab al empezar una partida Lab). */
+  /** Your Pokémon's signature sheets (G.Lab, when a Lab run starts). */
   function preload(pl) {
     const m = pl && G.SPRITE_META[pl.dex];
     if (!m) return;

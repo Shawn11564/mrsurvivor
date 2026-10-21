@@ -1,37 +1,37 @@
-/* ============ radiant.js — formas radiantes y el ritual (fork MrSurvivor) ============
- * Un radiante es una tercera variante de un Pokémon (normal, shiny, radiante) con sus propias
- * hojas recoloreadas en assets/pokemon/{dex}/r/ (las de su firma del Lab en r/lab/ y las de su
- * mega en m{dex}/r/), hechas con el kit (radiant-kit/index.html). Cuáles existen lo dice
- * G.RADIANTS (js/fork/radiant-list.js, lo genera fork/radiants.cjs al hacer el build), más los
- * de js/fork/radiants.json (refresh: lo que se publica con fork/radiant-admin.cjs sin rehacer el
- * build). Cada uno lleva su rareza (1-5): su peso en el ritual (WEIGHT).
+/* ============ radiant.js — radiant forms and the ritual (MrSurvivor fork) ============
+ * A radiant is a third variant of a Pokémon (normal, shiny, radiant) with its own
+ * recoloured sheets in assets/pokemon/{dex}/r/ (its Lab signature ones in r/lab/ and its
+ * Mega's in m{dex}/r/), made with the kit (radiant-kit/index.html). Which ones exist is set by
+ * G.RADIANTS (js/fork/radiant-list.js, written by fork/radiants.cjs during the build), plus the ones
+ * in js/fork/radiants.json (refresh: what's published with fork/radiant-admin.cjs without redoing the
+ * build). Each has its rarity (1-5): its weight in the ritual (WEIGHT).
  *
- *   Sprites   cada radiante se registra en G.SPRITE_META con la clave '{dex}/r' (y 'm{dex}/r'),
- *             con la geometría de la forma normal: G.Sprites lo carga de {dex}/r/{Anim}.png sin
- *             cambiar nada. G.UI.sprite / spriteCanvas aceptan opts.radiant.
- *   Partida   save.radiant: dex -> { at, from } (los que tienes); save.radOff: dex -> 1 si
- *             prefieres no usarlo (como save.shinyOff: si lo tienes, se usa por defecto).
- *   Ritual    sacrificas 10 shinies (los eliges tú) y sale UNO al azar entre TODOS los
- *             radiantes que existen, más o menos probable según su rareza. Los sacrificados pierden el shiny (el Pokémon normal se
- *             queda); save.sac: dex -> fecha del sacrificio. Si sale uno que ya tenías, DUP_COINS.
- *             Avisa antes de sacrificar un shiny legendario (se puede desactivar: G.Settings
- *             'radWarn', de este aparato) y pide confirmarlo.
- *   Fusión    G.forkMerge (lo llama merge() de js/core/db.js): unión de radiantes, el sacrificio
- *             más reciente de cada uno, y un shiny sacrificado sólo vuelve si se consiguió DESPUÉS
- *             del sacrificio (si no, la unión de shinies lo resucitaría desde la otra copia).
- *   En run    tu Pokémon va radiante si lo tienes y lo quieres (G.Game.startRun). En grupo, cada
- *             miembro de la sala lleva `rad` (G.LobbyPick, js/fork/coop-random.js) y los demás lo
- *             ven radiante. La mega y la Transformación del Lab pasan por G.Admin.repaint (look).
- *   Menú      el selector Normal / Shiny / Radiante (compañero y ficha) y la marca en la
- *             colección: ganchos de una línea en js/ui/menu.js (menu, cell, detail), y el
- *             filtro Radiant de la colección (dexF.rad). Si tienes el radiante, gana al shiny
- *             salvo que hayas elegido Normal o Shiny para ese Pokémon (radOff).
- *   Tirada    la del gacha de 1 ticket (js/ui/slots.js en #pull-fx): para en la bola de su rareza.
- * Textos sólo en inglés, como el modo Lab. Prueba: fork/test-radiant.cjs.
+ *   Sprites   each radiant is registered in G.SPRITE_META under the key '{dex}/r' (and 'm{dex}/r'),
+ *             with the normal form's geometry: G.Sprites loads it from {dex}/r/{Anim}.png without
+ *             changing anything. G.UI.sprite / spriteCanvas accept opts.radiant.
+ *   Save      save.radiant: dex -> { at, from } (the ones you have); save.radOff: dex -> 1 if
+ *             you'd rather not use it (like save.shinyOff: if you have it, it's used by default).
+ *   Ritual    you sacrifice 10 shinies (you pick them) and ONE comes out at random from ALL the
+ *             radiants that exist, more or less likely by its rarity. The sacrificed ones lose their shiny (the normal Pokémon
+ *             stays); save.sac: dex -> date of the sacrifice. If you get one you already had, DUP_COINS.
+ *             Warns before sacrificing a shiny legendary (can be turned off: G.Settings
+ *             'radWarn', per device) and asks you to confirm.
+ *   Merge     G.forkMerge (called by merge() in js/core/db.js): union of radiants, the latest
+ *             sacrifice of each, and a sacrificed shiny only comes back if it was caught AFTER
+ *             the sacrifice (otherwise the union of shinies would bring it back from the other copy).
+ *   In a run  your Pokémon is radiant if you have it and want it (G.Game.startRun). In a group, each
+ *             room member carries `rad` (G.LobbyPick, js/fork/coop-random.js) and the others
+ *             see it radiant. The Mega and the Lab's Transform go through G.Admin.repaint (look).
+ *   Menu      the Normal / Shiny / Radiant selector (partner and detail card) and the mark in the
+ *             collection: one-line hooks in js/ui/menu.js (menu, cell, detail), and the
+ *             collection's Radiant filter (dexF.rad). If you have the radiant, it beats the shiny
+ *             unless you've picked Normal or Shiny for that Pokémon (radOff).
+ *   Roll      the 1-ticket gacha one (js/ui/slots.js in #pull-fx): it stops on its rarity's ball.
+ * Texts in English only, like Lab mode. Test: fork/test-radiant.cjs.
  */
 G.Radiant = (() => {
-  const NEED = 10;                 // shinies por tirada
-  const DUP_COINS = 3000;          // si sale uno que ya tenías
+  const NEED = 10;                 // shinies per roll
+  const DUP_COINS = 3000;          // if you get one you already had
   const COLOR = '#ffb347';
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -40,7 +40,7 @@ G.Radiant = (() => {
   // ---------------- sprites ----------------
 
   const key = dex => dex + '/r';
-  /** ¿Existe el radiante de dex (con sus hojas registradas)? */
+  /** Does dex's radiant exist (with its sheets registered)? */
   const has = dex => !!(LIST[dex] && G.SPRITE_META[key(dex)]);
   function register(dex) {
     const m = G.SPRITE_META[dex];
@@ -55,8 +55,8 @@ G.Radiant = (() => {
   }
   for (const dex in LIST) register(dex);
 
-  // Los publicados después de este build (fork/radiant-admin.cjs sube js/fork/radiants.json sin
-  // rehacer app.min.js): se leen al cargar y al abrir el ritual, y se suman a la lista.
+  // The ones published after this build (fork/radiant-admin.cjs uploads js/fork/radiants.json without
+  // redoing app.min.js): read on load and when the ritual opens, and added to the list.
   async function refresh() {
     try {
       const own = document.querySelector('script[src*="app.min.js"], script[src*="js/game.js"]');
@@ -69,14 +69,14 @@ G.Radiant = (() => {
         LIST[d] = j[d]; register(d); changed = true;
       }
       return changed;
-    } catch (e) { return false; }                      // sin red o sin el archivo: los del build
+    } catch (e) { return false; }                      // no network or no file: the build's ones
   }
 
-  // Rareza de cada radiante (1-5; la pone fork/radiant-admin.cjs, si no la del Pokémon): su peso en el ritual.
+  // Each radiant's rarity (1-5; set by fork/radiant-admin.cjs, else the Pokémon's): its weight in the ritual.
   const WEIGHT = { 1: 40, 2: 25, 3: 15, 4: 7, 5: 3 };
   const tier = dex => (LIST[dex] && LIST[dex].rarity) || (G.DEX_BY[dex] && G.DEX_BY[dex].rarity) || 1;
   const weight = dex => WEIGHT[tier(dex)] || WEIGHT[1];
-  /** Probabilidad (0-1) de que el ritual dé dex, entre los de pool. */
+  /** Chance (0-1) that the ritual gives dex, among those in pool. */
   const chance = (dex, all = pool()) => all.includes(+dex) ? weight(dex) / all.reduce((s, d) => s + weight(d), 0) : 0;
   function draw(all) {
     let r = Math.random() * all.reduce((s, d) => s + weight(d), 0);
@@ -84,18 +84,18 @@ G.Radiant = (() => {
     return all[all.length - 1];
   }
 
-  /** G.Admin.repaint: la clave del sprite de p (base = su Pokémon o su mega) si va radiante. */
+  /** G.Admin.repaint: p's sprite key (base = its Pokémon or its Mega) if it's radiant. */
   function look(p, base) {
     return p.radiant && G.SPRITE_META[key(base)] && (base === p.dex || base === 'm' + p.dex) ? key(base) : base;
   }
 
-  // opts.radiant: el radiante de dex (con centelleos, como el shiny).
+  // opts.radiant: dex's radiant (with sparkles, like the shiny).
   const sprite = G.UI.sprite, spriteCanvas = G.UI.spriteCanvas;
   const swap = (dex, opts) => opts && opts.radiant && has(dex) ? [key(dex), Object.assign({}, opts, { shiny: true })] : [dex, opts];
   G.UI.sprite = (cv, dex, opts) => sprite(cv, ...swap(dex, opts));
   G.UI.spriteCanvas = (dex, w, h, opts) => { const [d, o] = swap(dex, opts); return spriteCanvas(d, w, h, o); };
 
-  // Las firmas del Lab con su hoja radiante (r/lab/), si la tiene; si no, la de siempre.
+  // Lab signatures with their radiant sheet (r/lab/), if there is one; if not, the usual one.
   if (G.LabAnims) {
     const pick = G.LabAnims.pick;
     G.LabAnims.pick = function (pl, prefs) {
@@ -109,13 +109,13 @@ G.Radiant = (() => {
     };
   }
 
-  // ---------------- partida ----------------
+  // ---------------- save ----------------
 
   const save = () => G.DB.save;
   const owns = dex => !!(save() && save().radiant && save().radiant[dex]);
-  /** ¿Usar el radiante de dex? Sí si lo tienes, existe y no has elegido otra cosa. */
+  /** Use dex's radiant? Yes if you have it, it exists and you haven't picked something else. */
   const wants = dex => owns(dex) && has(dex) && !(save().radOff && save().radOff[dex]);
-  /** Apunta la elección (sin guardar: quien la llama hace G.DB.commit()). */
+  /** Records the choice (without saving: the caller does G.DB.commit()). */
   function set(dex, on) {
     const s = save();
     s.radOff = s.radOff || {};
@@ -126,8 +126,8 @@ G.Radiant = (() => {
   const isLegend = dex => !!(G.DEX_BY[dex] && G.DEX_BY[dex].leg);
 
   /**
-   * El ritual: sacrifica esos 10 shinies y da un radiante al azar de todos los que existen.
-   * → { ok, dex, dup, coins } o { ok: false, why }
+   * The ritual: sacrifices those 10 shinies and gives a random radiant from all that exist.
+   * → { ok, dex, dup, coins } or { ok: false, why }
    */
   function sacrifice(list) {
     const s = save(), mine = new Set(shinies());
@@ -139,7 +139,7 @@ G.Radiant = (() => {
     s.sac = s.sac || {};
     for (const d of dexes) { delete s.shiny[d]; s.sac[d] = now; }
     if (dexes.includes(s.partner)) s.partnerShiny = false;
-    const dex = draw(all);                           // según su rareza (WEIGHT)
+    const dex = draw(all);                           // by its rarity (WEIGHT)
     s.radiant = s.radiant || {};
     const dup = !!s.radiant[dex];
     if (dup) s.coins += DUP_COINS;
@@ -152,7 +152,7 @@ G.Radiant = (() => {
     return { ok: true, dex, dup, coins: dup ? DUP_COINS : 0 };
   }
 
-  // Fusión de dos copias de la partida (merge() de js/core/db.js, sobre su resultado r).
+  // Merging two copies of the save (merge() in js/core/db.js, on its result r).
   G.forkMerge = (r, a, b) => {
     const sac = {}, rad = {};
     for (const s of [a, b]) {
@@ -169,7 +169,7 @@ G.Radiant = (() => {
     }
   };
 
-  // ---------------- en la partida ----------------
+  // ---------------- in the run ----------------
 
   document.addEventListener('DOMContentLoaded', () => {
     const startRun = G.Game.startRun;
@@ -177,7 +177,7 @@ G.Radiant = (() => {
       const r = startRun.apply(this, arguments);
       const pl = G.Game.player;
       if (pl && wants(pl.dex)) paint(pl);
-      // Compañeros de grupo: lo que diga su ficha de la sala.
+      // Group teammates: whatever their room entry says.
       const room = G.Social && G.Social.room;
       if (G.Coop.active && room) for (const m of G.Coop.mates) {
         const info = room.members.find(x => x.uid === m.uid);
@@ -188,13 +188,13 @@ G.Radiant = (() => {
   });
   function paint(p) {
     p.radiant = true;
-    p.shiny = false;                                  // se ve radiante: no cuenta como shiny (ni sus extras del Lab)
+    p.shiny = false;                                  // looks radiant: doesn't count as shiny (nor get its Lab extras)
     G.Sprites.preload([key(p.dex)], 8000);
     for (const k of LIST[p.dex].lab || []) G.Sprites.sheet(key(p.dex), 'lab/' + k);
     G.Admin.repaint(p);
   }
 
-  // ---------------- menú (ganchos en js/ui/menu.js) ----------------
+  // ---------------- menu (hooks in js/ui/menu.js) ----------------
 
   const ICON = 'radiant';
   G.Icons.UI[ICON] = { pal: { y: COLOR, w: '#fff3c4', o: '#e0762b' }, rows: [
@@ -202,7 +202,7 @@ G.Radiant = (() => {
     'kyyywwwwyyyo', '.kkyywwyykk.', '...kyyyyk...', '....kyyk....', '....kyok....', '.....kk.....'] };
   const icon = (n = 12) => G.Icons.html(ICON, n);
 
-  /** Pinta el selector Normal / Shiny / Radiant en `seg` para dex; choose(v) al pulsar (0, 1, 2). */
+  /** Draws the Normal / Shiny / Radiant selector in `seg` for dex; choose(v) on click (0, 1, 2). */
   function segment(seg, dex, cur, choose) {
     seg.querySelectorAll('[data-v="2"]').forEach(b => b.remove());
     const r = document.createElement('button');
@@ -217,10 +217,10 @@ G.Radiant = (() => {
     });
   }
 
-  /** Menú principal: tu compañero radiante y el selector. reopen = G.MenuUI.open. */
+  /** Main menu: your radiant partner and the selector. reopen = G.MenuUI.open. */
   function menu(reopen) {
     const s = save(), dex = s.partner, mon = G.DEX_BY[dex], seg = $('menu-shiny');
-    // Lo de la vez anterior fuera (el menú se vuelve a pintar sobre lo mismo).
+    // Clear out last time's (the menu is redrawn over the same elements).
     $('menu-partner').classList.remove('radiant');
     seg.querySelectorAll('[data-v="2"]').forEach(b => b.remove());
     seg.querySelectorAll('[data-v="1"]').forEach(b => { b.classList.remove('hidden'); b.innerHTML = G.Icons.html('shiny', 12) + ' Shiny'; });
@@ -241,7 +241,7 @@ G.Radiant = (() => {
     cv.classList.remove('shiny'); cv.classList.add('radiant');
     $('menu-partner-name').innerHTML = esc(mon.name) + ' ' + icon(24);
   }
-  /** Casilla de la colección: la marca, y el sprite radiante si es tu compañero y lo usas. */
+  /** Collection cell: the mark, and the radiant sprite if it's your partner and you use it. */
   function cell(el, dex) {
     if (!owns(dex) || !has(dex)) return;
     el.insertAdjacentHTML('beforeend', `<span class="rad-badge" title="You have its radiant">${icon(14)}</span>`);
@@ -250,7 +250,7 @@ G.Radiant = (() => {
     if (old) old.replaceWith(G.UI.spriteCanvas(dex, 92, 80, { scale: 2, shadow: true, radiant: true }));
   }
 
-  /** Ficha de la colección: el botón Radiant y su sprite. redraw() vuelve a pintar la ficha. */
+  /** Collection detail card: the Radiant button and its sprite. redraw() redraws the card. */
   function detail(dex, redraw, regrid) {
     if (!owns(dex) || !has(dex)) return;
     const box = $('dex-detail'), big = $('dex-big');
@@ -268,7 +268,7 @@ G.Radiant = (() => {
       set(dex, v === 2);
       G.DB.commit();
       const orig = before.find(([k]) => +k === v);
-      // Normal / Shiny: lo que ya hacía el menú (guarda la preferencia shiny y vuelve a pintar).
+      // Normal / Shiny: what the menu already did (saves the shiny preference and redraws).
       if (v !== 2 && orig && orig[1]) orig[1](); else redraw();
       if (dex === save().partner) regrid();
     });
@@ -280,7 +280,7 @@ G.Radiant = (() => {
     if (pick) pick.textContent = pick.textContent.replace(/\s*\(shiny\)$/, '') + ' (radiant)';
   }
 
-  // ---------------- el ritual ----------------
+  // ---------------- the ritual ----------------
 
   const SCR = 'scr-radiant';
   let chosen = new Set(), confirming = false, rolling = false;
@@ -316,7 +316,7 @@ G.Radiant = (() => {
     $('rad-q').oninput = grid;
     $('rad-warn').onchange = e => { G.Settings.set('radWarn', e.target.checked); confirming = false; render(); };
     $('rad-go').onclick = go;
-    // Que lo escrito en el buscador no mueva nada ni abra menús.
+    // So typing in the search box doesn't move anything or open menus.
     sec.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') e.stopPropagation(); });
   }
 
@@ -333,7 +333,7 @@ G.Radiant = (() => {
     $(SCR).classList.add('hidden');
     G.MenuUI.open();
   }
-  // Otra pantalla (una invitación, la sala...) cierra la del ritual.
+  // Another screen (an invite, the room...) closes the ritual's.
   for (const f of ['show', 'hideAll']) {
     const orig = G.UI[f];
     G.UI[f] = function (id) { if (id !== SCR && $(SCR) && !rolling) $(SCR).classList.add('hidden'); return orig.apply(this, arguments); };
@@ -421,9 +421,9 @@ G.Radiant = (() => {
     reveal(res);
   }
 
-  // La tirada, igual que la de 1 ticket del gacha (#pull-fx y js/ui/slots.js, como en
-  // js/ui/gacha-ui.js): los rodillos paran en la bola de la rareza del radiante (tier, la misma
-  // G.Icons.RARITY_BALL del gacha) y luego sale su carta. Saltar y Continuar son los del gacha.
+  // The roll, the same as the gacha's 1-ticket one (#pull-fx and js/ui/slots.js, as in
+  // js/ui/gacha-ui.js): the reels stop on the radiant's rarity ball (tier, the gacha's same
+  // G.Icons.RARITY_BALL) and then its card comes out. Skip and Continue are the gacha's.
   async function reveal(res) {
     const fx = $('pull-fx'), out = $('pull-results'), ok = $('pull-close'), skipBtn = $('pull-skip');
     const r = tier(res.dex), gachaClose = ok.onclick;
@@ -455,7 +455,7 @@ G.Radiant = (() => {
     };
   }
 
-  // El botón del menú principal, detrás del Gacha.
+  // The main menu button, after the Gacha.
   document.addEventListener('DOMContentLoaded', () => {
     refresh();
     const gacha = document.querySelector('#scr-menu [data-go=gacha]');

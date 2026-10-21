@@ -1,16 +1,16 @@
-/* ============ fork/fetch-lab.cjs — datos del modo Lab (fork MrSurvivor) ============
- *   node fork/fetch-lab.cjs            descarga lo que falte y escribe js/fork/lab/lab-data.js
- *   node fork/fetch-lab.cjs --fresh    vuelve a descargarlo todo
- *   node fork/fetch-lab.cjs --stats    además, cuántos movimientos puede aprender cada uno
+/* ============ fork/fetch-lab.cjs — Lab mode data (MrSurvivor fork) ============
+ *   node fork/fetch-lab.cjs            downloads what's missing and writes js/fork/lab/lab-data.js
+ *   node fork/fetch-lab.cjs --fresh    downloads everything again
+ *   node fork/fetch-lab.cjs --stats    also prints how many moves each one can learn
  *
- * Fuentes (una vez; el juego no toca internet):
- *   - PokeAPI (volcado CSV de su repositorio): qué movimientos aprende cada especie y cómo,
- *     sus habilidades y los nombres en inglés de las habilidades.
- *   - SpriteCollab (tracker.json): qué animaciones de Mundo Misterioso tiene cada especie.
- * Cada descarga va a su propia carpeta en tools/cache/lab/ (no se sube al repositorio).
+ * Sources (fetched once; the game never touches the internet):
+ *   - PokeAPI (CSV dump from its repository): which moves each species learns and how,
+ *     its abilities and the English names of the abilities.
+ *   - SpriteCollab (tracker.json): which Mystery Dungeon animations each species has.
+ * Each download goes to its own folder in tools/cache/lab/ (not committed to the repository).
  *
- * Sólo se guardan los movimientos que el juego tiene (js/data/moves.js), por el movimiento de
- * verdad que representa cada uno (REAL: nuestro giga-drain es Hierba Lazo...). Ver fork/LAB.md.
+ * Only the moves the game has (js/data/moves.js) are kept, matched by the real move
+ * each one stands for (REAL: our giga-drain is Grass Knot...). See fork/LAB.md.
  */
 const fs = require('fs'), path = require('path'), https = require('https'), vm = require('vm');
 
@@ -30,11 +30,11 @@ const FILES = {
 };
 const FRESH = process.argv.includes('--fresh'), STATS = process.argv.includes('--stats');
 
-// Movimientos del juego que no se llaman como el movimiento de verdad que son.
+// Game moves that aren't named after the real move they are.
 const REAL = { 'giga-drain': 'grass-knot', 'leaf-storm': 'petal-blizzard' };
-// pokemon_move_methods.csv: 1 nivel, 2 huevo, 3 tutor, 4 MT/MO. El resto (eventos, formas) no cuenta.
+// pokemon_move_methods.csv: 1 level, 2 egg, 3 tutor, 4 TM/HM. The rest (events, forms) doesn't count.
 const METHOD = { 1: 'lv', 2: 'egg', 3: 'tutor', 4: 'tm' };
-const EN = 9;                                  // languages.csv: inglés
+const EN = 9;                                  // languages.csv: English
 
 function get(url, file) {
   return new Promise((ok, ko) => {
@@ -49,7 +49,7 @@ function get(url, file) {
   });
 }
 
-/** Ruta de una descarga (cada una en su carpeta), bajándola si hace falta. */
+/** Path of a download (each one in its own folder), downloading it if needed. */
 async function source(name) {
   const url = FILES[name], dir = path.join(CACHE, name), file = path.join(dir, path.basename(url));
   if (FRESH || !fs.existsSync(file)) {
@@ -60,7 +60,7 @@ async function source(name) {
   return file;
 }
 
-/** CSV con comillas (los textos de PokeAPI llevan comas y saltos de línea). → [{col: valor}] */
+/** CSV with quotes (PokeAPI texts contain commas and line breaks). → [{col: value}] */
 function parseCsv(text) {
   const rows = [];
   let row = [], cur = '', q = false;
@@ -84,7 +84,7 @@ function parseCsv(text) {
 }
 const readCsv = f => parseCsv(fs.readFileSync(f, 'utf8'));
 
-/** Carga los datos del juego (pokedex.js, moves.js y los del Lab) con un G de mentira. */
+/** Loads the game data (pokedex.js, moves.js and the Lab's) with a fake G. */
 function gameData() {
   const G = { U: {}, I18n: { add() {} } };
   const ctx = vm.createContext({ G, window: {}, console });
@@ -97,7 +97,7 @@ function gameData() {
   const files = {};
   for (const k of Object.keys(FILES)) files[k] = await source(k);
 
-  // ---------------- movimientos ----------------
+  // ---------------- moves ----------------
   const moveIdByName = {}, powerOf = {};
   for (const m of readCsv(files.moves)) { moveIdByName[m.identifier] = +m.id; powerOf[m.identifier] = m.power ? +m.power : 0; }
   const catalog = G.Moves.ALL.map(m => m.id).concat(G.LabMoves.map(m => m.id));
@@ -111,7 +111,7 @@ function gameData() {
   if (missing.length) console.warn('lab: moves with no PokeAPI match (never in a learnset): ' + missing.join(', '));
 
   const dexSet = new Set(G.DEX.map(p => p.dex));
-  const learn = {};                       // dex -> { id: 'lv' | 'egg' | 'tutor' | 'tm' } (el mejor método)
+  const learn = {};                       // dex -> { id: 'lv' | 'egg' | 'tutor' | 'tm' } (the best method)
   const RANK = { lv: 0, egg: 1, tutor: 2, tm: 3 };
   for (const r of readCsv(files.pokemon_moves)) {
     const dex = +r.pokemon_id, how = METHOD[r.pokemon_move_method_id], id = catalogByApi[r.move_id];
@@ -120,11 +120,11 @@ function gameData() {
     if (!L[id] || RANK[how] < RANK[L[id]]) L[id] = how;
   }
 
-  // ---------------- habilidades ----------------
+  // ---------------- abilities ----------------
   const abilName = {}, abilIdent = {};
   for (const a of readCsv(files.abilities)) abilIdent[a.id] = a.identifier;
   for (const n of readCsv(files.ability_names)) if (+n.local_language_id === EN) abilName[abilIdent[n.ability_id]] = n.name;
-  const abil = {};                        // dex -> [[identifier, oculta]] por slot
+  const abil = {};                        // dex -> [[identifier, hidden]] by slot
   for (const r of readCsv(files.pokemon_abilities)) {
     const dex = +r.pokemon_id;
     if (!dexSet.has(dex)) continue;
@@ -133,9 +133,9 @@ function gameData() {
   const usedAbil = new Set();
   for (const d in abil) { abil[d].sort((a, b) => a[0] - b[0]); for (const a of abil[d]) usedAbil.add(a[1]); }
 
-  // ---------------- evoluciones (fase 6) ----------------
-  // fam[dex]: su cadena evolutiva (la de PokeAPI); evo[dex]: a qué evoluciona y a qué nivel en los
-  // juegos ("dex:nivel" separados por comas; nivel 0 = por objeto, intercambio, amistad...).
+  // ---------------- evolutions (phase 6) ----------------
+  // fam[dex]: its evolution chain (PokeAPI's); evo[dex]: what it evolves into and at what level in the
+  // games ("dex:level" separated by commas; level 0 = by item, trade, friendship...).
   const fam = {}, from = {}, evoLvl = {};
   for (const r of readCsv(files.pokemon_species)) {
     const d = +r.id;
@@ -146,13 +146,13 @@ function gameData() {
   for (const r of readCsv(files.pokemon_evolution)) {
     const d = +r.evolved_species_id, lv = r.minimum_level ? +r.minimum_level : 0;
     if (!from[d]) continue;
-    // Varias formas de evolucionar (por juego): el nivel más bajo que haya.
+    // Several ways to evolve (by game): the lowest level there is.
     if (!(d in evoLvl) || (lv && (!evoLvl[d] || lv < evoLvl[d]))) evoLvl[d] = lv;
   }
   const evo = {};
   for (const d in from) (evo[from[d]] = evo[from[d]] || []).push(d + ':' + (evoLvl[d] || 0));
 
-  // ---------------- animaciones de SpriteCollab ----------------
+  // ---------------- SpriteCollab animations ----------------
   const tracker = JSON.parse(fs.readFileSync(files.tracker, 'utf8'));
   const animNames = new Set();
   const animsOf = {};
@@ -164,12 +164,12 @@ function gameData() {
   }
   const ANIMS = [...animNames].sort();
 
-  // ---------------- salida ----------------
-  // Compacto: los movimientos por su índice en MOVES (base 36), en cuatro grupos separados
-  // por '|' según cómo los aprende (nivel|huevo|tutor|MT); las animaciones, en bits (base 36).
+  // ---------------- output ----------------
+  // Compact: moves by their index in MOVES (base 36), in four groups separated
+  // by '|' by how they're learned (level|egg|tutor|TM); animations as bits (base 36).
   const MOVES = catalog;
   const GROUPS = ['lv', 'egg', 'tutor', 'tm'];
-  // POWER: potencia del movimiento de verdad en los juegos (0 = de estado), por índice de MOVES.
+  // POWER: power of the real move in the games (0 = status move), by MOVES index.
   const POWER = MOVES.map(id => powerOf[REAL[id] || id] || 0);
   const out = { MOVES, POWER, ANIMS, learn: {}, abil: {}, abilName: {}, anims: {}, fam, evo: {} };
   for (const d in evo) out.evo[d] = evo[d].join(',');
@@ -183,15 +183,15 @@ function gameData() {
   }
   for (const a of [...usedAbil].sort()) out.abilName[a] = abilName[a] || a;
 
-  const js = `/* ============ lab-data.js — GENERADO por fork/fetch-lab.cjs, no editar a mano ============
- * Datos del modo Lab (fork/LAB.md), de PokeAPI y SpriteCollab:
- *   MOVES      ids de los movimientos del juego (js/data/moves.js y lab-moves.js), por índice
- *   POWER      su potencia en los juegos (0 = movimiento de estado), mismo índice
- *   learn[dex] "nivel|huevo|tutor|MT": en cada grupo, índices de MOVES en base 36 separados por comas
- *   abil[dex]  sus habilidades por orden de slot; * = oculta
- *   abilName   nombre en inglés de cada habilidad
- *   ANIMS      animaciones de Mundo Misterioso; anims[dex] = las que tiene, en bits (base 36)
- *   fam[dex]   su cadena evolutiva; evo[dex] "dex:nivel,..." a qué evoluciona (nivel 0 = sin nivel)
+  const js = `/* ============ lab-data.js — GENERATED by fork/fetch-lab.cjs, don't edit ============
+ * Lab mode's data (fork/LAB.md), from PokeAPI and SpriteCollab:
+ *   MOVES      the game's move ids (js/data/moves.js and lab-moves.js), by index
+ *   POWER      their power in the games (0 = status move), same index
+ *   learn[dex] "level|egg|tutor|TM": in each group, MOVES indexes in base 36, comma-separated
+ *   abil[dex]  its abilities in slot order; * = hidden
+ *   abilName   each ability's English name
+ *   ANIMS      Mystery Dungeon animations; anims[dex] = the ones it has, as bits (base 36)
+ *   fam[dex]   its evolution family; evo[dex] "dex:level,..." what it evolves into (level 0 = no level)
  */
 G.LabData = ${JSON.stringify(out)};
 `;

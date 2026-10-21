@@ -1,9 +1,9 @@
-/* ============ net-stats.js — la conexión con tus compañeros, en pantalla (fork MrSurvivor) ============
- * Ajustes → Gráficos, para todos: "Estadísticas de red" (apagado). En una partida en grupo, abajo a la
- * derecha (encima de los FPS): por compañero, su ping (el tiempo de ida y vuelta del par de candidatos
- * en uso, de RTCPeerConnection.getStats: G.Net.peerStats, un getter del fork en js/net/net.js) y el jitter
- * (cuánto varía el ping de una medida a la siguiente, de media), y tus FPS. Sólo en tu pantalla: no
- * manda nada por la red. Se mide una vez por segundo. Prueba: fork/test-net-stats.cjs.
+/* ============ net-stats.js — the connection to your teammates, on screen (MrSurvivor fork) ============
+ * Settings → Graphics, for everyone: "Estadísticas de red" (Network stats, off). In a co-op run, bottom
+ * right (above the FPS): per teammate, their ping (the round-trip time of the candidate pair
+ * in use, from RTCPeerConnection.getStats: G.Net.peerStats, a fork getter in js/net/net.js) and the jitter
+ * (how much the ping varies from one sample to the next, on average), and your FPS. Only on your screen: it
+ * sends nothing over the network. Measured once per second. Test: fork/test-net-stats.cjs.
  */
 G.NetStats = (() => {
   const on = () => !!G.Settings.get('netStats');
@@ -17,7 +17,7 @@ G.NetStats = (() => {
     requestAnimationFrame(count);
   })();
 
-  /** Ping del par de candidatos en uso (ms), o null. */
+  /** Ping of the candidate pair in use (ms), or null. */
   function rttOf(report) {
     if (!report) return null;
     let pair = null, tid = null;
@@ -25,7 +25,7 @@ G.NetStats = (() => {
     report.forEach(r => { if (r.type === 'candidate-pair' && (r.id === tid || (!tid && r.nominated && r.state === 'succeeded'))) pair = pair || r; });
     return pair && typeof pair.currentRoundTripTime === 'number' ? pair.currentRoundTripTime * 1000 : null;
   }
-  /** Una medida nueva para u (ms): el ping y el jitter, media móvil de la diferencia con la anterior. */
+  /** A new sample for u (ms): the ping, and the jitter as a moving average of the change from the last one. */
   function sample(u, ms) {
     if (ms == null) return;
     const s = S.get(u) || { rtt: ms, jit: 0, last: ms };

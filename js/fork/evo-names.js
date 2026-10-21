@@ -1,18 +1,18 @@
-/* ============ evo-names.js — evoluciones sin nombres de otros movimientos (fork MrSurvivor) ============
- * Arriba, cada movimiento al evolucionar toma el nombre de otro movimiento de los juegos (Bola Sombra
- * -> Golpe Fantasma, Placaje -> Derribo...). En este fork muchos de esos son movimientos de verdad del
- * modo Lab, y varios FIRMAS (Fuego Sagrado de Ho-Oh, Voltio Cruel de Pikachu, Golpe Umbrío de
- * Giratina...): el mismo nombre era dos movimientos distintos, uno con firma y otro sin ella.
- * Aquí esas evoluciones pasan a otro movimiento de verdad del mismo tipo que el juego no usa en ningún
- * sitio (ni arriba ni en el Lab), con el nombre oficial en cada idioma (PokeAPI; en portugués de Brasil,
- * el inglés de los juegos). Sólo el nombre: lo que gana al evolucionar no cambia. Los ★ de "was" son firmas.
- * La evolución de Vuelo del Lab (js/fork/lab/lab-moves.js) va allí: Dual Wingbeat, no Sky Attack.
- * fork/build.cjs lo lee también para las páginas del sitio (FORK_TEXTS y FORK_EVO_NAMES).
- * Prueba: fork/test-shadow-force.cjs (ninguna evolución se llama como un movimiento del Lab).
+/* ============ evo-names.js — evolutions without other moves' names (MrSurvivor fork) ============
+ * Upstream, each move takes the name of another move from the games when it evolves (Bola Sombra
+ * -> Golpe Fantasma, Placaje -> Derribo...). In this fork many of those are real moves in
+ * Lab mode, and several are SIGNATURES (Ho-Oh's Sacred Fire, Pikachu's Volt Tackle, Giratina's
+ * Shadow Force...): the same name was two different moves, one a signature and one not.
+ * Here those evolutions switch to another real move of the same type that the game uses nowhere
+ * else (neither upstream nor in Lab), with the official name in each language (PokeAPI; for Brazilian
+ * Portuguese, the games' English). Only the name: what it gains on evolving doesn't change. The ★ on "was" marks signatures.
+ * Lab's evolution of Vuelo (Fly) (js/fork/lab/lab-moves.js) is set there: Dual Wingbeat, not Sky Attack.
+ * fork/build.cjs also reads this for the site's pages (FORK_TEXTS and FORK_EVO_NAMES).
+ * Test: fork/test-shadow-force.cjs (no evolution is named like a Lab move).
  */
 (() => {
-  // id, nombre evolucionado: español (la clave, como en js/data/moves.js), inglés, francés, italiano,
-  // portugués (Brasil), chino simplificado y tradicional.
+  // id, evolved name: Spanish (the key, as in js/data/moves.js), English, French, Italian,
+  // Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ["shadow-ball", "Poltergeist", "Poltergeist", "Esprit Frappeur", "Poltergeist", "Poltergeist", "灵骚", "靈騷"],   // was Phantom Force
     ["ominous-wind", "Marcha Espectral", "Infernal Parade", "Cortège Funèbre", "Corteo Spettrale", "Infernal Parade", "群魔乱舞", "群魔亂舞"],   // was Shadow Force ★
@@ -37,7 +37,7 @@
     ["freeze-dry", "Vaho Gélido", "Frost Breath", "Souffle Glacé", "Alitogelido", "Frost Breath", "冰息", "冰息"],   // was Sheer Cold ★
     ["outrage", "Vasto Impacto", "Breaking Swipe", "Abattage", "Vastoimpatto", "Breaking Swipe", "广域破坏", "廣域破壞"],   // was Dragon Darts ★
     ["night-slash", "Giro Vil", "Brutal Swing", "Centrifugifle", "Vorticolpo", "Brutal Swing", "狂舞挥打", "狂舞揮打"],   // was Darkest Lariat ★
-    // Repaso de 2026-10-21: nombres que prometían curar o repetían el de otra evolución.
+    // Review of 2026-10-21: names that promised healing or repeated another evolution's name.
     ["energy-ball", "Hoja Mágica", "Magical Leaf", "Feuille Magik", "Fogliamagica", "Magical Leaf", "魔法叶", "魔法葉"],   // was Giga Drain (no healing here)
     ["u-turn", "Plancha", "Lunge", "Furie-Bond", "Assalto", "Lunge", "猛扑", "猛撲"],   // was Leech Life (no healing here)
     ["hex", "Homenaje Póstumo", "Last Respects", "Hommage Posthume", "Omaggio ai KO", "Last Respects", "扫墓", "掃墓"],   // was Poltergeist, like Shadow Ball's
@@ -51,7 +51,7 @@
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => {
     const names = Object.fromEntries(ROWS.map(r => [r[1], r[i + 2]]));
     G.I18n.add(names, l);
-    G.I18n.add(names, l, 'move');          // G.T(name, 'move'): cartas y HUD
+    G.I18n.add(names, l, 'move');          // G.T(name, 'move'): cards and HUD
   });
   // The English names stay as they are when the game sends its text through the dictionary again on
   // the way to the screen: its word-by-word pass made "Leaf Tornado" "Leaf Gust" (Tornado is Gust's

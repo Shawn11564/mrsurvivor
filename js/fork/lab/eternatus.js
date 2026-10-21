@@ -1,23 +1,23 @@
-/* ============ eternatus.js — la incursión de Eternatus (Lab primero, fork MrSurvivor) ============
- * En una partida Lab, a las 30:00 no llega la Sentencia de Arceus (js/systems/judgment.js): llega
- * ETERNATUS. Todos viajan a una arena oscura (como la de la grieta) contra él:
- *   - 3 OBELISCOS (enemigos quietos: stunT eterno, ni se mueven ni pegan) lo curan mientras sigan en
- *     pie, cada uno HEAL de su vida por segundo. Hay que romperlos para poder con él.
- *   - El ETERNABEAM: cada BEAM_EVERY s se queda quieto, avisa BEAM_WARN s y dispara a toda la arena.
- *     Te salvas si hay un CRISTAL (o una columna de la arena) entre él y tú; si no, BEAM_PCT de tu
- *     vida, puro. Mientras avisa se ve la sombra segura detrás de cada cristal.
- *   - TIME segundos. Si cae Eternatus: un ticket arcoíris ×25 para cada uno, de vuelta al mapa y la
- *     partida sigue (las grietas vuelven a abrirse; la Sentencia ya no llega). Si se acaba el
- *     tiempo, se acaba la partida (os debilita a todos). Caer en la arena es caer, como siempre.
- * Mientras dura, G.Judgment.active es true: nada más sale (oleadas, eventos, clima, cambio de
- * bioma, legendarios salvajes) y la velocidad tiene el tope suave de la Sentencia.
- * Ganchos: G.Judgment.update (en Lab no deja empezar a Arceus; sí mide vuestro daño, para la vida
- * de Eternatus), .active, .AT (las grietas miran AT − 2 min), .reset, .drawAir y .drawOverlay;
- * G.Events.drawables (los cristales, ordenados por Y); G.World.biomeName. pl._labEternatus: ya ganada (vuelve con
+/* ============ eternatus.js — the Eternatus raid (Lab first, MrSurvivor fork) ============
+ * In a Lab run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS
+ * does. Everyone travels to a dark arena (like the rift's) to fight it:
+ *   - 3 OBELISKS (still enemies: endless stunT, they neither move nor hit) heal it while they're
+ *     standing, each HEAL of its HP per second. You have to break them to beat it.
+ *   - The ETERNABEAM: every BEAM_EVERY s it stands still, warns for BEAM_WARN s and fires at the whole arena.
+ *     You're safe if there's a CRYSTAL (or an arena pillar) between it and you; if not, BEAM_PCT of your
+ *     HP, pure. While it warns, the safe shadow behind each crystal shows.
+ *   - TIME seconds. If Eternatus falls: a ×25 rainbow ticket for each player, back to the map and the
+ *     run goes on (rifts open again; the Judgment no longer comes). If time runs
+ *     out, the run ends (it faints all of you). Going down in the arena is going down, as always.
+ * While it lasts, G.Judgment.active is true: nothing else spawns (waves, events, weather, biome
+ * change, wild legendaries) and speed has the Judgment's soft cap.
+ * Hooks: G.Judgment.update (in Lab it doesn't let Arceus start; it does measure your damage, for
+ * Eternatus's HP), .active, .AT (rifts look at AT − 2 min), .reset, .drawAir and .drawOverlay;
+ * G.Events.drawables (the crystals, sorted by Y); G.World.biomeName. pl._labEternatus: already won (comes back with
  * js/fork/lab/resume.js).
- * Cooperativo: lo decide el anfitrión. { k:'labeter', a } con a = start (cfg), ids, beam, win, lose,
- * back. Eternatus y los obeliscos van como cualquier enemigo ('ne').
- * Textos en inglés, como el Lab. Prueba: fork/test-eternatus.cjs.
+ * Co-op: the host decides. { k:'labeter', a } with a = start (cfg), ids, beam, win, lose,
+ * back. Eternatus and the obelisks travel like any other enemy ('ne').
+ * Texts in English, like the Lab. Test: fork/test-eternatus.cjs.
  */
 G.Eternatus = (() => {
   const AT = 1800, DEX = 890, R = 15, TIME = 180;
@@ -35,9 +35,9 @@ G.Eternatus = (() => {
   }
   const done = () => !!(G.Game.player && G.Game.player._labEternatus);
 
-  // ---------------- empezar ----------------
+  // ---------------- start ----------------
 
-  /** Quien manda: el sitio, los cristales y la vuelta, y avisa a todos. */
+  /** Authority: the spot, the crystals and the way back, and tells everyone. */
   function start() {
     const ts = TS(), pl = G.Game.player;
     const tx = -9000 - Math.floor(Math.random() * 2000), ty = 9000 + Math.floor(Math.random() * 2000);
@@ -53,7 +53,7 @@ G.Eternatus = (() => {
     spawn();
   }
 
-  /** En cada ordenador: viaje a la arena. */
+  /** On every computer: travel to the arena. */
   function begin(cfg) {
     if (raid) return;
     const ts = TS(), pl = G.Game.player;
@@ -78,7 +78,7 @@ G.Eternatus = (() => {
     G.Spawner.say('Eternatus raid! Break the obelisks, hide from the Eternabeam', 4, true);
   }
 
-  /** Quien manda: Eternatus y sus obeliscos (con la vida según vuestro daño). */
+  /** Authority: Eternatus and its obelisks (with HP based on your damage). */
   function spawn() {
     const ts = TS(), t = G.Game.st.time, n = G.Game.everyone().length;
     const floor = (3200 + t * 9) * G.Coop.scaleHp(n) * (n > 1 ? 1.4 : 1) * 3;
@@ -103,7 +103,7 @@ G.Eternatus = (() => {
     G.Audio.sfx('boss');
   }
 
-  /** Un obelisco: quieto, sin golpes, con su propio dibujo (también la copia de un invitado). */
+  /** An obelisk: still, no hits, with its own drawing (a guest's copy too). */
   function obelisk(o) {
     if (o.obelisk) return;
     o.obelisk = true;
@@ -114,7 +114,7 @@ G.Eternatus = (() => {
     o.draw = drawObelisk;
   }
 
-  // ---------------- cada fotograma ----------------
+  // ---------------- every frame ----------------
 
   function tick(dt, pl, time) {
     if (!raid) {
@@ -144,7 +144,7 @@ G.Eternatus = (() => {
     if (raid.t >= TIME) { send({ a: 'lose' }); lost(); }
   }
 
-  /** Los cristales son sólidos (cada uno empuja a su Pokémon). */
+  /** The crystals are solid (each computer pushes its own Pokémon). */
   function push(p, c) {
     if (!p || p.dead) return;
     const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy), min = CR + (p.r || 10);
@@ -160,7 +160,7 @@ G.Eternatus = (() => {
 
   // ---------------- Eternabeam ----------------
 
-  /** Empieza a cargar desde (x, y) (también lo que manda el anfitrión). */
+  /** Starts charging from (x, y) (also what the host sends). */
   function charge(x, y) {
     if (!raid) return;
     raid.beam = { x, y, t: 0 };
@@ -168,7 +168,7 @@ G.Eternatus = (() => {
     G.Audio.sfx('quake');
   }
 
-  /** ¿Hay un cristal o una columna entre (ex, ey) y (px, py)? */
+  /** Is there a crystal or a pillar between (ex, ey) and (px, py)? */
   function shielded(ex, ey, px, py) {
     const vx = px - ex, vy = py - ey, L2 = vx * vx + vy * vy;
     if (L2 < 1) return false;
@@ -202,7 +202,7 @@ G.Eternatus = (() => {
     if (b.t >= BEAM_WARN + 0.6) raid.beam = null;
   }
 
-  // ---------------- final ----------------
+  // ---------------- end ----------------
 
   function won() {
     if (!raid || raid.phase !== 'fight') return;
@@ -221,13 +221,13 @@ G.Eternatus = (() => {
     G.Game.flash('#ff2040', 0.9);
     const pl = G.Game.player;
     if (pl && !pl.dead) {
-      pl.invuln = 0; pl.sashT = performance.now();       // (ni la Banda Focus)
+      pl.invuln = 0; pl.sashT = performance.now();       // (not even the Focus Sash)
       const ko = () => pl.hurt(pl.maxHp * 100, null, true);
       if (G.DeathCause) G.DeathCause.by({ name: 'Eternatus', dex: DEX, boss: true, how: 'raid' }, ko); else ko();
     }
   }
 
-  /** En cada ordenador: de vuelta al mapa. */
+  /** On every computer: back to the map. */
   function finish() {
     const a = raid, pl = G.Game.player;
     if (!a) return;
@@ -246,7 +246,7 @@ G.Eternatus = (() => {
     G.Game.flash('#ff3a6a', 0.8);
   }
 
-  // ---------------- dibujo ----------------
+  // ---------------- drawing ----------------
 
   function drawObelisk(ctx) {
     const e = this, a = e.dead ? Math.max(0, e.fade / 0.9) : 1, h = 66, w = 24;
@@ -289,7 +289,7 @@ G.Eternatus = (() => {
     ctx.restore();
   }
 
-  /** Lo que va por encima (en el mundo): los lazos de los obeliscos y la sombra segura. */
+  /** What goes on top (in the world): the obelisks' links and the safe shadow. */
   function drawWorld(ctx) {
     const boss = G.EnemyMgr.get(raid.bossId), now = performance.now() / 1000;
     if (boss && !boss.dead) {
@@ -321,7 +321,7 @@ G.Eternatus = (() => {
       ctx.lineTo(c.x + Math.cos(th - Math.PI / 2) * CR, c.y + Math.sin(th - Math.PI / 2) * CR);
       ctx.closePath(); ctx.fill();
     }
-    // La carga: un anillo rojo que se cierra sobre Eternatus.
+    // The charge: a red ring that closes in on Eternatus.
     const k = Math.min(1, b.t / BEAM_WARN);
     ctx.globalAlpha = b.hit ? 0.5 : 0.35 + k * 0.4;
     ctx.strokeStyle = RED; ctx.lineWidth = 4 + k * 6;
@@ -329,7 +329,7 @@ G.Eternatus = (() => {
     ctx.restore();
   }
 
-  /** En pantalla: el reloj, los obeliscos y el aviso del rayo. */
+  /** On screen: the clock, the obelisks and the beam warning. */
   function drawScreen(ctx, w, h) {
     const left = Math.max(0, TIME - raid.t), obs = raid.obs.filter(id => { const o = G.EnemyMgr.get(id); return o && !o.dead; }).length;
     ctx.save();
@@ -354,16 +354,16 @@ G.Eternatus = (() => {
     ctx.restore();
   }
 
-  // ---------------- ganchos ----------------
+  // ---------------- hooks ----------------
 
   const J = G.Judgment, jActive = Object.getOwnPropertyDescriptor(J, 'active').get;
   Object.defineProperty(J, 'active', { configurable: true, get() { return jActive.call(J) || !!raid; } });
-  // Las grietas dejan de abrirse 2 min antes; en Lab, tras ganar, vuelven.
+  // Rifts stop opening 2 min before; in Lab, after winning, they come back.
   Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && done() ? Infinity : AT; } });
   const jUpdate = J.update;
   J.update = function (dt, pl, time) {
     if (!lab() || jActive.call(J)) return jUpdate.apply(this, arguments);
-    jUpdate.call(this, dt, pl, 0);       // mide el daño; con el reloj a 0, Arceus no empieza
+    jUpdate.call(this, dt, pl, 0);       // measures the damage; with the clock at 0, Arceus doesn't start
     tick(dt, pl, time);
   };
   const jReset = J.reset;
@@ -372,7 +372,7 @@ G.Eternatus = (() => {
   J.drawAir = function (ctx) { const r = jAir.apply(this, arguments); if (raid) drawWorld(ctx); return r; };
   const jOver = J.drawOverlay;
   J.drawOverlay = function (ctx, w, h) { const r = jOver.apply(this, arguments); if (raid) drawScreen(ctx, w, h); return r; };
-  // (Si no, el HUD pondría el nombre de la arena oscura de las grietas.)
+  // (Otherwise the HUD would show the name of the rifts' dark arena.)
   const biomeName = G.World.biomeName;
   G.World.biomeName = function () { return raid ? 'Eternatus Raid' : biomeName.apply(this, arguments); };
   const evDraw = G.Events.drawables;
@@ -407,7 +407,7 @@ G.Eternatus = (() => {
   return {
     AT, TIME, BEAM_WARN, BEAM_PCT, DEX, shielded: (...a) => !!raid && shielded(...a),
     get active() { return !!raid; }, get raid() { return raid; },
-    /** Para pruebas: el Eternabeam ya, o el tiempo que queda. */
+    /** For tests: the Eternabeam right now, or the time left. */
     debugBeam() { const b = raid && G.EnemyMgr.get(raid.bossId); if (b && authority()) { raid.beamT = BEAM_EVERY; charge(b.x, b.y); } },
     debugTimeLeft(s) { if (raid) raid.t = TIME - s; }
   };

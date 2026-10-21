@@ -1,30 +1,30 @@
-/* ============ death-cause.js — qué te ha debilitado (fork MrSurvivor) ============
- * Player.hurt no sabe quién pega. Aquí se apunta, golpe a golpe, de dónde viene, con ganchos
- * que van justo antes del golpe en el mismo paso:
- *   contacto      Enemy.strike (Combat lo llama antes de pl.hurt)
- *   disparo       Enemy.shoot marca sus proyectiles (Projectiles.spawn); el que te toca sigue en
- *                 G.Projectiles.all() cuando llega el golpe
- *   ataque en área  Enemy.hazard marca la zona (también en la que el anfitrión manda a los
- *                 invitados, 'hz'); la que acaba de estallar y te pilla (G.Hazards.all)
- *   trampa        G.Interact.trapEffect
- *   Juicio de Arceus  G.Judgment activo y golpe puro
- *   lo que se diga  G.DeathCause.by(s, fn): el golpe que da fn viene de s (el Eternabeam de
+/* ============ death-cause.js — what knocked you out (MrSurvivor fork) ============
+ * Player.hurt doesn't know who hits. Here, hit by hit, we record where it comes from, with hooks
+ * that run just before the hit in the same step:
+ *   contact       Enemy.strike (Combat calls it before pl.hurt)
+ *   shot          Enemy.shoot tags its projectiles (Projectiles.spawn); the one that hits you is still in
+ *                 G.Projectiles.all() when the hit lands
+ *   area attack   Enemy.hazard tags the zone (also the copy the host sends to the
+ *                 guests, 'hz'); the one that just went off and catches you (G.Hazards.all)
+ *   trap          G.Interact.trapEffect
+ *   Arceus's Judgment  G.Judgment active and a pure hit
+ *   given source  G.DeathCause.by(s, fn): the hit fn deals comes from s (the Eternabeam in
  *                 js/fork/lab/eternatus.js)
- * pl.deathLog guarda los últimos golpes { name, dex, how, dmg, boss }. Al caer sale un aviso
- * ("Te ha debilitado X (contacto)") y la pantalla final lleva "Lo que te debilitó" con los
- * últimos golpes (G.RunUI.showOver). En grupo, cada uno los suyos.
- * Prueba: fork/test-death-cause.cjs.
+ * pl.deathLog keeps the last hits { name, dex, how, dmg, boss }. On going down a toast says
+ * "Te ha debilitado X (contacto)" (knocked out by X) and the end screen has "Lo que te debilitó"
+ * (what knocked you out) with the last hits (G.RunUI.showOver). In a group, each player sees their own.
+ * Test: fork/test-death-cause.cjs.
  */
 (() => {
   const KEEP = 5;
-  let actor = null;                    // el enemigo que está golpeando ahora mismo (contacto)
+  let actor = null;                    // the enemy hitting right now (contact)
   let trap = false;
   let forced = null;                   // G.DeathCause.by
 
   const E = G.Enemy.prototype;
   const strike = E.strike;
   E.strike = function (pl) {
-    actor = this;                      // lo lee el pl.hurt que viene justo después (y lo borra)
+    actor = this;                      // read by the pl.hurt that comes right after (which clears it)
     return strike.apply(this, arguments);
   };
   let shooter = null;
@@ -42,7 +42,7 @@
     hzSrc = who(this);
     try { return hazard.call(this, Object.assign({ src: hzSrc }, o)); } finally { hzSrc = null; }
   };
-  // El anfitrión manda cada zona a los invitados ('hz', js/systems/hazards.js add) con sus campos: también quién.
+  // The host sends each zone to the guests ('hz', js/systems/hazards.js add) with its fields: who as well.
   const broadcast = G.Coop.broadcast;
   G.Coop.broadcast = function (msg) {
     if (hzSrc && Array.isArray(msg) && msg[0] === 'hz' && msg[1]) msg[1].src = hzSrc;
@@ -53,7 +53,7 @@
 
   function who(e) { return { name: e.name, dex: e.dex || (e.def && e.def.dex), boss: !!e.boss }; }
 
-  /** De dónde viene el golpe que está entrando en pl. */
+  /** Where the hit now landing on pl comes from. */
   function source(pl, pure) {
     if (forced) return Object.assign({}, forced);
     if (actor && !actor.dead && G.U.dist2(actor.x, actor.y, pl.x, pl.y) < (actor.r + pl.r + 30) ** 2) return Object.assign(who(actor), { how: 'touch' });
@@ -76,14 +76,14 @@
     if (lost > 0) {
       if (s) {
         this.deathLog = (this.deathLog || []).concat([Object.assign(s, { dmg: Math.round(lost), type: type || null })]).slice(-KEEP);
-        if (this.hp <= 0 && hp0 > 0) { this.killedBy = s; announce(s); }   // el golpe que lo deja a 0
+        if (this.hp <= 0 && hp0 > 0) { this.killedBy = s; announce(s); }   // the hit that brings it to 0
       }
     }
     return res;
   };
 
-  // ---------------- textos ----------------
-  // (beam y raid: el Lab, sólo en inglés.)
+  // ---------------- texts ----------------
+  // (beam and raid: the Lab, English only.)
   const HOW = { touch: 'contacto', shot: 'disparo', area: 'ataque en área', trap: 'trampa', judgment: 'Juicio de Arceus',
                 beam: 'Eternabeam', raid: 'time ran out' };
   const name = s => s.how === 'trap' ? G.T('Una trampa') : s.how === 'judgment' ? G.T('Arceus') : s.name ? G.T(s.name) : G.T('Un enemigo');
@@ -112,7 +112,7 @@
     return res;
   };
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Te ha debilitado {x} ({x}).', 'Knocked out by {x} ({x}).', 'Mis K.O. par {x} ({x}).', 'Messo KO da {x} ({x}).', 'Nocauteado por {x} ({x}).', '被{x}击倒（{x}）。', '被{x}擊倒（{x}）。'],
     ['Lo que te debilitó', 'What knocked you out', 'Ce qui vous a mis K.O.', 'Cosa ti ha messo KO', 'O que te nocauteou', '击倒你的是', '擊倒你的是'],

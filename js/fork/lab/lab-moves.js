@@ -1,34 +1,34 @@
-/* ============ lab-moves.js — movimientos que sólo existen en el modo Lab (fork MrSurvivor) ============
- * Se registran en G.Moves.BY_ID al cargar (js/fork/lab/lab.js), en todas las partidas: así el
- * fantasma de un compañero (Combat.ghostCast) y su halo se ven aunque tú no estés en Lab. Pero
- * no entran en G.Moves.ALL ni en G.Moves.POOL: fuera de una partida Lab no salen nunca en las
- * cartas, la elección de movimiento inicial ni el veto.
+/* ============ lab-moves.js — moves that only exist in Lab mode (MrSurvivor fork) ============
+ * Registered in G.Moves.BY_ID on load (js/fork/lab/lab.js), in every run: that way a
+ * teammate's ghost (Combat.ghostCast) and its aura show even when you're not in Lab. But
+ * they don't go into G.Moves.ALL or G.Moves.POOL: outside a Lab run they never show up in the
+ * cards, the starting move choice or the veto.
  *
- * Mismos campos que js/data/moves.js, más:
- *   cat    'physical' | 'special' (en moves.js lo pone su tabla PHYSICAL); null = no pega él
- *   look   cómo se ve (lo que G.VFX.forMove daría): { proj, pal, trail... }
- *   evo    [nombre evolucionado, mejora que lo pide] como G.Moves.EVO
- *   sig    movimiento de firma (fase 5): sólo lo aprende esa línea evolutiva
- *          { line: dex } toda la cadena de dex · { final: [dex...] } sólo los que ya no evolucionan
- *          de esas cadenas · { dex: [...] } esos Pokémon
- *   anim   animación de Mundo Misterioso preferida, por orden (G.LabAnims, fase 5)
- *   ups    sus propias mejoras, si las de su familia no le sirven (Protección: no hace daño)
- *   evoMod su propia evolución { t, m } (como la de su familia en kinds.js / kinds2.js EVO)
- *   storeAll  Contraataque que devuelve los golpes de toda categoría (Repr. Metal)
- * Las familias nuevas (leap, recoil...) y los campos que usan están en js/fork/lab/kinds.js.
- * Los textos, sólo en inglés (fork/LAB.md). fork/fetch-lab.cjs también lee este archivo: un
- * movimiento nuevo entra en las listas de aprendizaje al volver a ejecutarlo (su id es el de
- * PokeAPI). Por eso aquí sólo hay datos: nada de G.algo.
+ * Same fields as js/data/moves.js, plus:
+ *   cat    'physical' | 'special' (in moves.js its PHYSICAL table sets it); null = it doesn't hit itself
+ *   look   how it looks (what G.VFX.forMove would give): { proj, pal, trail... }
+ *   evo    [evolved name, upgrade that triggers it] like G.Moves.EVO
+ *   sig    signature move (phase 5): only that evolution line learns it
+ *          { line: dex } dex's whole chain · { final: [dex...] } only the ones that no longer evolve
+ *          in those chains · { dex: [...] } those Pokémon
+ *   anim   preferred Mystery Dungeon animation, in order (G.LabAnims, phase 5)
+ *   ups    its own upgrades, if its family's don't fit it (Protect: deals no damage)
+ *   evoMod its own evolution { t, m } (like its family's in kinds.js / kinds2.js EVO)
+ *   storeAll  a Counter that returns hits of every category (Metal Burst)
+ * The new families (leap, recoil...) and the fields they use are in js/fork/lab/kinds.js.
+ * Texts in English only (fork/LAB.md). fork/fetch-lab.cjs also reads this file: a
+ * new move goes into the learn lists when it's run again (its id is
+ * PokeAPI's). That's why there's only data here: no G.anything.
  */
 G.LabMoves = [
-  // Rapidez: estrellas que nunca fallan (en los juegos no falla nunca y da a todos).
+  // Swift: stars that never miss (in the games it never misses and hits everyone).
   { id: 'swift', name: 'Swift', type: 'normal', kind: 'homing', cat: 'special',
     desc: 'Three stars that home in on enemies.',
     cd: 0.75, dmg: 9, count: 3, spread: 0.5, speed: 300, life: 2.0, size: 6, homing: 5,
     look: { proj: 'star', pal: 'electric' }, evo: ['Population Bomb', 'cd'] },
 
-  // ================= fase 4: familias nuevas =================
-  // ---- leap: te vas y caes sobre el blanco (no te pueden dar mientras) ----
+  // ================= phase 4: new families =================
+  // ---- leap: you leave and land on the target (nothing can hit you meanwhile) ----
   { id: 'fly', name: 'Fly', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly',
     desc: 'Fly up out of reach, then dive onto the enemy and hit everything where you land.',
     cd: 2.2, dmg: 34, radius: 70, dur: 0.7, knock: 120, look: { proj: 'wind' }, evo: ['Dual Wingbeat', 'spd'] },   // not Sky Attack: Moltres's signature
@@ -45,7 +45,7 @@ G.LabMoves = [
     desc: 'Vanish into the shadows, then strike the enemy from nowhere.',
     cd: 2.0, dmg: 32, radius: 66, dur: 0.65, look: { proj: 'shadow' }, evo: ['Astral Barrage', 'cd'] },
 
-  // ---- recoil: embestidas muy fuertes que te quitan algo de vida ----
+  // ---- recoil: very strong charges that cost you some HP ----
   { id: 'double-edge', name: 'Double-Edge', type: 'normal', kind: 'recoil', cat: 'physical',
     desc: 'A reckless tackle through everything in the way. Hurts you a little too (it never knocks you out).',
     cd: 1.1, dmg: 44, radius: 120, width: 36, knock: 100, recoil: 0.25, look: { proj: 'streak' }, evo: ['Last Resort', 'atk'] },
@@ -71,7 +71,7 @@ G.LabMoves = [
     desc: 'Grab and slam the enemies in your way. Hurts you a little too.',
     cd: 1.0, dmg: 38, radius: 100, width: 36, recoil: 0.25, look: { proj: 'impact' }, evo: ['Collision Course', 'atk'] },
 
-  // ---- ramp: cada golpe seguido pega más ----
+  // ---- ramp: each hit in a row hits harder ----
   { id: 'rollout', name: 'Rollout', type: 'rock', kind: 'ramp', cat: 'physical', roll: true,
     desc: 'Roll into the enemy. Each hit in a row is stronger; miss and it starts over.',
     cd: 0.55, dmg: 12, radius: 52, arc: 2.2, stacks: 4, step: 0.4, look: { proj: 'rock', melee: 'impact' }, evo: ['Steel Roller', 'spd'] },
@@ -85,7 +85,7 @@ G.LabMoves = [
     desc: 'Rake with your claws. Each hit in a row is stronger; miss and it starts over.',
     cd: 0.38, dmg: 9, radius: 52, arc: 1.6, stacks: 5, step: 0.25, look: { melee: 'claw' }, evo: ['Thrash', 'atk'] },
 
-  // ---- guard: se lanzan solos desde cualquier hueco cuando algo va a darte ----
+  // ---- guard: fire on their own from any slot when something is about to hit you ----
   { id: 'protect', name: 'Protect', type: 'normal', kind: 'guard', cat: null, mode: 'protect',
     desc: 'A barrier that blocks every hit for a moment. Raised on its own from any slot when something is about to hit you.',
     cd: 3.2, dur: 0.9, dmg: 0, evo: ['Obstruct', 'def'], ups: [{ t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% duration', m: { dur: 1.25 } }, { t: '-20% recharge and +20% duration', m: { cd: 0.8, dur: 1.2 } }], evoMod: { t: 'Lasts longer and recharges faster', m: { dur: 1.3, cd: 0.8 } } },
@@ -102,7 +102,7 @@ G.LabMoves = [
     desc: 'For a moment you take half from every hit; then it bursts out around you with half again what they did. Works from any slot.',
     cd: 3.2, dur: 1.2, dmg: 22, radius: 90, mult: 1.5, look: { proj: 'shard' }, evo: ['Spin Out', 'def'], storeAll: true },
 
-  // ---- sleep: una zona que duerme (un golpe los despierta) ----
+  // ---- sleep: an area that puts enemies to sleep (a hit wakes them) ----
   { id: 'hypnosis', name: 'Hypnosis', type: 'psychic', kind: 'sleep', cat: 'special',
     desc: 'A hypnotic wave where the ground glows: it hurts the enemies there and puts them to sleep for a few seconds (a hit wakes them).',
     cd: 1.9, dmg: 14, radius: 60, stun: 2.4, look: { proj: 'ring' }, evo: ['Psychic Noise', 'cd'] },
@@ -119,7 +119,7 @@ G.LabMoves = [
     desc: 'A big yawn: a moment later the enemies around it take damage and fall into a long sleep (a hit wakes them).',
     cd: 2.1, dmg: 8, radius: 80, stun: 3.5, look: { proj: 'note' }, evo: ['Snore', 'cd'] },
 
-  // ---- confusión (conf: s): van dando tumbos, no te atacan y se golpean entre ellos ----
+  // ---- confusion (conf: s): they stagger about, don't attack you and hit each other ----
   { id: 'confuse-ray', name: 'Confuse Ray', type: 'ghost', kind: 'homing', cat: 'special',
     desc: 'A sinister light that homes in and confuses: the enemy staggers about, stops attacking you and hits the ones next to it.',
     cd: 1.1, dmg: 13, speed: 220, life: 2.2, size: 8, homing: 4, conf: 2.8, look: { proj: 'ring', pal: 'ghost' }, evo: ['Night Daze', 'cd'] },
@@ -133,8 +133,8 @@ G.LabMoves = [
     desc: 'A kiss that homes in and leaves the enemy confused: it stops attacking you.',
     cd: 1.0, dmg: 14, speed: 260, life: 2.0, size: 7, homing: 5, conf: 2.4, look: { proj: 'ring', pal: 'fairy' }, evo: ['Alluring Voice', 'cd'] },
 
-  // ---- weather: pone un clima (se lanza solo desde cualquier hueco) ----
-  // Clima a tu alrededor un rato (js/fork/lab/kinds.js `wxzone`), no el de la arena (2026-10-21).
+  // ---- weather: sets a weather (fires on its own from any slot) ----
+  // Weather around you for a while (js/fork/lab/kinds.js `wxzone`), not the arena's (2026-10-21).
   { id: 'rain-dance', name: 'Rain Dance', type: 'water', kind: 'weather', cat: null, wx: 'rain',
     desc: 'Rain falls around you for a few seconds: Water moves used inside hit 30% harder. Works from any slot.', cd: 14, dur: 4, radius: 130 },
   { id: 'sunny-day', name: 'Sunny Day', type: 'fire', kind: 'weather', cat: null, wx: 'sun',
@@ -144,7 +144,7 @@ G.LabMoves = [
   { id: 'snowscape', name: 'Snowscape', type: 'ice', kind: 'weather', cat: null, wx: 'snow',
     desc: 'Snow falls around you for a few seconds, slowing the enemies inside. Works from any slot.', cd: 14, dur: 4, radius: 130, slow: 0.35 },
 
-  // ---- terrain: un círculo en el suelo que te ayuda (y a tus compañeros) ----
+  // ---- terrain: a circle on the ground that helps you (and your teammates) ----
   { id: 'electric-terrain', name: 'Electric Terrain', type: 'electric', kind: 'terrain', cat: null, terr: 'electric',
     desc: 'Electrifies the ground around you: Electric moves used inside hit 30% harder. Works from any slot.', cd: 16, dur: 9, radius: 150 },
   { id: 'grassy-terrain', name: 'Grassy Terrain', type: 'grass', kind: 'terrain', cat: null, terr: 'grassy',
@@ -154,7 +154,7 @@ G.LabMoves = [
   { id: 'misty-terrain', name: 'Misty Terrain', type: 'fairy', kind: 'terrain', cat: null, terr: 'misty',
     desc: 'A mist around you: you take 25% less damage while inside. Works from any slot.', cd: 16, dur: 9, radius: 150 },
 
-  // ---- wave: una ola ancha que avanza y arrastra ----
+  // ---- wave: a wide wave that moves forward and sweeps enemies along ----
   { id: 'surf', name: 'Surf', type: 'water', kind: 'wave', cat: 'special',
     desc: 'A wide wave rolls forward, hitting and carrying away every enemy in its path.',
     cd: 1.9, dmg: 26, width: 150, speed: 230, radius: 300, look: { proj: 'drop' }, evo: ['Water Pulse', 'atk'] },
@@ -165,14 +165,14 @@ G.LabMoves = [
     desc: 'A wave of sludge that carries enemies away and poisons them.',
     cd: 2.0, dmg: 22, width: 160, speed: 220, radius: 290, poison: 1, look: { proj: 'blob' }, evo: ['Malignant Chain', 'atk'] },
 
-  // ---- comodines ----
+  // ---- wildcards ----
   { id: 'metronome', name: 'Metronome', type: 'normal', kind: 'metronome', cat: null,
     desc: 'Wag a finger: every time, a random attack from the whole game.', cd: 0.95, look: { proj: 'note' } },
   { id: 'transform', name: 'Transform', type: 'normal', kind: 'transform', cat: null,
     desc: 'Turn into the nearest enemy for a while: you take its look and its types, and this slot uses its move.', cd: 14, dur: 10 },
 
-  // ================= fase 5: movimientos de firma =================
-  // ---- definitivos de los iniciales (sólo la última evolución: se ganan al evolucionar) ----
+  // ================= phase 5: signature moves =================
+  // ---- starter finishers (last evolution only: earned by evolving) ----
   { id: 'frenzy-plant', name: 'Frenzy Plant', type: 'grass', kind: 'quake', cat: 'special', sig: { final: [1, 152, 252, 387, 495] },
     desc: 'Signature: giant roots burst out of the ground in a long line.',
     cd: 1.6, dmg: 30, count: 7, radius: 36, look: { proj: 'leaf' }, anim: ['HitGround', 'Stomp', 'SpAttack', 'Attack'] },
@@ -182,7 +182,7 @@ G.LabMoves = [
   { id: 'hydro-cannon', name: 'Hydro Cannon', type: 'water', kind: 'charge', cat: 'special', sig: { final: [7, 158, 258, 393, 501] },
     desc: 'Signature: gather water for a moment and fire an enormous blast that goes through everything.',
     cd: 2.3, charge: 0.7, dmg: 70, radius: 300, width: 46, look: { beam: 'drop', proj: 'drop' }, anim: ['SpAttack', 'Shoot', 'Charge'] },
-  // ---- iniciales con su propia firma (toda la línea) ----
+  // ---- starters with their own signature (the whole line) ----
   { id: 'spiky-shield', name: 'Spiky Shield', type: 'grass', kind: 'guard', cat: 'physical', mode: 'protect', sig: { line: 650 },
     desc: 'Signature: a barrier of spikes that blocks every hit and hurts whoever touches it. Works from any slot.',
     cd: 3.0, dur: 0.9, dmg: 0, thorns: 18, ups: [{ t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% duration', m: { dur: 1.25 } }, { t: '-20% recharge and +20% duration', m: { cd: 0.8, dur: 1.2 } }], evoMod: { t: 'Lasts longer and recharges faster', m: { dur: 1.3, cd: 0.8 } } },
@@ -219,7 +219,7 @@ G.LabMoves = [
   { id: 'aqua-step', name: 'Aqua Step', type: 'water', kind: 'dash', cat: 'physical', sig: { line: 912 },
     desc: 'Signature: dance through the enemies in a splash, hitting everything on the way.',
     cd: 0.7, dmg: 22, radius: 130, width: 40, look: { proj: 'drop' }, anim: ['Dance', 'Twirl', 'Attack'] },
-  // ---- otras líneas ----
+  // ---- other lines ----
   { id: 'volt-tackle', name: 'Volt Tackle', type: 'electric', kind: 'recoil', cat: 'physical', sig: { line: 25 },
     desc: 'Signature: charge in a storm of electricity. Huge damage, and it hurts you too.',
     cd: 1.1, dmg: 50, radius: 135, width: 40, recoil: 0.33, look: { proj: 'bolt', trail: 'spark' }, anim: ['QuickStrike', 'Attack'] },
@@ -262,7 +262,7 @@ G.LabMoves = [
   { id: 'rage-fist', name: 'Rage Fist', type: 'ghost', kind: 'ramp', cat: 'physical', sig: { line: 56 },
     desc: 'Signature: punch with your rage. Each hit in a row is stronger; miss and it starts over.',
     cd: 0.5, dmg: 14, radius: 54, arc: 1.6, stacks: 6, step: 0.3, look: { melee: 'impact' }, anim: ['Punch', 'Attack'] },
-  // ---- legendarios y singulares ----
+  // ---- legendaries and mythicals ----
   { id: 'sky-attack', name: 'Sky Attack', type: 'flying', kind: 'charge', cat: 'physical', sig: { dex: [146] },
     desc: 'Signature: glow for a moment, then tear through everything in a blazing line of light.',
     cd: 2.3, charge: 0.8, dmg: 70, radius: 300, width: 46, look: { beam: 'star', proj: 'star', pal: 'flying' }, anim: ['SpAttack', 'Charge'] },
@@ -387,8 +387,8 @@ G.LabMoves = [
   { id: 'glaciate', name: 'Glaciate', type: 'ice', kind: 'cone', cat: 'special', sig: { dex: [646] },
     desc: 'Signature: a fan of freezing air that slows enemies right down.',
     cd: 0.8, dmg: 10, count: 9, arc: 1.2, speed: 320, life: 0.6, size: 7, pierce: 1, slow: 0.6, look: { proj: 'shard' }, anim: ['SpAttack', 'Shoot'] },
-  // ================= fase 9: cuerpo a cuerpo y aguante (js/fork/lab/kinds2.js) =================
-  // ---- grab: agarras al más cercano y lo lanzas contra los demás ----
+  // ================= phase 9: close range and sustain (js/fork/lab/kinds2.js) =================
+  // ---- grab: you grab the nearest one and throw it into the others ----
   { id: 'seismic-toss', name: 'Seismic Toss', type: 'fighting', kind: 'grab', cat: 'physical',
     desc: 'Grab the nearest enemy and hurl it into the others. Hits harder the higher your level, and it lands dazed.',
     cd: 0.7, dmg: 18, perLvl: 1.1, radius: 50, knock: 900, stun: 0.6, splash: 1.0, look: { melee: 'impact' }, evo: ['Vital Throw', 'atk'] },
@@ -399,7 +399,7 @@ G.LabMoves = [
     desc: 'Sweep the nearest enemy away with your tail. It lands dazed and hits the ones in its way.',
     cd: 0.7, dmg: 36, radius: 54, knock: 1100, stun: 1.1, splash: 0.8, look: { melee: 'claw' }, evo: ['Dragon Hammer', 'hp'] },
 
-  // ---- bind: los sujetas (ni se mueven ni atacan) y les vas haciendo daño ----
+  // ---- bind: you hold them (they can't move or attack) and keep hurting them ----
   { id: 'wrap', name: 'Wrap', type: 'normal', kind: 'bind', cat: 'physical',
     desc: 'Wrap up the two nearest enemies: they can\'t move or attack while you squeeze them.',
     cd: 0.9, dmg: 23, dur: 3.5, count: 2, radius: 54, evo: ['Wring Out', 'atk'] },
@@ -416,7 +416,7 @@ G.LabMoves = [
     desc: 'Lock the two nearest enemies in cages of electricity that shock them over and over.',
     cd: 0.9, dmg: 21, dur: 3.2, count: 2, radius: 60, look: { proj: 'bolt' }, evo: ['Electro Drift', 'cd'] },
 
-  // ---- focus: cargas; Puño Certero sale si no te dan, Coraza Trampa si te dan ----
+  // ---- focus: you charge up; Focus Punch goes off if you're not hit, Shell Trap if you are ----
   { id: 'focus-punch', name: 'Focus Punch', type: 'fighting', kind: 'focus', cat: 'physical',
     desc: 'Brace and focus for a moment (you take 30% less), then throw a devastating punch across your front that staggers what it hits. Each hit you take while focusing weakens it.',
     cd: 1.3, charge: 0.6, dmg: 75, radius: 70, arc: 3.2, knock: 220, stun: 0.4, look: { melee: 'impact' }, evo: ['Sky Uppercut', 'atk'] },
@@ -424,7 +424,7 @@ G.LabMoves = [
     desc: 'Set a trap in your shell: if an enemy hits you in the next moments, it explodes in flames all around you.',
     cd: 1.6, charge: 1.6, dmg: 52, radius: 110, knock: 260, burn: 2, look: { proj: 'fire' }, evo: ['Mind Blown', 'hp'], ups: [{ t: '+40% damage', m: { dmg: 1.4 } }, { t: 'The trap stays set 30% longer', m: { charge: 1.3 } }, { t: '+25% area', m: { radius: 1.25 } }, { t: '-20% recharge and +40% damage', m: { cd: 0.8, dmg: 1.4 } }] },
 
-  // ---- heal: se lanzan solos desde cualquier hueco al bajar de la mitad de la vida ----
+  // ---- heal: fire on their own from any slot when you fall below half HP ----
   { id: 'recover', name: 'Recover', type: 'normal', kind: 'heal', cat: null,
     desc: 'Restore 25% of your HP when you fall below half. Works from any slot.', cd: 20, amount: 0.25, evo: ['Lunar Blessing', null] },
   { id: 'soft-boiled', name: 'Soft-Boiled', type: 'normal', kind: 'heal', cat: null,
@@ -444,7 +444,7 @@ G.LabMoves = [
   { id: 'heal-order', name: 'Heal Order', type: 'bug', kind: 'heal', cat: null,
     desc: 'Your swarm patches you up: restore 25% of your HP when you fall below half. Works from any slot.', cd: 20, amount: 0.25, evo: ['Pollen Puff', null] },
 
-  // ---- screen: menos daño para ti y los compañeros cerca ----
+  // ---- screen: less damage for you and nearby teammates ----
   { id: 'reflect', name: 'Reflect', type: 'psychic', kind: 'screen', cat: null, screen: 'physical',
     desc: 'A wall of light: you and teammates near you take 40% less from physical attacks for 7 s. Works from any slot.', cd: 18, dur: 7, amount: 0.4, radius: 150, evo: ['Wide Guard', null] },
   { id: 'light-screen', name: 'Light Screen', type: 'psychic', kind: 'screen', cat: null, screen: 'special',
@@ -452,7 +452,7 @@ G.LabMoves = [
   { id: 'aurora-veil', name: 'Aurora Veil', type: 'ice', kind: 'screen', cat: null, wx: 'snow',
     desc: 'A shimmering veil: 30% less from every attack for you and teammates near you, 60% longer in snow. Works from any slot.', cd: 20, dur: 6, amount: 0.3, radius: 150, evo: ['Crafty Shield', null] },
 
-  // ---- shout: un grito que debilita a los enemigos cerca (solo desde cualquier hueco) ----
+  // ---- shout: a cry that weakens nearby enemies (on its own from any slot) ----
   { id: 'growl', name: 'Growl', type: 'normal', kind: 'shout', cat: null, meek: 0.3,
     desc: 'A cute growl: enemies around you deal 30% less damage for 6 s. Works from any slot when enemies get close.', cd: 6, dur: 6, radius: 120, evo: ['Play Nice', null] },
   { id: 'baby-doll-eyes', name: 'Baby-Doll Eyes', type: 'fairy', kind: 'shout', cat: null, meek: 0.4,
@@ -472,11 +472,11 @@ G.LabMoves = [
   { id: 'scary-face', name: 'Scary Face', type: 'normal', kind: 'shout', cat: null, slow: 0.55, meek: 0.1,
     desc: 'A terrifying face: enemies around you slow right down and deal 10% less for 6 s. Works from any slot when enemies get close.', cd: 6, dur: 6, radius: 130, evo: ['Mean Look', null], look: { proj: 'crescent', pal: 'dark' } },
 
-  // ---- endure: aguantas con 1 PS ----
+  // ---- endure: you hold on with 1 HP ----
   { id: 'endure', name: 'Endure', type: 'normal', kind: 'endure', cat: null,
     desc: 'When a hit would knock you out, you hold on with 1 HP and can\'t be hit for 1.5 s. Recharges in 40 s. Works from any slot.', cd: 40, dur: 1.5, evo: ['Safeguard', null] },
 
-  // ---- drenan: te curan parte del daño que hacen ----
+  // ---- drain: they heal you for part of the damage they do ----
   { id: 'drain-punch', name: 'Drain Punch', type: 'fighting', kind: 'melee', cat: 'physical', leech: 0.5,
     desc: 'A punch that drains: you heal half the damage it does (up to 5% of your HP a second).',
     cd: 0.55, dmg: 21, radius: 60, arc: 2.0, knock: 60, look: { melee: 'impact' }, evo: ['Mach Punch', 'atk'] },
@@ -493,21 +493,21 @@ G.LabMoves = [
     desc: 'Signature: a cut of regret-laden flames in a wide arc that burns; you heal half the damage it does (up to 5% of your HP a second).',
     cd: 0.6, dmg: 28, radius: 66, arc: 2.2, knock: 90, burn: 1, look: { melee: 'claw', pal: 'fire' }, anim: ['Slice', 'Swing', 'Attack'] },
 
-  // ---- revancha: más fuertes si te acaban de dar ----
+  // ---- revenge: stronger if you've just been hit ----
   { id: 'revenge', name: 'Revenge', type: 'fighting', kind: 'melee', cat: 'physical', revenge: 2,
     desc: 'A strike that hits twice as hard if an enemy hit you in the last 1.5 s.',
     cd: 0.55, dmg: 16, radius: 56, arc: 1.8, knock: 80, look: { melee: 'impact' }, evo: ['Cross Chop', 'atk'] },
   { id: 'payback', name: 'Payback', type: 'dark', kind: 'melee', cat: 'physical', revenge: 2,
     desc: 'Pay them back: twice the damage if an enemy hit you in the last 1.5 s.',
     cd: 0.55, dmg: 16, radius: 56, arc: 1.8, knock: 70, look: { melee: 'jaws' }, evo: ['Throat Chop', 'atk'] },
-  // ---- cuanta menos vida, más fuerte ----
+  // ---- the less HP, the stronger ----
   { id: 'reversal', name: 'Reversal', type: 'fighting', kind: 'melee', cat: 'physical', reversal: 2,
     desc: 'The less HP you have, the harder it hits: up to three times as hard when you\'re nearly down.',
     cd: 0.55, dmg: 14, radius: 56, arc: 1.8, knock: 70, look: { melee: 'impact' }, evo: ['Low Kick', 'atk'] },
   { id: 'flail', name: 'Flail', type: 'normal', kind: 'melee', cat: 'physical', reversal: 2,
     desc: 'Flail about wildly: the less HP you have, the harder it hits (up to three times).',
     cd: 0.5, dmg: 13, radius: 54, arc: 2.2, knock: 60, look: { melee: 'impact' }, evo: ['Endeavor', 'atk'] },
-  // ---- quitan una parte de la vida que les queda ----
+  // ---- take away part of the HP they have left ----
   { id: 'super-fang', name: 'Super Fang', type: 'normal', kind: 'melee', cat: 'physical', cut: 0.5,
     desc: 'A bite that takes away half the HP the enemy has left (a little from bosses).',
     cd: 1.2, dmg: 14, radius: 54, arc: 1.4, knock: 40, look: { melee: 'jaws' }, evo: ['Hyper Fang', 'cd'] },
@@ -517,19 +517,19 @@ G.LabMoves = [
   { id: 'ruination', name: 'Ruination', type: 'dark', kind: 'homing', cat: 'special', cut: 0.5, sig: { dex: [1001, 1002, 1003, 1004] },
     desc: 'Signature: two curses of ruin home in, each taking away half the HP its enemy has left.',
     cd: 1.1, dmg: 20, count: 2, spread: 0.4, speed: 280, life: 2.0, size: 8, homing: 5, look: { proj: 'shadow' }, anim: ['SpAttack', 'Shoot'] },
-  // ---- más fuertes con tus mejoras acumuladas ----
+  // ---- stronger with your stacked boosts ----
   { id: 'stored-power', name: 'Stored Power', type: 'psychic', kind: 'homing', cat: 'special', power: 0.2,
     desc: 'Homing power that grows 20% stronger for each stat boost you have stacked up.',
     cd: 0.6, dmg: 11, speed: 290, life: 2.0, size: 8, homing: 5, look: { proj: 'ring' }, evo: ['Esper Wing', 'atk'] },
   { id: 'power-trip', name: 'Power Trip', type: 'dark', kind: 'melee', cat: 'physical', power: 0.2,
     desc: 'Show off: a strike 20% stronger for each stat boost you have stacked up.',
     cd: 0.55, dmg: 13, radius: 56, arc: 1.8, knock: 60, look: { melee: 'claw' }, evo: ['Lash Out', 'atk'] },
-  // ---- el primer golpe a cada uno lo deja aturdido ----
+  // ---- the first hit on each one leaves it stunned ----
   { id: 'fake-out', name: 'Fake Out', type: 'normal', kind: 'melee', cat: 'physical', flinch: 1.2,
     desc: 'A sneaky slap: the first time it hits each enemy, that enemy flinches and can\'t act for a moment.',
     cd: 0.45, dmg: 12, radius: 54, arc: 2.0, knock: 40, look: { melee: 'impact' }, evo: ['Upper Hand', 'cd'] },
 
-  // ---- potenciadores de varias stats (`also`) ----
+  // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],
     desc: 'Deals no damage: builds up ATTACK and DEFENSE while active.', cd: 0.85, amount: 0.1, dur: 7, stacks: 5, evo: ['Victory Dance', null] },
   { id: 'calm-mind', name: 'Calm Mind', type: 'psychic', kind: 'buff', cat: null, stat: 'satk', also: [{ stat: 'def', amount: 0.05 }],

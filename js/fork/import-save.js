@@ -1,13 +1,13 @@
-/* ============ import-save.js — traer tu partida de PokéSurvivor (fork MrSurvivor) ============
- * Una web no puede leer lo que otra guarda en el navegador. Por eso el jugador
- * ejecuta un código EN la web original (marcador o consola): lee la copia de su
- * partida que el juego deja allí (ps.save.<cuenta> o ps.cloud.<uid>), la
- * convierte en un texto "MRSV1:..." y la copia (o la descarga si no puede).
- * Aquí se pega ese texto y G.DB.adopt() la fusiona con la tuya.
+/* ============ import-save.js — bring over your PokéSurvivor save (MrSurvivor fork) ============
+ * A website can't read what another one stores in the browser. So the player
+ * runs a snippet ON the original site (bookmarklet or console): it reads the copy of their
+ * save that the game keeps there (ps.save.<account> or ps.cloud.<uid>),
+ * turns it into a "MRSV1:..." text and copies it (or downloads it if it can't).
+ * That text is pasted here and G.DB.adopt() merges it with yours.
  *
- * El nombre y el dominio de upstream van escritos por partes: fork/brand.cjs
- * cambia "PokéSurvivor" y su dominio por los nuestros en todo el build.
- * Prueba: fork/test-import.cjs.
+ * Upstream's name and domain are written in pieces: fork/brand.cjs
+ * replaces "PokéSurvivor" and its domain with ours across the whole build.
+ * Test: fork/test-import.cjs.
  */
 G.ImportSave = (() => {
   const UP_NAME = 'Pok' + String.fromCharCode(233) + 'Survivor';
@@ -16,8 +16,8 @@ G.ImportSave = (() => {
   const PREFIX = 'MRSV1:';
   const FILE = 'pokesurvivor-save.txt';
   const MAX = 4 * 1024 * 1024;
-  // Textos de esta pantalla (sólo del fork: no van en los diccionarios de upstream).
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Texts for this screen (fork only: they don't go in upstream's dictionaries).
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ["Importar partida de {x}", "Import save from {x}", "Importer la partie de {x}", "Importa partita da {x}", "Importar jogo de {x}", "从 {x} 导入存档", "從 {x} 匯入存檔"],
     ["Importar tu partida de {x}", "Import your {x} save", "Importer ta partie de {x}", "Importa la tua partita di {x}", "Importar seu jogo de {x}", "导入你的 {x} 存档", "匯入你的 {x} 存檔"],
@@ -46,9 +46,9 @@ G.ImportSave = (() => {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /**
-   * El código que se ejecuta en la web original (en su consola o como marcador).
-   * Sin nada de este juego dentro: sólo localStorage, el portapapeles y avisos.
-   * `msg` son los textos ya traducidos.
+   * The code that runs on the original site (in its console or as a bookmarklet).
+   * Nothing from this game inside: only localStorage, the clipboard and alerts.
+   * `msg` holds the texts, already translated.
    */
   function snippet(msg) {
     const M = JSON.stringify(msg);
@@ -75,7 +75,7 @@ G.ImportSave = (() => {
     };
   }
 
-  /** Lee un código "MRSV1:..." (o la partida en JSON tal cual) → objeto, o null. */
+  /** Reads a "MRSV1:..." code (or the save as plain JSON) → object, or null. */
   function decode(text) {
     const t = String(text || '').trim();
     if (!t || t.length > MAX) return null;
@@ -113,7 +113,7 @@ G.ImportSave = (() => {
     const q = a => el.querySelector(`[data-a="${a}"]`);
     const say = (s, bad) => { const m = q('msg'); m.textContent = s; m.style.color = bad ? '#ff8a96' : '#8ff0a8'; };
     q('close').onclick = () => el.remove();
-    // Aquí no hace nada (y la política de seguridad no lo dejaría): es para arrastrarlo.
+    // It does nothing here (and the security policy wouldn't allow it): it's there to be dragged.
     q('mark').onclick = e => { e.preventDefault(); say(G.T('Arrástralo a la barra de marcadores; púlsalo luego en la otra web.')); };
     q('copy').onclick = () => {
       const ta = q('snippet');

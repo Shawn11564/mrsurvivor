@@ -1,22 +1,22 @@
-/* ============ rainbow.js — el ticket arcoíris ×25 (fork MrSurvivor) ============
- * Un ticket que paga 25 tiradas de una vez con al menos una Legendaria (la última, si no ha salido
- * ninguna: js/systems/gacha.js). Va en save.tickets.t25, en la libreta de monedas y tickets como
- * los demás (CUR de js/core/db.js), así no se pierde ni se duplica al fusionar dos copias.
- * Se consigue:
- *   - al vencer a un legendario de una grieta, 1 de cada 10 veces (el ×10 sale 1 de cada 2);
- *   - al aguantar 30:00 en una run (una vez por run);
- *   - con 4 logros grandes, una vez: 500 Pokémon, todos, 20 shinies y 20 minutos aguantados.
- *     Se pagan al guardar (G.DB.commit) si el logro está y no se había pagado (save.r25), también
- *     a quien ya lo tenía; save.r25 se une al fusionar (G.forkMerge).
- * En el gacha: el botón "Arcoíris ×25" bajo los demás, cuántos tienes y una línea en las notas
- * (gancho: G.PityBar.draw, que el gacha llama cada vez que se pinta). Prueba: fork/test-rainbow.cjs.
+/* ============ rainbow.js — the ×25 rainbow ticket (MrSurvivor fork) ============
+ * A ticket that pays for 25 pulls at once with at least one Legendary (the last pull, if none has
+ * come up: js/systems/gacha.js). It lives in save.tickets.t25, in the coin and ticket ledger like
+ * the others (CUR in js/core/db.js), so it isn't lost or duplicated when two copies are merged.
+ * How you get one:
+ *   - by beating a rift legendary, 1 time in 10 (the ×10 comes 1 time in 2);
+ *   - by lasting 30:00 in a run (once per run);
+ *   - from 4 big achievements, once: 500 Pokémon, all of them, 20 shinies and 20 minutes survived.
+ *     They're paid on save (G.DB.commit) if the achievement is there and wasn't paid yet (save.r25),
+ *     also to players who already had it; save.r25 is joined on merge (G.forkMerge).
+ * In the gacha: the "Arcoíris ×25" (Rainbow ×25) button under the others, how many you have and a
+ * line in the notes (hook: G.PityBar.draw, which the gacha calls on every paint). Test: fork/test-rainbow.cjs.
  */
 G.Rainbow = (() => {
   const $ = id => document.getElementById(id);
   const RIFT = 1 / 10, TIME = 1800;
   const ACH = { own500: 1, ownAll: 2, shiny20: 1, time20: 1 };
 
-  // El icono: el ticket ×10 con sus franjas de colores.
+  // The icon: the ×10 ticket with coloured stripes.
   G.Icons.UI.ticket25 = { pal: { r: '#ff5f6d', o: '#ff9a3d', y: '#ffd23f', g: '#5fe08a', b: '#4fb4ff', v: '#c47bff', w: '#ffffff', d: '#7a4fb0' }, rows: [
     '............', '............', 'kkkkkkkkkkkk', 'kwroyygbbvvk', 'krroyygbbvvk', '.krooyggbvk.',
     '.krooyygbvk.', 'krrooyggbbvk', 'kddddddddddk', 'kkkkkkkkkkkk', '............', '............'] };
@@ -40,7 +40,7 @@ G.Rainbow = (() => {
     if (G.UI.refreshCoins) G.UI.refreshCoins();
   }
 
-  // ---------------- de dónde salen ----------------
+  // ---------------- where they come from ----------------
   const event = G.Progress.event;
   G.Progress.event = function (kind) {
     const r = event.apply(this, arguments);
@@ -80,7 +80,7 @@ G.Rainbow = (() => {
     return r && r.t25 ? G.Icons.html('ticket25', 12) + ' ' + r.t25 + ' ×25' + (t ? ' · ' + t : '') : t;
   };
 
-  // ---------------- en el gacha ----------------
+  // ---------------- in the gacha ----------------
   function paint() {
     const row = $('pull-10b') && $('pull-10b').parentElement;
     if (!row) return;
@@ -108,11 +108,11 @@ G.Rainbow = (() => {
   }
   if (G.PityBar) {
     const draw = G.PityBar.draw;
-    // El gacha llama a draw en medio de su refresh, antes de escribir los tickets y las notas: después.
+    // The gacha calls draw midway through its refresh, before it writes the tickets and notes: paint after.
     G.PityBar.draw = function () { const r = draw.apply(this, arguments); Promise.resolve().then(paint); return r; };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Arcoíris ×25', 'Rainbow ×25', 'Arc-en-ciel ×25', 'Arcobaleno ×25', 'Arco-íris ×25', '彩虹 ×25', '彩虹 ×25'],
     ['25 tiradas, una Legendaria segura', '25 pulls, a Legendary guaranteed', '25 tirages, un Légendaire garanti', '25 lanci, un Leggendario garantito', '25 giros, um Lendário garantido', '25 抽，必得一只传说', '25 抽，必得一隻傳說'],

@@ -1,15 +1,15 @@
-/* ============ resume.js — seguir la partida tras recargar (Lab primero, fork MrSurvivor) ============
- * En una partida Lab en solitario, cada 5 s (y al cerrar la pestaña) se guarda en este navegador
- * (localStorage ms.resume) lo que hace falta para seguirla: el tiempo, la semilla del mapa, dónde
- * estás, tu Pokémon (su forma de ahora), nivel y experiencia, vida, los multiplicadores (cartas,
- * mejoras, objeto, prestigio, Lab), las cartas cogidas, los movimientos con su nivel y si han
- * evolucionado, cómo están en los huecos, el objeto, los vínculos, las monedas recogidas y lo del Lab
- * (_lab*). En la grieta o ante Arceus no se guarda (vale la última de antes).
- * Al volver al menú con una guardada, un aviso: "Resume" la sigue (los enemigos empiezan de nuevo
- * a esa hora) y "End run" la sigue y la termina en el acto, con los premios de siempre (endRun).
- * Los tickets ya se guardaron al cogerlos: no vuelven a contar. Se borra al acabar la partida.
- * El reloj se pone con G.Game.debugTime (la marca no cuenta para el ranking; el Lab nunca cuenta).
- * En grupo no se puede: la partida es del anfitrión. Textos en inglés. Prueba: fork/test-resume.cjs.
+/* ============ resume.js — carry on with the run after a reload (Lab first, MrSurvivor fork) ============
+ * In a solo Lab run, every 5 s (and when the tab closes) this browser saves (localStorage
+ * ms.resume) what it takes to carry on: the time, the map seed, where you
+ * are, your Pokémon (its current form), level and experience, HP, the multipliers (cards,
+ * upgrades, item, prestige, Lab), the cards taken, the moves with their level and whether they have
+ * evolved, how they sit in the slots, the item, the bonds, the coins picked up and the Lab state
+ * (_lab*). Nothing is saved in the rift or against Arceus (the last save from before stands).
+ * Back at the menu with a saved run, a prompt: "Resume" carries on (the enemies start over
+ * at that time) and "End run" resumes it and ends it at once, with the usual rewards (endRun).
+ * Tickets were already saved when picked up: they don't count again. The save is deleted when the run ends.
+ * The clock is set with G.Game.debugTime (the time doesn't count for the ranking; Lab never counts).
+ * Not in co-op: the run belongs to the host. Texts in English. Test: fork/test-resume.cjs.
  */
 G.Resume = (() => {
   const KEY = 'ms.resume', EVERY = 5000;
@@ -17,7 +17,7 @@ G.Resume = (() => {
     'regenFlat', 'magnet', 'xpMul', 'coinMul', 'critChance', 'rerolls', 'rerollBonus', 'maxMoves', 'selfRevive', 'prestige', 'passiveBuffs', 'x', 'y'];
   let seed = 1;
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
-  const write = v => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* nada */ } };
+  const write = v => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* nothing */ } };
   const who = () => (G.DB.guest ? 'guest' : (G.DB.uid || (G.DB.fb && G.DB.fb.uid) || 'local'));
 
   const reset = G.World.reset;
@@ -28,7 +28,7 @@ G.Resume = (() => {
     if (!pl || G.Game.state !== 'playing' || G.Coop.active || !(G.Lab && G.Lab.active) || G.Rift.inArena || (G.Judgment && G.Judgment.active) || pl.dead) return null;
     const p = {};
     for (const k of PRIM) if (pl[k] !== undefined) p[k] = pl[k];
-    for (const k of Object.keys(pl)) if (k.startsWith('_lab')) { try { p[k] = JSON.parse(JSON.stringify(pl[k])); } catch (e) { /* nada */ } }
+    for (const k of Object.keys(pl)) if (k.startsWith('_lab')) { try { p[k] = JSON.parse(JSON.stringify(pl[k])); } catch (e) { /* nothing */ } }
     const moves = pl.moves.map(m => ({ id: m.id, lvl: m.lvl, evolved: !!m.evolved }));
     return { v: 1, who: who(), at: Date.now(), dex: pl.mon.dex, shiny: !!pl.shiny, seed, time: st.time, p,
       statsTaken: Object.assign({}, pl.statsTaken), item: pl.item || null, banned: [...(pl.banned || [])],
@@ -39,13 +39,13 @@ G.Resume = (() => {
     if (s) write(s);
     else if (G.Game.state === 'over' || G.Game.state === 'ui') {
       const old = read();
-      if (old && G.Game.state === 'over') write(null);          // la partida se acabó: nada que seguir
+      if (old && G.Game.state === 'over') write(null);          // the run is over: nothing to carry on
     }
   }
   setInterval(save, EVERY);
   addEventListener('beforeunload', () => { const s = snap(); if (s) write(s); });
 
-  /** Seguir la guardada (end: y terminarla en el acto). */
+  /** Carry on with the saved run (end: and end it at once). */
   function resume(end = false) {
     const s = read();
     if (!s || s.who !== who() || !G.DEX_BY[s.dex]) { write(null); return false; }
@@ -58,13 +58,13 @@ G.Resume = (() => {
     Object.assign(pl, s.p);
     pl.statsTaken = Object.assign({}, s.statsTaken);
     pl.banned = new Set(s.banned || []);
-    pl.item = s.item && G.Items.BY[s.item] ? s.item : null;        // sus efectos ya van en los multiplicadores
+    pl.item = s.item && G.Items.BY[s.item] ? s.item : null;        // its effects are already in the multipliers
     pl.moves.length = 0; pl.slots.length = 0;
     const ms = s.moves.map(m => { const i = G.Moves.instance(m.id, m.lvl); if (m.evolved) G.Moves.evolve(i); return i; });
     ms.forEach(m => pl.moves.push(m));
     for (const g of s.slots) pl.slots.push(g.map(i => ms[i]).filter(Boolean));
     pl.active = Math.min(s.active | 0, Math.max(0, pl.slots.length - 1));
-    pl.t1 = 0; pl.t10 = 0;                                          // ya guardados al cogerlos
+    pl.t1 = 0; pl.t10 = 0;                                          // already saved when picked up
     G.Camera.x = pl.x; G.Camera.y = pl.y;
     write(null);
     if (end) G.Game.quit();
@@ -72,7 +72,7 @@ G.Resume = (() => {
     return true;
   }
 
-  // ---------------- el aviso en el menú ----------------
+  // ---------------- the prompt in the menu ----------------
   function offer() {
     const s = read();
     if (!s || s.who !== who() || G.Game.state !== 'ui' || document.getElementById('resume-box')) return;

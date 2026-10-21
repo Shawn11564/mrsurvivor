@@ -1,29 +1,29 @@
-/* ============ radiant-glow.js — el brillo de los radiantes (fork MrSurvivor) ============
- * Ajustes > Gráficos > "Radiant glow" (G.Settings 'radGlow', 0-1; sin tocar, DEF = 10 %): un
- * radiante (js/fork/radiant.js) brilla con su color más llamativo, el mismo que da el voto de sus
- * ataques (G.LabShiny.paletteFrom de la hoja Idle normal contra la r/Idle).
+/* ============ radiant-glow.js — the radiants' glow (MrSurvivor fork) ============
+ * Settings > Graphics > "Radiant glow" (G.Settings 'radGlow', 0-1; untouched, DEF = 10 %): a
+ * radiant (js/fork/radiant.js) glows in its most striking colour, the same one the vote gives its
+ * attacks (G.LabShiny.paletteFrom of the normal Idle sheet against the r/Idle one).
  *
- *   Máscara   en cada hoja del radiante, los píxeles de ese tono (±20°, se apaga hasta ±40°) cuentan
- *             entero y el resto del cuerpo un poco (BODY). Si el color llamativo es gris, cuentan
- *             los grises claros. Se hace UNA vez por hoja (como Sprites.white): cada fotograma con
- *             margen PAD, y dos desenfoques (tres cajas seguidas, casi gaussiano): uno estrecho
- *             (el núcleo, encima del sprite: esos píxeles "dan luz") y uno ancho (el halo, debajo).
- *   Dibujo    Animator.draw envuelto: el halo debajo, el sprite, y el núcleo encima con 'lighter'
- *             (luz que se suma). El halo va mezclado normal, no sumado: sumado, un halo rojo sobre la
- *             hierba salía naranja. Crece con el ajuste y late un poco (no con "Menos sacudidas y
- *             destellos").
- *             A 0 % se dibuja como siempre, sin nada más.
- * Vale para todo lo que dibuja un radiante con su clave '{dex}/r' o 'm{dex}/r': la partida, los
- * compañeros del cooperativo, el menú, la colección, el ritual y la vista previa del ajuste.
- * Textos sólo en inglés, como radiant.js. Prueba: fork/test-radiant-glow.cjs.
+ *   Mask      on each of the radiant's sheets, the pixels of that hue (±20°, fading out to ±40°) count
+ *             fully and the rest of the body a little (BODY). If the striking colour is grey, the
+ *             light greys count. It's done ONCE per sheet (like Sprites.white): each frame with a
+ *             PAD margin, and two blurs (three box blurs in a row, almost Gaussian): a narrow one
+ *             (the core, over the sprite: those pixels "give off light") and a wide one (the halo, under it).
+ *   Drawing   Animator.draw wrapped: the halo under it, the sprite, and the core on top with 'lighter'
+ *             (light that adds up). The halo is blended normally, not added: added, a red halo on the
+ *             grass came out orange. It grows with the setting and pulses a little (not with "Menos sacudidas y
+ *             destellos" (Less shaking and flashing)).
+ *             At 0 % it draws as always, with nothing extra.
+ * Works for everything that draws a radiant with its key '{dex}/r' or 'm{dex}/r': the run, co-op
+ * teammates, the menu, the collection, the ritual and the setting's preview.
+ * Texts in English only, like radiant.js. Test: fork/test-radiant-glow.cjs.
  */
 G.RadiantGlow = (() => {
   const DEF = 0.1;
-  const PAD = 10;                          // píxeles de arte alrededor de cada fotograma (hasta dónde llega el halo)
-  const BODY = 0.18;                       // lo que cuenta el resto del cuerpo en la máscara
-  const FALLBACK = 32;                     // tono si no se puede leer la hoja: el naranja de los radiantes
-  const tones = {};                        // '150/r' -> { h, s, grey, halo, core } ; sin calcular: undefined
-  const glows = new WeakMap();             // img de la hoja -> { tight, wide }
+  const PAD = 10;                          // art pixels around each frame (how far the halo reaches)
+  const BODY = 0.18;                       // how much the rest of the body counts in the mask
+  const FALLBACK = 32;                     // hue if the sheet can't be read: the radiants' orange
+  const tones = {};                        // '150/r' -> { h, s, grey, halo, core } ; not computed yet: undefined
+  const glows = new WeakMap();             // sheet img -> { tight, wide }
   let lastBuild = 0;
 
   const level = () => { const v = G.Settings.get('radGlow'); return v == null ? DEF : G.U.clamp(+v || 0, 0, 1); };
@@ -49,7 +49,7 @@ G.RadiantGlow = (() => {
     return x.getImageData(0, 0, c.width, c.height);
   }
 
-  /** El color llamativo del radiante key ('150/r'): { h, s, grey, halo, core }; undefined si las hojas aún cargan. */
+  /** The striking colour of radiant key ('150/r'): { h, s, grey, halo, core }; undefined while the sheets are still loading. */
   function tone(key) {
     if (tones[key]) return tones[key];
     const a = G.Sprites.sheet(key.slice(0, -2), 'Idle'), b = G.Sprites.sheet(key, 'Idle');
@@ -58,9 +58,9 @@ G.RadiantGlow = (() => {
     let pal = null;
     try {
       const pb = pixels(b.img), none = { width: 0, height: 0, data: [] };
-      // Lo que cambia de la normal al radiante; si casi nada cambia, todo el radiante.
+      // What changes from the normal one to the radiant; if almost nothing changes, the whole radiant.
       pal = (a && a.ready && G.LabShiny.paletteFrom(pixels(a.img), pb)) || G.LabShiny.paletteFrom(none, pb);
-    } catch (e) { /* file:// no deja leerlas */ }
+    } catch (e) { /* file:// won't let us read them */ }
     if (!pal) return (tones[key] = make(FALLBACK, 0.9));
     const n = parseInt(pal[2].slice(1), 16), [h, s] = hsl(n >> 16, (n >> 8) & 255, n & 255);
     return (tones[key] = make(h, s));
@@ -70,7 +70,7 @@ G.RadiantGlow = (() => {
     return { h, s, grey, halo: grey ? [235, 240, 255] : rgb(h, Math.max(s, 0.9), 0.55), core: grey ? [255, 255, 255] : rgb(h, Math.max(s, 0.9), 0.6) };
   }
 
-  /** Cuánto da luz un píxel (0-1) según el color llamativo t. */
+  /** How much light a pixel gives off (0-1) given the striking colour t. */
   function weight(t, r, g, b) {
     const [h, , l] = hsl(r, g, b), c = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
     if (t.grey) return c < 0.12 && l > 0.45 ? BODY + (1 - BODY) * Math.min(1, (l - 0.45) / 0.4) : BODY;
@@ -80,7 +80,7 @@ G.RadiantGlow = (() => {
     return Math.max(BODY, near * Math.min(1, c / 0.3));
   }
 
-  // Desenfoque de caja (r) sobre v (W×H), en horizontal y en vertical; tres veces ≈ gaussiano.
+  // Box blur (r) over v (W×H), horizontal then vertical; three times ≈ Gaussian.
   function box(v, tmp, W, H, r) {
     const n = 2 * r + 1;
     for (let y = 0; y < H; y++) {
@@ -104,7 +104,7 @@ G.RadiantGlow = (() => {
     }
   }
 
-  /** Las dos capas de brillo de una hoja (cada fotograma en una celda de (w+2·PAD)×(h+2·PAD)). */
+  /** A sheet's two glow layers (each frame in a cell of (w+2·PAD)×(h+2·PAD)). */
   function build(img, w, h, t) {
     const cols = Math.round(img.width / w), rows = Math.round(img.height / h);
     const W = w + 2 * PAD, H = h + 2 * PAD, src = pixels(img).data;
@@ -134,11 +134,11 @@ G.RadiantGlow = (() => {
     return out;
   }
 
-  /** Lo que hace falta para el brillo del fotograma que va a dibujar el Animator an, o null. */
+  /** What's needed for the glow of the frame Animator an is about to draw, or null. */
   function frameGlow(an) {
     let m = G.Sprites.animMeta(an.dex, an.cur, an.shiny), s = G.Sprites.sheet(an.dex, an.cur, an.shiny);
     const cur = s;
-    if (s && !s.ready) {                                   // como Animator.draw: Idle mientras carga
+    if (s && !s.ready) {                                   // like Animator.draw: Idle while it loads
       const idle = G.Sprites.sheet(an.dex, 'Idle', an.shiny);
       if (idle && idle.ready) { s = idle; m = G.Sprites.animMeta(an.dex, 'Idle', an.shiny); }
     }
@@ -146,7 +146,7 @@ G.RadiantGlow = (() => {
     let g = glows.get(s.img);
     if (!g) {
       const t = tone(an.dex), now = performance.now();
-      if (!t || now - lastBuild < 30) return null;          // una hoja cada dos fotogramas como mucho
+      if (!t || now - lastBuild < 30) return null;          // one sheet every two frames at most
       lastBuild = now;
       try { g = build(s.img, m.w, m.h, t); } catch (e) { g = { none: true }; }
       glows.set(s.img, g);
@@ -162,7 +162,7 @@ G.RadiantGlow = (() => {
     const prev = ctx.globalAlpha;
     ctx.globalAlpha = prev * Math.min(1, alpha);
     const w = f.W * f.k * grow, h = f.H * f.k * grow;
-    // Crece desde el centro de la celda, no desde los pies.
+    // It grows from the centre of the cell, not from the feet.
     const cx = Math.round(x - f.ax * f.k) + f.W * f.k / 2, cy = Math.round(y - f.ay * f.k) + f.H * f.k / 2;
     ctx.drawImage(cv, f.sx, f.sy, f.W, f.H, cx - w / 2, cy - h / 2, w, h);
     ctx.globalAlpha = prev;
@@ -171,17 +171,17 @@ G.RadiantGlow = (() => {
   const draw = G.Sprites.Animator.prototype.draw;
   G.Sprites.Animator.prototype.draw = function (ctx, x, y, opts = {}) {
     const v = isRad(this.dex) ? level() : 0;
-    // A 0 %, o con un filtro puesto (la silueta negra de la colección), como siempre.
+    // At 0 %, or with a filter on (the collection's black silhouette), as always.
     if (!v || (ctx.filter && ctx.filter !== 'none')) return draw.call(this, ctx, x, y, opts);
     const f = frameGlow(this);
     if (!f) return draw.call(this, ctx, x, y, opts);
     const fade = opts.alpha == null ? 1 : opts.alpha;
     const pulse = G.Settings.get('calm') ? 1 : 0.88 + 0.12 * Math.sin(performance.now() / 1000 * 2.4);
-    const a = Math.pow(v, 0.35) * pulse * fade;              // 10 % → 0,45 · 50 % → 0,78 · 100 % → 1
+    const a = Math.pow(v, 0.35) * pulse * fade;              // 10 % → 0.45 · 50 % → 0.78 · 100 % → 1
     const smooth = ctx.imageSmoothingEnabled, op = ctx.globalCompositeOperation;
-    ctx.imageSmoothingEnabled = true;                        // el halo, suave aunque el sprite vaya a píxeles
-    layer(ctx, f.g.wide, f, x, y, a, 1.1 + 0.25 * v);       // un poco más grande que él: si no, el sprite lo tapa
-    layer(ctx, f.g.wide, f, x, y, (v - 0.4) * 1.2 * pulse * fade, 1 + 0.6 * v);   // de 40 % para arriba, un segundo halo más amplio
+    ctx.imageSmoothingEnabled = true;                        // the halo smooth even when the sprite is pixelated
+    layer(ctx, f.g.wide, f, x, y, a, 1.1 + 0.25 * v);       // a little bigger than the sprite: otherwise the sprite covers it
+    layer(ctx, f.g.wide, f, x, y, (v - 0.4) * 1.2 * pulse * fade, 1 + 0.6 * v);   // from 40 % up, a second, wider halo
     ctx.imageSmoothingEnabled = smooth;
     draw.call(this, ctx, x, y, opts);
     ctx.imageSmoothingEnabled = true;
@@ -191,9 +191,9 @@ G.RadiantGlow = (() => {
     ctx.imageSmoothingEnabled = smooth;
   };
 
-  // ---------------- el ajuste (Gráficos, js/ui/settings-ui.js) ----------------
+  // ---------------- the setting (Graphics, js/ui/settings-ui.js) ----------------
 
-  /** Un radiante para la vista previa: tu compañero si lo usas, si no uno tuyo, si no el primero. */
+  /** A radiant for the preview: your partner if you use it, else one of yours, else the first one. */
   function previewDex() {
     const R = G.Radiant, s = G.DB.save;
     if (!R) return null;
@@ -203,7 +203,7 @@ G.RadiantGlow = (() => {
   }
   function settingsRow(section) {
     const p = Math.round(level() * 100), dex = previewDex();
-    queueMicrotask(() => {                                   // ya está en la página (render() lo acaba de poner)
+    queueMicrotask(() => {                                   // it's on the page by now (render() just put it there)
       const r = document.getElementById('set-radglow'), out = document.getElementById('set-radglow-v');
       if (!r) return;
       r.oninput = () => { G.Settings.set('radGlow', r.value / 100); out.textContent = r.value + '%'; };

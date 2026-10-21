@@ -1,14 +1,14 @@
-/* ============ move-looks.js — que cada movimiento se vea como lo que hace (fork MrSurvivor) ============
- * Los dibujos de js/entities/vfx.js (MOVE) que prometían algo que el movimiento no hace, corregidos
- * sin tocar ese archivo (los cambios de upstream llegan sin conflictos):
- *   - Hierba Lazo (id giga-drain, antes Gigadrenado): corazones que iban hacia ti, como si curase,
- *     y ya no cura. Ahora hojas que suben del suelo (sus raíces golpean desde abajo). Va por
- *     m.look, que js/fork/lab/lab.js aplica a G.VFX.forMove en todas las partidas.
- *   - Las zonas de aturdir (Tumba Rocas, Onda Trueno, Liofilización, Puño Dinámico): su dibujo
- *     (roca, rayo, esquirla, impacto) no salía nunca, sólo un círculo. Ahora cae durante el aviso,
- *     como los meteoros: Tumba Rocas dice "caen rocas" y ahora caen. Lee los campos de
- *     G.Combat.fields (un getter del fork en js/systems/combat.js).
- * Prueba: fork/test-move-truth.cjs.
+/* ============ move-looks.js — every move looks like what it does (MrSurvivor fork) ============
+ * The drawings in js/entities/vfx.js (MOVE) that promised something the move doesn't do, fixed
+ * without touching that file (upstream's changes come in without conflicts):
+ *   - Hierba Lazo (id giga-drain, formerly Gigadrenado): hearts flowing toward you, as if it healed,
+ *     and it no longer heals. Now leaves rising from the ground (its roots strike from below). Goes through
+ *     m.look, which js/fork/lab/lab.js applies to G.VFX.forMove in every run.
+ *   - The stun zones (Tumba Rocas, Onda Trueno, Liofilización, Puño Dinámico): their drawing
+ *     (rock, bolt, shard, impact) never showed, only a circle. Now it falls during the warning,
+ *     like the meteors: Tumba Rocas says "caen rocas" (rocks fall) and now they fall. Reads the fields from
+ *     G.Combat.fields (a fork getter in js/systems/combat.js).
+ * Test: fork/test-move-truth.cjs.
  */
 (() => {
   const gk = G.Moves.BY_ID['giga-drain'];

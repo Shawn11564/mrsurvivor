@@ -1,13 +1,13 @@
-/* ============ toughness.js — defensa como aguante y tope de velocidad (Lab primero, fork MrSurvivor) ============
- * En una partida Lab:
- *   - La defensa (dmgReduce de mejoras, cartas, objetos, prestigio, y el potenciador de defensa) es
- *     AGUANTE: recibes 1 / (1 + aguante) del daño. +100 % es la mitad; tope +200 % (un tercio).
- *     Antes se restaba tal cual (hasta un 80 % menos), y apilarla llegaba a casi no recibir daño.
- *   - La velocidad tiene tope: ×2,5 de la tuya (mejoras, cartas y potenciadores juntos). Con el tope
- *     ya alcanzado, la carta Carrera (+velocidad) no sale.
- *   - La carta Coraza dice "aguante" en vez de "reducción de daño".
- * Ganchos: los getters reduction y spd de G.Player, G.LevelUp.offer. Fuera del Lab todo sigue igual.
- * Prueba: fork/test-toughness.cjs.
+/* ============ toughness.js — defense as toughness, and a speed cap (Lab first, MrSurvivor fork) ============
+ * In a Lab run:
+ *   - Defense (dmgReduce from upgrades, cards, items, prestige, and the defense booster) is
+ *     TOUGHNESS: you take 1 / (1 + toughness) of the damage. +100 % is half; capped at +200 % (a third).
+ *     Before, it was subtracted as is (up to 80 % less), and stacking it got close to taking no damage.
+ *   - Speed has a cap: ×2.5 of yours (upgrades, cards and boosters together). Once the cap
+ *     is reached, the Carrera card (+speed) doesn't come up.
+ *   - The Coraza card says "toughness" instead of "damage reduction".
+ * Hooks: G.Player's reduction and spd getters, G.LevelUp.offer. Outside Lab nothing changes.
+ * Test: fork/test-toughness.cjs.
  */
 G.Toughness = (() => {
   const CAP_T = 2, CAP_SPD = 2.5;
@@ -32,7 +32,7 @@ G.Toughness = (() => {
   G.LevelUp.offer = function (pl) {
     let out = offer.apply(this, arguments);
     if (!lab() || !pl || !Array.isArray(out)) return out;
-    // Con la velocidad en el tope, otra tanda sin Carrera (o la misma sin ella, si no sale).
+    // With speed at the cap, another batch without Carrera (or the same one minus it, if none comes).
     for (let i = 0; i < 20 && spdMul(pl) >= CAP_SPD && out.some(c => c.key === 'stat:spd'); i++) out = offer.apply(this, arguments);
     if (spdMul(pl) >= CAP_SPD) out = out.filter(c => c.key !== 'stat:spd');
     for (const c of out) if (c.key === 'stat:def' && typeof c.desc === 'string') {

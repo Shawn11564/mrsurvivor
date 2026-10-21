@@ -1,31 +1,31 @@
-/* ============ growth.js — que los Pokémon flojos también valgan, en el modo Lab (fork MrSurvivor) ============
- * Fase 6 de fork/LAB.md. En una partida Lab:
- *   - EVOLUCIONAR en la partida: al llegar a su nivel (el de los juegos, G.LabData.evo, pasado a
- *     niveles de partida: levelFor) sale una carta dorada "Evolve into X" (una por evolución, como
- *     mucho dos) y otra de Piedra Eterna: no evolucionar y quedarse con un extra de defensa y vida
- *     (como el Mineral Evolutivo). La evolución trae sus stats, su aspecto, sus movimientos (su
- *     lista del Lab) y su habilidad; los iniciales ganan su definitivo (fase 5, sig.final).
- *   - OBJETOS de los juegos para los flojos (ITEMS): Mineral Evolutivo (si aún puede evolucionar),
- *     Bola Luminosa (Pikachu), Hueso Grueso (Cubone y Marowak), Puerro (Farfetch'd), Polvo Metálico
- *     y Polvo Veloz (Ditto)... Salen en cofres y jefes (G.Items.roll), 1 de cada 3 veces si es tuyo.
- *   - EXPERIENCIA para los flojos: hasta +60 % según sus stats base (underdog).
- *   - CARAMELOS: con el ajuste Lab encendido, cada repetido del gacha da un caramelo de su línea
- *     evolutiva (save.lab.candy[dex]). Se gastan en la pantalla de Mejoras (con Lab encendido) en la
- *     estadística que elijas: Vida, Ataque, Ataque Especial, Defensa o Velocidad, hasta 10 puntos por
- *     línea evolutiva (save.lab.cpts[línea]); el punto n de una estadística cuesta n caramelos, y
- *     Reiniciar los devuelve todos. En una partida Lab: por punto +3 % de vida, +3 % al daño físico o
- *     especial, +2 % de reducción de daño o +2 % de velocidad (hasta el 21-10-2026 cada caramelo daba
- *     +3 % de vida y daño, sin elegir).
+/* ============ growth.js — making weak Pokémon worth playing too, in Lab mode (MrSurvivor fork) ============
+ * Phase 6 of fork/LAB.md. In a Lab run:
+ *   - EVOLVING during the run: on reaching its level (the games' level, G.LabData.evo, turned into
+ *     run levels: levelFor) a gold "Evolve into X" card comes up (one per evolution, at
+ *     most two), plus an Everstone card: don't evolve and keep extra defence and HP instead
+ *     (like Eviolite). The evolution brings its stats, its look, its moves (its
+ *     Lab list) and its ability; starters get their finisher (phase 5, sig.final).
+ *   - The games' ITEMS for weak Pokémon (ITEMS): Eviolite (if it can still evolve),
+ *     Light Ball (Pikachu), Thick Club (Cubone and Marowak), Leek (Farfetch'd), Metal Powder
+ *     and Quick Powder (Ditto)... They drop from chests and bosses (G.Items.roll), 1 time in 3 if it's yours.
+ *   - EXPERIENCE for weak Pokémon: up to +60 % depending on their base stats (underdog).
+ *   - CANDIES: with the Lab setting on, each gacha duplicate gives a candy for its evolution
+ *     line (save.lab.candy[dex]). They're spent on the Upgrades screen (with Lab on) on the
+ *     stat you choose: HP, Attack, Sp. Atk, Defense or Speed, up to 10 points per
+ *     evolution line (save.lab.cpts[line]); point n of a stat costs n candies, and
+ *     Reset gives them all back. In a Lab run, per point: +3 % HP, +3 % physical or
+ *     special damage, +2 % damage reduction or +2 % speed (until 21-10-2026 each candy gave
+ *     +3 % HP and damage, with no choice).
  *
- * Cooperativo: { k:'labevo', u, dex } al anfitrión, que lo reparte (como js/fork/mega.js): todos
- * ven a tu Pokémon evolucionado. Textos sólo en inglés (fork/LAB.md). Prueba: fork/test-lab.cjs.
+ * Co-op: { k:'labevo', u, dex } to the host, who passes it on (like js/fork/mega.js): everyone
+ * sees your Pokémon evolved. Texts in English only (fork/LAB.md). Test: fork/test-lab.cjs.
  */
 G.LabGrowth = (() => {
   const D = G.LabData;
   const esc = s => G.Lab.esc(s);
   const UNDERDOG_REF = 480, UNDERDOG_K = 1.1, UNDERDOG_MAX = 0.6;
-  const CANDY_K = 0.03, CANDY_MAX = 10;     // puntos por línea
-  // Lo que da cada punto en una partida Lab.
+  const CANDY_K = 0.03, CANDY_MAX = 10;     // points per line
+  // What each point gives in a Lab run.
   const CSTAT = {
     hp:   { name: 'HP', per: 0.03, text: k => `+${Math.round(k * 100)}% HP` },
     atk:  { name: 'Attack', per: 0.03, text: k => `+${Math.round(k * 100)}% physical damage` },
@@ -34,22 +34,22 @@ G.LabGrowth = (() => {
     spd:  { name: 'Speed', per: 0.02, text: k => `+${Math.round(k * 100)}% speed` }
   };
   const ITEM_P = 1 / 3;
-  const STAY = { def: 0.15, hp: 0.15 };    // Piedra Eterna: -15 % de daño recibido y +15 % de vida
+  const STAY = { def: 0.15, hp: 0.15 };    // Everstone: -15 % damage taken and +15 % HP
 
-  // ---------------- evolución ----------------
+  // ---------------- evolution ----------------
   const parent = {};
   for (const d in D.evo) for (const x of D.evo[d].split(',')) parent[x.split(':')[0]] = +d;
   const stageOf = d => parent[d] ? 1 + stageOf(parent[d]) : 0;
-  /** A qué evoluciona: [[dex, nivel de partida]] (sólo las que tienen sprite). */
+  /** What it evolves into: [[dex, run level]] (only those with a sprite). */
   function targets(dex) {
     return (D.evo[dex] || '').split(',').filter(Boolean).map(x => x.split(':').map(Number))
       .filter(([to]) => G.DEX_BY[to] && G.SPRITE_META[to]).map(([to, lv]) => [to, levelFor(dex, lv)]);
   }
-  /** Nivel de partida al que evoluciona: el de los juegos × 0,45 (5–26); sin nivel (piedra, amistad...), 10 o 18. */
+  /** Run level it evolves at: the games' level × 0.45 (5–26); with no level (stone, friendship...), 10 or 18. */
   function levelFor(dex, lv) { return lv ? G.U.clamp(Math.round(lv * 0.45), 5, 26) : stageOf(dex) ? 18 : 10; }
   const canEvolve = dex => targets(dex).length > 0;
 
-  /** Cartas de evolución para esta mano (o nada). */
+  /** Evolution cards for this hand (or nothing). */
   function cards(pl) {
     if (pl._labStay || !pl.mon) return [];
     const t = targets(pl.dex).filter(([, lv]) => pl.level >= lv);
@@ -80,7 +80,7 @@ G.LabGrowth = (() => {
     const old = p.mon, mon = G.DEX_BY[to];
     if (!mon) return;
     if (p._labTf) { p.mon = p._labTf.mon0; delete p._labTf; }
-    // Lo que depende de qué Pokémon es se quita y se vuelve a poner.
+    // Whatever depends on which Pokémon it is gets removed and put back.
     const item = p.item;
     if (item === 'megastone' || item === 'eviolite') p.equip(null);
     const under0 = p._labUnder || 0;
@@ -92,9 +92,9 @@ G.LabGrowth = (() => {
     p.shiny = p.shiny && G.Sprites.hasShiny(to);
     p.r = G.Sprites.playerRadius(to);
     G.Sprites.preload([to], 8000, p.shiny);
-    G.Admin.repaint(p);                                 // su sprite (y escala), como la megaevolución
+    G.Admin.repaint(p);                                 // its sprite (and scale), like Mega Evolution
     underdog(p, under0);
-    // Su habilidad, si es otra (Charmander y Charizard: Mar Llamas las dos).
+    // Its ability, if it's a different one (Charmander and Charizard: both Blaze).
     const a = G.LabAbilities.of(to);
     if (a && a.on && a.id !== p.labAbility) {
       p.labAbility = a.id;
@@ -113,7 +113,7 @@ G.LabGrowth = (() => {
     share(to);
   }
 
-  /** Puppet de un compañero que ha evolucionado (sólo se ve). */
+  /** Puppet of a teammate who has evolved (looks only). */
   function lookAs(p, dex) {
     if (!G.DEX_BY[dex] || !G.SPRITE_META[dex]) return;
     p.mon = G.DEX_BY[dex]; p.dex = dex;
@@ -138,7 +138,7 @@ G.LabGrowth = (() => {
     if (m && m.pl) lookAs(m.pl, msg.dex);
   });
 
-  // La carta de evolución va la primera; la de Piedra Eterna, detrás.
+  // The evolution card goes first; the Everstone one, after it.
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {
     const hand = offer.apply(this, arguments);
@@ -148,9 +148,9 @@ G.LabGrowth = (() => {
     return c.concat(hand.filter(x => !c.some(y => y.key === x.key))).slice(0, Math.max(hand.length, c.length));
   };
 
-  // ---------------- experiencia de los flojos ----------------
-  /** + de experiencia según sus stats base (Caterpie +60 %, Charmander +39 %, Charizard nada). */
-  // Épicos y legendarios nunca (aunque alguno tenga stats bajos, como Cosmog): son los raros del gacha.
+  // ---------------- experience for weak Pokémon ----------------
+  /** Extra experience based on its base stats (Caterpie +60 %, Charmander +39 %, Charizard none). */
+  // Never for epics and legendaries (even if one has low stats, like Cosmog): they're the gacha's rare ones.
   const underdogK = mon => (mon.rarity || 1) >= 4 ? 0 : G.U.clamp((UNDERDOG_REF - (mon.bst || UNDERDOG_REF)) / UNDERDOG_REF * UNDERDOG_K, 0, UNDERDOG_MAX);
   function underdog(p, was = 0) {
     const k = underdogK(p.mon);
@@ -158,18 +158,18 @@ G.LabGrowth = (() => {
     p._labUnder = k;
   }
 
-  // ---------------- caramelos ----------------
+  // ---------------- candies ----------------
   const byFam = {};
   for (const d in D.fam) (byFam[D.fam[d]] = byFam[D.fam[d]] || []).push(+d);
   const line = d => byFam[D.fam[d]] || [d];
-  /** Caramelos ganados por toda la línea de dex (lo que se ha gastado, aparte: spent). */
+  /** Candies earned by dex's whole line (what has been spent is separate: spent). */
   function candies(dex) {
     const c = (G.DB.save && G.DB.save.lab && G.DB.save.lab.candy) || {};
     return line(dex).reduce((s, d) => s + (c[d] | 0), 0);
   }
   const lineKey = dex => Math.min(...line(dex));
   function labOf(s) { return (s.lab = s.lab && typeof s.lab === 'object' ? s.lab : {}); }
-  /** Puntos de la línea de dex: { hp, atk, satk, def, spd }. */
+  /** Points of dex's line: { hp, atk, satk, def, spd }. */
   function points(dex) {
     const s = G.DB.save, p = s && s.lab && s.lab.cpts && s.lab.cpts[lineKey(dex)];
     const out = {};
@@ -177,10 +177,10 @@ G.LabGrowth = (() => {
     return out;
   }
   const total = p => Object.values(p).reduce((a, b) => a + b, 0);
-  const costOf = (dex, k) => points(dex)[k] + 1;                    // el punto n cuesta n
+  const costOf = (dex, k) => points(dex)[k] + 1;                    // point n costs n
   const spent = dex => Object.values(points(dex)).reduce((a, n) => a + n * (n + 1) / 2, 0);
   const left = dex => Math.max(0, candies(dex) - spent(dex));
-  /** Un punto más en k (si quedan puntos y caramelos). */
+  /** One more point in k (if there are points and candies left). */
   function spend(dex, k) {
     const p = points(dex);
     if (!CSTAT[k] || total(p) >= CANDY_MAX || left(dex) < p[k] + 1) return false;
@@ -189,7 +189,7 @@ G.LabGrowth = (() => {
     G.DB.commit();
     return true;
   }
-  /** Los puntos de la línea vuelven a ser caramelos. */
+  /** The line's points turn back into candies. */
   function reset(dex) {
     const lab = labOf(G.DB.save);
     if (lab.cpts) delete lab.cpts[lineKey(dex)];
@@ -210,7 +210,7 @@ G.LabGrowth = (() => {
     return res;
   };
 
-  // ---------------- objetos ----------------
+  // ---------------- items ----------------
   const boost = (types, k) => ({ boost: m => types.includes(m.type) ? k : 1 });
   const ITEMS = {
     eviolite:      { name: 'Eviolite', desc: 'While your Pokémon can still evolve: 25% less damage taken and 20% more HP.', who: p => canEvolve(p.dex),
@@ -240,7 +240,7 @@ G.LabGrowth = (() => {
     G.Icons.UI[id] = { pal: ICON, rows: ROUND(COLOR[id] || 'b') };
     G.Items.BY[id] = { id, name: it.name, desc: it.desc, lab: true,
       on: it.on || (p => {
-        if (it.dex && !it.dex.includes(p.dex)) return;          // en otro Pokémon no hace nada
+        if (it.dex && !it.dex.includes(p.dex)) return;          // does nothing on another Pokémon
         p._labItem = it;
         if (it.crit) p.critChance += it.crit;
         if (it.def) p.dmgReduce += it.def;
@@ -261,7 +261,7 @@ G.LabGrowth = (() => {
     if (it.mul && (!it.cat || it.cat === m.cat)) return k * it.mul;
     return it.boost ? k * it.boost(m) : k;
   };
-  /** Los objetos de los juegos que le van a este Pokémon. */
+  /** The games' items that suit this Pokémon. */
   const itemsFor = p => Object.keys(ITEMS).filter(id => ITEMS[id].who ? ITEMS[id].who(p) : ITEMS[id].dex.includes(p.dex));
   const roll = G.Items.roll;
   G.Items.roll = function (except) {
@@ -273,7 +273,7 @@ G.LabGrowth = (() => {
     return roll.apply(this, arguments);
   };
 
-  // ---------------- al empezar una partida Lab ----------------
+  // ---------------- on starting a Lab run ----------------
   function start(pl) {
     pl._labStay = false;
     underdog(pl, 0);
@@ -281,7 +281,7 @@ G.LabGrowth = (() => {
     if (p.hp) pl.addMaxHp(Math.round(pl.maxHp * CSTAT.hp.per * p.hp));
     if (p.def) pl.dmgReduce = Math.min(0.7, pl.dmgReduce + CSTAT.def.per * p.def);
     if (p.spd) pl.spdMul *= 1 + CSTAT.spd.per * p.spd;
-    pl._labCandy = total(p) ? p : null;                 // atk / satk: en atkFor (abajo)
+    pl._labCandy = total(p) ? p : null;                 // atk / satk: in atkFor (below)
   }
 
   G.Lab.pauseLine(pl => {
@@ -294,7 +294,7 @@ G.LabGrowth = (() => {
     return out.join(' ');
   });
 
-  // Ataque / Ataque Especial de los caramelos: sólo a los movimientos de esa categoría.
+  // Candy Attack / Sp. Atk: only for moves of that category.
   const candyAtkFor = P.atkFor;
   P.atkFor = function (m) {
     const k = candyAtkFor.apply(this, arguments), c = this._labCandy;

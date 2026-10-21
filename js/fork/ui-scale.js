@@ -1,28 +1,28 @@
-/* ============ ui-scale.js — la interfaz a la medida de la pantalla (fork MrSurvivor) ============
- * El mundo ya se ve igual en cualquier pantalla (G.Camera.resize: VIEW_W de ancho), pero la
- * interfaz iba en píxeles fijos: en 2560×1440 la vida, los ataques, los menús, las cartas de nivel
- * y sus iconos se quedaban diminutos. Ahora todo va a escala k = la pantalla (en px CSS) contra
- * REF_W×REF_H, nunca menos de 1 ni más de MAX: 1 hasta 1400×850 (como antes), ≈1,27 en 1920×1080,
- * ≈1,69 en 2560×1440, ≈2,5 en 4K.
+/* ============ ui-scale.js — the interface sized to the screen (MrSurvivor fork) ============
+ * The world already looks the same on any screen (G.Camera.resize: VIEW_W wide), but the
+ * interface was in fixed pixels: at 2560×1440 the HP, the moves, the menus, the level cards
+ * and their icons were tiny. Now everything is scaled by k = the screen (in CSS px) against
+ * REF_W×REF_H, never less than 1 or more than MAX: 1 up to 1400×850 (as before), ≈1.27 at 1920×1080,
+ * ≈1.69 at 2560×1440, ≈2.5 at 4K.
  *
- *   HUD     (lienzo: js/ui/hud.js y lo que el fork le añade) se dibuja con ctx.scale(k). Mientras,
- *           todo lo que lee de la pantalla va en sus coordenadas: el ancho y el alto (w/k, h/k), los
- *           márgenes del iPhone, el ratón (G.Touch.mouseAt, G.Input.mouse), lo que arrastras
- *           (G.Touch.drag) y la cámara (G.Camera.scale / k, para las flechas de lo que queda
- *           fuera); y los botones que registra (G.Touch.addButton) vuelven a px CSS, para que el clic
- *           y el toque caigan donde se ven. Envuelve G.HUD.draw por fuera de todo (se carga después
- *           de evo-hud, underdog y markers), así que lo del fork escala igual.
- *   Páginas (HTML: menús, cartas, barra de arriba, avisos) con CSS zoom: k en --ui-k, en todo lo
- *           que cuelga de <body> menos el lienzo del juego y el editor de botones (#scr-layout, que
- *           coloca sus piezas en px de la ventana). El estilo va aquí y no en css/brand.css porque
- *           dev.html no carga brand.css.
- * Prueba: fork/test-ui-scale.cjs.
+ *   HUD     (canvas: js/ui/hud.js and what the fork adds to it) is drawn with ctx.scale(k). Meanwhile,
+ *           everything it reads from the screen is in its coordinates: the width and height (w/k, h/k), the
+ *           iPhone margins, the mouse (G.Touch.mouseAt, G.Input.mouse), what you drag
+ *           (G.Touch.drag) and the camera (G.Camera.scale / k, for the arrows to what is
+ *           off screen); and the buttons it registers (G.Touch.addButton) go back to CSS px, so the click
+ *           and the tap land where they're shown. Wraps G.HUD.draw outside everything (it loads after
+ *           evo-hud, underdog and markers), so the fork's parts scale the same way.
+ *   Pages   (HTML: menus, cards, top bar, toasts) with CSS zoom: k in --ui-k, on everything
+ *           under <body> except the game canvas and the button editor (#scr-layout, which
+ *           places its pieces in window px). The style is here and not in css/brand.css because
+ *           dev.html doesn't load brand.css.
+ * Test: fork/test-ui-scale.cjs.
  */
 G.UIScale = (() => {
   const REF_W = 1400, REF_H = 850, MAX = 3;
   const k = (w, h) => G.U.clamp(Math.min(w / REF_W, h / REF_H), 1, MAX);
 
-  // ---------------- el HUD ----------------
+  // ---------------- the HUD ----------------
 
   const draw = G.HUD.draw;
   G.HUD.draw = function (ctx, w, h, pl, st) {
@@ -53,7 +53,7 @@ G.UIScale = (() => {
     }
   };
 
-  // ---------------- las páginas ----------------
+  // ---------------- the pages ----------------
 
   const css = document.createElement('style');
   css.textContent = 'body > :not(#game):not(#scr-layout) { zoom: var(--ui-k, 1); }';

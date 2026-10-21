@@ -1,9 +1,9 @@
-/* ============ pity-bar.js — la barra del pity en el gacha (fork MrSurvivor) ============
- * Bajo "Tiradas sin legendaria: N / 220", una barra de 22 tramos de 10 tiradas: se llena con las
- * tuyas en ese banner, y los tramos desde la 180 (el pity blando de js/systems/gacha.js, donde la
- * Legendaria empieza a subir) van en dorado, con el 180 marcado debajo. Estilos en línea: dev.html
- * no carga css/brand.css. Gancho de una línea en js/ui/gacha-ui.js (refresh, también al cambiar de
- * banner). Prueba: fork/test-pity-bar.cjs.
+/* ============ pity-bar.js — the pity bar in the gacha (MrSurvivor fork) ============
+ * Under "Tiradas sin legendaria: N / 220" (Pulls without a legendary), a bar of 22 segments of 10 pulls: it fills with
+ * your pulls on that banner, and the segments from pull 180 on (the soft pity in js/systems/gacha.js, where the
+ * Legendary chance starts to rise) are gold, with 180 marked underneath. Inline styles: dev.html
+ * doesn't load css/brand.css. One-line hook in js/ui/gacha-ui.js (refresh, also when the
+ * banner changes). Test: fork/test-pity-bar.cjs.
  */
 G.PityBar = (() => {
   const STEP = 10;

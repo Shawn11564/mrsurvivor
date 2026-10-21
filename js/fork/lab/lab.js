@@ -1,39 +1,39 @@
-/* ============ lab.js — modo Lab: movimientos y habilidades en pruebas (fork MrSurvivor) ============
- * Plan, decisiones y estado: fork/LAB.md. Pruebas: fork/test-lab.cjs y fork/test-lab-coop.cjs (grupo).
+/* ============ lab.js — Lab mode: moves and abilities being tested (MrSurvivor fork) ============
+ * Plan, decisions and status: fork/LAB.md. Tests: fork/test-lab.cjs and fork/test-lab-coop.cjs (group).
  *
- * Ajuste: Ajustes → Experimental (G.Settings 'lab', de este dispositivo; la pestaña la añade
- * este archivo y su contenido lo pinta settingsRow desde js/ui/settings-ui.js). Cada partida decide al empezar (begin):
- *   - solo: tu ajuste
- *   - grupo: el del ANFITRIÓN, que va en su mensaje 'start' (lab, labV); el de los invitados
- *     no cuenta. Si su labV no es el tuyo, aviso de recargar.
- * G.Lab.active: hay una partida Lab en marcha (con Pokémon). Fuera de partida es false, así que
- * los menús (movimiento inicial, veto, colección) ven siempre lo normal y lo del Lab no se
- * guarda nunca en la partida guardada.
+ * Setting: Settings → Experimental (G.Settings 'lab', per device; this file adds the tab
+ * and settingsRow draws its content from js/ui/settings-ui.js). Each run decides when it starts (begin):
+ *   - solo: your setting
+ *   - group: the HOST's, sent in its 'start' message (lab, labV); the guests' setting
+ *     doesn't count. If its labV isn't yours, a notice to reload.
+ * G.Lab.active: a Lab run is under way (with a Pokémon). Outside a run it's false, so
+ * the menus (starting move, veto, collection) always see the normal game and nothing from the Lab
+ * is ever stored in the saved run.
  *
- * En una partida Lab:
- *   - G.Moves.poolFor(mon) da su lista del Lab (poolFor, abajo): lo que aprende en los juegos.
- *   - su habilidad (js/fork/lab/abilities.js)
- *   - no sube al ranking (G.Game.taint) y no cuenta para misiones, logros ni récords: los
- *     avisos de G.Progress se callan y save.stats vuelve a como estaba al acabar. Monedas,
- *     tickets y shinies, sí.
- *   - "LAB" en el HUD, su habilidad y su lista en la pausa, y aviso en el resumen final.
- * Sala de cooperativo: el anfitrión manda { k:'lab', on, v } a cada uno al conectar y al
- * cambiar el ajuste (sólo por la conexión directa entre jugadores), y la sala lo enseña.
+ * In a Lab run:
+ *   - G.Moves.poolFor(mon) gives its Lab list (poolFor, below): what it learns in the games.
+ *   - its ability (js/fork/lab/abilities.js)
+ *   - it doesn't go on the leaderboard (G.Game.taint) and doesn't count for missions, achievements or records: the
+ *     G.Progress notices are muted and save.stats goes back to how it was at the end. Coins,
+ *     tickets and shinies do count.
+ *   - "LAB" on the HUD, its ability and its list in the pause menu, and a note on the final summary.
+ * Co-op lobby: the host sends { k:'lab', on, v } to each player on connecting and when
+ * the setting changes (only over the direct connection between players), and the lobby shows it.
  *
- * Todo se engancha desde aquí (envolviendo funciones que el juego llama como G.X.y); en los
- * archivos de upstream sólo hay una línea, en settings-ui.js.
+ * Everything hooks in from here (wrapping functions the game calls as G.X.y); upstream's
+ * files only have one line, in settings-ui.js.
  */
 G.Lab = (() => {
   const D = G.LabData;
   const $ = id => document.getElementById(id);
-  let run = false;                      // ¿la partida en curso es Lab? (begin)
-  let stats0 = null;                    // save.stats al empezar (restoreStats)
-  let info = null;                      // su habilidad: G.LabAbilities.of
-  const hostLab = new Map();            // uid del anfitrión -> { on, v } (sala de grupo)
+  let run = false;                      // is the current run a Lab run? (begin)
+  let stats0 = null;                    // save.stats at the start (restoreStats)
+  let info = null;                      // its ability: G.LabAbilities.of
+  const hostLab = new Map();            // host uid -> { on, v } (group lobby)
   const active = () => run && !!(G.Game && G.Game.player);
 
-  // ---------------- movimientos que sólo existen en el Lab ----------------
-  // Mejoras: las de su familia nueva (js/fork/lab/kinds.js) o las de un movimiento del juego de la misma.
+  // ---------------- moves that only exist in the Lab ----------------
+  // Upgrades: those of its new family (js/fork/lab/kinds.js) or those of a game move of the same family.
   const BALLS = ['projectile', 'homing', 'bounce'];
   for (const d of G.LabMoves) {
     const like = G.Moves.ALL.find(m => m.kind === d.kind);
@@ -43,18 +43,18 @@ G.Lab = (() => {
     delete m.evo;
     if (BALLS.includes(m.kind)) { if (m.count == null) m.count = 1; if (m.spread == null) m.spread = 0.12; }
     G.Moves.BY_ID[m.id] = m;
-    // Las firmas evolucionan sólo con llegar al nivel máximo ("Blast Burn ★"), como los potenciadores:
-    // sin evolución, al final de la partida se quedaban muy por detrás (fork/balance-lab.cjs).
+    // Signatures evolve just by reaching max level ("Blast Burn ★"), like the boosters:
+    // without evolving, they fell far behind late in the run (fork/balance-lab.cjs).
     if (d.evo) G.Moves.EVO[m.id] = d.evo;
     else if (d.sig) G.Moves.EVO[m.id] = [d.name + ' ★', null];
-    // Fase 8: promote = pasa al juego normal (cartas, movimiento inicial, veto). Las firmas, sólo a su línea (poolFor).
+    // Phase 8: promote = it moves to the normal game (cards, starting move, veto). Signatures, only to their line (poolFor).
     if (d.promote && !d.sig) { G.Moves.ALL.push(m); (G.Moves.POOL[m.type] = G.Moves.POOL[m.type] || []).push(m.id); }
   }
-  // Su aspecto (look) manda sobre el de su tipo.
+  // Its own look (look) wins over its type's.
   const forMove = G.VFX.forMove;
   G.VFX.forMove = m => m && m.look ? Object.assign(forMove(m), m.look) : forMove(m);
 
-  // Versión del contenido del Lab: si la del anfitrión no es la tuya, no veríais lo mismo.
+  // Version of the Lab content: if the host's isn't yours, you wouldn't both see the same thing.
   const VERSION = (() => {
     const s = JSON.stringify([G.LabMoves, D.MOVES, Object.keys(G.LabAbilities.DEF)]);
     let h = 2166136261;
@@ -62,8 +62,8 @@ G.Lab = (() => {
     return (h >>> 0).toString(36);
   })();
 
-  // ---------------- movimientos de firma (fase 5) ----------------
-  // SIG[dex]: los suyos (lab-moves.js sig). La cadena evolutiva sale de G.LabData.fam/evo.
+  // ---------------- signature moves (phase 5) ----------------
+  // SIG[dex]: its own (lab-moves.js sig). The evolution chain comes from G.LabData.fam/evo.
   const SIG = {};
   (() => {
     const byFam = {};
@@ -77,15 +77,15 @@ G.Lab = (() => {
   })();
   const isSig = id => !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].sig);
 
-  // ---------------- lista de movimientos de cada especie (fase 2) ----------------
+  // ---------------- each species' move list (phase 2) ----------------
   const MIN_OWN = 4, MIN_TOTAL = 6, MAX_COVER = 2;
-  // De apoyo: no cuentan como cobertura (no pegan, o no a lo de otro tipo).
+  // Support: they don't count as coverage (they don't hit, or not as another type).
   const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'metronome', 'transform', 'heal', 'screen', 'shout', 'endure']);
   const HOW = ['lv', 'egg', 'tutor', 'tm'];
   const SCORE = { lv: 3, egg: 2, tutor: 2, tm: 1 };
   const learnCache = {}, poolCache = {};
 
-  /** → { id: 'lv' | 'egg' | 'tutor' | 'tm' } con lo que aprende en los juegos (G.LabData.learn). */
+  /** → { id: 'lv' | 'egg' | 'tutor' | 'tm' } with what it learns in the games (G.LabData.learn). */
   function learnOf(dex) {
     if (learnCache[dex]) return learnCache[dex];
     const out = {};
@@ -98,29 +98,29 @@ G.Lab = (() => {
     return (learnCache[dex] = out);
   }
 
-  /** Azar fijo por especie (cada Pokémon tiene siempre la misma lista). */
+  /** Fixed randomness per species (each Pokémon always gets the same list). */
   function rng(seed) {
     let a = (seed * 2654435761) >>> 0;
     return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
 
-  /** Movimientos de un tipo: los del juego y los del Lab (sin las firmas, que son de cada línea). */
+  /** Moves of one type: the game's and the Lab's (without signatures, which belong to each line). */
   function ofType(t) {
     return (G.Moves.POOL[t] || []).concat(G.LabMoves.filter(m => m.type === t && !m.sig && G.Moves.BY_ID[m.id]).map(m => m.id));
   }
   const labOnly = id => !!G.Moves.BY_ID[id].lab;
 
   /**
-   * Lo que puede aprender en una partida Lab:
-   *   - los de tipo Normal que aprende en los juegos
-   *   - los de sus tipos que aprende; si son menos de MIN_OWN, se completan con otros de sus tipos
-   *   - hasta MAX_COVER de otros tipos que aprende (cobertura), de tipos distintos: antes los que
-   *     aprende por nivel, luego huevo o tutor, luego MT; y antes los de su lado bueno
-   *   - si aún son menos de MIN_TOTAL, más de sus tipos y luego de tipo Normal
-   *   - y sus movimientos de firma (SIG), siempre
-   * Los de tipo Normal que sólo existen en el Lab (Protección, Doble Filo...) cuentan sólo si los
-   * aprende por nivel, huevo o tutor: por MT los aprende casi todo el mundo.
-   * Fijo por especie (rng(dex)): Charmander aprende siempre lo mismo.
+   * What it can learn in a Lab run:
+   *   - the Normal-type moves it learns in the games
+   *   - the moves of its own types that it learns; if fewer than MIN_OWN, topped up with others of its types
+   *   - up to MAX_COVER moves of other types it learns (coverage), each of a different type: first those
+   *     learned by level, then egg or tutor, then TM; and first those on its stronger side
+   *   - if still fewer than MIN_TOTAL, more of its types and then Normal type
+   *   - and its signature moves (SIG), always
+   * Normal-type moves that only exist in the Lab (Protect, Double-Edge...) count only if it
+   * learns them by level, egg or tutor: almost everyone learns them by TM.
+   * Fixed per species (rng(dex)): Charmander always learns the same.
    */
   function labPool(mon) {
     if (poolCache[mon.dex]) return poolCache[mon.dex].slice();
@@ -153,10 +153,10 @@ G.Lab = (() => {
 
   const poolFor = G.Moves.poolFor;
   G.Moves.poolFor = mon => active() ? labPool(mon)
-    : poolFor(mon).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // firmas ya promovidas (fase 8)
+    : poolFor(mon).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
 
-  // Cartas de nivel: una firma sale dorada ("Signature") y, si puedes aprenderla y no está en la
-  // mano, en 1 de cada 3 manos ocupa el sitio de la última carta de movimiento nuevo.
+  // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
+  // hand, in 1 hand out of 3 it takes the place of the last new-move card.
   const SIG_IN = 1 / 3;
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {
@@ -170,7 +170,7 @@ G.Lab = (() => {
     }
     for (const c of hand) {
       if (c.type !== 'new' || !isSig(c.key.slice(4))) continue;
-      c.type = 'evo';                                   // dorada (run-ui.js) y el chip con su texto
+      c.type = 'evo';                                   // gold (run-ui.js) and the chip with its text
       const d = G.Moves.BY_ID[c.key.slice(4)];
       c.tag = 'Signature · ' + G.T(G.U.TYPE_NAME[d.type]) + (d.cat ? ' · ' + G.T(G.Stats.NAME[d.cat]) : '');
       c.color = '#ffd23f'; c.own = false;
@@ -178,9 +178,9 @@ G.Lab = (() => {
     return hand;
   };
 
-  // ---------------- empezar y acabar ----------------
+  // ---------------- start and end ----------------
 
-  /** Al empezar cualquier partida: ¿es Lab? (en grupo, lo dice el anfitrión en cfg). */
+  /** At the start of any run: is it Lab? (in a group, the host says so in cfg). */
   function begin(coop) {
     run = coop ? !!coop.lab : !!G.Settings.get('lab');
     info = null; stats0 = null;
@@ -189,8 +189,8 @@ G.Lab = (() => {
     }
   }
 
-  // game.js se carga después que el fork: G.Game existe al acabar de cargar todos los scripts
-  // (defer), antes de DOMContentLoaded.
+  // game.js loads after the fork: G.Game exists once all the scripts have loaded
+  // (defer), before DOMContentLoaded.
   document.addEventListener('DOMContentLoaded', () => {
     const startRun = G.Game.startRun;
     G.Game.startRun = function (coop = null) {
@@ -198,13 +198,13 @@ G.Lab = (() => {
       const r = startRun.apply(this, arguments);
       const pl = G.Game.player;
       if (run && pl) {
-        G.Game.taint();                                 // no sube al ranking
+        G.Game.taint();                                 // doesn't go on the leaderboard
         const sv = G.DB.save;
         stats0 = sv && sv.stats ? JSON.parse(JSON.stringify(sv.stats)) : null;
         info = G.LabAbilities.attach(pl);
-        G.LabAnims.preload(pl);                         // animaciones de sus firmas (fase 5)
-        G.LabGrowth.start(pl);                          // experiencia de los flojos y caramelos (fase 6)
-        G.LabShiny.start(pl);                           // colores y extras del shiny (fase 7)
+        G.LabAnims.preload(pl);                         // its signatures' animations (phase 5)
+        G.LabGrowth.start(pl);                          // XP for the weak ones, and candies (phase 6)
+        G.LabShiny.start(pl);                           // the shiny's colours and extras (phase 7)
         G.Spawner.say('LAB · ' + (info ? 'Ability: ' + info.name : 'experimental moves'), 3.4, true);
       }
       badge();
@@ -212,7 +212,7 @@ G.Lab = (() => {
     };
   });
 
-  /** Fin de una partida Lab: los récords y estadísticas, como estaban. */
+  /** End of a Lab run: records and stats back to how they were. */
   function restoreStats() {
     const s = G.DB.save && G.DB.save.stats;
     if (!s || !stats0) return;
@@ -220,8 +220,8 @@ G.Lab = (() => {
     Object.assign(s, stats0);
     stats0 = null;
   }
-  // Misiones y logros: callados en una partida Lab. 'runEnd' llega justo después de que
-  // endRun (game.js) apunte las estadísticas: ahí se devuelven.
+  // Missions and achievements: muted in a Lab run. 'runEnd' arrives right after
+  // endRun (game.js) records the stats: that's where they're put back.
   for (const k of ['event', 'kill', 'checkAch']) {
     const f = G.Progress[k];
     G.Progress[k] = function (kind) {
@@ -230,15 +230,15 @@ G.Lab = (() => {
     };
   }
 
-  // ---------------- cooperativo ----------------
+  // ---------------- co-op ----------------
   const broadcast = G.Net.broadcast;
   G.Net.broadcast = function (msg) {
-    // El 'start' del anfitrión (social-ui.js LobbyUI.start) lleva su ajuste; es el mismo
-    // objeto que luego recibe G.Flow.startCoop, así que el anfitrión también lo ve.
+    // The host's 'start' (social-ui.js LobbyUI.start) carries its setting; it's the same
+    // object G.Flow.startCoop then receives, so the host sees it too.
     if (msg && msg.k === 'start' && msg.lab == null) { msg.lab = !!G.Settings.get('lab'); msg.labV = VERSION; }
     return broadcast.apply(this, arguments);
   };
-  /** El anfitrión cuenta su ajuste (a uno o a todos). */
+  /** The host tells its setting (to one player or to all). */
   function tell(uid) {
     const room = G.Social.room;
     if (!room || !room.isHost) return;
@@ -250,11 +250,11 @@ G.Lab = (() => {
   G.Settings.on(k => { if (k === 'lab') { tell(); lobby(); } });
   G.Social.on(what => { if (what === 'room') lobby(); });
 
-  // ---------------- lo que se ve ----------------
+  // ---------------- what you see ----------------
   const NOTE = 'Lab run: experimental moves and abilities. It won\'t count for leaderboards, missions, achievements or records.';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /** La sala de grupo: ¿será Lab? */
+  /** The group lobby: will it be Lab? */
   function lobby() {
     const el = $('lab-lobby'), room = G.Social.room;
     if (!el) return;
@@ -267,14 +267,14 @@ G.Lab = (() => {
       : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It won\'t count for leaderboards, missions, achievements or records.');
   }
 
-  /** La pestaña Ajustes → Experimental (la pinta settings-ui.js con sus propias piezas). */
+  /** The Settings → Experimental tab (settings-ui.js draws it with its own pieces). */
   function settingsRow(toggle, section) {
     return section('Experimental')
       + toggle('lab', 'Lab mode', 'Try moves and abilities that are still being tested: each Pokémon gets the moves it learns in the games and one of its abilities. '
         + 'Lab runs give coins, tickets and shinies as usual, but don\'t count for leaderboards, missions, achievements or records. In co-op, the host\'s setting decides.');
   }
 
-  /** Pausa: su habilidad y lo que puede aprender aquí. */
+  /** Pause: its ability and what it can learn here. */
   function pauseBlock() {
     const pl = G.Game.player;
     if (!pl) return '';
@@ -282,7 +282,7 @@ G.Lab = (() => {
       const d = G.Moves.BY_ID[id];
       return `<span class="${d.sig ? 'lab-sig' : ''}" title="${esc(G.T(d.name, 'move') + (d.sig ? ' (signature)' : ''))}">${G.Icons.html('move:' + id, 18)}</span>`;
     }).join('');
-    // Más líneas de los otros archivos del Lab (evolución, caramelos, shiny...).
+    // More lines from the other Lab files (evolution, candies, shiny...).
     const more = pauseExtra.map(f => f(pl)).filter(Boolean).map(t => `<div class="lab-more"><small>${t}</small></div>`).join('');
     return `<div class="lab-pause"><div><span class="lab-badge">LAB</span> ${info
         ? `Ability: <b>${esc(info.name)}</b> <small>${esc(info.desc)}</small>` : ''}</div>
@@ -305,7 +305,7 @@ G.Lab = (() => {
     return out;
   };
 
-  // "LAB" en la partida (y su habilidad).
+  // "LAB" in the run (and its ability).
   const hud = document.createElement('div');
   hud.id = 'lab-hud';
   hud.className = 'lab-badge lab-hud hidden';
@@ -316,7 +316,7 @@ G.Lab = (() => {
     if (on) hud.textContent = 'LAB' + (info ? ' · ' + info.name : '');
   }
   setInterval(badge, 400);
-  // La pestaña Experimental de Ajustes, antes de Cuenta.
+  // The Experimental tab in Settings, before Account.
   const acc = document.querySelector('#set-tabs [data-t="acc"]');
   if (acc) {
     const b = document.createElement('button');
@@ -326,16 +326,16 @@ G.Lab = (() => {
     b.onclick = () => G.SettingsUI.open('lab');
     acc.before(b);
   }
-  // El aviso de la sala, debajo de su nota.
+  // The lobby notice, under its note.
   const ln = $('lobby-note');
   if (ln) ln.insertAdjacentHTML('afterend', '<p id="lab-lobby" class="note lab-note hidden"></p>');
 
   return {
     VERSION, begin, learnOf, settingsRow, SIG, esc,
     poolFor: labPool,
-    /** Otra línea para el bloque del Lab en la pausa: f(pl) → HTML o ''. */
+    /** Another line for the Lab block in the pause menu: f(pl) → HTML or ''. */
     pauseLine(f) { pauseExtra.push(f); },
-    /** La habilidad que enseñan el HUD y la pausa (al evolucionar puede cambiar). */
+    /** The ability the HUD and the pause menu show (it can change on evolving). */
     setAbility(a) { info = a; badge(); },
     get active() { return active(); },
     get ability() { return info; }

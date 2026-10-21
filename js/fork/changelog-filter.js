@@ -1,10 +1,10 @@
-/* ============ changelog-filter.js — novedades de upstream que no son verdad aquí (MrSurvivor) ============
- * js/data/changelog.js es de upstream y no se toca (los merges lo traen tal cual). Aquí se quitan las
- * líneas que hablan de cosas que el fork no tiene, y las fechas que se quedan vacías:
- *   - el cooperativo por el servidor TURN de upstream (2026-10-21): aquí está apagado (turnUser en
- *     js/net/net.js) y el cooperativo sigue sólo con conexión directa.
- * Se cambia G.CHANGELOG en su sitio, antes de que G.NewsUI.init lo lea (así el punto de "Novedades"
- * tampoco se enciende por una fecha quitada). Lo comprueba fork/test-changelog-filter.cjs.
+/* ============ changelog-filter.js — upstream news that isn't true here (MrSurvivor) ============
+ * js/data/changelog.js is upstream's and isn't touched (merges bring it in as is). Here we drop the
+ * lines about things the fork doesn't have, and the dates left empty:
+ *   - co-op through upstream's TURN server (2026-10-21): here it's off (turnUser in
+ *     js/net/net.js) and co-op still runs on direct connections only.
+ * G.CHANGELOG is changed in place, before G.NewsUI.init reads it (so the "Novedades" (News) dot
+ * doesn't light up for a dropped date either). Checked by fork/test-changelog-filter.cjs.
  */
 (() => {
   const DROP = [/pasa por nuestro servidor/];

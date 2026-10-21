@@ -1,35 +1,35 @@
-/* ============ guest-save.js — la partida de invitado se queda (MrSurvivor) ============
- * Upstream juega como invitado con una partida en memoria: una recarga (también la de una
- * actualización, js/core/updater.js) lo borraba todo, y crear una cuenta empezaba de cero.
- * Aquí:
- *   - Guardar   cada commit() del invitado copia la partida en este navegador (ms.guest),
- *               y también al ocultar o cerrar la pestaña. Nunca va a la nube.
- *   - Recargar  si se recarga jugando como invitado (ms.guest.on), se vuelve a él sin pasar
- *               por la pantalla de entrar. "Jugar como invitado" sigue la misma partida.
- *   - Cuenta    al crear una cuenta o entrar en una (nombre, Google, local), lo del invitado
- *               pasa a ella con G.DB.adopt y la copia se borra (sólo una vez). En una cuenta
- *               nueva queda la partida del invitado tal cual (con el nombre de la cuenta); en
- *               una que ya existía se suman sus Pokémon, shinies y logros, los tickets y las
- *               monedas ganadas por encima de las 500 del principio (nunca se restan).
- *   - Salir     si la copia se guarda, salir del invitado ya no avisa de que se pierde todo
- *               (`kept`, ganchos en js/ui/menu.js y js/ui/settings-ui.js).
- *   - Actualizar  si este navegador no deja guardar la copia, el updater no recarga al
- *               invitado (safe(), gancho en js/core/updater.js) y avisa una vez. Una versión
- *               obligatoria recarga igual.
- * Ganchos de una línea en js/core/db.js (commit, playAsGuest). Prueba: fork/test-guest-save.cjs.
+/* ============ guest-save.js — the guest save stays (MrSurvivor) ============
+ * Upstream plays as a guest with a save in memory: a reload (also the one from an
+ * update, js/core/updater.js) wiped it all, and creating an account started from scratch.
+ * Here:
+ *   - Save      every guest commit() copies the save into this browser (ms.guest),
+ *               and also when the tab is hidden or closed. It never goes to the cloud.
+ *   - Reload    if the page reloads while playing as a guest (ms.guest.on), it goes back to it without going
+ *               through the login screen. "Jugar como invitado" (Play as guest) continues the same save.
+ *   - Account   when creating an account or logging in to one (name, Google, local), the guest's progress
+ *               moves to it with G.DB.adopt and the copy is deleted (only once). In a new
+ *               account the guest save stays as it is (with the account's name); in
+ *               one that already existed its Pokémon, shinies and achievements are added, plus the tickets and
+ *               the coins earned above the starting 500 (never subtracted).
+ *   - Log out   if the copy is saved, leaving the guest no longer warns that everything is lost
+ *               (`kept`, hooks in js/ui/menu.js and js/ui/settings-ui.js).
+ *   - Update    if this browser won't let the copy be saved, the updater doesn't reload the
+ *               guest (safe(), hook in js/core/updater.js) and warns once. A mandatory
+ *               version reloads anyway.
+ * One-line hooks in js/core/db.js (commit, playAsGuest). Test: fork/test-guest-save.cjs.
  */
 G.GuestSave = (() => {
   const K = 'ms.guest', K_ON = 'ms.guest.on';
-  let kept = true;        // ¿se pudo guardar la última copia?
+  let kept = true;        // could the last copy be saved?
   let told = false;
 
   const read = () => { try { const v = localStorage.getItem(K); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
-  const drop = () => { try { localStorage.removeItem(K); localStorage.removeItem(K_ON); } catch (e) { /* nada */ } };
-  const on = v => { try { if (v) localStorage.setItem(K_ON, '1'); else localStorage.removeItem(K_ON); } catch (e) { /* nada */ } };
+  const drop = () => { try { localStorage.removeItem(K); localStorage.removeItem(K_ON); } catch (e) { /* nothing */ } };
+  const on = v => { try { if (v) localStorage.setItem(K_ON, '1'); else localStorage.removeItem(K_ON); } catch (e) { /* nothing */ } };
   const playing = () => { try { return !!localStorage.getItem(K_ON); } catch (e) { return false; } };
   const progress = s => !!(s && s.owned && Object.keys(s.owned).length);
 
-  /** Copia la partida del invitado en el navegador (la llama commit() de js/core/db.js). */
+  /** Copies the guest save into the browser (called by commit() in js/core/db.js). */
   function store(s) {
     s = s || (G.DB.guest && G.DB.save);
     if (!s) return kept;
@@ -41,7 +41,7 @@ G.GuestSave = (() => {
     return kept;
   }
 
-  /** La partida guardada para playAsGuest() (migrate la pone al día), o null. */
+  /** The stored save for playAsGuest() (migrate brings it up to date), or null. */
   function load(migrate) {
     on(true);
     const s = read();
@@ -50,9 +50,9 @@ G.GuestSave = (() => {
   }
 
   /**
-   * Pasa lo del invitado a la cuenta recién abierta. Las monedas y tickets van por la libreta
-   * (save.led, js/core/db.js) con un apunte propio de este invitado: fusionar dos veces la
-   * misma copia no los duplica.
+   * Moves the guest's progress to the account just opened. Coins and tickets go through the ledger
+   * (save.led, js/core/db.js) with an entry of this guest's own: merging the same copy
+   * twice doesn't double them.
    */
   function carry() {
     const g = read();
@@ -64,9 +64,9 @@ G.GuestSave = (() => {
       c: [Math.max(0, coins - START), fresh ? Math.max(0, START - coins) : 0],
       t1: [Math.max(0, Math.floor(+t.t1 || 0)), 0], t10: [Math.max(0, Math.floor(+t.t10 || 0)), 0]
     } };
-    g.coins = Math.max(0, coins - START);           // = lo que dice la libreta: nada sin explicar
-    // Cuenta nueva: gana la partida del invitado (compañero, test, pity, misiones...).
-    // Cuenta con partida: gana la suya, y del invitado se suma lo conseguido.
+    g.coins = Math.max(0, coins - START);           // = what the ledger says: nothing unaccounted for
+    // New account: the guest save wins (partner, test, pity, missions...).
+    // Account with a save: its own wins, and what the guest earned is added.
     g.updated = fresh ? Date.now() + 1 : 0;
     delete g.gid;
     const r = G.DB.adopt(g);
@@ -77,7 +77,7 @@ G.GuestSave = (() => {
     return r;
   }
 
-  // Entrar o crear cuenta: lo del invitado pasa a la cuenta antes de seguir (login.js espera).
+  // Logging in or creating an account: the guest's progress moves to the account before going on (login.js waits).
   for (const fn of ['register', 'login', 'loginWithGoogle']) {
     const orig = G.DB[fn];
     G.DB[fn] = async function () {
@@ -86,15 +86,15 @@ G.GuestSave = (() => {
       return r;
     };
   }
-  // Salir del invitado: la copia se queda (para la cuenta o para volver), pero ya no se entra solo.
+  // Leaving the guest: the copy stays (for the account or to come back to), but it no longer logs in by itself.
   const logout = G.DB.logout;
   G.DB.logout = function () {
     if (G.DB.guest) { store(); on(false); }
     return logout.apply(this, arguments);
   };
 
-  // Pantalla de entrar: tras una recarga jugando como invitado, se vuelve a él; si no, una
-  // nota con lo que pasará a la cuenta.
+  // Login screen: after a reload while playing as a guest, it goes back to the guest; if not, a
+  // note with what will move to the account.
   const open = G.LoginUI.open;
   G.LoginUI.open = function () {
     if (playing() && progress(read()) && !G.DB.loggedIn) { G.DB.playAsGuest(); G.Flow.afterLogin(); return; }
@@ -115,7 +115,7 @@ G.GuestSave = (() => {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && G.DB.guest) store(); });
   addEventListener('pagehide', () => { if (G.DB.guest) store(); });
 
-  /** Para js/core/updater.js: ¿se puede recargar sin que el invitado pierda nada? */
+  /** For js/core/updater.js: can the page reload without the guest losing anything? */
   function safe() {
     if (!G.DB.guest || store()) return true;
     if (!told) { told = true; G.UI.toast(G.T('Hay una versión nueva, pero este navegador no guarda la partida de invitado: crea una cuenta y recarga para no perderla.'), 9000); }

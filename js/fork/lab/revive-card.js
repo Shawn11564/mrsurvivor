@@ -1,12 +1,12 @@
-/* ============ revive-card.js — la carta de Revivir (Lab primero, fork MrSurvivor) ============
- * En una partida Lab, a veces (RATE por tanda, desde el nivel 5, si no llevas ya una) la última carta
- * de subir de nivel es "Revive": la guardas en su propio hueco (un corazón junto a tu vida).
- *   - Solo: al caer, te levantas en el acto con el 50 % de la vida, 3 s intocable, y los enemigos de
- *     alrededor salen despedidos. Se gasta.
- *   - En grupo: al caer eliges cuándo usarla (R, o el botón en pantalla) o esperas a que te levante un
- *     compañero, como siempre (y entonces no se gasta).
- * Ganchos: G.LevelUp.offer (la carta), Player.hurt (solo), G.HUD.draw (el hueco y el botón, antes de
- * js/fork/ui-scale.js). Textos en inglés, como el Lab. Prueba: fork/test-revive-card.cjs.
+/* ============ revive-card.js — the Revive card (Lab first, MrSurvivor fork) ============
+ * In a Lab run, sometimes (RATE per batch, from level 5, if you don't already carry one) the last
+ * level-up card is "Revive": you keep it in its own slot (a heart next to your HP).
+ *   - Solo: when you fall, you get up at once with 50 % HP, 3 s untouchable, and the enemies
+ *     around you are thrown back. It's used up.
+ *   - In co-op: when you fall you choose when to use it (R, or the on-screen button) or wait for a
+ *     teammate to revive you, as always (and then it isn't used up).
+ * Hooks: G.LevelUp.offer (the card), Player.hurt (solo), G.HUD.draw (the slot and the button, before
+ * js/fork/ui-scale.js). Texts in English, like Lab. Test: fork/test-revive-card.cjs.
  */
 G.ReviveCard = (() => {
   const RATE = 1 / 25, MIN_LEVEL = 5, HP = 0.5, SAFE = 3, PUSH_R = 150;
@@ -28,14 +28,14 @@ G.ReviveCard = (() => {
     return out;
   };
 
-  /** Usar la que llevas: arriba con la mitad de la vida, intocable, y los de cerca salen despedidos. */
+  /** Use the one you carry: back up with half your HP, untouchable, and those nearby are thrown back. */
   function use(pl) {
     if (!pl || !pl.dead || !(pl.selfRevive > 0)) return false;
     pl.selfRevive--;
     pl.revive(HP);
     pl.invuln = SAFE;
     for (const e of G.EnemyMgr.all()) {
-      if (e.dead || G.U.dist2(e.x, e.y, pl.x, pl.y) > PUSH_R * PUSH_R) continue;   // todos (la rejilla de queryCircle es de este fotograma)
+      if (e.dead || G.U.dist2(e.x, e.y, pl.x, pl.y) > PUSH_R * PUSH_R) continue;   // all of them (queryCircle's grid is from this frame)
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);
       e.hurt(1, '#ff8acb', nx, ny, 1200);
     }
@@ -44,7 +44,7 @@ G.ReviveCard = (() => {
     return true;
   }
 
-  // Solo: en el mismo golpe que te tumba.
+  // Solo: on the same hit that knocks you down.
   const P = G.Player.prototype, hurt = P.hurt;
   P.hurt = function () {
     const was = this.dead, r = hurt.apply(this, arguments);
@@ -52,7 +52,7 @@ G.ReviveCard = (() => {
     return r;
   };
 
-  // El hueco (junto a la vida) y, caído en grupo, el botón.
+  // The slot (next to the HP) and, when down in co-op, the button.
   const draw = G.HUD.draw;
   G.HUD.draw = function (ctx, w, h, pl) {
     const r = draw.apply(this, arguments);

@@ -1,32 +1,32 @@
-/* ============ asset-overrides.js — arte cambiado desde el Asset Admin (fork MrSurvivor) ============
- * fork/asset-admin.cjs publica dos listas (sin rehacer app.min.js) que el juego lee al cargar:
- *   - js/fork/asset-rev.json { 'assets/pokemon/150/Idle.png': 'a1b2c3d4e5' }: archivos que se han
- *     cambiado con el mismo nombre. sw.js guarda las imágenes de assets/ para siempre (no cambiaban
- *     nunca), así que cada imagen de la lista se pide con ?v=<huella>: para la caché es otra URL y
- *     llega la nueva. Se hace en el setter de HTMLImageElement.src (todas las hojas se cargan con
- *     new Image() + src); las que se pidieron antes de que llegara la lista se vuelven a pedir.
- *   - js/fork/icon-overrides.json { 'lb-y': { file, v, w, h } }: un PNG en lugar de un icono
- *     dibujado con código (G.Icons). Ocupa lo mismo que el original (su tamaño de siempre, ×1, ×2...)
- *     y se dibuja desde el PNG, que puede ser más fino (×4): se suaviza al reducirlo; o, con own,
- *     del tamaño del PNG (un dibujo más grande que el de código, sin perder píxeles). Envuelve
- *     G.Icons.canvas/draw/html/url, y los <img> que ya estaban pintados se cambian al cargar.
- * Las dos listas se comprueban antes de usarlas: rutas de assets/ con .png y huellas hexadecimales
- * (los iconos, sólo de assets/icons/code/). Sin red o sin las listas, todo como siempre.
- * Prueba: fork/test-asset-overrides.cjs.
+/* ============ asset-overrides.js — art changed from the Asset Admin (MrSurvivor fork) ============
+ * fork/asset-admin.cjs publishes two lists (without rebuilding app.min.js) that the game reads on load:
+ *   - js/fork/asset-rev.json { 'assets/pokemon/150/Idle.png': 'a1b2c3d4e5' }: files that were
+ *     changed under the same name. sw.js caches the images in assets/ forever (they never used to
+ *     change), so each image on the list is requested with ?v=<hash>: to the cache it's a new URL and
+ *     the new image arrives. This is done in the HTMLImageElement.src setter (every sheet is loaded with
+ *     new Image() + src); the ones requested before the list arrived are requested again.
+ *   - js/fork/icon-overrides.json { 'lb-y': { file, v, w, h } }: a PNG instead of an icon
+ *     drawn in code (G.Icons). It takes the same space as the original (its usual size, ×1, ×2...)
+ *     and is drawn from the PNG, which can be finer (×4): it's smoothed when scaled down; or, with own,
+ *     at the PNG's size (a bigger drawing than the code one, without losing pixels). Wraps
+ *     G.Icons.canvas/draw/html/url, and the <img> already on the page are swapped when it loads.
+ * Both lists are checked before use: assets/ paths ending in .png and hex hashes
+ * (icons only from assets/icons/code/). With no network or no lists, everything works as before.
+ * Test: fork/test-asset-overrides.cjs.
  */
 G.AssetOverrides = (() => {
-  // La raíz del juego: lo que va antes de js/ en la URL de este script (o de app.min.js).
+  // The game's root: what comes before js/ in the URL of this script (or of app.min.js).
   const own = document.currentScript || document.querySelector('script[src*="app.min.js"], script[src*="asset-overrides.js"]');
   const src = own ? own.src : location.href;
   const ROOT = src.includes('/js/') ? src.slice(0, src.lastIndexOf('/js/') + 1) : new URL('./', location.href).href;
   const HEX = /^[0-9a-f]{6,40}$/;
   const ASSET = /^assets\/[A-Za-z0-9_\/.-]+\.png$/, CODE = /^assets\/icons\/code\/[A-Za-z0-9._-]+\.png$/;
 
-  // ---------------- archivos cambiados: ?v= ----------------
-  let rev = null;                                   // ruta -> huella (null: aún no ha llegado)
-  const pending = [];                               // [WeakRef(img), ruta] pedidas antes de la lista
+  // ---------------- changed files: ?v= ----------------
+  let rev = null;                                   // path -> hash (null: not here yet)
+  const pending = [];                               // [WeakRef(img), path] requested before the list
   const P = HTMLImageElement.prototype, D = Object.getOwnPropertyDescriptor(P, 'src');
-  /** { url, rel } si u es una imagen de assets/ de este juego. */
+  /** { url, rel } if u is an image from this game's assets/. */
   function relOf(u) {
     if (typeof u !== 'string' || u.indexOf('assets/') < 0 || /^(data|blob):/.test(u)) return null;
     let url;
@@ -48,25 +48,25 @@ G.AssetOverrides = (() => {
     }
   });
 
-  // ---------------- iconos de código cambiados por un PNG ----------------
+  // ---------------- code icons replaced by a PNG ----------------
   const I = G.Icons, oCanvas = I.canvas, oDraw = I.draw, oHtml = I.html, oUrl = I.url;
-  const icons = {};                                 // nombre -> { img, url, w, h, ready }
+  const icons = {};                                 // name -> { img, url, w, h, ready }
   const cvs = new Map();
-  // El tamaño base: el del dibujo de código, o el del PNG si trae el suyo (own: un 18×18 en vez de 13×13,
-  // que se ve 1:1, o ×2 donde el icono va al doble; el resto del juego mide con G.Icons.canvas).
+  // The base size: the code drawing's, or the PNG's if it brings its own (own: an 18×18 instead of 13×13,
+  // shown 1:1, or ×2 where the icon is doubled; the rest of the game measures with G.Icons.canvas).
   const native = n => { const o = icons[n]; return o && o.own ? { width: o.w, height: o.h } : oCanvas.call(I, n); };
-  // El ancho en pantalla para `size`: el múltiplo nítido del de código (×1, ×2...), y con own ese mismo
-  // múltiplo del PNG (un 18×18 se ve a 18 donde el de código va a 13, a 36 donde va a 26). Con own, por
-  // debajo de la mitad del de código, ½ o ¼ del PNG (las flechas del Lab, a 9: js/fork/lab/badges.js).
+  // The on-screen width for `size`: the sharp multiple of the code one (×1, ×2...), and with own that same
+  // multiple of the PNG (an 18×18 shows at 18 where the code one is at 13, at 36 where it's at 26). With own,
+  // below half the code one, ½ or ¼ of the PNG (the Lab arrows, at 9: js/fork/lab/badges.js).
   const mult = (n, size) => {
     const k = size / oCanvas.call(I, n).width;
     return k < 0.75 && icons[n] && icons[n].own ? 2 ** Math.max(-2, Math.round(Math.log2(k))) : Math.max(1, Math.round(k));
   };
   const shown = (n, size) => { const o = icons[n]; return (o && o.own ? o.w : oCanvas.call(I, n).width) * mult(n, size); };
   const ready = n => icons[n] && icons[n].ready ? icons[n] : null;
-  const CSS = { coin: '--ico-coin', cursor: '--ico-cursor' };   // los de ui/icons.js installCss
+  const CSS = { coin: '--ico-coin', cursor: '--ico-cursor' };   // the ones from ui/icons.js installCss
 
-  /** Los <img> ya pintados con el dibujo de código pasan al PNG (y las variables de CSS). */
+  /** <img> already drawn with the code drawing switch to the PNG (and so do the CSS variables). */
   function swapDom(n, o) {
     const old = oUrl.call(I, n);
     for (const img of document.querySelectorAll('img.pix')) {
@@ -102,7 +102,7 @@ G.AssetOverrides = (() => {
     }
     return c;
   };
-  // Mismo sitio y tamaño que ui/icons.js draw(); suavizado sólo si el PNG es más grande que lo que ocupa.
+  // Same place and size as ui/icons.js draw(); smoothing only if the PNG is bigger than the space it takes.
   I.draw = function (ctx, n, x, y, size, fit = false) {
     const o = ready(n);
     if (!o) return oDraw.apply(this, arguments);
@@ -131,13 +131,13 @@ G.AssetOverrides = (() => {
     return r;
   };
 
-  // ---------------- las listas ----------------
+  // ---------------- the lists ----------------
   const get = f => fetch(ROOT + 'js/fork/' + f + '?t=' + Date.now(), { cache: 'no-store' })
     .then(r => r.ok ? r.json() : {}).catch(() => ({}));
-  // No antes de que hayan corrido todos los scripts (DOMContentLoaded): los iconos que se añaden
-  // después (badge-art.js) se pedirían antes de existir y ui/icons.js se quedaría para siempre con
-  // su sustituto (una estrella). Los scripts defer corren con readyState ya 'interactive', así que
-  // sólo 'complete' quiere decir que ya pasó; si no, lo primero de DOMContentLoaded y load.
+  // Not before every script has run (DOMContentLoaded): icons added
+  // later (badge-art.js) would be requested before they exist, and ui/icons.js would keep
+  // its placeholder (a star) forever. Defer scripts run with readyState already 'interactive', so
+  // only 'complete' means it has passed; otherwise, whichever of DOMContentLoaded and load comes first.
   const scripts = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => {
     addEventListener('DOMContentLoaded', r, { once: true }); addEventListener('load', r, { once: true });
   });
@@ -147,7 +147,7 @@ G.AssetOverrides = (() => {
     rev = clean;
     for (const [ref, rel] of pending.splice(0)) {
       const img = ref.deref(), cur = img && D.get.call(img), r2 = cur && relOf(cur);
-      if (rev[rel] && r2 && r2.rel === rel) img.src = cur;          // otra vez, ya con ?v=
+      if (rev[rel] && r2 && r2.rel === rel) img.src = cur;          // again, now with ?v=
     }
     loadIcons(i);
   });

@@ -1,13 +1,13 @@
-/* ============ buff-evos.js — evolución de los potenciadores (fork MrSurvivor) ============
- * Los movimientos que suben stats (Danza Espada, Maquinación...) evolucionan al llegar al
- * nivel máximo, sin condición (G.Moves.EVO y EVO_MODS.buff en js/data/moves.js): desde
- * entonces se lanzan solos desde cualquier hueco (m.passive, ver Combat.tick) y acumulan
- * una vez más. Aquí sólo van los textos: los nombres evolucionados (movimientos de verdad
- * que suben stats) y lo que gana. Prueba: fork/test-gameplay.cjs.
+/* ============ buff-evos.js — evolution of the stat-boosting moves (MrSurvivor fork) ============
+ * Moves that raise stats (Danza Espada, Maquinación...) evolve on reaching
+ * max level, with no condition (G.Moves.EVO and EVO_MODS.buff in js/data/moves.js): from
+ * then on they cast on their own from any slot (m.passive, see Combat.tick) and stack
+ * one more time. Only the texts are here: the evolved names (real moves
+ * that raise stats) and what it gains. Test: fork/test-gameplay.cjs.
  */
 (() => {
   const EFFECT = 'Se lanza solo desde cualquier hueco (ya no hace falta cambiar a él) y +1 acumulación';
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const NAMES = [
     ['Tambor', 'Belly Drum', 'Cognobidon', 'Panciamburo', 'Belly Drum', '腹鼓', '腹鼓'],
     ['Danza Aleteo', 'Quiver Dance', 'Papillodanse', 'Eledanza', 'Quiver Dance', '蝶舞', '蝶舞'],
@@ -27,7 +27,7 @@
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => {
     const names = Object.fromEntries(NAMES.map(r => [r[0], r[i + 1]]));
     G.I18n.add(names, l);
-    G.I18n.add(names, l, 'move');          // G.T(name, 'move'): cartas y HUD
+    G.I18n.add(names, l, 'move');          // G.T(name, 'move'): cards and HUD
     G.I18n.add(Object.fromEntries(TEXT.map(r => [r[0], r[i + 1]])), l);
   });
 })();

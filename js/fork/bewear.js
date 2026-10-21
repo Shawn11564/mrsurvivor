@@ -1,11 +1,11 @@
-/* ============ bewear.js — un secreto al sur del mapa (fork MrSurvivor) ============
- * En cada run, lejos al sur de donde empiezas (unos 3000 px hacia abajo, en el primer sitio libre),
- * espera un Bewear. Si llegas hasta él te da un abrazo y desbloquea "Corazones" en Ajustes →
- * Gráficos (save.hearts): con él encendido, todos los proyectiles que lanzas son corazones (sólo
- * el dibujo; tus compañeros los ven como siempre). Se dibuja con los de G.Events.drawables (ordenado
- * por su Y con el resto) y no estorba (no es sólido, nadie le ataca); en la arena de una grieta no
- * está. La fila de Ajustes va detrás de la del brillo de los radiantes (G.RadiantGlow.settingsRow).
- * Prueba: fork/test-bewear.cjs.
+/* ============ bewear.js — a secret south of the map (MrSurvivor fork) ============
+ * In every run, far south of where you start (about 3000 px down, at the first free spot),
+ * a Bewear waits. Reach it and it gives you a hug and unlocks "Corazones" (Hearts) in Settings →
+ * Graphics (save.hearts): with it on, every projectile you fire is a heart (only
+ * the drawing; your teammates see them as usual). It's drawn with G.Events.drawables (sorted
+ * by Y with the rest) and doesn't get in the way (not solid, nobody attacks it); it isn't in a
+ * rift's arena. Its Settings row goes after the radiant glow's (G.RadiantGlow.settingsRow).
+ * Test: fork/test-bewear.cjs.
  */
 G.Bewear = (() => {
   const DEX = 760, SOUTH = 3000, NEAR = 56;
@@ -13,7 +13,7 @@ G.Bewear = (() => {
   const save = () => G.DB.save;
   const unlocked = () => !!(save() && save().hearts);
 
-  /** Dónde está en esta run: el primer sitio libre cerca de (0, SOUTH). */
+  /** Where it is this run: the first free spot near (0, SOUTH). */
   function where() {
     if (spot) return spot;
     for (let r = 0; r < 600; r += 24) for (let a = 0; a < 6.283; a += r ? 24 / r : 7) {
@@ -44,7 +44,7 @@ G.Bewear = (() => {
     const now = performance.now() / 1000, dt = Math.min(0.1, now - (last || now));
     last = now;
     anim.update(dt);
-    // Mira hacia ti; si estás a su lado, abrazo (el primero desbloquea; luego, corazones cada 3 s).
+    // It faces you; if you're next to it, a hug (the first one unlocks; after that, hearts every 3 s).
     anim.dir = G.Sprites.dirFromAngle(Math.atan2(pl.y - p.y, pl.x - p.x));
     hugT -= dt;
     if (!pl.dead && Math.hypot(pl.x - p.x, pl.y - p.y) < NEAR && hugT <= 0) { hugT = 3; anim.play('Attack'); hug(pl); }
@@ -57,14 +57,14 @@ G.Bewear = (() => {
     const b = drawable();
     return b ? out.concat([b]) : out;
   };
-  // Cada run, su sitio (el mundo cambia).
+  // A new spot each run (the world changes).
   function wrapRun() {
     const startRun = G.Game.startRun;
     G.Game.startRun = function () { spot = null; hugT = 0; return startRun.apply(this, arguments); };
   }
   if (G.Game) wrapRun(); else addEventListener('DOMContentLoaded', wrapRun);
 
-  // ---------------- los corazones ----------------
+  // ---------------- the hearts ----------------
   const spawn = G.Projectiles.spawn;
   G.Projectiles.spawn = function (o) {
     if (o && o.friendly !== false && !o.ghost && o.owner && o.owner === G.Game.player && unlocked() && G.Settings.get('hearts'))
@@ -82,7 +82,7 @@ G.Bewear = (() => {
     };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Bewear te da un abrazo enorme. Has desbloqueado Corazones (Ajustes → Gráficos).', 'Bewear gives you a huge hug. You unlocked Hearts (Settings → Graphics).',
      'Chelours vous fait un énorme câlin. Vous avez débloqué Cœurs (Réglages → Graphismes).', 'Bewear ti fa un abbraccio enorme. Hai sbloccato Cuori (Impostazioni → Grafica).',

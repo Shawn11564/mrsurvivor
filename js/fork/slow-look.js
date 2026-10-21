@@ -1,19 +1,19 @@
-/* ============ slow-look.js — frenar se nota (fork MrSurvivor) ============
- * 1. Bola Neblina frenaba un 30 % durante 1,2 s, sin que se viera: parecía que no hacía nada.
- *    Ahora un 40 % durante 2 s (`slowDur`, un campo del fork para cualquier movimiento).
- * 2. `slowDur`: Combat aplica el frenado de un golpe con Enemy.applySlow(m.slow), siempre 1,2 s.
- *    G.RunStats.tag(e, m) va justo antes en ese mismo golpe (js/systems/combat.js hit y resolve),
- *    así que aquí se apunta el slowDur de ese movimiento y applySlow lo usa. Un invitado lo manda
- *    al anfitrión con la duración (G.Coop.status, un quinto campo opcional en js/net/coop.js).
- * 3. Un enemigo frenado lleva un anillo azul hielo a los pies (como el disco de quemado y
- *    envenenado), también en la pantalla de los invitados (el bit 8 de estado de coop.js).
- * Prueba: fork/test-slow-look.cjs.
+/* ============ slow-look.js — slowing shows (MrSurvivor fork) ============
+ * 1. Bola Neblina (Mist Ball) slowed by 30 % for 1.2 s, with nothing to see: it looked like it did nothing.
+ *    Now 40 % for 2 s (`slowDur`, a fork field for any move).
+ * 2. `slowDur`: Combat applies a hit's slow with Enemy.applySlow(m.slow), always 1.2 s.
+ *    G.RunStats.tag(e, m) runs just before, in that same hit (js/systems/combat.js hit and resolve),
+ *    so here the move's slowDur is noted and applySlow uses it. A guest sends it
+ *    to the host with the duration (G.Coop.status, an optional fifth field in js/net/coop.js).
+ * 3. A slowed enemy wears an ice-blue ring at its feet (like the burn and poison
+ *    disc), on the guests' screens too (status bit 8 in coop.js).
+ * Test: fork/test-slow-look.cjs.
  */
 (() => {
   const mb = G.Moves.BY_ID['mist-ball'];
   if (mb) { mb.slow = 0.4; mb.slowDur = 2; }
 
-  let next = 0;                        // slowDur del golpe que se está aplicando
+  let next = 0;                        // slowDur of the hit being applied
   const tag = G.RunStats.tag;
   G.RunStats.tag = function (e, m) { next = (m && m.slowDur) || 0; return tag.apply(this, arguments); };
 

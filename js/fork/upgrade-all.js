@@ -1,16 +1,16 @@
-/* ============ upgrade-all.js — comprar todas las mejoras de golpe (fork MrSurvivor, Lab primero) ============
- * Con el ajuste Lab encendido, Mejoras lleva un botón "Upgrade all" para el Pokémon elegido: sube
- * cada mejora a su máximo de una vez. Antes de gastar, pide confirmar con el total en monedas. Si
- * no llega, dice cuánto falta. Las monedas salen como en una compra normal (G.DB.commit apunta el
- * gasto en la libreta). El panel se repinta cuando menu.js rehace la lista (#upg-list): así el total
- * sigue bien después de comprar una suelta. Textos en inglés, como el Lab. Prueba: fork/test-upgrade-all.cjs.
+/* ============ upgrade-all.js — buy every upgrade at once (MrSurvivor fork, Lab first) ============
+ * With the Lab setting on, Upgrades has an "Upgrade all" button for the chosen Pokémon: it raises
+ * every upgrade to its max in one go. Before spending, it asks to confirm with the total in coins. If
+ * you can't afford it, it says how much is missing. The coins go out as in a normal purchase (G.DB.commit notes the
+ * spend in the ledger). The panel repaints when menu.js rebuilds the list (#upg-list): that way the total
+ * stays right after buying a single one. Texts in English, like Lab. Test: fork/test-upgrade-all.cjs.
  */
 G.UpgradeAll = (() => {
   const $ = id => document.getElementById(id);
   const dexNow = () => { const sel = $('upg-mon'); return sel && +sel.value; };
   let sure = false, watched = null;
 
-  /** Lo que falta para tenerlo todo: { total, steps }. */
+  /** What's left to max everything: { total, steps }. */
   function quote(dex) {
     const lv = G.DB.upgradesOf(dex) || {};
     let total = 0, steps = 0;
@@ -52,7 +52,7 @@ G.UpgradeAll = (() => {
         G.Audio.sfx('buy');
         G.UI.refreshCoins();
         G.UI.toast(`${G.DEX_BY[dex].name}: every upgrade maxed`, 2600);
-        const sel = $('upg-mon'); if (sel) sel.dispatchEvent(new Event('change'));   // menu.js repinta la lista
+        const sel = $('upg-mon'); if (sel) sel.dispatchEvent(new Event('change'));   // menu.js repaints the list
       }
       render();
     };

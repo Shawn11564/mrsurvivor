@@ -1,17 +1,17 @@
-/* ============ move-text.js — textos de los movimientos (fork MrSurvivor) ============
- * 1. Descripciones en inglés que no decían lo que hace el movimiento (Lengüetazo "paraliza" y
- *    sólo frena; Burbuja sale en círculo, no en abanico...). Se cambia sólo el inglés, con la
- *    misma clave española: así lang-en.js y los demás idiomas siguen como están (menos conflictos
- *    al traer cambios de upstream). Infortunio sí cambia en todos: ahora también cuenta aturdidos.
- * 2. G.MoveText.tipNotes: lo que dice el recuadro de un movimiento en la barra (hud.js drawTip)
- *    bajo el tipo: con qué estadística pega y qué lo potencia, y si a tu Pokémon le va peor.
- *    (Ningún objeto es sólo físico o sólo especial: Cinta Elección o Vidasfera suben todo.)
- * 3. Cartas de subir de nivel: el chip "Tu tipo" va con el tipo, y la nota del lado flojo dice que es
- *    por la categoría (G.LevelUp.offer, antes que js/fork/lab/lab.js).
- * Prueba: fork/test-moves.cjs, fork/test-move-truth.cjs, fork/test-slow-look.cjs.
+/* ============ move-text.js — move texts (MrSurvivor fork) ============
+ * 1. English descriptions that didn't say what the move does (Lick "paralyzes" but
+ *    only slows; Bubble comes out in a ring, not a fan...). Only the English changes, under the
+ *    same Spanish key: so lang-en.js and the other languages stay as they are (fewer conflicts
+ *    when pulling upstream changes). Hex does change in every language: it now counts stunned foes too.
+ * 2. G.MoveText.tipNotes: what a move's box in the bar says (hud.js drawTip)
+ *    under the type: which stat it hits with, what boosts it, and whether your Pokémon is worse at it.
+ *    (No item is only physical or only special: Choice Band and Life Orb boost everything.)
+ * 3. Level-up cards: the "Tu tipo" (Your type) chip goes with the type, and the weak-side note says
+ *    it's because of the category (G.LevelUp.offer, before js/fork/lab/lab.js).
+ * Test: fork/test-moves.cjs, fork/test-move-truth.cjs, fork/test-slow-look.cjs.
  */
 (() => {
-  // ---------------- 1. descripciones ----------------
+  // ---------------- 1. descriptions ----------------
   const EN = {
     'Lametazo espectral que paraliza un poco.':'A ghostly lick that slows the foes it touches.',
     'Burbujas en abanico que ralentizan a quien tocan.': 'A ring of bubbles in every direction that slows whatever they touch.',
@@ -31,7 +31,7 @@
     'Llamas que giran a tu alrededor. Defensa constante.': 'Flames that spin around you and burn what they touch.',
     'Explota en llamas en todas las direcciones.': 'Bursts of flame in every direction that burn foes.',
     'Corres envuelto en fuego y dejas un rastro de llamas.': 'You run wrapped in fire, leaving a trail of flames that burns foes.',
-    // Repaso de 2026-10-21 (que el texto diga lo que hace el código):
+    // Review of 2026-10-21 (so the text says what the code does):
     'Destello a tu alrededor.': 'A dazzling flash around you that hurts everything nearby.',
     'Remolinos de viento que te escoltan.': 'Whirlwinds that circle you and blow back the foes they hit.',
     'Embiste en arco a todo lo que tengas delante.': 'Slams everything in an arc in front of you, knocking it back.',
@@ -49,20 +49,20 @@
   };
   G.I18n.add(EN, 'en');
 
-  // Infortunio (combat.js hasStatus): texto nuevo en todos los idiomas.
+  // Hex (combat.js hasStatus): new text in every language.
   const HEX = 'Maldición que salta entre enemigos. Mucho más daño si están quemados, envenenados, frenados o aturdidos (paralizados, congelados...).';
   G.Moves.BY_ID.hex.desc = HEX;
 
-  // ---------------- 2. recuadro de la barra ----------------
+  // ---------------- 2. the bar's box ----------------
   const PHYS = 'Físico: pega con tu Ataque. Lo potencian Danza Espada y Danza Dragón.';
   const SPEC = 'Especial: pega con tu Ataque Especial. Lo potencia Maquinación.';
   const BUFF = { patk: 'Potencia tus ataques físicos.', satk: 'Potencia tus ataques especiales.' };
   const BUFF_CAT = { patk: 'physical', satk: 'special' };
   const BOTH = 'Potencia tus ataques físicos y especiales.';
   const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
-  // Cuerpo a cuerpo (player.js hurt) y las familias cercanas del Lab (G.LabKinds2.CLOSE): -25 % de daño recibido.
+  // Melee (player.js hurt) and the Lab's close-range families (G.LabKinds2.CLOSE): -25 % damage taken.
   const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
-  // El lado flojo, por categoría (antes "Peor para X: sólo hace un N %", que parecía hablar del movimiento).
+  // The weak side, by category (it used to be "Peor para X: sólo hace un N %", which read as if it were about the move).
   const OFF = {
     physical: 'Ataque físico: {x} sólo hace un {x} % del daño con estos (lo suyo es el especial).',
     special: 'Ataque especial: {x} sólo hace un {x} % del daño con estos (lo suyo es el físico).'
@@ -73,17 +73,17 @@
   };
   const close = m => m.kind === 'melee' || !!(G.LabKinds2 && G.LabKinds2.CLOSE.has(m.kind));
 
-  /** [[texto en español, color]] para el movimiento m de pl. */
+  /** [[Spanish text, color]] for move m of pl. */
   function tipNotes(m, pl) {
     const mon = pl && pl.mon, out = [];
     if (m.cat) {
       out.push([m.cat === 'physical' ? PHYS : SPEC, COL[m.cat]]);
-      // Como la carta de subir de nivel (levelup.js fitNote): mismo texto, ya traducido.
+      // Like the level-up card (levelup.js fitNote): same text, already translated.
       const f = G.Stats.fit(mon, m.cat);
       if (mon && f < 0.95) out.push([offNote(mon, m.cat), COL.weak]);
       if (close(m)) out.push([CLOSE, COL.close]);
     } else if (BUFF[m.stat] && (m.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[m.stat])) {
-      out.push([BOTH, COL.good]);                        // Avivar, Filete Fuera (Lab): los dos lados
+      out.push([BOTH, COL.good]);                        // Work Up, Fillet Away (Lab): both sides
     } else if (BUFF[m.stat]) {
       out.push([BUFF[m.stat], COL[BUFF_CAT[m.stat]]]);
       if (mon && G.Stats.sideOf(mon) === BUFF_CAT[m.stat])
@@ -92,7 +92,7 @@
     return out;
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     [HEX, 'A curse that jumps between enemies. Much more damage if they are burned, poisoned, slowed or stunned (paralyzed, frozen...).',
      'Malédiction qui saute d’ennemi en ennemi. Bien plus de dégâts s’ils sont brûlés, empoisonnés, ralentis ou étourdis (paralysés, gelés...).',
@@ -136,12 +136,12 @@
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
 
-  // ---------------- 3. cartas de subir de nivel: "Tu tipo" ----------------
-  // El chip "Tu tipo" pedía además que fuera de su lado fuerte (fit >= 95 %): con un Pokémon
-  // Dragón/Agua especial, Garra Dragón (física) salía sin el chip y con una nota de "71 %" que
-  // parecía hablar del movimiento. Ahora el chip va con el tipo (cualquiera de los dos) y la nota
-  // dice que es por la categoría. Envuelve G.LevelUp.offer antes que js/fork/lab/lab.js (que lo
-  // quita en las firmas). La misma nota en el recuadro de la barra (tipNotes, arriba).
+  // ---------------- 3. level-up cards: "Tu tipo" ----------------
+  // The "Tu tipo" (Your type) chip also required the move to be on its strong side (fit >= 95 %): with a
+  // special Dragon/Water Pokémon, Dragon Claw (physical) came up without the chip and with a "71 %" note that
+  // read as if it were about the move. Now the chip goes with the type (either of the two) and the note
+  // says it's because of the category. Wraps G.LevelUp.offer before js/fork/lab/lab.js (which
+  // removes it on signature moves). The same note is in the bar's box (tipNotes, above).
   const OLD = /Peor para [^<]*? \(lo suyo es el ataque (?:especial|físico)\)\./;
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {

@@ -1,10 +1,10 @@
-/* ============ candy-ui.js — gastar caramelos en Mejoras (Lab, fork MrSurvivor) ============
- * Con el ajuste Lab encendido, la pantalla de Mejoras lleva debajo de la lista un panel de
- * caramelos para el Pokémon elegido (su línea evolutiva): cuántos quedan, los puntos (hasta 10),
- * un botón por estadística con lo que cuesta el siguiente punto y lo que da, y Reiniciar.
- * La lógica está en js/fork/lab/growth.js (points, spend, reset). El panel va fuera de #upg-list
- * (renderUpgrades de js/ui/menu.js la rehace entera) y se pinta al abrir Mejoras y al cambiar de
- * Pokémon. Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-candy.cjs.
+/* ============ candy-ui.js — spending candies in Upgrades (Lab, MrSurvivor fork) ============
+ * With the Lab setting on, the Upgrades screen has a candy panel under the list
+ * for the chosen Pokémon (its evolution line): how many are left, the points (up to 10),
+ * one button per stat with what the next point costs and what it gives, and Reset.
+ * The logic is in js/fork/lab/growth.js (points, spend, reset). The panel sits outside #upg-list
+ * (renderUpgrades in js/ui/menu.js rebuilds it whole) and is painted when Upgrades opens and when the
+ * Pokémon changes. Texts in English only, like the rest of Lab. Test: fork/test-candy.cjs.
  */
 G.LabCandyUI = (() => {
   const $ = id => document.getElementById(id);

@@ -1,12 +1,12 @@
-/* ============ wild-legends.js — legendarios salvajes por el mapa (Lab primero, fork MrSurvivor) ============
- * En una partida Lab, desde el minuto 15, un legendario salvaje aparece por el mapa (no en la grieta)
- * cada GAP segundos mientras haya menos de MAX vivos: uno al azar de los que tienen sprite, a
- * 650-850 px de un jugador, con su propia vida y daño (crecen con el minuto; más vida en grupo, como
- * los jefes). Va como un jefe (barra de vida, recompensa de jefe), pero no cuenta como vencer a ese
- * legendario en una grieta (no lleva `legend`). Tampoco cuenta como combate de jefe (G.EnemyMgr.bossAlive):
- * si contara, con uno casi siempre vivo desde el minuto 15 no habría grietas, ni eventos, ni mareas.
- * Lo decide quien manda (solo, o el anfitrión): los invitados lo reciben como cualquier enemigo ('ne').
- * Prueba: fork/test-wild-legends.cjs.
+/* ============ wild-legends.js — wild legendaries roaming the map (Lab first, MrSurvivor fork) ============
+ * In a Lab run, from minute 15, a wild legendary appears on the map (not in the rift)
+ * every GAP seconds while fewer than MAX are alive: a random one among those with a sprite,
+ * 650-850 px from a player, with its own HP and damage (they grow with the minute; more HP in co-op, like
+ * bosses). It acts as a boss (HP bar, boss reward), but doesn't count as beating that
+ * legendary in a rift (it has no `legend`). Nor does it count as a boss fight (G.EnemyMgr.bossAlive):
+ * if it did, with one almost always alive from minute 15 there would be no rifts, events or surges.
+ * Whoever is in charge decides (solo, or the host): guests get it like any other enemy ('ne').
+ * Test: fork/test-wild-legends.cjs.
  */
 G.WildLegends = (() => {
   const FROM = 900, MAX = 2, GAP = 75;
@@ -15,7 +15,7 @@ G.WildLegends = (() => {
   const alive = () => G.EnemyMgr.all().filter(e => e.wildLegend && !e.dead);
   const pool = () => G.DEX.filter(p => p.rarity === 5 && G.SPRITE_META[p.dex]);
 
-  /** Vida, daño y experiencia a los t segundos con n jugadores. */
+  /** HP, damage and experience at t seconds with n players. */
   function stats(t, n) {
     return { hp: Math.round((2600 + t * 6) * G.Coop.scaleHp(n) * (n > 1 ? 1.3 : 1)), dmg: Math.round(30 + t / 25),
              shotDmg: Math.round(16 + t / 45), xp: Math.round(400 + t) };
@@ -55,7 +55,7 @@ G.WildLegends = (() => {
     if (st.time < FROM || st.time - last < GAP || alive().length >= MAX) return;
     spawn();
   }, 1000);
-  // Cada run empieza sin ninguno pendiente.
+  // Every run starts with none pending.
   function wrapRun() { const s = G.Game.startRun; G.Game.startRun = function () { last = -1e9; return s.apply(this, arguments); }; }
   if (G.Game) wrapRun(); else addEventListener('DOMContentLoaded', wrapRun);
 

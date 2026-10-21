@@ -1,13 +1,13 @@
-/* ============ cloud-backup.js — la nube se guarda sola (MrSurvivor) ============
- * Upstream (20-10-2026) sólo sube la partida a la nube con el botón Guardar, antes de una
- * actualización y al cerrar sesión. Todo queda en el navegador mientras, pero si el navegador
- * borra los datos del sitio (Safari de iPhone lo hace tras 7 días sin entrar, borrar datos,
- * una ventana privada) antes de pulsar Guardar, ese progreso se perdía. Aquí, además:
- *   - EVERY después del primer cambio sin subir, se sube solo
- *   - al ocultar o cerrar la pestaña (cambiar de app en el móvil), si hay algo sin subir
- * Cada subida junta lo de la nube (pushNow en js/core/db.js), así que dos aparatos no se
- * pisan. Gasto: 1 lectura + 1 escritura por subida, nunca dos en menos de 65 s (MIN_GAP),
- * y nada si no ha cambiado nada. Lo comprueba fork/test-cloud-backup.cjs.
+/* ============ cloud-backup.js — the cloud saves on its own (MrSurvivor) ============
+ * Upstream (20-10-2026) only uploads the save to the cloud with the Save button, before an
+ * update and on sign-out. Meanwhile everything stays in the browser, but if the browser
+ * clears the site's data (iPhone Safari does it after 7 days away, clearing data,
+ * a private window) before Save is pressed, that progress was lost. So here it also uploads:
+ *   - on its own, EVERY after the first change not yet uploaded
+ *   - when the tab is hidden or closed (switching apps on a phone), if anything is not uploaded
+ * Each upload merges in what's in the cloud (pushNow in js/core/db.js), so two devices don't
+ * overwrite each other. Cost: 1 read + 1 write per upload, never two within 65 s (MIN_GAP),
+ * and nothing if nothing changed. Checked by fork/test-cloud-backup.cjs.
  */
 (() => {
   const EVERY = 10 * 60 * 1000;

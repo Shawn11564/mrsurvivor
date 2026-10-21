@@ -1,22 +1,22 @@
-/* ============ fx-opacity.js — transparencia de los efectos de los movimientos (fork MrSurvivor) ============
- * Ajustes → Gráficos, para todos: "Tus efectos" (100 % por defecto) y "Efectos de tus compañeros"
- * (60 %). Los de los enemigos y el mapa no cambian.
- * De quién es cada cosa:
- *   - proyectiles y campos (G.Projectiles.all, G.Combat.fields, G.LabKinds.fields): su `owner`;
- *   - partículas, golpes, anillos y rayos de G.FX (no saben de quién son): se marcan al nacer según
- *     quién está lanzando: G.Combat.tick con tu Pokémon → tuyos; G.Combat.ghostCast / ghostOrbit (los
- *     compañeros) → suyos. Las listas las da G.FX.lists (un getter del fork en js/entities/fx.js).
- * Al dibujar, cada grupo va en su propia pasada (las listas se dejan sólo con ese grupo y luego se
- * reponen, en el mismo orden) y en ella todo globalAlpha que se ponga sale multiplicado (una propiedad
- * propia sobre ese ctx, que se quita al acabar). Los números de daño, en la pasada de "lo demás".
- * Prueba: fork/test-fx-opacity.cjs.
+/* ============ fx-opacity.js — opacity of move effects (MrSurvivor fork) ============
+ * Settings → Graphics, for everyone: "Tus efectos" (your effects, 100 % by default) and
+ * "Efectos de tus compañeros" (teammates' effects, 60 %). Enemy and map effects don't change.
+ * Whose each thing is:
+ *   - projectiles and fields (G.Projectiles.all, G.Combat.fields, G.LabKinds.fields): their `owner`;
+ *   - G.FX particles, hits, rings and beams (they don't know whose they are): tagged at birth by
+ *     who is casting: G.Combat.tick with your Pokémon → yours; G.Combat.ghostCast / ghostOrbit (the
+ *     teammates) → theirs. The lists come from G.FX.lists (a fork getter in js/entities/fx.js).
+ * When drawing, each group gets its own pass (the lists are left with only that group, then
+ * restored in the same order), and in that pass every globalAlpha that gets set is multiplied (an own
+ * property on that ctx, removed at the end). Damage numbers go in the "other" pass.
+ * Test: fork/test-fx-opacity.cjs.
  */
 G.FxOpacity = (() => {
   const A = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'globalAlpha');
   const num = (v, d) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : d);
   const K = () => ({ me: num(G.Settings.get('fxMine'), 1), mate: num(G.Settings.get('fxMates'), 0.6) });
 
-  /** fn con todo globalAlpha de ctx multiplicado por k. */
+  /** Runs fn with every globalAlpha of ctx multiplied by k. */
   function withAlpha(ctx, k, fn) {
     if (!(k < 0.999)) return fn();
     const prev = A.get.call(ctx);
@@ -24,7 +24,7 @@ G.FxOpacity = (() => {
     A.set.call(ctx, prev * k);
     try { return fn(); } finally { delete ctx.globalAlpha; A.set.call(ctx, prev); }
   }
-  /** Dibuja con draw() una pasada por grupo: arrays se quedan sólo con lo de ese grupo (y se reponen). */
+  /** Draws with draw() one pass per group: arrays keep only that group's items (and are restored after). */
   function byGroup(ctx, arrays, groupOf, draw, only = null) {
     const k = K();
     if (k.me >= 0.999 && k.mate >= 0.999) return draw();
@@ -40,7 +40,7 @@ G.FxOpacity = (() => {
 
   const ownerGroup = o => { const pl = G.Game.player; return !o ? 'other' : o === pl ? 'me' : 'mate'; };
 
-  // ---------------- partículas de G.FX: se marcan al nacer ----------------
+  // ---------------- G.FX particles: tagged at birth ----------------
   function tagNew(tag, fn, self, args) {
     const L = G.FX.lists, before = {};
     if (!L) return fn.apply(self, args);
@@ -58,11 +58,11 @@ G.FxOpacity = (() => {
     const L = G.FX.lists;
     if (!L) return fxDraw.apply(this, arguments);
     const names = ['beams', 'slashes', 'rings', 'parts', 'sprites', 'texts'];
-    // Los números de daño (texts) sólo en la pasada de "lo demás".
+    // Damage numbers (texts) only in the "other" pass.
     return byGroup(ctx, names.map(n => L[n]), x => x.tg || 'other', () => fxDraw.call(this, ctx), names.map(n => n !== 'texts'));
   };
 
-  // ---------------- proyectiles y campos: su owner ----------------
+  // ---------------- projectiles and fields: their owner ----------------
   const pDraw = G.Projectiles.draw;
   G.Projectiles.draw = function (ctx) {
     return byGroup(ctx, [G.Projectiles.all()], p => (p.friendly ? ownerGroup(p.owner) : 'other'), () => pDraw.call(this, ctx));
@@ -73,7 +73,7 @@ G.FxOpacity = (() => {
     C[name] = function (ctx) { return byGroup(ctx, fieldLists(), x => ownerGroup(x.owner), () => f.call(this, ctx)); };
   }
 
-  // ---------------- Ajustes → Gráficos ----------------
+  // ---------------- Settings → Graphics ----------------
   function slider(key, label, desc, def) {
     const v = Math.round(num(G.Settings.get(key), def) * 100);
     queueMicrotask(() => {
@@ -94,7 +94,7 @@ G.FxOpacity = (() => {
     };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Tus efectos', 'Your move effects', 'Vos effets', 'I tuoi effetti', 'Seus efeitos', '你的招式特效', '你的招式特效'],
     ['Lo transparentes que se ven tus ataques (proyectiles, golpes, rayos...).', 'How see-through your attacks look (projectiles, hits, beams...).',

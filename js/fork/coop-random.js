@@ -1,27 +1,27 @@
-/* ============ coop-random.js — Pokémon al azar en la sala (MrSurvivor) ============
- * En la sala, "Pokémon al azar" elige uno de los tuyos (con la rareza mínima del botón del
- * menú, G.Settings 'randMin') y lo lleva a la sala en vez de tu compañero, que no cambia
- * (como la partida al azar en solitario). Se puede volver a tirar o volver a tu compañero.
- * Los listos siguen igual: elegir no te pone listo ni empieza nada, y mientras estás listo
- * no se puede cambiar (así nadie cambia de Pokémon en plena cuenta atrás).
- * Dura lo que dure la sala. Lo usan js/net/social.js (mine) y G.Flow.startCoop (js/game.js).
- * get() lleva `rad: true` si ese Pokémon va radiante (js/fork/radiant.js), y entonces también
- * sin elegir al azar: así la ficha de la sala dice a los demás que te vean radiante.
- * Cambiar de compañero, de shiny o de radiante fuera de la sala (menú, colección) también llega
- * a la sala al momento: todo eso se guarda con G.DB.commit, que aquí mira si tu plaza de la sala
- * ya no coincide con tu Pokémon (si no, los demás te veían con el viejo hasta la partida siguiente).
- * Lo comprueba fork/test-coop-random.cjs.
+/* ============ coop-random.js — random Pokémon in the lobby (MrSurvivor) ============
+ * In the lobby, "Pokémon al azar" (Random Pokémon) picks one of yours (with the minimum rarity from the
+ * menu button, G.Settings 'randMin') and brings it to the lobby instead of your partner, which doesn't change
+ * (like the random run in solo). You can reroll or go back to your partner.
+ * Ready states stay as they are: picking doesn't make you ready or start anything, and while you're ready
+ * you can't change (so nobody switches Pokémon in the middle of the countdown).
+ * It lasts as long as the lobby. Used by js/net/social.js (mine) and G.Flow.startCoop (js/game.js).
+ * get() carries `rad: true` if that Pokémon is radiant (js/fork/radiant.js), and then also
+ * without a random pick: that way the lobby card tells the others to show you as radiant.
+ * Switching partner, shiny or radiant outside the lobby (menu, collection) also reaches
+ * the lobby right away: all of that is saved with G.DB.commit, which here checks whether your lobby seat
+ * no longer matches your Pokémon (before, the others saw you with the old one until the next run).
+ * Checked by fork/test-coop-random.cjs.
  */
 (() => {
   const $ = id => document.getElementById(id);
-  let pick = null;                      // { dex, shiny } o null (tu compañero)
+  let pick = null;                      // { dex, shiny } or null (your partner)
 
   const pool = () => {
     const owned = Object.keys(G.DB.save.owned).map(Number).filter(d => G.DEX_BY[d]);
     const m = G.Settings.get('randMin') | 0, min = m >= 1 && m <= 5 && owned.some(d => G.DEX_BY[d].rarity >= m) ? m : 1;
     return owned.filter(d => G.DEX_BY[d].rarity >= min);
   };
-  // Tu plaza en la sala, si no coincide con tu Pokémon (G.Social.mine), se pone al día.
+  // Your lobby seat gets updated if it doesn't match your Pokémon (G.Social.mine).
   const same = (a, b) => a.dex === b.dex && !!a.shiny === !!b.shiny && !!a.rad === !!b.rad;
   function syncSeat() {
     const r = G.Social.room, seat = r && r.members.find(x => x.uid === G.Social.uid);
@@ -59,7 +59,7 @@
     $('lobby-rand-note').textContent = ready ? G.T('Quita "Estoy listo" para cambiar de Pokémon.') : '';
   }
 
-  // Los botones, debajo de las tarjetas de la sala.
+  // The buttons, under the lobby cards.
   const members = $('lobby-members');
   if (members) {
     members.insertAdjacentHTML('afterend', `<div class="row lobby-rand" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap">
@@ -69,14 +69,14 @@
     $('lobby-rand').onclick = roll;
     $('lobby-partner').onclick = back;
     G.Social.on(() => {
-      if (!G.Social.room) pick = null;         // fuera de la sala, se olvida
+      if (!G.Social.room) pick = null;         // outside the lobby, it's forgotten
       update();
     });
     const open = G.LobbyUI.open;
     G.LobbyUI.open = function () { const r = open.apply(this, arguments); update(); return r; };
   }
 
-  // Textos: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Texts: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Otro al azar', 'Reroll', 'Un autre au hasard', 'Un altro a caso', 'Outro aleatório', '再随机一个', '再隨機一個'],
     ['Volver a mi compañero', 'Back to my partner', 'Revenir à mon partenaire', 'Torna al mio compagno', 'Voltar ao meu parceiro', '换回我的伙伴', '換回我的夥伴'],
@@ -85,7 +85,7 @@
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  // Fork: con `rad` si va radiante (js/fork/radiant.js), también con tu compañero de siempre.
+  // Fork: with `rad` if it's radiant (js/fork/radiant.js), also with your usual partner.
   function get() {
     const s = G.DB.save, p = pick || (G.Radiant && G.Radiant.wants(s.partner)
       ? { dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) } : null);

@@ -1,25 +1,25 @@
-/* ============ abilities.js — habilidades del modo Lab (fork MrSurvivor) ============
- * Fase 3 de fork/LAB.md. En una partida Lab tu Pokémon tiene UNA de sus habilidades de los
- * juegos (G.LabData.abil, por orden de slot): la primera que esté hecha aquí. Si ninguna lo
- * está, lleva la primera, sin efecto ("No effect in this game yet").
+/* ============ abilities.js — Lab mode abilities (MrSurvivor fork) ============
+ * Phase 3 of fork/LAB.md. In a Lab run your Pokémon has ONE of its abilities from the
+ * games (G.LabData.abil, in slot order): the first one that is implemented here. If none
+ * is, it gets the first one, with no effect ("No effect in this game yet").
  *
- * Cada habilidad es una entrada de DEF con lo que necesite:
- *   out(pl, m)               × al daño de tus ataques (Player.atkFor)
- *   in(pl, amount, type, cat)  × al daño que recibes; 0 = no te hace nada (Player.hurt)
- *   after(pl, type, cat)     te acaban de golpear (y te ha dolido)
- *   contact(pl, e)           un enemigo te golpea cuerpo a cuerpo (Enemy.strike)
- *   spd(pl)                  × a tu velocidad (Player.spd)
- *   tick(pl, dt)             cada fotograma (Player.update)
- *   start(pl)                al empezar la partida
- *   learn(pl, m)             al aprender un movimiento (Player.addMove; y los que ya tenías)
- *   sw(pl)                   al cambiar de movimiento activo (Player.setActive)
- *   buff(pl)                 × a la potencia de tus potenciadores (Player.addBuff)
- * Los ganchos se ponen una vez, al cargar, y sólo hacen algo con pl.labAbility (lo pone
- * attach() en tu Pokémon al empezar una partida Lab; nunca en los de tus compañeros).
+ * Each ability is a DEF entry with whatever it needs:
+ *   out(pl, m)               × to your attacks' damage (Player.atkFor)
+ *   in(pl, amount, type, cat)  × to the damage you take; 0 = it does nothing to you (Player.hurt)
+ *   after(pl, type, cat)     you were just hit (and it hurt)
+ *   contact(pl, e)           an enemy hits you in melee (Enemy.strike)
+ *   spd(pl)                  × to your speed (Player.spd)
+ *   tick(pl, dt)             every frame (Player.update)
+ *   start(pl)                when the run starts
+ *   learn(pl, m)             when you learn a move (Player.addMove; and the ones you already had)
+ *   sw(pl)                   when you switch the active move (Player.setActive)
+ *   buff(pl)                 × to the strength of your stat boosts (Player.addBuff)
+ * The hooks are set once, on load, and only do something with pl.labAbility (set by
+ * attach() on your Pokémon when a Lab run starts; never on your teammates').
  *
- * Cooperativo: todo es de tu Pokémon. Lo que hace a los enemigos al tocarte (Elec. Estática,
- * Piel Tosca...) usa applyStun/applyPoison/hurt, que en un invitado ya se mandan al anfitrión.
- * Textos sólo en inglés (fork/LAB.md). Prueba: fork/test-lab.cjs.
+ * Co-op: it all belongs to your Pokémon. What it does to enemies that touch you (Static,
+ * Rough Skin...) uses applyStun/applyPoison/hurt, which on a guest are already sent to the host.
+ * Texts in English only (fork/LAB.md). Test: fork/test-lab.cjs.
  */
 G.LabAbilities = (() => {
   const D = G.LabData;
@@ -32,14 +32,14 @@ G.LabAbilities = (() => {
   const SHEER = ['burn', 'poison', 'slow'];
   const boss = e => e.boss || e.judge;
 
-  /** Texto flotante sobre tu Pokémon (como mucho uno cada 0,7 s por clave). */
+  /** Floating text over your Pokémon (at most one every 0.7 s per key). */
   function note(pl, text, color = '#e8e2ff', key = text) {
     const now = performance.now(), t = pl._labNote || (pl._labNote = {});
     if (now - (t[key] || 0) < 700) return;
     t[key] = now;
     G.FX.dmgText(pl.x, pl.y - pl.bodyH - 12, text, color);
   }
-  /** Absorbe un tipo: no te hace daño y te da algo (como mucho una vez por segundo). */
+  /** Absorbs a type: it doesn't hurt you and gives you something (at most once a second). */
   const absorb = (type, gain, label) => (pl, amount, t) => {
     if (t !== type) return 1;
     const now = performance.now();
@@ -49,25 +49,25 @@ G.LabAbilities = (() => {
   };
   const heal = k => (pl, amount) => pl.heal(amount * k);
   const buff = (stat, amount) => pl => pl.addBuff(stat, amount, 7, 5);
-  /** Al tocarte: con probabilidad p le pasa `fx` al enemigo. */
+  /** When it touches you: with chance p, `fx` happens to the enemy. */
   const touch = (p, fx) => (pl, e) => { if (!e.dead && Math.random() < p) fx(e, pl); };
   const stun = dur => e => e.applyStun(dur * (boss(e) ? 0.35 : 1));
   const thorns = (pl, e) => { if (!e.dead) e.hurt(11 + pl.level * 3, '#9aa6b5', e.x - pl.x, e.y - pl.y, 40); };
-  // Leer los KO para Autoestima / Ultraimpulso: pl.kills sube en EnemyMgr (en grupo, los del equipo).
+  // Read the KOs for Moxie / Beast Boost: pl.kills goes up in EnemyMgr (in a group, the team's).
   const onKill = gain => (pl) => {
     if (pl._labKills == null) pl._labKills = pl.kills;
     if (pl.kills > pl._labKills) { pl._labKills = pl.kills; gain(pl); }
   };
-  const WX_HEAL = 0.006;                       // vida por segundo con su clima (1/16 por turno en los juegos)
+  const WX_HEAL = 0.006;                       // HP per second in its weather (1/16 per turn in the games)
 
   const DEF = {
-    // ---- más daño con lo suyo cuando vas mal (1/3 de vida o menos) ----
+    // ---- more damage with their own type when you're in trouble (1/3 HP or less) ----
     overgrow: { out: pinch('grass'), desc: 'Grass moves deal 50% more damage while your HP is at 1/3 or less.' },
     blaze:    { out: pinch('fire'), desc: 'Fire moves deal 50% more damage while your HP is at 1/3 or less.' },
     torrent:  { out: pinch('water'), desc: 'Water moves deal 50% more damage while your HP is at 1/3 or less.' },
     swarm:    { out: pinch('bug'), desc: 'Bug moves deal 50% more damage while your HP is at 1/3 or less.' },
 
-    // ---- clima (js/systems/weather.js) ----
+    // ---- weather (js/systems/weather.js) ----
     'swift-swim':  { spd: pl => W('rain') ? 1.4 : 1, desc: '40% faster in the rain.' },
     chlorophyll:   { spd: pl => W('sun') ? 1.4 : 1, desc: '40% faster in harsh sunlight.' },
     'sand-rush':   { spd: pl => W('sand') ? 1.4 : 1, desc: '40% faster in a sandstorm.' },
@@ -88,7 +88,7 @@ G.LabAbilities = (() => {
                      },
                      desc: 'Water hits heal you instead and rain slowly heals you, but Fire hurts 25% more and sunlight slowly drains you.' },
 
-    // ---- daño que recibes ----
+    // ---- damage you take ----
     intimidate:  { in: (pl, a, t, cat) => cat === 'physical' ? 0.75 : 1, desc: 'Enemies deal 25% less physical damage to you.' },
     levitate:    { in: (pl, a, t) => t === 'ground' ? (note(pl, 'Levitate', '#aa7c3c'), 0) : 1, desc: 'Ground-type attacks can\'t touch you.' },
     'thick-fat': { in: (pl, a, t) => t === 'fire' || t === 'ice' ? 0.5 : 1, desc: 'Fire and Ice attacks deal half damage to you.' },
@@ -104,9 +104,9 @@ G.LabAbilities = (() => {
       start: pl => { pl.maxHp = Math.max(1, Math.round(pl.maxHp / 2)); pl.hp = pl.maxHp; },
       desc: 'Only super-effective attacks (and lava and traps) can hurt you, but you have half the HP.'
     },
-    sturdy: { desc: 'A hit that would knock you out from half HP or more leaves you at 1 HP (once a minute).' },   // en hurt
+    sturdy: { desc: 'A hit that would knock you out from half HP or more leaves you at 1 HP (once a minute).' },   // in hurt
 
-    // ---- absorber un tipo ----
+    // ---- absorb a type ----
     'water-absorb':   { in: absorb('water', heal(0.5), 'Water Absorb'), desc: 'Water attacks heal you instead of hurting you.' },
     'volt-absorb':    { in: absorb('electric', heal(0.5), 'Volt Absorb'), desc: 'Electric attacks heal you instead of hurting you.' },
     'flash-fire':     { in: absorb('fire', pl => { pl._labFire = 8; }, 'Flash Fire'),
@@ -118,12 +118,12 @@ G.LabAbilities = (() => {
     'motor-drive':    { in: absorb('electric', buff('spd', 0.10), 'Motor Drive'), desc: 'Electric attacks don\'t hurt you and raise your Speed instead.' },
     'sap-sipper':     { in: absorb('grass', buff('patk', 0.13), 'Sap Sipper'), desc: 'Grass attacks don\'t hurt you and raise your Attack instead.' },
 
-    // ---- al recibir un golpe ----
+    // ---- when you take a hit ----
     rattled:      { after: (pl, t) => { if (t === 'bug' || t === 'ghost' || t === 'dark') buff('spd', 0.10)(pl); }, desc: 'Being hit by a Bug, Ghost or Dark attack raises your Speed.' },
     justified:    { after: (pl, t) => { if (t === 'dark') buff('patk', 0.13)(pl); }, desc: 'Being hit by a Dark attack raises your Attack.' },
     'weak-armor': { after: (pl, t, cat) => { if (cat === 'physical') buff('spd', 0.10)(pl); }, desc: 'Being hit by a physical attack raises your Speed.' },
 
-    // ---- al tocarte (cuerpo a cuerpo) ----
+    // ---- when touched (melee) ----
     static:         { contact: touch(0.3, stun(1)), desc: 'Enemies that touch you may be paralyzed (stopped for 1 s).' },
     'poison-point': { contact: touch(0.3, e => e.applyPoison(2)), desc: 'Enemies that touch you may be poisoned.' },
     'flame-body':   { contact: touch(0.3, e => e.applyBurn(2)), desc: 'Enemies that touch you may be burned.' },
@@ -134,7 +134,7 @@ G.LabAbilities = (() => {
     'iron-barbs':   { contact: thorns, desc: 'Enemies that touch you take damage.' },
     pressure:       { contact: (pl, e) => { e.touchCd += 0.25; }, desc: 'Enemies touching you attack about 30% less often.' },
 
-    // ---- tus ataques ----
+    // ---- your attacks ----
     technician:      { out: (pl, m) => !m.evolved && power(m) > 0 && power(m) <= 60 ? 1.5 : 1, desc: 'Moves that are weak in the games (60 power or less) deal 50% more damage.' },
     'iron-fist':     { out: (pl, m) => /Puño|puño|Punch/.test(m.name) ? 1.2 : 1, desc: 'Punching moves deal 20% more damage.' },
     'strong-jaw':    { out: (pl, m) => /Mordisco|Triturar|colmillo|Fang/i.test(m.name) ? 1.5 : 1, desc: 'Biting moves deal 50% more damage.' },
@@ -151,11 +151,11 @@ G.LabAbilities = (() => {
     'skill-link':    { learn: (pl, m) => { if ((m.count | 0) >= 2) m.count += 1; }, desc: 'Moves that hit several times hit once more.' },
     prankster:       { learn: (pl, m) => { if (m.kind === 'buff') m.cd *= 0.7; }, desc: 'Stat-boosting moves recharge 30% faster.' },
     simple:          { buff: () => 2, desc: 'Your stat boosts are twice as strong.' },
-    // recoil: Doble Filo, Envite Ígneo... (js/fork/lab/kinds.js, fase 4)
-    'rock-head':     { desc: 'Recoil moves (Double-Edge, Head Smash...) don\'t hurt you.' },      // en kinds.js
+    // recoil: Double-Edge, Flare Blitz... (js/fork/lab/kinds.js, phase 4)
+    'rock-head':     { desc: 'Recoil moves (Double-Edge, Head Smash...) don\'t hurt you.' },      // in kinds.js
     reckless:        { out: (pl, m) => m.kind === 'recoil' ? 1.2 : 1, desc: 'Recoil moves deal 20% more damage.' },
 
-    // ---- con el tiempo ----
+    // ---- over time ----
     'speed-boost':  { tick: (pl, dt) => { pl._labSB = (pl._labSB || 0) + dt; if (pl._labSB >= 8) { pl._labSB = 0; pl.addBuff('spd', 0.08, 9, 5); } },
                       desc: 'Your Speed keeps rising as the run goes on.' },
     moxie:          { tick: onKill(pl => pl.addBuff('patk', 0.05, 4, 5)), desc: 'Knocking out enemies keeps raising your Attack for a few seconds.' },
@@ -165,21 +165,21 @@ G.LabAbilities = (() => {
                       desc: 'You may shake off sticky slowdowns on your own.' },
     limber:         { tick: pl => { if (pl.slowT > 0) pl.slowT = 0; }, desc: 'Sticky traps can\'t slow you down.' },
 
-    // ---- al cambiar de movimiento ----
+    // ---- when you switch moves ----
     regenerator:    { sw: pl => { const now = performance.now(); if (now - (pl._labRegen || 0) > 4000) { pl._labRegen = now; pl.heal(pl.maxHp * 0.06); } },
                       desc: 'Switching your active move heals 6% of your HP (once every 4 s).' },
     'natural-cure': { sw: pl => { pl.slowT = 0; }, desc: 'Switching your active move shakes off sticky slowdowns.' },
 
-    // ---- de la partida ----
+    // ---- for the whole run ----
     unburden:       { spd: pl => pl.item ? 1 : 1.25, desc: '25% faster while you hold no item.' },
     pickup:         { start: pl => { pl.coinMul *= 1.2; }, desc: '20% more coins.' },
     'super-luck':   { start: pl => { pl.critChance += 0.08; }, desc: '+8% chance of critical hits.' }
   };
   for (const id in DEF) DEF[id].name = D.abilName[id] || id;
 
-  // ---------------- qué habilidad lleva cada uno ----------------
+  // ---------------- which ability each one gets ----------------
 
-  /** → { id, name, desc, on } para esta especie (on = tiene efecto aquí). */
+  /** → { id, name, desc, on } for this species (on = it has an effect here). */
   function of(dex) {
     const list = (D.abil[dex] || '').split(' ').filter(Boolean).map(s => s.replace('*', ''));
     const id = list.find(a => DEF[a]) || list[0];
@@ -188,7 +188,7 @@ G.LabAbilities = (() => {
                    : { id, name: D.abilName[id] || id, desc: 'No effect in this game yet.', on: false };
   }
 
-  /** Se la pone a tu Pokémon al empezar una partida Lab (G.Lab, tras crear el Player). */
+  /** Gives it to your Pokémon when a Lab run starts (G.Lab, after the Player is created). */
   function attach(pl) {
     const a = of(pl.dex);
     pl.labAbility = a && a.on ? a.id : null;
@@ -199,7 +199,7 @@ G.LabAbilities = (() => {
     return a;
   }
 
-  // ---------------- ganchos ----------------
+  // ---------------- hooks ----------------
   const P = G.Player.prototype, E = G.Enemy.prototype;
   const def = pl => pl.labAbility && DEF[pl.labAbility];
 
@@ -209,7 +209,7 @@ G.LabAbilities = (() => {
     return d && d.out && m ? k * d.out(this, m) : k;
   };
 
-  // Robustez: estar a punto de caer con Robustez no cuenta como caída (G.RunStats.down).
+  // Sturdy: almost going down with Sturdy doesn't count as a down (G.RunStats.down).
   let saving = false;
   const down = G.RunStats.down;
   G.RunStats.down = function () { if (!saving) return down.apply(this, arguments); };
@@ -273,7 +273,7 @@ G.LabAbilities = (() => {
     return addBuff.call(this, stat, d && d.buff ? amount * d.buff(this) : amount, dur, maxStacks);
   };
 
-  // Te toca un enemigo (Combat.resolve: e.touchCd, e.strike(pl), pl.hurt...).
+  // An enemy touches you (Combat.resolve: e.touchCd, e.strike(pl), pl.hurt...).
   const strike = E.strike;
   E.strike = function (pl) {
     strike.call(this, pl);

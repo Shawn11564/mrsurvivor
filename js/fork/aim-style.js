@@ -1,20 +1,20 @@
-/* ============ aim-style.js — la mira y el stick derecho (fork MrSurvivor) ============
- * Ajustes → Controles, para todos:
- *   - Color de la mira (dorada, blanca, roja, verde, celeste o rosa) y su tamaño (pequeña, mediana,
- *     grande). La mira es la de "Apuntar a mano" (drawAimMark, js/game.js: dos ganchos de una línea).
- *   - "Apuntar con el stick derecho" (encendido): empujar el stick derecho del mando apunta a mano
- *     aunque "Apuntar a mano" esté apagado; al soltarlo vuelve a apuntar solo (Player.handAim).
- * La fila va detrás de la de los marcadores (G.Markers.settingsRow). Prueba: fork/test-aim-style.cjs.
+/* ============ aim-style.js — the crosshair and the right stick (MrSurvivor fork) ============
+ * Settings → Controls, for everyone:
+ *   - Crosshair colour (gold, white, red, green, cyan or pink) and its size (small, medium,
+ *     large). The crosshair is the "Apuntar a mano" one ("Manual aim"; drawAimMark, js/game.js: two one-line hooks).
+ *   - "Apuntar con el stick derecho" ("Aim with the right stick", on): pushing the controller's right stick aims by hand
+ *     even with "Apuntar a mano" off; let go and it aims on its own again (Player.handAim).
+ * The row goes after the markers row (G.Markers.settingsRow). Test: fork/test-aim-style.cjs.
  */
 G.AimStyle = (() => {
   const COLORS = [['#ffe9a8', 'Dorada'], ['#ffffff', 'Blanca'], ['#ff5f6d', 'Roja'], ['#5fe08a', 'Verde'], ['#4fd1ff', 'Celeste'], ['#ff8acb', 'Rosa']];
   const SIZES = [[0.75, 'Pequeña'], [1, 'Mediana'], [1.4, 'Grande']];
   const color = () => { const c = G.Settings.get('aimColor'); return COLORS.some(x => x[0] === c) ? c : COLORS[0][0]; };
   const size = () => { const k = +G.Settings.get('aimSize'); return SIZES.some(x => x[0] === k) ? k : 1; };
-  /** Gancho de drawAimMark: mueve el lienzo a la mira y lo escala; la mira se dibuja en (0, 0). */
+  /** drawAimMark hook: moves the canvas to the crosshair and scales it; the crosshair is drawn at (0, 0). */
   function frame(ctx, x, y) { ctx.translate(x, y); const k = size(); ctx.scale(k, k); return { x: 0, y: 0 }; }
 
-  // El stick derecho apunta aunque "Apuntar a mano" esté apagado.
+  // The right stick aims even with "Apuntar a mano" off.
   const P = G.Player.prototype, hand = P.handAim;
   P.handAim = function () {
     const r = hand.apply(this, arguments);
@@ -36,7 +36,7 @@ G.AimStyle = (() => {
     };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Mira', 'Crosshair', 'Viseur', 'Mirino', 'Mira', '准星', '準星'],
     ['El color y el tamaño de la mira de "Apuntar a mano".', 'The colour and size of the "Manual aim" crosshair.', 'La couleur et la taille du viseur de « Viser à la main ».',

@@ -1,19 +1,19 @@
-/* ============ rare-cards.js — cartas de nivel muy raras (fork MrSurvivor) ============
- * Segunda naturaleza: muy de vez en cuando (RATE por cada tanda de cartas, también al
- * cambiarlas) la última carta es esta, si tienes algún movimiento que sube stats (los de
- * tipo 'buff': Danza Espada, Maquinación, Agilidad...). Desde que la eliges, esos
- * movimientos se lanzan solos desde cualquier hueco, cada uno con su recarga, como si
- * siempre estuvieran activos: ya no hay que cambiar a ellos. También los que aprendas
- * después. Una vez por partida.
- * Ganchos: G.LevelUp.offer (maybe), Combat.tick (pl.passiveBuffs), RunUI.renderCards (.card.rare).
- * Prueba: fork/test-gameplay.cjs.
+/* ============ rare-cards.js — very rare level-up cards (MrSurvivor fork) ============
+ * Segunda naturaleza (Second Nature): very rarely (RATE per batch of cards, rerolls
+ * included) the last card is this one, if you have a move that raises stats (the
+ * 'buff' kind: Danza Espada, Maquinación, Agilidad...). Once you pick it, those
+ * moves cast on their own from any slot, each on its own cooldown, as if they were
+ * always active: no more switching to them. The ones you learn later too.
+ * Once per run.
+ * Hooks: G.LevelUp.offer (maybe), Combat.tick (pl.passiveBuffs), RunUI.renderCards (.card.rare).
+ * Test: fork/test-gameplay.cjs.
  */
 G.RareCards = (() => {
   const RATE = 1 / 500;
   const TITLE = 'Segunda naturaleza', TAG = 'Muy rara';
   const DESC = 'Tus movimientos que suben stats se lanzan solos desde cualquier hueco, como si siempre estuvieran activos: ya no hace falta cambiar a ellos.';
   const YOURS = 'Ahora:';
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     [TITLE, 'Second Nature', 'Seconde nature', 'Seconda natura', 'Segunda natureza', '本能', '本能'],
     [TAG, 'Very rare', 'Très rare', 'Rarissima', 'Muito rara', '极其稀有', '極其稀有'],
@@ -27,12 +27,12 @@ G.RareCards = (() => {
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  let force = false;          // menú de admin: la próxima tanda trae la carta seguro
+  let force = false;          // admin menu: the next batch is sure to bring the card
 
   const buffs = pl => pl.moves.filter(m => m.kind === 'buff');
 
   function card(pl) {
-    // Los tuyos, ya en tu idioma (la frase entera no está en los diccionarios).
+    // Yours, already in your language (the whole sentence isn't in the dictionaries).
     const mine = buffs(pl).map(m => G.T(m.name, 'move'));
     return {
       w: 0, type: 'up', rare: true, key: 'rare:passive',
@@ -47,7 +47,7 @@ G.RareCards = (() => {
     };
   }
 
-  /** G.LevelUp.offer: a veces cambia la última carta por esta (si tienes con qué usarla). */
+  /** G.LevelUp.offer: sometimes swaps the last card for this one (if you have moves to use it with). */
   function maybe(pl, picked) {
     if (pl.passiveBuffs || !picked.length) return;
     if (!force && (Math.random() >= RATE || !buffs(pl).length)) return;

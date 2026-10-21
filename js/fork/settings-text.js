@@ -1,7 +1,7 @@
-/* ============ settings-text.js — textos de los ajustes del fork (MrSurvivor) ============
- * La fila "Cuenta atrás al quitar la pausa" (pauseCount, js/ui/settings-ui.js; la usa
- * resumeRun en js/game.js). Columnas: español, inglés, francés, italiano, portugués (Brasil),
- * chino simplificado y tradicional, como js/fork/mega.js.
+/* ============ settings-text.js — texts for the fork's settings (MrSurvivor) ============
+ * The "Cuenta atrás al quitar la pausa" (Countdown after pausing) row (pauseCount, js/ui/settings-ui.js; used by
+ * resumeRun in js/game.js). Columns: Spanish, English, French, Italian, Portuguese (Brazil),
+ * Simplified and Traditional Chinese, like js/fork/mega.js.
  */
 (() => {
   const ROWS = [

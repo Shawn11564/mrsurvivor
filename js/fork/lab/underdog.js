@@ -1,20 +1,20 @@
-/* ============ underdog.js — que se vea la experiencia extra de los flojos (Lab, fork MrSurvivor) ============
- * La experiencia extra (G.LabGrowth.underdogK, js/fork/lab/growth.js: hasta +60 % según los stats
- * base) se ve en dos sitios:
- *   - En la barra de experiencia (G.HUD.draw): la parte que viene del extra, en dorado al final
- *     de lo lleno, con "Underdog Bonus +N%" debajo; brilla un momento al ganar experiencia.
- *     El extra multiplica toda la experiencia (xpMul), así que su parte de la barra es siempre
- *     k / (1 + k) de lo lleno: no hace falta llevar la cuenta de cada gema.
- *   - Antes de entrar: al pulsar Jugar o Pokémon al azar con el Lab encendido (en solitario), una
- *     escalera por rareza (de qué a qué va el extra en cada una, calculado de G.DEX) con la de
- *     tu Pokémon resaltada y su extra exacto, y el botón para empezar. Sólo una vez por Pokémon:
- *     no vuelve hasta que juegas con otro (G.Settings 'underdogSeen' = el último dex que la vio),
- *     así que varias partidas seguidas con el mismo no la repiten. Se puede quitar del todo
- *     (G.Settings 'underdogLadder', de este aparato). Sólo se arma con esos dos botones, así que
- *     quien llama a G.Game.startRun por su cuenta (pruebas, grupo) no la ve.
- *   - Siempre, en el botón Jugar del menú (con el Lab encendido): "LAB · Underdog +N% XP" de tu
- *     compañero (#ud-play), para que se sepa sin la escalera.
- * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-underdog.cjs.
+/* ============ underdog.js — showing the weak Pokémon's extra XP (Lab, MrSurvivor fork) ============
+ * The extra XP (G.LabGrowth.underdogK, js/fork/lab/growth.js: up to +60 % based on base
+ * stats) shows in two places:
+ *   - On the XP bar (G.HUD.draw): the part that comes from the extra, in gold at the end
+ *     of the filled part, with "Underdog Bonus +N%" under it; it flashes for a moment when you gain XP.
+ *     The extra multiplies all XP (xpMul), so its part of the bar is always
+ *     k / (1 + k) of the filled part: no need to keep count of each gem.
+ *   - Before starting: on pressing Play or Random Pokémon with the Lab on (solo), a
+ *     ladder by rarity (the extra's range in each one, computed from G.DEX) with
+ *     your Pokémon's highlighted and its exact extra, and the button to start. Only once per Pokémon:
+ *     it doesn't come back until you play another one (G.Settings 'underdogSeen' = the last dex that saw it),
+ *     so several runs in a row with the same one don't repeat it. It can be turned off for good
+ *     (G.Settings 'underdogLadder', for this device). Only those two buttons arm it, so
+ *     whoever calls G.Game.startRun on their own (tests, group) doesn't see it.
+ *   - Always, on the menu's Play button (with the Lab on): your partner's "LAB · Underdog +N% XP"
+ *     (#ud-play), so it's known without the ladder.
+ * Texts in English only, like the rest of the Lab. Test: fork/test-underdog.cjs.
  */
 G.LabUnderdog = (() => {
   const GOLD = '#ffd23f';
@@ -23,7 +23,7 @@ G.LabUnderdog = (() => {
   const pct = k => Math.round(k * 100);
   const k = mon => G.LabGrowth.underdogK(mon);
 
-  // ---------------- la barra ----------------
+  // ---------------- the bar ----------------
 
   let lastXp = 0, lastLv = 0, glow = 0, lastT = 0;
   const draw = G.HUD.draw;
@@ -49,8 +49,8 @@ G.LabUnderdog = (() => {
     ctx.font = '700 10px Pixelify,"Segoe UI",system-ui,sans-serif';
     ctx.textBaseline = 'top';
     const text = `Underdog Bonus +${pct(u)}%`, tw = ctx.measureText(text).width;
-    // Debajo de la parte dorada, sin salirse de la pantalla ni pisar la etiqueta "LAB · habilidad"
-    // del centro (js/fork/lab/lab.js): si cae encima, al lado que quede más cerca del dorado.
+    // Under the gold part, without going off screen or over the "LAB · ability" tag
+    // in the middle (js/fork/lab/lab.js): if it lands on it, to whichever side is closer to the gold.
     let x = G.U.clamp(end - tw, 6, w - tw - 6);
     const [L, R] = tagSpan(ctx, w);
     if (x < R && x + tw > L) x = (start + end) / 2 < w / 2 ? Math.max(6, L - tw - 6) : Math.min(w - tw - 6, R + 6);
@@ -61,7 +61,7 @@ G.LabUnderdog = (() => {
     ctx.restore();
   }
 
-  /** Dónde está la etiqueta del Lab (#lab-hud) en la anchura del lienzo; sin ella, el centro. */
+  /** Where the Lab tag (#lab-hud) is across the canvas width; without it, the middle. */
   function tagSpan(ctx, w) {
     const tag = $('lab-hud'), cv = ctx.canvas.getBoundingClientRect();
     if (!tag || tag.classList.contains('hidden') || !cv.width) return [w / 2 - 130, w / 2 + 130];
@@ -69,9 +69,9 @@ G.LabUnderdog = (() => {
     return [(r.left - cv.left) * k - 6, (r.right - cv.left) * k + 6];
   }
 
-  // ---------------- la escalera, antes de entrar ----------------
+  // ---------------- the ladder, before starting ----------------
 
-  /** Extra más bajo y más alto de cada rareza (todo el Pokédex). */
+  /** Lowest and highest extra for each rarity (the whole Pokédex). */
   let bands = null;
   function ladder() {
     if (bands) return bands;
@@ -105,7 +105,7 @@ G.LabUnderdog = (() => {
       </div></div>`;
   }
 
-  // Estilos aquí y no en css/brand.css: dev.html no carga brand.css y la escalera tapa el menú.
+  // Styles here and not in css/brand.css: dev.html doesn't load brand.css and the ladder covers the menu.
   const CSS = `
 #ud-ladder { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(8,12,20,.78); }
@@ -129,7 +129,7 @@ G.LabUnderdog = (() => {
 .ud-play .ud-tag { font-size: 9px; vertical-align: 1px; margin-right: 3px; }
 .ud-opt { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }`;
 
-  /** Enseña la escalera para mon; go() empieza la partida. */
+  /** Shows the ladder for mon; go() starts the run. */
   function show(mon, go) {
     let box = $('ud-ladder');
     if (!box) {
@@ -139,7 +139,7 @@ G.LabUnderdog = (() => {
     box.innerHTML = html(mon);
     box.classList.remove('hidden');
     const close = () => { box.classList.add('hidden'); document.removeEventListener('keydown', key, true); };
-    // Vista con una partida empezada: hasta que juegues con otro, no vuelve (Atrás no cuenta).
+    // Seen with a run started: it doesn't come back until you play another one (Back doesn't count).
     const start = () => { close(); G.Settings.set('underdogSeen', mon.dex); go(); };
     const key = e => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
@@ -152,13 +152,13 @@ G.LabUnderdog = (() => {
     $('ud-go').focus();
   }
 
-  // Sólo Jugar y Pokémon al azar (en solitario, con el Lab encendido) la arman.
+  // Only Play and Random Pokémon (solo, with the Lab on) arm it.
   let armed = false;
   document.addEventListener('click', e => {
     if (e.target.closest('#scr-menu [data-go=play], #rand-go')) armed = true;
   }, true);
-  // Por fuera de todos los demás envoltorios de startRun (Lab, radiante...): se instalan en
-  // DOMContentLoaded y esto en load, que va después.
+  // Outside all the other startRun wrappers (Lab, radiant...): they're installed on
+  // DOMContentLoaded and this on load, which comes after.
   addEventListener('load', () => {
     const startRun = G.Game.startRun;
     G.Game.startRun = function (coop = null, pick = null) {
@@ -166,15 +166,15 @@ G.LabUnderdog = (() => {
       armed = false;
       if (!was || coop || !G.Settings.get('lab') || !on()) return startRun.apply(this, arguments);
       const mon = G.DEX_BY[pick ? pick.dex : G.DB.save.partner];
-      if (!mon || G.Settings.get('underdogSeen') === mon.dex) return startRun.apply(this, arguments);   // ya la vio con este
+      if (!mon || G.Settings.get('underdogSeen') === mon.dex) return startRun.apply(this, arguments);   // already saw it with this one
       const self = this, args = arguments;
       show(mon, () => startRun.apply(self, args));
     };
   });
 
-  // ---------------- en el botón Jugar ----------------
+  // ---------------- on the Play button ----------------
 
-  /** "LAB · Underdog +N% XP" de tu compañero en el botón Jugar, con el Lab encendido y algo de extra. */
+  /** Your partner's "LAB · Underdog +N% XP" on the Play button, with the Lab on and some extra. */
   function playTag() {
     const btn = document.querySelector('#scr-menu [data-go=play]');
     if (!btn) return;
@@ -189,7 +189,7 @@ G.LabUnderdog = (() => {
     tag.title = mon ? `${mon.name} levels up ${pct(u)}% faster in Lab runs` : '';
   }
   const open = G.MenuUI.open;
-  G.MenuUI.open = function () { const r = open.apply(this, arguments); try { playTag(); } catch (e) { /* sin compañero aún */ } return r; };
+  G.MenuUI.open = function () { const r = open.apply(this, arguments); try { playTag(); } catch (e) { /* no partner yet */ } return r; };
 
   return { ladder, range, show, playTag };
 })();

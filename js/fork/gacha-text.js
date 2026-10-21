@@ -1,7 +1,7 @@
-/* ============ gacha-text.js — textos del pity blando del fork (MrSurvivor) ============
- * Las dos líneas de js/ui/gacha-ui.js para el pity blando de js/systems/gacha.js (desde la
- * tirada 180 la Legendaria sube 2 puntos por tirada). Columnas: español, inglés, francés,
- * italiano, portugués (Brasil), chino simplificado y tradicional, como js/fork/settings-text.js.
+/* ============ gacha-text.js — texts for the fork's soft pity (MrSurvivor) ============
+ * The two lines in js/ui/gacha-ui.js for the soft pity in js/systems/gacha.js (from
+ * pull 180 the Legendary chance rises 2 points per pull). Columns: Spanish, English, French,
+ * Italian, Portuguese (Brazil), Simplified and Traditional Chinese, like js/fork/settings-text.js.
  */
 (() => {
   const ROWS = [

@@ -1,16 +1,16 @@
-/* ============ prestige.js — prestigio de cada Pokémon (fork MrSurvivor) ============
- * Con todas las mejoras de un Pokémon compradas (Mejoras), puede subir de prestigio: sus mejoras
- * vuelven a 0 (sin devolver monedas) y gana, en cada run con él, +5 % de vida, daño, velocidad y
- * reducción de daño por nivel de prestigio, hasta 3. Con el 3.º empieza cada run con un objeto al
- * azar (G.Items.roll). save.prest[dex] = 0..3.
- * Fusión de dos copias (G.forkMerge): merge() de js/core/db.js se queda con el nivel mayor de cada
- * mejora, así que una copia vieja con todo comprado desharía el reinicio. Si las copias no tienen el
- * mismo prestigio de un Pokémon, sus mejoras son las de la copia con más prestigio (o, con el mismo, la que
- * más veces las ha reiniciado con gemas: save.ureset, js/fork/lab/gems.js).
- * Con el ajuste Lab encendido (gemas, Lab primero) subir de prestigio cuesta además 100 gemas.
- * Dónde: un panel bajo la lista de Mejoras, ★ en su casilla de la colección (G.Radiant.cell, el
- * gancho que menu.js ya llama) y en el selector de Mejoras. En la run: G.Game.startRun.
- * Prueba: fork/test-prestige.cjs.
+/* ============ prestige.js — prestige for each Pokémon (MrSurvivor fork) ============
+ * With all of a Pokémon's upgrades bought (Upgrades screen), it can prestige: its upgrades
+ * go back to 0 (coins aren't refunded) and, in every run with it, it gains +5 % HP, damage, speed and
+ * damage reduction per prestige level, up to 3. At the 3rd it starts every run with a random
+ * item (G.Items.roll). save.prest[dex] = 0..3.
+ * Merging two copies (G.forkMerge): merge() in js/core/db.js keeps the higher level of each
+ * upgrade, so an old copy with everything bought would undo the reset. If the copies don't have the
+ * same prestige for a Pokémon, its upgrades come from the copy with more prestige (or, if equal, the one
+ * that has reset them with gems more times: save.ureset, js/fork/lab/gems.js).
+ * With the Lab setting on (gems, Lab first), prestiging also costs 100 gems.
+ * Where: a panel under the Upgrades list, ★ on its cell in the collection (G.Radiant.cell, the
+ * hook menu.js already calls) and in the Upgrades picker. In the run: G.Game.startRun.
+ * Test: fork/test-prestige.cjs.
  */
 G.Prestige = (() => {
   const $ = id => document.getElementById(id);
@@ -19,7 +19,7 @@ G.Prestige = (() => {
   const level = dex => { const s = save(), v = s && s.prest && s.prest[dex]; return Math.max(0, Math.min(MAX, v | 0)); };
   const maxedAll = dex => { const lv = G.DB.upgradesOf(dex) || {}; return G.Upgrades.LIST.every(u => (lv[u.id] || 0) >= u.max); };
   const GEMS = 100;
-  const gemCost = () => (G.Settings.get('lab') ? GEMS : 0);       // gemas: Lab primero
+  const gemCost = () => (G.Settings.get('lab') ? GEMS : 0);       // gems: Lab first
   const can = dex => level(dex) < MAX && maxedAll(dex) && ((save() && save().gems) | 0) >= gemCost();
 
   function prestige(dex) {
@@ -34,8 +34,8 @@ G.Prestige = (() => {
     return true;
   }
 
-  // ---------------- en la run ----------------
-  // game.js se carga después de los archivos del fork: se envuelve al terminar de cargar (nadie empieza antes).
+  // ---------------- in the run ----------------
+  // game.js loads after the fork's files: wrap it once loading is done (nobody starts a run before that).
   function wrapRun() {
   const startRun = G.Game.startRun;
   G.Game.startRun = function () {
@@ -57,11 +57,11 @@ G.Prestige = (() => {
   }
   if (G.Game) wrapRun(); else addEventListener('DOMContentLoaded', wrapRun);
 
-  // ---------------- fusión ----------------
+  // ---------------- merge ----------------
   const merge = G.forkMerge;
   G.forkMerge = function (r, a, b) {
     if (merge) merge.apply(this, arguments);
-    // La "época" de las mejoras de cada Pokémon: su prestigio y, dentro de él, sus reinicios con gemas.
+    // The "epoch" of each Pokémon's upgrades: its prestige and, within that, its resets with gems.
     const epoch = (s, d) => ((s && s.prest && s.prest[d]) | 0) * 1000 + ((s && s.ureset && s.ureset[d]) | 0);
     const keys = s => Object.keys((s && s.prest) || {}).concat(Object.keys((s && s.ureset) || {}));
     const dexes = new Set(keys(a).concat(keys(b)));
@@ -77,7 +77,7 @@ G.Prestige = (() => {
     }
   };
 
-  // ---------------- pantalla de Mejoras ----------------
+  // ---------------- Upgrades screen ----------------
   let sure = false;
   const dexNow = () => { const sel = $('upg-mon'); return sel && +sel.value; };
   function stars(p) { return '★'.repeat(p) + '☆'.repeat(MAX - p); }
@@ -113,13 +113,13 @@ G.Prestige = (() => {
       if (prestige(dex)) {
         G.Audio.sfx('legend');
         G.UI.toast(G.I18n.f('¡{x} sube a prestigio {x}!', G.DEX_BY[dex].name, level(dex)), 2800);
-        const sel = $('upg-mon'); if (sel) sel.dispatchEvent(new Event('change'));   // menu.js vuelve a pintar sus mejoras (a 0)
+        const sel = $('upg-mon'); if (sel) sel.dispatchEvent(new Event('change'));   // menu.js redraws its upgrades (at 0)
       }
       render();
     };
     labels();
   }
-  /** ★ en el selector de Mejoras. */
+  /** ★ in the Upgrades picker. */
   function labels() {
     const sel = $('upg-mon');
     if (!sel) return;
@@ -134,7 +134,7 @@ G.Prestige = (() => {
     if (id === 'scr-upgrades') Promise.resolve().then(() => {
       sure = false;
       render();
-      // Al comprar una mejora suelta, menu.js rehace la lista: el panel vuelve a mirar si ya está todo.
+      // Buying a single upgrade makes menu.js rebuild the list: the panel checks again whether everything is bought.
       const list = $('upg-list');
       if (list && !list._prest) { list._prest = true; new MutationObserver(render).observe(list, { childList: true }); }
       const sel = $('upg-mon');
@@ -142,7 +142,7 @@ G.Prestige = (() => {
     });
     return r;
   };
-  // ★ en la casilla de la colección (menu.js dexCell llama a G.Radiant.cell).
+  // ★ on the collection cell (menu.js dexCell calls G.Radiant.cell).
   if (G.Radiant && G.Radiant.cell) {
     const cell = G.Radiant.cell;
     G.Radiant.cell = function (el, dex) {
@@ -153,7 +153,7 @@ G.Prestige = (() => {
     };
   }
 
-  // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
+  // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Prestigio', 'Prestige', 'Prestige', 'Prestigio', 'Prestígio', '声望', '聲望'],
     ['Prestigio {x}/{x}: +{x}% a vida, daño, velocidad y defensa.', 'Prestige {x}/{x}: +{x}% HP, damage, speed and defense.', 'Prestige {x}/{x} : +{x} % PV, dégâts, vitesse et défense.',

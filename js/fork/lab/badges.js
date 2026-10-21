@@ -1,34 +1,34 @@
-/* ============ badges.js — flechas de "te viene bien / mal" en los movimientos (Lab, fork MrSurvivor) ============
- * En una partida Lab, cada cosa que cambia lo bueno que es un movimiento para TU Pokémon lleva una
- * flechita pegada a la palabra que juzga ("Fire ▲ · Special ▲"): verde arriba (bien), amarilla
- * abajo (algo peor), roja abajo (mucho peor); sobre los enemigos, la de la tabla de tipos: magenta
- * (x4), verde (x2), amarilla (1/2), roja (1/4 e inmune). Son 4 flechas (js/fork/lab/badge-art.js);
- * el dibujo es el del artista, un PNG del Asset Admin (js/fork/icon-overrides.json).
- * Qué lleva cada movimiento (marks):
- *   - tipo: verde si es de tu tipo Y te da daño de más (sólo con un tipo: Player.monoType)
- *   - físico/especial: verde con el 95 % o más de tu daño (G.Stats.fit), amarilla desde el 65 %,
- *     roja por debajo; un potenciador de ataque (Danza Espada, Maquinación), verde si es de tu
- *     lado bueno y amarilla si no. Velocidad, defensa y curación: nada (sirven a todos igual).
- * Dónde: cartas de subir de nivel (sólo las de movimiento nuevo), el recuadro de la barra
- * (gancho de una línea en hud.js drawTip) y las flechas de la tabla de tipos sobre los enemigos
- * (gancho de una línea en enemy.js: enemyMark). Todas a la mitad de su tamaño (el PNG de 18×18,
- * a 9): a la izquierda de la barra de vida del enemigo, o centradas sobre él si aún no la tiene.
- * Las de los enemigos, en todas las partidas desde el 21-10-2026 (las del juego, más grandes y siempre
- * a la izquierda de donde iría la barra, tapaban al enemigo); las de los movimientos, sólo en el Lab.
- * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-badges.cjs.
+/* ============ badges.js — "good / bad for you" arrows on moves (Lab, MrSurvivor fork) ============
+ * In a Lab run, everything that changes how good a move is for YOUR Pokémon gets a
+ * small arrow stuck to the word it judges ("Fire ▲ · Special ▲"): green up (good), yellow
+ * down (a bit worse), red down (much worse); over enemies, the type chart's: magenta
+ * (x4), green (x2), yellow (1/2), red (1/4 and immune). There are 4 arrows (js/fork/lab/badge-art.js);
+ * the art is the artist's, a PNG from the Asset Admin (js/fork/icon-overrides.json).
+ * What each move gets (marks):
+ *   - type: green if it's your type AND gives you extra damage (single type only: Player.monoType)
+ *   - physical/special: green at 95 % or more of your damage (G.Stats.fit), yellow from 65 %,
+ *     red below; an attack booster (Swords Dance, Nasty Plot), green if it's on your
+ *     good side and yellow if not. Speed, defence and healing: nothing (they help everyone the same).
+ * Where: level-up cards (only new-move ones), the move bar's tooltip box
+ * (one-line hook in hud.js drawTip) and the type-chart arrows over enemies
+ * (one-line hook in enemy.js: enemyMark). All at half their size (the 18×18 PNG,
+ * at 9): left of the enemy's health bar, or centred above it if it has none yet.
+ * The enemy ones in every run since 21-10-2026 (the game's, bigger and always
+ * left of where the bar would go, covered the enemy); the move ones only in the Lab.
+ * Texts in English only, like the rest of the Lab. Test: fork/test-badges.cjs.
  */
 G.LabBadges = (() => {
   const F = (w, s) => `${w} ${s}px Pixelify,"Segoe UI",system-ui,sans-serif`;
   const raw = (ctx, k, s, x, y) => G.I18n.rawCanvas(ctx, k, s, x, y);
   const on = () => !!G.Lab.active;
 
-  // Las 4 flechas las dibuja js/fork/lab/badge-art.js (también para la galería de fork/asset-admin.html).
+  // js/fork/lab/badge-art.js draws the 4 arrows (also for the gallery in fork/asset-admin.html).
   const { NAMES, EFF } = G.LabBadgeArt;
 
-  // ---------------- qué lleva cada movimiento ----------------
+  // ---------------- what each move gets ----------------
   const BUFF_CAT = { patk: 'physical', satk: 'special' };
 
-  /** { type, cat } de d (definición o movimiento de la partida) para mon: 'lb-g' / 'lb-y' / 'lb-r' o null. */
+  /** { type, cat } of d (a definition or a run's move) for mon: 'lb-g' / 'lb-y' / 'lb-r' or null. */
   function marks(mon, d) {
     const out = { type: null, cat: null };
     if (!mon || !d) return out;
@@ -37,15 +37,15 @@ G.LabBadges = (() => {
       const f = G.Stats.fit(mon, d.cat);
       out.cat = f >= 0.95 ? 'lb-g' : f >= 0.65 ? 'lb-y' : 'lb-r';
     } else if (d.kind === 'buff' && BUFF_CAT[d.stat] && (d.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[d.stat])) {
-      out.cat = 'lb-g';                                  // los dos lados (Avivar, Filete Fuera): bueno para todos
+      out.cat = 'lb-g';                                  // both sides (Work Up, Fillet Away): good for everyone
     } else if (d.kind === 'buff' && BUFF_CAT[d.stat]) {
       out.cat = G.Stats.fit(mon, BUFF_CAT[d.stat]) >= 0.95 ? 'lb-g' : 'lb-y';
     }
     return out;
   }
 
-  // Todas a la mitad (21-10-2026: a 18 tapaban al enemigo y al texto). Del lienzo de G.Icons.canvas,
-  // que es el PNG del artista (o el dibujo de código si no ha llegado): suavizado sólo si encoge.
+  // All at half size (21-10-2026: at 18 they covered the enemy and the text). From G.Icons.canvas's canvas,
+  // which is the artist's PNG (or the code drawing if it hasn't arrived): smoothing only when it shrinks.
   const HALF = 0.5;
   const size = n => { const c = G.Icons.canvas(n); return { c, w: c.width * HALF, h: c.height * HALF }; };
   function paint(ctx, n, x, y) {
@@ -56,10 +56,10 @@ G.LabBadges = (() => {
     return s;
   }
 
-  // ---------------- cartas de subir de nivel ----------------
-  // Dentro del chip, pegadas a cada palabra. El chip es "Nuevo · " + c.tag: "Nuevo · Fuego" se queda
-  // en un solo texto (lo traduce i18n como siempre) y " · Especial" va ya traducido y sin traducir otra vez.
-  // El <img> a mano: G.Icons.html no baja de ×1 (asset-overrides.js lo cambia si el PNG llega después).
+  // ---------------- level-up cards ----------------
+  // Inside the chip, stuck to each word. The chip is "Nuevo · " + c.tag: "Nuevo · Fuego" stays
+  // one text (i18n translates it as usual) and " · Especial" goes in already translated and isn't translated again.
+  // The <img> by hand: G.Icons.html doesn't go below ×1 (asset-overrides.js swaps it if the PNG arrives later).
   const img = n => {
     if (!n) return '';
     const s = size(n), smooth = s.c.width > s.w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
@@ -81,8 +81,8 @@ G.LabBadges = (() => {
     return list;
   };
 
-  // ---------------- recuadro de la barra (hud.js drawTip) ----------------
-  /** La línea de tipo y categoría del recuadro, entera, con cada flecha detrás de su palabra (true: hud.js no pinta más). */
+  // ---------------- the move bar's tooltip box (hud.js drawTip) ----------------
+  /** The box's whole type and category line, with each arrow after its word (true: hud.js draws nothing more). */
   function tipLine(ctx, m, pl, x, o) {
     if (!on() || !pl) return false;
     const mk = marks(pl.mon, m);
@@ -92,7 +92,7 @@ G.LabBadges = (() => {
     const tw = raw(ctx, 'measureText', tn).width + 12;
     ctx.beginPath(); ctx.roundRect(x, o - 11, tw, 15, 4); ctx.fillStyle = G.U.TYPE_COLOR[m.type]; ctx.fill();
     ctx.fillStyle = '#10131a'; ctx.textAlign = 'left'; raw(ctx, 'fillText', tn, x + 6, o);
-    // Cada flecha a la mitad, centrada en la línea.
+    // Each arrow at half size, centred on the line.
     const arrowAt = (n, ax) => paint(ctx, n, ax, o - 3.5 - size(n).h / 2).w;
     let cx = x + tw + 3;
     if (mk.type) cx += arrowAt(mk.type, cx) + 3;
@@ -104,10 +104,10 @@ G.LabBadges = (() => {
     return true;
   }
 
-  // ---------------- flechas de los enemigos ----------------
-  // 'eff:up:x2' -> 'lb-g'. enemy.js pide G.Icons.canvas (para el tamaño) y G.Icons.draw con el mismo nombre.
+  // ---------------- enemy arrows ----------------
+  // 'eff:up:x2' -> 'lb-g'. enemy.js asks G.Icons.canvas (for the size) and G.Icons.draw with the same name.
   const effName = n => {
-    if (typeof n !== 'string' || !n.startsWith('eff:')) return n;      // en todas las partidas
+    if (typeof n !== 'string' || !n.startsWith('eff:')) return n;      // in every run
     const t = EFF[n.split(':')[2]];
     return t ? 'lb-' + t : n;
   };
@@ -116,17 +116,17 @@ G.LabBadges = (() => {
   G.Icons.draw = function (ctx, n, ...a) { return draw.call(this, ctx, effName(n), ...a); };
 
   /**
-   * La flecha de e (gancho de enemy.js; true: enemy.js no pinta la suya). w es el ancho de su barra
-   * de vida. Con barra (jefes, o ya herido), a su izquierda y centrada en ella, como la de siempre;
-   * sin barra, centrada sobre él donde irá la barra (o encima del icono de curandero / escudero / invocador).
+   * e's arrow (enemy.js hook; true: enemy.js doesn't draw its own). w is the width of its health
+   * bar. With a bar (bosses, or already hurt), left of it and centred on it, like the usual one;
+   * without a bar, centred above it where the bar will go (or above the healer / shielder / summoner icon).
    */
   function enemyMark(ctx, e, eff, w) {
-    const n = effName(eff), s = size(n), bar = e.y - e.bodyH - 10;   // la barra: 3,4 de alto
+    const n = effName(eff), s = size(n), bar = e.y - e.bodyH - 10;   // the bar: 3.4 tall
     if (e.boss || e.hp < e.maxHp) paint(ctx, n, e.x - w / 2 - s.w - 1, bar + 1.7 - s.h / 2);
     else paint(ctx, n, e.x - s.w / 2, (SUPPORT[e.behavior] ? e.y - e.bodyH - 18 - 1 : bar + 3.4) - s.h);
     return true;
   }
-  const SUPPORT = { healer: 1, shielder: 1, summoner: 1 };   // los que llevan icono encima (enemy.js SUP)
+  const SUPPORT = { healer: 1, shielder: 1, summoner: 1 };   // the ones with an icon above them (enemy.js SUP)
 
   return { marks, tipLine, effName, enemyMark, NAMES };
 })();

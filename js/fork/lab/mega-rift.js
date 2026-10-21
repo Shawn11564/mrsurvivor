@@ -1,16 +1,16 @@
-/* ============ mega-rift.js — legendarios de grieta megaevolucionados (Lab primero, fork MrSurvivor) ============
- * En una partida Lab, desde el minuto 15, el legendario de una grieta que tiene megaevolución o
- * regresión primigenia (sprite en G.MEGA_FORMS, js/fork/mega-sprites.js: Mewtwo, Latias, Latios,
- * Kyogre, Groudon, Rayquaza...) puede salir en esa forma: 5 % a los 15 min, 15 % a los 30 y 30 % a
- * los 60 (en línea recta entre medias). Así sale con ×1,3 de vida, ×1,2 de daño y ×1,2 de
- * experiencia (lo que suelta), su sprite y "Mega" / "Primal" delante del nombre.
- * Gancho: G.EnemyMgr.add (rift.js añade al legendario con legend = true, en la arena). En grupo lo
- * decide el anfitrión: la vida y el daño ya van en su 'ne'; el sprite, con { k:'labmega', id }.
- * Prueba: fork/test-mega-rift.cjs.
+/* ============ mega-rift.js — Mega Evolved rift legendaries (Lab first, MrSurvivor fork) ============
+ * In a Lab run, from minute 15, a rift legendary that has a Mega Evolution or
+ * Primal Reversion (sprite in G.MEGA_FORMS, js/fork/mega-sprites.js: Mewtwo, Latias, Latios,
+ * Kyogre, Groudon, Rayquaza...) can come in that form: 5 % at 15 min, 15 % at 30 and 30 % at
+ * 60 (a straight line in between). It then has ×1.3 HP, ×1.2 damage and ×1.2
+ * experience (what it drops), its own sprite and "Mega" / "Primal" before its name.
+ * Hook: G.EnemyMgr.add (rift.js adds the legendary with legend = true, in the arena). In co-op the
+ * host decides: HP and damage already travel in its 'ne'; the sprite, with { k:'labmega', id }.
+ * Test: fork/test-mega-rift.cjs.
  */
 G.MegaRift = (() => {
   const HP = 1.3, DMG = 1.2, REW = 1.2;
-  /** Probabilidad a los t segundos. */
+  /** Chance at t seconds. */
   function chance(t) {
     if (t < 900) return 0;
     if (t < 1800) return 0.05 + (t - 900) / 900 * 0.10;
@@ -19,7 +19,7 @@ G.MegaRift = (() => {
   }
   const has = dex => !!(G.MEGA_FORMS && G.MEGA_FORMS[dex] && G.SPRITE_META['m' + dex]);
 
-  /** Su aspecto de mega (también en la pantalla de los invitados). */
+  /** Its Mega look (on the guests' screens too). */
   function look(e) {
     if (e.megaForm) return;
     const key = 'm' + e.dex;
