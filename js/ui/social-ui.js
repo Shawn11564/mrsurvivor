@@ -216,7 +216,7 @@
         : 'Estás en la sala de ' + ((ms.find(m => m.uid === room.host) || {}).name || '…') + '. El anfitrión empezará la partida.';
 
       // Las tarjetas sólo se rehacen si cambian los miembros (los sprites no parpadean).
-      const key = ms.map(m => m.uid + ':' + m.dex + ':' + (m.shiny ? 1 : 0)).join('|');
+      const key = ms.map(m => m.uid + ':' + m.dex + ':' + (m.shiny ? 1 : 0) + (m.rad ? 'r' : '')).join('|');
       const box = $('lobby-members');
       if (key !== membersKey) {
         membersKey = key;
@@ -227,7 +227,7 @@
           c.className = 'lob-card' + (m ? '' : ' empty');
           if (m) {
             c.style.setProperty('--pc', G.Coop.COLORS[i]);
-            c.appendChild(G.UI.spriteCanvas(m.dex, 120, 96, { scale: 2, lively: true, shiny: !!m.shiny }));
+            c.appendChild(G.UI.spriteCanvas(m.dex, 120, 96, { scale: 2, lively: true, shiny: !!m.shiny, radiant: !!m.rad }));   // fork: radiant
             c.insertAdjacentHTML('beforeend', `<b translate="no">${esc(m.name)}</b><small>${esc((G.DEX_BY[m.dex] || {}).name || '')}</small><span class="conn" data-u="${m.uid}"></span><span class="rdy" data-u="${m.uid}"></span>`);
           } else c.innerHTML = '<span>Libre</span>';
           box.appendChild(c);

@@ -291,9 +291,10 @@ G.Social = (() => {
   // ---------------- salas ----------------
 
   // Fork (MrSurvivor): el Pokémon al azar de la sala (js/fork/coop-random.js) o, si no, tu compañero.
+  // `rad: null` borra en la sala el radiante del Pokémon anterior (update() mezcla los campos).
   function mine() {
     const s = G.DB.save, p = G.LobbyPick && G.LobbyPick.get();
-    return p || { dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) };
+    return Object.assign({ rad: null }, p || { dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner) });
   }
 
   function memberInfo() {
@@ -420,16 +421,16 @@ G.Social = (() => {
     const rref = fb.rtdb.ref('rooms/' + r.id);
     const host = await rref.child('host').get().then(s => s.val(), () => null);
     // Tu plaza (sólo se puede leer si sigue existiendo).
-    const mine = await rref.child('m/' + uid).get().then(s => s.val(), () => null);
+    const seat = await rref.child('m/' + uid).get().then(s => s.val(), () => null);
     if (!host || room || !fb) { if (!room) forget(); return; }
     if (Date.now() - r.t > GRACE) {
       // Demasiado tarde: ya te han dado por ido (o están a punto).
       if (host === uid) await rref.remove().catch(() => {});
-      else if (mine) await rref.child('m/' + uid).remove().catch(() => {});
+      else if (seat) await rref.child('m/' + uid).remove().catch(() => {});
       forget();
       return;
     }
-    if (!mine) {
+    if (!seat) {
       // Ya te habían quitado: se vuelve a entrar como cualquiera (si la sala sigue abierta).
       const j = await joinRoom(r.id);
       if (!j.ok) { forget(); return; }
@@ -623,7 +624,7 @@ G.Social = (() => {
 
   return {
     start, stop, claimNick, request, accept, remove, publishProfile, getProfile, profileData,
-    createRoom, joinRoom, leaveRoom, setOpen, setReady, refreshMember, setPlaying, refreshPresence, ensureFriends,
+    createRoom, joinRoom, leaveRoom, setOpen, setReady, refreshMember, mine, setPlaying, refreshPresence, ensureFriends,
     invite, acceptInvite, declineInvite,
     on(fn) { listeners.add(fn); }, off(fn) { listeners.delete(fn); },
     get me() { return me; },

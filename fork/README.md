@@ -154,6 +154,15 @@ lobby: it rolls one of yours for that room without changing your partner (`js/fo
 `mine()` in `js/net/social.js`, `G.Flow.startCoop` in `js/game.js`), others see it, ready-up works as
 usual (no changing while ready) and you play it in the run.
 
+`node fork/test-coop-seat.cjs` (server + Firebase emulator) checks that changing your Pokémon while in
+a room reaches the others at once: a partner, shiny or radiant picked in the menu or the collection is
+saved with `G.DB.commit`, which `js/fork/coop-random.js` wraps to update your seat when it no longer
+matches (`G.Social.mine`). Before, the others saw your old Pokémon until the run after next. It also checks
+that a radiant flag is cleared when you switch away (`rad: null` in `mine()`), that the lobby card shows
+radiants (`js/ui/social-ui.js`), and that a host starting while you're in the collection plays you as the
+new one. `node fork/test-party-reload.cjs` covers the rejoin after a reload (`resume()` in
+`js/net/social.js`: its seat variable used to hide `mine()`, so a reloaded player never got back in).
+
 `node fork/test-remember.cjs` (with the server running) checks that Settings and
 Missions/Achievements/Profile open on their last tab, and the Pokémon screen keeps its
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in

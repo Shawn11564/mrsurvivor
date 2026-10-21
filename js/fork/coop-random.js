@@ -7,6 +7,9 @@
  * Dura lo que dure la sala. Lo usan js/net/social.js (mine) y G.Flow.startCoop (js/game.js).
  * get() lleva `rad: true` si ese Pokémon va radiante (js/fork/radiant.js), y entonces también
  * sin elegir al azar: así la ficha de la sala dice a los demás que te vean radiante.
+ * Cambiar de compañero, de shiny o de radiante fuera de la sala (menú, colección) también llega
+ * a la sala al momento: todo eso se guarda con G.DB.commit, que aquí mira si tu plaza de la sala
+ * ya no coincide con tu Pokémon (si no, los demás te veían con el viejo hasta la partida siguiente).
  * Lo comprueba fork/test-coop-random.cjs.
  */
 (() => {
@@ -18,6 +21,15 @@
     const m = G.Settings.get('randMin') | 0, min = m >= 1 && m <= 5 && owned.some(d => G.DEX_BY[d].rarity >= m) ? m : 1;
     return owned.filter(d => G.DEX_BY[d].rarity >= min);
   };
+  // Tu plaza en la sala, si no coincide con tu Pokémon (G.Social.mine), se pone al día.
+  const same = (a, b) => a.dex === b.dex && !!a.shiny === !!b.shiny && !!a.rad === !!b.rad;
+  function syncSeat() {
+    const r = G.Social.room, seat = r && r.members.find(x => x.uid === G.Social.uid);
+    if (seat && !same(seat, G.Social.mine())) G.Social.refreshMember();
+  }
+  const commit = G.DB.commit;
+  G.DB.commit = function () { const res = commit.apply(this, arguments); syncSeat(); return res; };
+
   const meReady = () => { const r = G.Social.room, m = r && r.members.find(x => x.uid === G.Social.uid); return !!(m && m.ready); };
 
   function roll() {
