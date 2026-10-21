@@ -159,7 +159,10 @@ built `index.html`.
 going while the host's tab is hidden: the host's frames come from a Worker then
 (`js/fork/coop-background.js`, `js/fork/tick-worker.js`) and `js/net/coop.js` no longer tells the
 guests to wait. The host runs in a plain Edge over raw CDP, because Playwright makes every page it
-drives look visible. `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
+drives look visible. `node fork/test-coop-pause.cjs` (same setup) checks the pause menu's Continue
+button in co-op: the pause doesn't stop a co-op run, so `game.js` (which resumes only from `paused`)
+ignored it and only Esc / P closed the menu; `coop-background.js` wraps `G.RunUI.wirePause` to close
+it. `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
 thief says how far it is (`drawHud` in `js/systems/events.js`).
 
 `node fork/test-coop-random.cjs` (server + Firebase emulator) checks "Random Pokémon" in a co-op

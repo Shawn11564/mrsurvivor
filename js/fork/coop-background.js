@@ -8,6 +8,11 @@
  * coop.js ya no manda el aviso de pestaña oculta (keepsRunning). Si el anfitrión se queda de
  * verdad sin red, o el móvil congela la página entera, los demás siguen parándose por el aviso
  * de "no responde" de coop.js (stalled). Lo comprueba fork/test-coop-background.cjs.
+ *
+ * El botón Continuar del menú de pausa, en grupo: allí la pausa no para la partida (el estado
+ * sigue en 'playing') y game.js sólo continuaba desde 'paused', así que no hacía nada y sólo
+ * Esc / P cerraban el menú. Ahora en grupo lo cierra (G.RunUI.wirePause, antes de G.Game.init).
+ * Lo comprueba fork/test-coop-pause.cjs.
  */
 (() => {
   const native = window.requestAnimationFrame.bind(window), nativeCancel = window.cancelAnimationFrame.bind(window);
@@ -53,6 +58,14 @@
     if (behind()) ensureWorker();
     else for (const j of jobs.values()) if (!j.nid) j.nid = native(j.run);
   });
+
+  const wirePause = G.RunUI.wirePause;
+  G.RunUI.wirePause = function (onResume, onQuit) {
+    return wirePause.call(this, () => {
+      if (G.Coop.active && G.Game.state === 'playing' && G.UI.isOpen('scr-pause')) G.UI.hide('scr-pause');
+      else onResume();
+    }, onQuit);
+  };
 
   G.CoopBackground = {
     /** ¿Puede seguir la partida con la pestaña oculta? (coop.js no avisa entonces de que se ha ido) */

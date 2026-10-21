@@ -805,11 +805,14 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     G.Markers.at = function (key) { const r = at.apply(this, arguments); if (r) window.__mk[key] = r; return r; }; });
   await page.waitForTimeout(2800);                                   // past the start, when nothing counts as new
   const mkPos = () => page.evaluate(() => {
-    const pl = G.Game.player, cam = G.Camera, e = G.EnemyMgr.shinies()[0], m = e && window.__mk['shiny:' + e.id];
-    if (!m) return null;
+    const pl = G.Game.player, cam = G.Camera, e = G.EnemyMgr.shinies()[0], mk = e && window.__mk['shiny:' + e.id];
+    if (!mk) return null;
+    // The HUD is drawn scaled to the screen (js/fork/ui-scale.js, ×1.27 at 1920×1080): markers are placed
+    // in its units, so ×s gives screen px; their distances (125, 440) are in those units too.
+    const s = G.UIScale ? G.UIScale.now : 1, m = { x: mk.x * s, y: mk.y * s };
     const cx = (pl.x - cam.left()) * cam.scale, cy = (pl.y - pl.bodyH * 0.5 - cam.top()) * cam.scale;
     const ta = Math.atan2((e.y - cam.top()) * cam.scale - cy, (e.x - cam.left()) * cam.scale - cx);
-    return { d: Math.round(Math.hypot(m.x - cx, m.y - cy)), da: Math.abs(Math.atan2(m.y - cy, m.x - cx) - ta), x: Math.round(m.x), y: Math.round(m.y), k: G.Markers.focusK };
+    return { d: Math.round(Math.hypot(m.x - cx, m.y - cy) / s), da: Math.abs(Math.atan2(m.y - cy, m.x - cx) - ta), x: Math.round(m.x), y: Math.round(m.y), k: G.Markers.focusK, s: +s.toFixed(3) };
   });
   await page.evaluate(() => {
     const pl = G.Game.player, sc = G.Enemies.scale(G.Game.st.time);
@@ -824,7 +827,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const far = await mkPos();
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'markers.png') });
   check(!!far && far.k === 0 && far.d > 200 && far.d <= 445 && far.da < 0.02 && far.x < 1920 - 300,
-    `then back out, but around your Pokémon (at most 440 px, not on the edge of a 1920 px screen) and pointing straight at it (${JSON.stringify(far)})`);
+    `then back out, but around your Pokémon (at most 440 HUD px, not on the edge of a 1920 px screen) and pointing straight at it (${JSON.stringify(far)})`);
   await page.keyboard.down('KeyF');
   await page.waitForTimeout(400);
   const fHeld = await mkPos();
