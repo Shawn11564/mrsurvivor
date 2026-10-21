@@ -25,7 +25,7 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/radiant-admin.cjs` | `node fork/radiant-admin.cjs` opens the **Radiant Admin** page (`fork/radiant-admin.html`), served on this PC only (127.0.0.1, random key in the link), never on the site: drop the artists' zips, see every Pokémon in them checked (the importer's code) with an animated preview of each sheet, normal next to radiant, pick which to import and each one's rarity (its weight in the ritual, with the resulting odds), change the rarity of radiants already in, then **Publish**: commits only the radiant files (sheets, `radiants.json`, `radiant-list.js`), whatever else is changed, and pushes main. Players get them once Pages has deployed, with no rebuild (below) |
 | `fork/import-radiant.cjs` | `node fork/import-radiant.cjs <zip or folder>... [--dry-run] [--strict]` brings the artist's recolours in: reads the dex from the folder name (`0150_…`, any wrapper folder, several Pokémon per zip, the Kit's older `assets/pokemon/{dex}/r/` layout too), checks every sheet against the normal one (missing or wrong-size sheets turn that Pokémon away; a changed outline, with the frame's cell, or an unrecoloured sheet is a warning), copies them to `assets/pokemon/{dex}/r/`, `r/lab/`, `m{dex}/r/` and runs `fork/radiants.cjs`. Then build, try it, commit and push: that is how a radiant ships |
 | `fork/radiants.cjs` | finds the radiant forms in `assets/pokemon/{dex}/r/` (every standard sheet, each the size of the normal one; `r/lab/` and `m{dex}/r/` optional) and writes `js/fork/radiant-list.js` (bundled) and `js/fork/radiants.json` (the same list, which the game also reads when it loads and when the ritual opens, so a published radiant works without a rebuild), each with its rarity (kept from `radiants.json`, else the Pokémon's). `fork/build.cjs` runs it; it prints what it leaves out (`--strict` fails instead) |
-| `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, weighted by each radiant's rarity (`WEIGHT`: Common 40, Uncommon 25, Rare 15, Epic 7, Legendary 3), warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
+| `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, weighted by each radiant's rarity (`WEIGHT`: Common 40, Uncommon 25, Rare 15, Epic 7, Legendary 3), revealed with the gacha's single-ticket slot machine (`js/ui/slots.js` in `#pull-fx`), its reels stopping on that rarity's ball, then the radiant's card, warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -77,6 +77,16 @@ cloud saves upstream left to the Save button: an unsaved change goes up by itsel
 and when the tab is hidden (`js/fork/cloud-backup.js`), and every upload merges with the cloud so
 two devices don't erase each other's progress (`pushNow` in `js/core/db.js`, a transaction again).
 
+`node fork/test-guest-save.cjs` (server + Firebase emulator; `node fork/build.cjs` first, its last
+step plays the built `index.html`) checks guest progress (`js/fork/guest-save.js`, one-line hooks in
+`commit`/`playAsGuest` of `js/core/db.js`, `safe()` of `js/core/updater.js`, the guest's log-out in
+`js/ui/menu.js` and `js/ui/settings-ui.js`). Upstream kept it only in memory, so any reload, an update's
+included, lost it. Here it stays in this browser (`ms.guest`): a reload, and the updater's, lands back on
+the menu as the same guest; signing up or logging in moves it to the account (`G.DB.adopt`: a new account
+becomes the guest's save, an existing one gains its Pokémon, tickets and the coins earned above the 500 it
+started with, never fewer) and the copy is used up. A browser that can't keep the copy isn't reloaded by
+the updater (except a forced version) and still warns before logging out.
+
 `node fork/test-shiny-gacha.cjs` (server + Firebase emulator) checks shiny by default: a Pokémon
 you have the shiny of shows and plays shiny unless you picked Normal for it, which the save keeps
 (`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
@@ -91,6 +101,10 @@ that is its own git repo with a bare `origin` and an unrelated change: only the 
 zips (Kit layout, older layout, a broken one) give the right cards; the preview draws normal and radiant frames;
 rarities and the odds line; import writes the sheets and both lists; a rarity change from the table; publish commits
 only the radiant files (the unrelated change stays) and pushes, and waits for a tick when other commits aren't pushed yet.
+
+`node fork/test-radiant-prefs.cjs` (server) checks that a radiant you own beats its shiny by default (main menu, selector,
+run, co-op card, the collection's detail and partner pick, and a shiny won after the radiant), that picking Shiny or
+Normal is respected and kept, and the **Radiant** filter on the Pokémon screen (only your radiants, kept in `ms.dex`).
 
 `node fork/test-radiant-live.cjs` (server) checks the game side on `dev.html` with the built list empty: radiants from
 `radiants.json` are in the pool with their rarities and odds, the roll follows the weights, one published while the game
@@ -172,6 +186,13 @@ generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `d
 - stat moves evolving at their top level with no stat card needed (Swords Dance → Belly Drum,
   `EVO`/`EVO_MODS.buff` in `js/data/moves.js`, texts in `js/fork/buff-evos.js`): evolved, they
   cast on their own from any slot (`m.passive` in `Combat.tick`)
+- evolved moves renamed so none reuses a real move's name (`js/fork/evo-names.js`): upstream names
+  23 evolutions after moves that are real Lab moves here, 11 of them signatures (Fire Spin → Sacred
+  Fire, Thunder Wave → Volt Tackle, Ominous Wind → Shadow Force...). Each now takes another real move
+  of its type the game doesn't use (Fiery Dance, Electroweb, Infernal Parade...), with official names
+  in every language (PokeAPI); only the name changes. Fly's Lab evolution is Dual Wingbeat, not Sky
+  Attack (`lab-moves.js`). `fork/build.cjs` applies the names to the site pages too. Checked by
+  `fork/test-shadow-force.cjs` (no evolved name matches a Lab move)
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.

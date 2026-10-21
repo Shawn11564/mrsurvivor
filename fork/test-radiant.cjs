@@ -18,7 +18,7 @@
 //      co-op lobby card says rad.
 //   5. Attack colours (js/fork/lab/shiny.js): the most striking colour wins (a radiant Mewtwo
 //      with a black or dark-grey body and a red tail attacks in red); in a Lab run a radiant's
-//      moves take its radiant palette and it gets none of the shiny's extras, even if you own
+//      moves take its radiant palette and it gets the radiant's extras, not the shiny's, even if you own
 //      the shiny and had picked it.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
@@ -34,6 +34,8 @@ async function open(browser, list) {
   const errs = [];
   page.on('pageerror', e => errs.push(e.message));
   await page.route('**/js/fork/radiant-list.js*', r => r.fulfill({ contentType: 'text/javascript', body: `G.RADIANTS = ${JSON.stringify(list)};` }));
+  // The list the game also reads at runtime (js/fork/radiant.js refresh): the same stand-in, not the real one.
+  await page.route('**/js/fork/radiants.json*', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(list) }));
   await page.route(/\/assets\/pokemon\/(m?\d+)\/r\/(.+\.png)/, r => {
     const m = r.request().url().match(/\/assets\/pokemon\/(m?\d+)\/r\/(.+\.png)/);
     asked.push(m[1] + '/r/' + m[2]);
@@ -78,15 +80,26 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   await page.click('#rad-no');
   check(!(await page.isVisible('#rad-warning')), 'Cancel closes the warning');
   await page.click('#rad-go');
+  // The roll is the gacha's single-ticket animation: record what the slot machine is asked to show.
+  await save(page, () => { const play = G.Slots.play; window.__slots = []; window.__gc = document.getElementById('pull-close').onclick; G.Slots.play = function (cv, res) { __slots.push({ cv: cv.id, res: JSON.parse(JSON.stringify(res)), fx: !document.getElementById('pull-fx').classList.contains('hidden') }); return play.apply(this, arguments); }; });
   await page.click('#rad-yes');
-  await page.waitForSelector('#rad-ok', { state: 'visible', timeout: 10000 });
+  await page.waitForSelector('#pull-close', { state: 'visible', timeout: 15000 });
   let s = await save(page, () => JSON.parse(JSON.stringify({ shiny: G.DB.save.shiny, sac: G.DB.save.sac, rad: G.DB.save.radiant, owned: G.DB.save.owned, coins: G.DB.save.coins })));
   check(ten.every(d => !s.shiny[d] && s.sac[d] && s.owned[d]), 'the 10 lost their shiny, kept the normal one, and have a sacrifice date');
   check(Object.keys(s.shiny).length === 6, '6 shinies left', Object.keys(s.shiny));
   const won = Object.keys(s.rad).map(Number);
   check(won.length === 1 && [1, 4, 6].includes(won[0]) && s.owned[won[0]], 'one radiant from the pool, and its Pokémon', won);
   check((await page.textContent('#rad-name')).includes(await save(page, d => G.DEX_BY[d].name, won[0])), 'the reveal shows it');
-  await page.click('#rad-ok');
+  const slot = await save(page, d => ({ calls: __slots, tier: G.Radiant.tier(d), ball: G.Icons.RARITY_BALL[G.Radiant.tier(d)], name: G.T(G.Gacha.RARITY_NAME[G.Radiant.tier(d)]),
+    card: document.querySelector('#rad-card .rarity-ball') && document.querySelector('#rad-card .rarity-ball').title }), won[0]);
+  check(slot.calls.length === 1 && slot.calls[0].cv === 'slot' && slot.calls[0].fx && slot.calls[0].res.length === 1,
+    "the gacha's single-ticket slot machine plays, in its overlay, for one result", slot.calls);
+  check(slot.calls[0] && slot.calls[0].res[0].dex === won[0] && slot.calls[0].res[0].rarity === slot.tier && !slot.calls[0].res[0].shiny,
+    `its reels stop on the ball of the radiant's rarity (${slot.ball})`, slot);
+  check(slot.card === slot.name, 'the card shows the same rarity ball', slot.card);
+  await page.click('#pull-close');
+  check(!(await page.isVisible('#pull-fx')) && await page.isVisible('#scr-radiant'), 'Continue closes it, back to the ritual');
+  check(await save(page, () => document.getElementById('pull-close').onclick === __gc && !!__gc), "and the gacha's own Continue is put back");
 
   // Warning off: a legendary goes without asking (the setting stays on this device).
   await save(page, () => { for (const d of [43, 46, 48, 50, 52, 54, 56, 58, 144]) G.DB.grantShiny(d, 'test'); });
@@ -94,9 +107,11 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   check(await save(page, () => G.Settings.get('radWarn') === false), 'the warning can be turned off');
   await pickCells(page, [32, 35, 37, 39, 41, 43, 46, 48, 50, 144]);
   await page.click('#rad-go');
-  await page.waitForSelector('#rad-ok', { state: 'visible', timeout: 10000 });
+  await page.click('#pull-skip');                        // Skip works as in the gacha
+  await page.waitForSelector('#pull-close', { state: 'visible', timeout: 15000 });
   check(await save(page, () => !G.DB.save.shiny[144]), 'with it off, the legendary goes without asking');
-  await page.click('#rad-ok');
+  check(await page.isVisible('#rad-card'), 'Skip goes straight to the card');
+  await page.click('#pull-close');
   await page.check('#rad-warn');
 
   // A duplicate: coins instead.
@@ -215,7 +230,7 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   }, 4);
   check(lab.lab && lab.anim === '4/r' && lab.rad && lab.pal === 'radiant4' && lab.looks.every(x => x === 'radiant4'),
     'Lab run with a radiant: its moves take its radiant palette', lab);
-  check(!lab.shiny && !lab.labShiny && !lab.reroll, "and it gets none of the shiny's extras, though you own the shiny and had picked it");
+  check(!lab.shiny && !lab.labShiny && lab.reroll === 2, "and it gets the radiant's extras (2 rerolls), not the shiny's, though you own the shiny and had picked it", lab.reroll);
   check(!col.errs.length, 'no page errors', col.errs);
   await col.page.close();
 

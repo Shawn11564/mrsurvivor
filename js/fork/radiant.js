@@ -23,7 +23,10 @@
  *             miembro de la sala lleva `rad` (G.LobbyPick, js/fork/coop-random.js) y los demás lo
  *             ven radiante. La mega y la Transformación del Lab pasan por G.Admin.repaint (look).
  *   Menú      el selector Normal / Shiny / Radiante (compañero y ficha) y la marca en la
- *             colección: ganchos de una línea en js/ui/menu.js (menu, cell, detail).
+ *             colección: ganchos de una línea en js/ui/menu.js (menu, cell, detail), y el
+ *             filtro Radiant de la colección (dexF.rad). Si tienes el radiante, gana al shiny
+ *             salvo que hayas elegido Normal o Shiny para ese Pokémon (radOff).
+ *   Tirada    la del gacha de 1 ticket (js/ui/slots.js en #pull-fx): para en la bola de su rareza.
  * Textos sólo en inglés, como el modo Lab. Prueba: fork/test-radiant.cjs.
  */
 G.Radiant = (() => {
@@ -305,12 +308,7 @@ G.Radiant = (() => {
     <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
       <button class="btn gold" id="rad-go" type="button" data-sfx="confirm"></button>
     </div>
-  </div>
-  <div class="rad-reveal hidden" id="rad-reveal"><div class="rad-card">
-    <canvas id="rad-big" class="stage radiant" width="220" height="190"></canvas>
-    <h3 id="rad-name"></h3><p id="rad-note" class="sub"></p>
-    <button class="btn gold" id="rad-ok" type="button">Great!</button>
-  </div></div>`;
+  </div>`;
     document.body.appendChild(sec);
     $('rad-back').onclick = close;
     $('rad-auto').onclick = auto;
@@ -318,7 +316,6 @@ G.Radiant = (() => {
     $('rad-q').oninput = grid;
     $('rad-warn').onchange = e => { G.Settings.set('radWarn', e.target.checked); confirming = false; render(); };
     $('rad-go').onclick = go;
-    $('rad-ok').onclick = () => { $('rad-reveal').classList.add('hidden'); render(); };
     // Que lo escrito en el buscador no mueva nada ni abra menús.
     sec.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') e.stopPropagation(); });
   }
@@ -421,24 +418,41 @@ G.Radiant = (() => {
     chosen.clear(); confirming = false; rolling = true;
     G.UI.refreshCoins();
     render();
-    // Unos cuantos al azar y luego el que ha salido.
-    const all = pool(), big = $('rad-big');
-    $('rad-reveal').classList.remove('hidden');
-    $('rad-ok').classList.add('hidden');
-    $('rad-name').textContent = '…'; $('rad-note').textContent = '';
-    let n = 0;
-    const spin = () => {
-      const d = n < 9 ? all[Math.floor(Math.random() * all.length)] : res.dex;
-      G.UI.sprite(big, d, { scale: 3, hero: true, radiant: true, silhouette: n < 9 });
-      G.Audio.sfx(n < 9 ? 'click' : 'legend');
-      if (n++ < 9) { setTimeout(spin, 110 + n * 25); return; }
+    reveal(res);
+  }
+
+  // La tirada, igual que la de 1 ticket del gacha (#pull-fx y js/ui/slots.js, como en
+  // js/ui/gacha-ui.js): los rodillos paran en la bola de la rareza del radiante (tier, la misma
+  // G.Icons.RARITY_BALL del gacha) y luego sale su carta. Saltar y Continuar son los del gacha.
+  async function reveal(res) {
+    const fx = $('pull-fx'), out = $('pull-results'), ok = $('pull-close'), skipBtn = $('pull-skip');
+    const r = tier(res.dex), gachaClose = ok.onclick;
+    out.innerHTML = '';
+    ok.classList.add('hidden');
+    $('slot-wrap').style.display = '';
+    fx.classList.remove('hidden');
+    skipBtn.classList.remove('hidden');
+    await G.Slots.play($('slot'), [{ dex: res.dex, rarity: r, shiny: false }]);
+    G.Audio.sfx('burst', { rarity: r });
+    $('slot-wrap').style.display = 'none';
+    const c = document.createElement('div');
+    c.className = 'pcard r' + r + ' radiant';
+    c.id = 'rad-card';
+    c.style.setProperty('--rc', COLOR);
+    c.innerHTML = `<div class="stars">${G.UI.stars(r, 24)}</div>`;
+    c.appendChild(G.UI.spriteCanvas(res.dex, 132, 120, { lively: true, scale: 2, radiant: true }));
+    c.insertAdjacentHTML('beforeend', `<b id="rad-name">${icon(12)} Radiant ${esc(G.DEX_BY[res.dex].name)}</b><div class="tag">` +
+      (res.dup ? `Already yours · <span class="coin"></span> +${res.coins}` : '<span class="new">NEW RADIANT!</span>') + '</div>');
+    out.appendChild(c);
+    G.Audio.sfx('reveal', { rarity: r });
+    skipBtn.classList.add('hidden');
+    ok.classList.remove('hidden');
+    ok.onclick = () => {
+      ok.onclick = gachaClose;
+      fx.classList.add('hidden');
       rolling = false;
-      G.UI.sprite(big, res.dex, { lively: true, scale: 3, hero: true, radiant: true });
-      $('rad-name').innerHTML = `${icon(20)} Radiant ${esc(G.DEX_BY[res.dex].name)}`;
-      $('rad-note').textContent = res.dup ? `You already had it: +${res.coins} coins instead.` : 'New! It is now in your collection.';
-      $('rad-ok').classList.remove('hidden');
+      render();
     };
-    spin();
   }
 
   // El botón del menú principal, detrás del Gacha.
@@ -453,5 +467,5 @@ G.Radiant = (() => {
     gacha.after(b);
   });
 
-  return { NEED, DUP_COINS, WEIGHT, key, has, owns, wants, set, pool, tier, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
+  return { NEED, DUP_COINS, WEIGHT, icon, key, has, owns, wants, set, pool, tier, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
 })();

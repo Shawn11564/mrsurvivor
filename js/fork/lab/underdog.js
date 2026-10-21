@@ -7,9 +7,13 @@
  *     k / (1 + k) de lo lleno: no hace falta llevar la cuenta de cada gema.
  *   - Antes de entrar: al pulsar Jugar o Pokémon al azar con el Lab encendido (en solitario), una
  *     escalera por rareza (de qué a qué va el extra en cada una, calculado de G.DEX) con la de
- *     tu Pokémon resaltada y su extra exacto, y el botón para empezar. Se puede quitar
+ *     tu Pokémon resaltada y su extra exacto, y el botón para empezar. Sólo una vez por Pokémon:
+ *     no vuelve hasta que juegas con otro (G.Settings 'underdogSeen' = el último dex que la vio),
+ *     así que varias partidas seguidas con el mismo no la repiten. Se puede quitar del todo
  *     (G.Settings 'underdogLadder', de este aparato). Sólo se arma con esos dos botones, así que
  *     quien llama a G.Game.startRun por su cuenta (pruebas, grupo) no la ve.
+ *   - Siempre, en el botón Jugar del menú (con el Lab encendido): "LAB · Underdog +N% XP" de tu
+ *     compañero (#ud-play), para que se sepa sin la escalera.
  * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-underdog.cjs.
  */
 G.LabUnderdog = (() => {
@@ -94,7 +98,7 @@ G.LabUnderdog = (() => {
       <p class="ud-mine" style="color:${col(mon.rarity)}">${mine > 0
         ? `${mon.name} gets <b>+${pct(mine)}% XP</b>. It shows in gold on your XP bar.`
         : `${mon.name} is strong enough already: no bonus.`}</p>
-      <label class="ud-opt"><input type="checkbox" id="ud-show" checked> Show this before every Lab run</label>
+      <label class="ud-opt"><input type="checkbox" id="ud-show" checked> Show this when I play a different Pokémon</label>
       <div class="row" style="gap:8px;justify-content:flex-end;margin-top:10px">
         <button class="btn ghost" id="ud-back" type="button">Back</button>
         <button class="btn gold" id="ud-go" type="button" data-sfx="confirm">Start run</button>
@@ -120,21 +124,23 @@ G.LabUnderdog = (() => {
 .ud-row .ud-you { grid-column: 1 / -1; color: #ffd23f; font-size: 14px; }
 .ud-row .ud-you b { color: #ffd23f; }
 .ud-mine { margin: 4px 0 0; }
+.ud-play { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #ffd23f; letter-spacing: .2px; }
+.ud-play.hidden { display: none; }
+.ud-play .ud-tag { font-size: 9px; vertical-align: 1px; margin-right: 3px; }
 .ud-opt { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }`;
 
   /** Enseña la escalera para mon; go() empieza la partida. */
   function show(mon, go) {
     let box = $('ud-ladder');
     if (!box) {
-      const st = document.createElement('style');
-      st.textContent = CSS;
-      document.head.appendChild(st);
+      if (!$('ud-css')) { const st = document.createElement('style'); st.id = 'ud-css'; st.textContent = CSS; document.head.appendChild(st); }
       box = document.createElement('div'); box.id = 'ud-ladder'; document.body.appendChild(box);
     }
     box.innerHTML = html(mon);
     box.classList.remove('hidden');
     const close = () => { box.classList.add('hidden'); document.removeEventListener('keydown', key, true); };
-    const start = () => { close(); go(); };
+    // Vista con una partida empezada: hasta que juegues con otro, no vuelve (Atrás no cuenta).
+    const start = () => { close(); G.Settings.set('underdogSeen', mon.dex); go(); };
     const key = e => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
       else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') { e.preventDefault(); e.stopPropagation(); start(); }
@@ -160,11 +166,30 @@ G.LabUnderdog = (() => {
       armed = false;
       if (!was || coop || !G.Settings.get('lab') || !on()) return startRun.apply(this, arguments);
       const mon = G.DEX_BY[pick ? pick.dex : G.DB.save.partner];
-      if (!mon) return startRun.apply(this, arguments);
+      if (!mon || G.Settings.get('underdogSeen') === mon.dex) return startRun.apply(this, arguments);   // ya la vio con este
       const self = this, args = arguments;
       show(mon, () => startRun.apply(self, args));
     };
   });
 
-  return { ladder, range, show };
+  // ---------------- en el botón Jugar ----------------
+
+  /** "LAB · Underdog +N% XP" de tu compañero en el botón Jugar, con el Lab encendido y algo de extra. */
+  function playTag() {
+    const btn = document.querySelector('#scr-menu [data-go=play]');
+    if (!btn) return;
+    let tag = $('ud-play');
+    if (!tag) {
+      if (!$('ud-css')) { const st = document.createElement('style'); st.id = 'ud-css'; st.textContent = CSS; document.head.appendChild(st); }
+      tag = document.createElement('span'); tag.id = 'ud-play'; tag.className = 'ud-play'; btn.appendChild(tag);
+    }
+    const mon = G.DEX_BY[G.DB.save && G.DB.save.partner], u = mon ? k(mon) : 0;
+    tag.classList.toggle('hidden', !G.Settings.get('lab') || u <= 0);
+    tag.innerHTML = `<span class="ud-tag">LAB</span>Underdog +${pct(u)}% XP`;
+    tag.title = mon ? `${mon.name} levels up ${pct(u)}% faster in Lab runs` : '';
+  }
+  const open = G.MenuUI.open;
+  G.MenuUI.open = function () { const r = open.apply(this, arguments); try { playTag(); } catch (e) { /* sin compañero aún */ } return r; };
+
+  return { ladder, range, show, playTag };
 })();

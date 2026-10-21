@@ -71,8 +71,4 @@ p.fork-credit { font-size: 0.9em; }
   color: #ffd6d6; background: rgba(255,95,109,.25); border: 1px solid rgba(255,95,109,.6); }
 .rad-warning { margin-top: 10px; padding: 10px 12px; border-radius: 8px; color: #ffe1e1;
   background: rgba(255,95,109,.14); border: 1px solid rgba(255,95,109,.55); }
-.rad-reveal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle, rgba(255,179,71,.35), rgba(12,17,27,.92)); }
-.rad-reveal.hidden { display: none; }
-.rad-card { text-align: center; padding: 18px 22px; border-radius: 14px; background: #151f30; border: 2px solid #ffb347; max-width: calc(100vw - 32px); }
-.rad-card h3 { color: #ffd08a; margin: 10px 0 2px; }
+.pcard.radiant b { color: #ffd08a; }

@@ -5,7 +5,7 @@ G.MenuUI = (() => {
   let dexGen = 1, dexSel = null;
   // Filtros de la colección (se combinan): tengo / me faltan, rarezas (varias),
   // shiny, favoritos, tipo y búsqueda; y el orden. Duran mientras no recargas.
-  const DEX0 = () => ({ status: 'all', rar: new Set(), shiny: false, fav: false, type: '', q: '', sort: 'num' });
+  const DEX0 = () => ({ status: 'all', rar: new Set(), shiny: false, rad: false, fav: false, type: '', q: '', sort: 'num' });   // fork: rad
   let dexF = DEX0();
   // Fork (MrSurvivor): la generación, los filtros y el orden se guardan en este dispositivo
   // (la búsqueda no). Las pestañas de Ajustes y Misiones, en js/fork/remember.js.
@@ -190,6 +190,7 @@ G.MenuUI = (() => {
     };
     for (const [k, label] of [['all', 'Todos'], ['own', 'Tengo'], ['miss', 'Me faltan']]) chip(label, dexF.status === k, () => { dexF.status = k; });
     chip(G.Icons.html('shiny', 12) + ' Shiny', dexF.shiny, () => { dexF.shiny = !dexF.shiny; });
+    if (G.Radiant) chip(G.Radiant.icon(12) + ' Radiant', dexF.rad, () => { dexF.rad = !dexF.rad; });   // fork: radiantes (js/fork/radiant.js)
     chip(G.Icons.html('star', 12) + ' Favoritos', dexF.fav, () => { dexF.fav = !dexF.fav; });
     for (const r of [5, 4, 3, 2, 1]) {
       chip(G.Icons.rarity(r, 12) + ' ' + G.Gacha.RARITY_NAME[r], dexF.rar.has(r), () => { dexF.rar.has(r) ? dexF.rar.delete(r) : dexF.rar.add(r); });
@@ -241,6 +242,7 @@ G.MenuUI = (() => {
       if (f.status === 'own' && !own) return false;
       if (f.status === 'miss' && own) return false;
       if (f.shiny && !(s.shiny && s.shiny[p.dex])) return false;
+      if (f.rad && !(G.Radiant && G.Radiant.owns(p.dex) && G.Radiant.has(p.dex))) return false;   // fork: los radiantes que tienes
       if (f.fav && !G.DB.isFav(p.dex)) return false;
       if (f.rar.size && !f.rar.has(p.rarity)) return false;
       if (f.type && !(own && p.types.includes(f.type))) return false;
@@ -390,6 +392,7 @@ G.MenuUI = (() => {
       renderGrid(true); showDetail(dex);
     };
     if (G.Radiant) G.Radiant.detail(dex, () => showDetail(dex), () => renderGrid(true));   // fork: radiante
+    if (G.VariantBonus) G.VariantBonus.detail(dex, viewShiny);      // fork: extras del shiny / radiante (js/fork/lab/variant-bonus.js)
   }
 
   // ---------------- mejoras ----------------

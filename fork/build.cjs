@@ -41,13 +41,18 @@ try {
 }
 // The site pages (make_seo_pages.py) translate with the English dictionary export_data.js
 // captured from upstream's files; add the fork's texts the pages show (the evolved stat moves).
-const FORK_TEXTS = ['js/fork/buff-evos.js'];
+const FORK_TEXTS = ['js/fork/buff-evos.js', 'js/fork/evo-names.js'];
 {
   const vm = require('vm'), data = path.join(ROOT, 'tools', 'cache', 'gamedata.json');
   const out = JSON.parse(realRead(data, 'utf8'));
   const G = { I18n: { add(d, language = 'en', context = '') { if (language === 'en' && !context) Object.assign(out.en, d); } } };
   // (A checkout from before a file existed, like fork/test-sync.cjs replays, just skips it.)
   for (const f of FORK_TEXTS) if (fs.existsSync(path.join(ROOT, f))) vm.runInNewContext(realRead(path.join(ROOT, f), 'utf8'), { G }, { filename: f });
+  // Evolutions the fork renames (js/fork/evo-names.js): the pages show the new names too.
+  for (const [id, name] of Object.entries(G.FORK_EVO_NAMES || {})) {
+    const m = (out.moves || []).find(x => x.id === id);
+    if (m && m.evo) m.evo.name = name;
+  }
   fs.writeFileSync(data, JSON.stringify(out));
 }
 execFileSync(process.platform === 'win32' ? 'python' : 'python3', [path.join(ROOT, 'tools', 'make_seo_pages.py')], { stdio: 'inherit', cwd: ROOT });

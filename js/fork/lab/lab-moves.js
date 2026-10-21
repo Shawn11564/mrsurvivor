@@ -28,7 +28,7 @@ G.LabMoves = [
   // ---- leap: te vas y caes sobre el blanco (no te pueden dar mientras) ----
   { id: 'fly', name: 'Fly', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly',
     desc: 'Fly up out of reach, then dive onto the enemy and hit everything where you land.',
-    cd: 2.2, dmg: 34, radius: 70, dur: 0.7, knock: 120, look: { proj: 'wind' }, evo: ['Sky Attack', 'spd'] },
+    cd: 2.2, dmg: 34, radius: 70, dur: 0.7, knock: 120, look: { proj: 'wind' }, evo: ['Dual Wingbeat', 'spd'] },   // not Sky Attack: Moltres's signature
   { id: 'dig', name: 'Dig', type: 'ground', kind: 'leap', cat: 'physical', leap: 'dig',
     desc: 'Burrow underground where nothing can hit you, then burst out under the enemy.',
     cd: 2.3, dmg: 36, radius: 66, dur: 0.75, knock: 120, look: { proj: 'rock' }, evo: ['Drill Run', 'atk'] },
@@ -298,9 +298,10 @@ G.LabMoves = [
   { id: 'spacial-rend', name: 'Spacial Rend', type: 'dragon', kind: 'beam', cat: 'special', sig: { dex: [484] },
     desc: 'Signature: tear the space in front of you apart.',
     cd: 1.1, dmg: 34, radius: 300, width: 44, look: { beam: 'crescent' }, anim: ['SpAttack', 'Shoot'] },
+  // Not a stronger Phantom Force: it chains, reappearing on up to three enemies in turn (kinds.js chainLeap).
   { id: 'shadow-force', name: 'Shadow Force', type: 'ghost', kind: 'leap', cat: 'physical', leap: 'phantom', sig: { dex: [487] },
-    desc: 'Signature: vanish into the shadows and strike from nowhere, very hard.',
-    cd: 1.9, dmg: 41, radius: 84, dur: 0.8, look: { proj: 'shadow' }, anim: ['SpAttack', 'Attack'] },
+    desc: 'Signature: slip into the Distortion World and strike up to three enemies in turn, untouchable throughout.',
+    cd: 2.3, dmg: 34, radius: 72, dur: 0.7, chain: 3, chainR: 260, chainDur: 0.32, look: { proj: 'shadow' }, anim: ['SpAttack', 'Attack'] },
   { id: 'dark-void', name: 'Dark Void', type: 'dark', kind: 'sleep', cat: 'special', sig: { dex: [491] },
     desc: 'Signature: drag a wide area into a world of darkness where everyone sleeps.',
     cd: 2.0, dmg: 16, radius: 96, stun: 3.0, look: { proj: 'shadow' }, anim: ['SpAttack', 'Shoot'] },

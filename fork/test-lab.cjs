@@ -310,18 +310,54 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
       G.EnemyMgr.add(e);
       return e;
     };
-    // A quiet arena: no spawns, events, rifts or weather while these run.
+    // A quiet arena: no spawns, events, rifts or weather while these run. Weather that starts on its
+    // own is cleared (a sandstorm or hail chips HP every 2 s, which once passed for Double-Edge
+    // recoil under Rock Head); weather a move asks for (Rain Dance: debugStart, force) still runs.
+    const W = G.Weather, wxUpdate = W.update, wxStart = W.debugStart, wxForce = W.force;
+    let wxAsked = false, wxSeen = false;
+    W.debugStart = function () { wxAsked = true; wxSeen = false; return wxStart.apply(this, arguments); };
+    W.force = function () { wxAsked = true; wxSeen = false; return wxForce.apply(this, arguments); };
     window.__quiet = on => {
       const k = ['Spawner', 'Events', 'Rift', 'Hazards'];
-      if (on) { window.__q = k.map(n => G[n].update); k.forEach(n => { G[n].update = () => {}; }); }
-      else if (window.__q) { k.forEach((n, i) => { G[n].update = window.__q[i]; }); window.__q = null; }
+      if (on) {
+        W.clear(); wxAsked = false;
+        window.__q = k.map(n => G[n].update); k.forEach(n => { G[n].update = () => {}; });
+        W.update = function () {
+          const r = wxUpdate.apply(this, arguments);
+          if (W.current) { if (!wxAsked) W.clear(); else wxSeen = true; }
+          else if (wxSeen) wxAsked = wxSeen = false;      // the asked-for weather is over
+          return r;
+        };
+      } else if (window.__q) { k.forEach((n, i) => { G[n].update = window.__q[i]; }); window.__q = null; W.update = wxUpdate; }
     };
-    window.__only = id => { const pl = G.Game.player; pl.slots.length = 0; pl.moves.length = 0; pl.maxMoves = 4; G.EnemyMgr.clear(); G.Combat.clearFields(); pl.addMove(id); return pl.moves[0]; };
+    // Open ground (nothing solid within R): the dummies go at fixed distances, and a tree or rock in
+    // between stopped dashes short (Double-Edge "costing no HP" was a Double-Edge that never hit).
+    window.__open = (R = 240) => {
+      const pl = G.Game.player;
+      const ok = (x, y) => { for (let a = 0; a < 6.283; a += 0.4) for (let r = 0; r <= R; r += 16) if (!G.World.isFree(x + Math.cos(a) * r, y + Math.sin(a) * r, pl.r, true)) return false; return true; };
+      if (ok(pl.x, pl.y)) return true;
+      for (let r = 64; r < 6000; r += 64) for (let a = 0; a < 6.283; a += 0.5) {
+        const x = pl.x + Math.cos(a) * r, y = pl.y + Math.sin(a) * r;
+        if (ok(x, y)) { pl.x = x; pl.y = y; return true; }
+      }
+      return false;
+    };
+    window.__only = id => { const pl = G.Game.player; pl.slots.length = 0; pl.moves.length = 0; pl.maxMoves = 4; G.EnemyMgr.clear(); G.Combat.clearFields(); __open(); pl.addMove(id); return pl.moves[0]; };
   });
 
   // ---------------- 7. new move kinds (phase 4, js/fork/lab/kinds.js) ----------------
   console.log('New move kinds');
   await startRun(4);
+  // The quiet arena itself: weather that starts on its own (as a random one does) is cleared.
+  const calm = await page.evaluate(async () => {
+    __quiet(true);
+    G.Weather.onEvent(['wx', 'sand', 60]);                // internal start(), not asked for
+    await new Promise(r => setTimeout(r, 400));
+    const w = G.Weather.current;
+    __quiet(false);
+    return !w;
+  });
+  check(calm, 'test harness: the quiet arena keeps weather that starts on its own out (sandstorm chip damage)');
   const kinds = await page.evaluate(async () => {
     __quiet(true);
     const pl = G.Game.player, out = {};
@@ -488,7 +524,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     if (c) c.apply(pl);
     return { title: c && c.title, name: m.name, k: +(m.dmg / d0).toFixed(2) };
   });
-  check(evoCard.title === 'Fly → Sky Attack' && evoCard.name === 'Sky Attack' && evoCard.k === 1.9, `new kinds evolve too: "${evoCard.title}" (×${evoCard.k} damage)`);
+  // Dual Wingbeat, not Sky Attack (Moltres's signature): js/fork/evo-names.js.
+  check(evoCard.title === 'Fly → Dual Wingbeat' && evoCard.name === 'Dual Wingbeat' && evoCard.k === 1.9, `new kinds evolve too: "${evoCard.title}" (×${evoCard.k} damage)`);
   await endRun(); await toMenu();
 
   // ---------------- 8. signature moves (phase 5) ----------------
@@ -624,15 +661,17 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     await __until(() => pl._labPal, 6000);
     __quiet(true);
     __only('ember'); pl.addMove('flamethrower');
+    // Only a shot fired from now on: one fired before the palette was ready can still be in the air.
+    const older = new Set(G.Projectiles.all());
     __dummy(pl.x + 100, pl.y);
-    await __until(() => G.Projectiles.all().some(p => p.owner === pl), 3000);
-    const proj = G.Projectiles.all().find(p => p.owner === pl);
+    await __until(() => G.Projectiles.all().some(p => p.owner === pl && !older.has(p)), 3000);
+    const proj = G.Projectiles.all().find(p => p.owner === pl && !older.has(p));
     __quiet(false);
     return { pal: pl._labPal, colors: G.VFX.PAL[pl._labPal], looks: pl.moves.map(m => m.look && m.look.pal), proj: proj && proj.vis.pal,
              xp: pl.xpMul, coin: pl.coinMul, rr: pl.rerollBonus };
   });
   check(sh.pal === 'shiny6' && sh.colors && sh.colors.length === 5 && sh.looks.every(p => p === 'shiny6') && sh.proj === 'shiny6',
-    `shiny Charizard: its moves use a palette from its shiny sprite (${sh.colors && sh.colors.join(' ')}), Ember's fireballs included`);
+    `shiny Charizard: its moves use a palette from its shiny sprite (${sh.colors && sh.colors.join(' ')}), Ember's fireballs included`, { looks: sh.looks, proj: sh.proj });
   check(Math.abs(sh.xp / plain.xp - 1.1) < 1e-6 && Math.abs(sh.coin / plain.coin - 1.1) < 1e-6 && sh.rr === plain.rr + 1, 'shiny: +10% XP, +10% coins and one more card reroll');
   if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'lab-shiny-moves.png') }); }
   await endRun(); await toMenu();

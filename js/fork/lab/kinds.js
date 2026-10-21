@@ -163,7 +163,7 @@ G.LabKinds = (() => {
       const dur = m.dur || 0.65;
       pl._labLeap = { t: 0, dur, sx: pl.x, sy: pl.y, tx, ty, style: m.leap || 'fly' };
       if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur + 0.15);
-      fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: tx, y: ty, sx: pl.x, sy: pl.y });
+      fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: tx, y: ty, sx: pl.x, sy: pl.y, left: (m.chain || 1) - 1 });
       const v = G.VFX.forMove(m);
       G.FX.burst(pl.x, pl.y - 4, m.leap === 'dig' ? '#aa7c3c' : m.leap === 'dive' ? '#8ccaff' : col(m), 12, 140);
       for (let i = 0; i < 4; i++) G.FX.sp(v.proj, v.pal, pl.x + G.U.rand(-10, 10), pl.y - 6, { vy: m.leap === 'dig' ? 30 : -120, life: 0.35 });
@@ -186,8 +186,26 @@ G.LabKinds = (() => {
       blast(pl, m, x, y, m.radius, m.dmg * pl.atkFor(m), m.knock || 120);
       if (m.stun) for (const e of G.EnemyMgr.queryCircle(x, y, m.radius)) if (!e.dead) e.applyStun(m.stun * (boss(e) ? 0.35 : 1));
       G.Camera.kick(0.3);
+      if (f.left > 0) chainLeap(pl, f, x, y);
     }
     return true;
+  }
+  // chain (Shadow Force): after a strike, it vanishes again and reappears on the nearest enemy it
+  // hasn't hit yet (within chainR), up to `chain` strikes in all, untouchable the whole time.
+  function chainLeap(pl, f, x, y) {
+    const m = f.m, done = f.done || new Set();
+    for (const e of G.EnemyMgr.queryCircle(x, y, m.radius)) done.add(e);
+    let next = null, best = Infinity;
+    for (const e of G.EnemyMgr.queryCircle(x, y, m.chainR || 240)) {
+      const d = G.U.dist(x, y, e.x, e.y);
+      if (!e.dead && !done.has(e) && d < best) { best = d; next = e; }
+    }
+    if (!next) return;
+    const [tx, ty] = freeTo(pl, x, y, next.x, next.y), dur = m.chainDur || 0.32;
+    pl._labLeap = { t: 0, dur, sx: x, sy: y, tx, ty, style: m.leap || 'fly' };
+    pl.invuln = Math.max(pl.invuln || 0, dur + 0.15);
+    fields.push({ kind: 'leap', owner: pl, ghost: false, m, t: 0, dur, x: tx, y: ty, sx: x, sy: y, left: f.left - 1, done });
+    G.FX.burst(x, y - 4, col(m), 10, 120);
   }
 
   // ---------------- recoil ----------------

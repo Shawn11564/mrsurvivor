@@ -137,7 +137,8 @@ G.LabGrowth = (() => {
 
   // ---------------- experiencia de los flojos ----------------
   /** + de experiencia según sus stats base (Caterpie +60 %, Charmander +39 %, Charizard nada). */
-  const underdogK = mon => G.U.clamp((UNDERDOG_REF - (mon.bst || UNDERDOG_REF)) / UNDERDOG_REF * UNDERDOG_K, 0, UNDERDOG_MAX);
+  // Épicos y legendarios nunca (aunque alguno tenga stats bajos, como Cosmog): son los raros del gacha.
+  const underdogK = mon => (mon.rarity || 1) >= 4 ? 0 : G.U.clamp((UNDERDOG_REF - (mon.bst || UNDERDOG_REF)) / UNDERDOG_REF * UNDERDOG_K, 0, UNDERDOG_MAX);
   function underdog(p, was = 0) {
     const k = underdogK(p.mon);
     p.xpMul *= (1 + k) / (1 + was);

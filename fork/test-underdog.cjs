@@ -11,8 +11,11 @@
 //      fill, with "Underdog Bonus +39%" under it.
 //   3. Charizard: the ladder says no bonus, and the bar has no gold and no text.
 //   4. Random Pokémon shows the ladder for the Pokémon it picked.
-//   5. No ladder: with Lab off, with "Show this before every Lab run" unticked, or when
+//   5. No ladder: with Lab off, with "Show this when I play a different Pokémon" unticked, or when
 //      G.Game.startRun is called directly (tests, co-op).
+//   6. Once per Pokémon: runs back to back with the same one don't show it again; another
+//      partner does. The Play button always says "LAB · Underdog +N% XP" (not with Lab off or
+//      for a Pokémon with no bonus).
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 
@@ -65,6 +68,9 @@ const inRun = page => page.evaluate(() => !!(G.Game.player && G.Game.state !== '
   const pct = x => Math.round(x * 100);
   const expect = b => b[1] <= 0 ? 'no bonus' : b[0] <= 0 ? `up to +${pct(b[1])}%` : `+${pct(b[0])}% to +${pct(b[1])}%`;
   check(lad.rows.every((r, i) => r.range === expect(lad.want[5 - i])), 'each row\'s range is what the formula gives', lad.rows.map(r => r.range));
+  check(lad.rows[0].range === 'no bonus' && lad.rows[1].range === 'no bonus', 'Legendary and Epic: no bonus (even weak ones)', lad.rows.slice(0, 2).map(r => r.range));
+  check(await page.evaluate(() => G.DEX.filter(m => m.rarity >= 4).every(m => G.LabGrowth.underdogK(m) === 0) && G.LabGrowth.underdogK(G.DEX_BY[789] || { rarity: 5, bst: 200 }) === 0),
+    'no Epic or Legendary gets underdog XP (Cosmog, base stats 200, included)');
   const me = lad.rows.filter(r => r.me);
   check(me.length === 1 && me[0].name === 'Common' && me[0].you.includes('Charmander') && me[0].you.includes(`+${pct(lad.k)}% XP`),
     `Charmander's rarity (Common) is highlighted with its +${pct(lad.k)}%`, me);
@@ -138,10 +144,38 @@ const inRun = page => page.evaluate(() => !!(G.Game.player && G.Game.state !== '
   await page.waitForSelector('#ud-ladder:not(.hidden)');
   await page.uncheck('#ud-show');
   await page.click('#ud-back');
-  check(await page.evaluate(() => G.Settings.get('underdogLadder') === false), 'unticking "Show this before every Lab run" is kept');
+  check(await page.evaluate(() => G.Settings.get('underdogLadder') === false), 'unticking "Show this when I play a different Pokémon" is kept');
   await page.click('#scr-menu [data-go=play]');
   await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
   check(await page.isHidden('#ud-ladder'), 'then Play goes straight in');
+  await page.close();
+  console.log('Once per Pokémon, and the Play button');
+  ({ page, errs } = await menu(browser));
+  const tag = () => page.evaluate(() => { const t = document.getElementById('ud-play'); return t && !t.classList.contains('hidden') ? t.textContent : null; });
+  const want = await page.evaluate(() => 'LABUnderdog +' + Math.round(G.LabGrowth.underdogK(G.DEX_BY[4]) * 100) + '% XP');
+  check(await tag() === want, `the Play button says it (${want})`, await tag());
+  const back = () => page.evaluate(() => { G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.MenuUI.open(); });
+  await page.click('#scr-menu [data-go=play]');
+  await page.waitForSelector('#ud-ladder:not(.hidden)');
+  await page.click('#ud-go');
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await back();
+  await page.click('#scr-menu [data-go=play]');
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  check(await page.isHidden('#ud-ladder'), 'the next run with the same Pokémon: no ladder');
+  await back();
+  check(await tag() === want, 'the Play button still says it');
+  await page.evaluate(() => { G.DB.save.partner = 10; G.DB.commit(); G.MenuUI.open(); });
+  const cat = await page.evaluate(() => 'LABUnderdog +' + Math.round(G.LabGrowth.underdogK(G.DEX_BY[10]) * 100) + '% XP');
+  check(await tag() === cat, 'a new partner: its own bonus on the button', await tag());
+  await page.click('#scr-menu [data-go=play]');
+  check(await page.waitForSelector('#ud-ladder:not(.hidden)', { timeout: 5000 }).then(() => true, () => false), 'and the ladder shows again for it');
+  await page.click('#ud-back');
+  await page.evaluate(() => { G.DB.save.partner = 6; G.DB.commit(); G.MenuUI.open(); });
+  check(await tag() === null, 'Charizard (no bonus): no tag');
+  await page.evaluate(() => { G.DB.save.partner = 4; G.Settings.set('lab', false); G.DB.commit(); G.MenuUI.open(); });
+  check(await tag() === null, 'Lab off: no tag');
+  check(!errs.length, 'no page errors', errs);
   await page.close();
   ({ page, errs } = await menu(browser));
   await page.evaluate(() => G.Game.startRun());

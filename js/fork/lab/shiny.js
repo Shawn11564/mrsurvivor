@@ -11,15 +11,17 @@
  *     (el rojo no se parte entre 355° y 5°). Charizard shiny tira llamas rojizas (sus alas);
  *     Gyarados shiny, agua roja; Metagross shiny, dorada. Si apenas cambia de color (o la hoja no se
  *     puede leer), sus ataques se quedan como siempre.
- *   - los RADIANTES (js/fork/radiant.js), igual con su hoja r/Idle ('radiant{dex}'), sin los extras
- *     del shiny; y mientras juegas con el radiante no cuentas como shiny.
- *   - pequeños extras que no tocan el ranking (no hay ranking en el Lab): +10 % de experiencia,
- *     +10 % de monedas y un cambio de cartas más (BONUS).
+ *   - los RADIANTES (js/fork/radiant.js), igual con su hoja r/Idle ('radiant{dex}'); mientras juegas
+ *     con el radiante no cuentas como shiny, y sus extras son mayores que los del shiny (RBONUS).
+ *   - pequeños extras que no tocan el ranking (no hay ranking en el Lab): el shiny +10 % de
+ *     experiencia, +10 % de monedas y un cambio de cartas más (BONUS); el radiante +20 %, +20 % y
+ *     dos cambios más (RBONUS). La ficha de la colección los enseña (js/fork/lab/variant-bonus.js).
  * Cooperativo: el fantasma de un compañero shiny (Combat.ghostCast) también sale con su paleta.
  * Prueba: fork/test-lab.cjs.
  */
 G.LabShiny = (() => {
-  const BONUS = { xp: 0.1, coins: 0.1, rerolls: 1 };
+  const BONUS = { xp: 0.1, coins: 0.1, rerolls: 1 };      // shiny
+  const RBONUS = { xp: 0.2, coins: 0.2, rerolls: 2 };     // radiante: siempre más que el shiny
   const W_BASE = 0.05, GREY = 0.06;          // el voto de cada píxel: W_BASE + croma²; por debajo de GREY, gris
   const pals = {};                         // 'shiny6' / 'radiant6' -> esa clave | null (no se distingue) ; sin calcular: undefined
 
@@ -118,9 +120,10 @@ G.LabShiny = (() => {
 
   function start(p) {
     p._labPal = null;
-    // Con su radiante: sus colores, sin los extras del shiny (y deja de contar como shiny).
+    // Con su radiante: sus colores y sus extras (RBONUS, no los del shiny; deja de contar como shiny).
     if (G.Radiant && G.Radiant.wants(p.dex)) {
       p.shiny = false; p._labRadiant = true;
+      p.xpMul *= 1 + RBONUS.xp; p.coinMul *= 1 + RBONUS.coins; p.rerollBonus = (p.rerollBonus || 0) + RBONUS.rerolls;
       G.Sprites.preload([p.dex], 8000, false);         // la normal, para compararla
       return;
     }
@@ -142,7 +145,7 @@ G.LabShiny = (() => {
   }, 300);
 
   G.Lab.pauseLine(p => p._labShiny ? 'Shiny: +10% XP, +10% coins and one more card reroll' + (p._labPal ? '; its moves take its shiny colours.' : '.')
-    : p._labRadiant && p._labPal ? 'Radiant: its moves take its radiant colours.' : '');
+    : p._labRadiant ? 'Radiant: +20% XP, +20% coins and two more card rerolls' + (p._labPal ? '; its moves take its radiant colours.' : '.') : '');
 
-  return { start, paletteOf, paletteFrom, BONUS };
+  return { start, paletteOf, paletteFrom, BONUS, RBONUS };
 })();
