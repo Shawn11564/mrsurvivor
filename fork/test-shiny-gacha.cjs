@@ -11,7 +11,8 @@
 //      remembered after a reload; choosing it as partner keeps that choice.
 //   2. Getting your partner's shiny (as the gacha does: straight into save.shiny) switches you
 //      to it at the menu; a partner you already played in Normal stays Normal.
-//   3. Gacha: Legendary 0.15 % (odds screen and 200 000 real pulls), pity at 220.
+//   3. Gacha: Legendary 0.15 % (odds screen and 200 000 real pulls), soft pity from pull 180
+//      (+2 points a pull), pity at 220.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -99,7 +100,22 @@ const detail = async (page, dex) => {
     check(g.leg === 0.15 && Math.abs(g.total - 100) < 1e-9 && g.pity === 220, 'Legendary 0.15 %, rates add to 100 %, pity 220', g);
     await page.evaluate(() => G.GachaUI && G.GachaUI.open ? G.GachaUI.open() : document.querySelector('#scr-menu [data-go="gacha"]').click());
     const txt = await page.textContent('#gacha-rates');
-    check(/0[.,]15\s*%/.test(txt) && /220/.test(txt), 'the odds screen says 0.15 % and 220', txt.replace(/\s+/g, ' ').slice(0, 160));
+    check(/0[.,]15\s*%/.test(txt) && /220/.test(txt) && /180/.test(txt), 'the odds screen says 0.15 %, 180 and 220', txt.replace(/\s+/g, ' ').slice(0, 160));
+    const soft = await page.evaluate(() => [1, 179, 180, 181, 200, 219, 220].map(k => +G.Gacha.legendRate(k).toFixed(2)));
+    check(JSON.stringify(soft) === JSON.stringify([0.15, 0.15, 2.15, 4.15, 42.15, 80.15, 100]), 'soft pity: 0.15 % up to pull 179, then +2 points a pull, 100 % at 220', soft);
+    const at200 = await page.evaluate(() => {   // pull 200 on its own, many times: 42.15 % Legendary, the rest still adds up
+      let leg = 0, epic = 0; const N = 20000;
+      for (let i = 0; i < N; i++) {
+        const s = JSON.parse(JSON.stringify(G.DB.save)); s.tickets = { t1: 1, t10: 0 }; s.pity = { 1: 199 };
+        const r = G.Gacha.pull(s, 1, 1)[0].rarity; if (r === 5) leg++; if (r === 4) epic++;
+      }
+      return { leg: leg / N * 100, epic: epic / N * 100 };
+    });
+    // Epic shares what's left: 6.5 × (100 − 42.15) / 99.85 ≈ 3.77 %.
+    check(at200.leg > 40.5 && at200.leg < 43.8 && at200.epic > 3.2 && at200.epic < 4.4, 'pull 200 without one: Legendary about 42 %, Epic shrinks in proportion', at200);
+    await page.evaluate(() => { G.DB.save.pity = { 1: 199 }; G.GachaUI.open(); });
+    const pityTxt = await page.textContent('#gacha-pity');
+    check(/199 \/ 220/.test(pityTxt) && /42[.,]15\s*%/.test(pityTxt), "the pity line shows the next pull's Legendary chance", pityTxt);
     const sim = await page.evaluate(() => {
       const s = JSON.parse(JSON.stringify(G.DB.save)); s.tickets = { t1: 1e9, t10: 0 }; s.pity = {};
       let leg = 0, n = 0, maxRun = 0, run = 0, firstPity = null;
@@ -109,8 +125,10 @@ const detail = async (page, dex) => {
       }
       return { n, leg, rate: leg / n * 100, maxRun };
     });
-    // 0.15 % a pull, capped at 220 by pity (1/187 ≈ 0.53 %), plus the ×10's guaranteed Epic+ roll (≈ +0.02 %).
-    check(sim.n >= 200000 && sim.rate > 0.45 && sim.rate < 0.65, '200 000 pulls: Legendary about 0.55 % overall (0.15 % a pull + pity)', sim);
+    // 0.15 % a pull with the soft pity from 180 and the hard one at 220 is 1/163.6 ≈ 0.61 %; the ×10's guaranteed
+    // Epic+ roll (Legendary 0.15/6.65 of it, when the first 9 had none) brings it to ≈ 0.674 % (a Python model of
+    // this code, 4 M pulls). One run of 200 000 varies by ±0.018 %: the bounds are about 5 of those.
+    check(sim.n >= 200000 && sim.rate > 0.58 && sim.rate < 0.77, '200 000 pulls: Legendary about 0.67 % overall (0.15 % a pull + soft and hard pity + the ×10 guarantee)', sim);
     check(sim.maxRun <= 221, 'never more than 220 pulls in a row without one', sim.maxRun);
     const p = await page.evaluate(() => {
       const s = JSON.parse(JSON.stringify(G.DB.save)); s.tickets = { t1: 10, t10: 0 }; s.pity = { 1: 219 };

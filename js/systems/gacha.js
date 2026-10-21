@@ -2,10 +2,11 @@
  * Lógica pura: no toca la interfaz. La pantalla está en ui/gacha-ui.js.
  *
  * 9 banners (Kanto ... Paldea). Cada uno con su propio pity.
- * Probabilidades por tirada:  1★ 45% · 2★ 30% · 3★ 17% · 4★ 6.5% · 5★ 1.5%
+ * Probabilidades por tirada:  1★ 46.35% · 2★ 30% · 3★ 17% · 4★ 6.5% · 5★ 0.15% (fork)
  * Garantías:
  *   - la tirada ×10 trae al menos un 4★ o superior
- *   - a las 70 tiradas sin 5★ en ese banner, el siguiente es 5★ seguro
+ *   - desde la tirada 180 sin 5★ en ese banner, el 5★ sube 2 puntos por tirada (fork)
+ *   - a las 220 tiradas sin 5★ en ese banner, el siguiente es 5★ seguro (fork; era 70)
  * Shiny: 1 de cada 100 tiradas sale en su versión shiny.
  * Repetidos: se convierten en Pokémonedas (los shiny repetidos, el triple).
  *
@@ -24,6 +25,14 @@ G.Gacha = (() => {
   // Fork (MrSurvivor): Legendaria al 0,15 % (era 1,5 %; lo que sobra va a Común) y pity a 220 (era 70).
   const RATES = [[1, 46.35], [2, 30], [3, 17], [4, 6.5], [5, 0.15]];
   const PITY_5 = 220;
+  // Fork: pity blando. Desde la tirada 180 sin Legendaria, su probabilidad sube 2 puntos por
+  // tirada (lo que gana sale de las demás rarezas, en proporción); la 220 es segura.
+  const SOFT_PITY = 180, SOFT_STEP = 2;
+  /** % de Legendaria en la tirada número k sin ella en ese banner. */
+  function legendRate(k) {
+    if (k >= PITY_5) return 100;
+    return Math.min(100, RATES[4][1] + Math.max(0, k - SOFT_PITY + 1) * SOFT_STEP);
+  }
   const SHINY_RATE = 1 / 100;
   const REFUND = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 };
   let forceShiny = 0;           // para pruebas y vídeos: las N próximas salen shiny
@@ -59,8 +68,9 @@ G.Gacha = (() => {
     return { rarity, list: G.DEX.filter(p => inBanner(p, gen)) };
   }
 
-  function rollRarity(min = 1) {
-    const rates = RATES.filter(([r]) => r >= min);
+  function rollRarity(min = 1, leg = RATES[4][1]) {
+    const rest = (100 - leg) / (100 - RATES[4][1]);
+    const rates = RATES.filter(([r]) => r >= min).map(([r, w]) => [r, r === 5 ? leg : w * rest]);
     const total = rates.reduce((a, [, w]) => a + w, 0);
     let x = Math.random() * total;
     for (const [r, w] of rates) { x -= w; if (x <= 0) return r; }
@@ -91,9 +101,10 @@ G.Gacha = (() => {
     for (let i = 0; i < n; i++) {
       save.pity[gen]++;
       let want;
-      if (save.pity[gen] >= PITY_5) want = 5;
-      else if (n === 10 && i === n - 1 && !out.some(r => r.rarity >= 4)) want = rollRarity(4);
-      else want = rollRarity();
+      const leg = legendRate(save.pity[gen]);
+      if (leg >= 100) want = 5;
+      else if (n === 10 && i === n - 1 && !out.some(r => r.rarity >= 4)) want = rollRarity(4, leg);
+      else want = rollRarity(1, leg);
 
       const { rarity, list } = poolNear(want, gen);
       if (rarity === 5) save.pity[gen] = 0;
@@ -126,6 +137,6 @@ G.Gacha = (() => {
   }
 
   return { debugForceShiny(n = 1) { forceShiny = n; },
-           costOf, RATES, PITY_5, SHINY_RATE, REFUND, RARITY_NAME, RARITY_COLOR, BANNERS,
+           costOf, RATES, PITY_5, SOFT_PITY, SOFT_STEP, legendRate, SHINY_RATE, REFUND, RARITY_NAME, RARITY_COLOR, BANNERS,
            pool, featured, pull };
 })();

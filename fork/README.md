@@ -94,7 +94,9 @@ the updater (except a forced version) and still warns before logging out.
 `node fork/test-shiny-gacha.cjs` (server + Firebase emulator) checks shiny by default: a Pokémon
 you have the shiny of shows and plays shiny unless you picked Normal for it, which the save keeps
 (`save.shinyOff`, `js/fork/shiny-pref.js`, used by `js/ui/menu.js`), and the gacha: Legendary
-0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
+0.15 % a pull, soft pity from pull 180 (+2 percentage points a pull, taken from the other rarities in
+proportion; `SOFT_PITY`/`SOFT_STEP`/`legendRate`) and pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`;
+the odds screen's lines, `js/ui/gacha-ui.js`, are translated in `js/fork/gacha-text.js`).
 
 `node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type, rarity and
 "mega"; each Pokémon's rarity (the game's colours); the .zip's names and bytes (`0006_charizard/`, with and without its Mega, Bulbasaur) and its README; every species'
