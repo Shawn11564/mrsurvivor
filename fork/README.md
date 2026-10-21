@@ -257,6 +257,14 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+`node fork/test-death-cause.cjs` (server; co-op part with the Firebase emulator) checks what knocked
+you out (`js/fork/death-cause.js`): `Player.hurt` doesn't know who hits, so hooks just before each hit
+say it (`Enemy.strike` for a touch, `Enemy.shoot` marks its shots, `Enemy.hazard` its area attacks,
+also in the host's 'hz' message to guests, `G.Interact.trapEffect`, Arceus's Judgment). Three runs
+ended by a touch, a shot and an area attack: the popup ("Knocked out by X (contact)") and the
+game-over screen's "What knocked you out" with the last hits; and a co-op guest knocked out by the
+host's boss.
+
 `node fork/test-slow-look.cjs` (server; co-op part with the Firebase emulator) checks Mist Ball's
 40 % slow for 2 s (`js/fork/slow-look.js`: a `slowDur` field, passed to `applySlow` through
 `G.RunStats.tag`, and to the host as the optional 5th field of `G.Coop.status` in `js/net/coop.js`),
