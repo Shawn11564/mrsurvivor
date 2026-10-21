@@ -735,7 +735,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   };
   const mgG = await megaCell('Gengar'), mgC = await megaCell('Charmander');
   await page.fill('#dex-q', '');
-  check(chipTxt === 'Mega' && mgG.badge === 1 && mgG.hint === 'Can Mega Evolve in Lab mode: from minute 5 on, each rift legendary you beat with it has a 1 in 30 chance to drop its Mega Stone.',
+  check(chipTxt === 'Mega' && mgG.badge === 1 && mgG.hint === 'Can Mega Evolve: from minute 5 on, each rift legendary you beat with it has a 1 in 30 chance to drop its Mega Stone.',
     `Lab on: can Mega Evolve chip on the partner ("${chipTxt}"), stone on Gengar's cell, detail says "${mgG.hint}"`);
   check(mgC.badge === 0 && !mgC.hint, 'nothing of the kind on Charmander (no Mega)');
   await page.evaluate(p => { G.DB.save.partner = p; }, prevPartner);
