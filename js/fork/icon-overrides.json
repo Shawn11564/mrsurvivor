@@ -1,1 +1,30 @@
-{}
+{
+  "lb-g": {
+    "file": "assets/icons/code/lb-g.png",
+    "v": "f29a2d4f3d",
+    "w": 18,
+    "h": 18,
+    "own": true
+  },
+  "lb-m": {
+    "file": "assets/icons/code/lb-m.png",
+    "v": "bc6ccb6752",
+    "w": 18,
+    "h": 18,
+    "own": true
+  },
+  "lb-r": {
+    "file": "assets/icons/code/lb-r.png",
+    "v": "121d328069",
+    "w": 18,
+    "h": 18,
+    "own": true
+  },
+  "lb-y": {
+    "file": "assets/icons/code/lb-y.png",
+    "v": "8d8bc83739",
+    "w": 18,
+    "h": 18,
+    "own": true
+  }
+}
