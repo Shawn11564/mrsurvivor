@@ -522,6 +522,7 @@ G.HUD = (() => {
         // tipo (en su color) y categoría
         y += 18;
         at(o => {
+          if (G.LabBadges && G.LabBadges.tipLine(ctx, m, pl, TIP_PAD, o, inner)) return;   // fork: js/fork/lab/badges.js
           const tn = G.T(G.U.TYPE_NAME[m.type]);
           ctx.font = F(800, 10);
           const tw = raw(ctx, 'measureText', tn).width + 12;
