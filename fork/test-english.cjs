@@ -293,6 +293,22 @@ async function game() {
       await page.evaluate(() => document.querySelector('#test-a .answer').click()); await page.waitForTimeout(60);
     }
     await shot(); await collect('test result');
+    // Every personality trait, as the result screen (capitalised) and the starter list (lower case) show
+    // it, through the page's own translation pass. The walk above can't flag these: a Spanish word in
+    // no dictionary isn't 'translatable', and SPANISH doesn't list them. js/fork/trait-names.js.
+    const traits = await page.evaluate(async () => {
+      const ts = [...new Set(G.STARTERS.flatMap(s => s.traits))], el = document.getElementById('res-trait'), info = document.getElementById('starter-info');
+      const out = [];
+      for (const t of ts) {
+        el.textContent = t.charAt(0).toUpperCase() + t.slice(1); info.textContent = t + ', ' + t;
+        await new Promise(r => setTimeout(r, 30));
+        out.push([t, el.textContent, info.textContent]);
+      }
+      return out;
+    });
+    const EN_TRAITS = ['brave', 'impulsive', 'careful', 'loyal', 'patient', 'kind', 'shy', 'mischievous', 'serene', 'clever', 'cheerful', 'determined', 'proud', 'lone wolf', 'laid-back', 'chaotic'];
+    const badTraits = traits.filter(([, cap, low]) => !EN_TRAITS.some(e => cap === e.charAt(0).toUpperCase() + e.slice(1) && low === e + ', ' + e));
+    check(traits.length === 16 && !badTraits.length, 'all 16 personality traits show in English (result screen and starter list)', badTraits.length ? badTraits : undefined);
     await page.evaluate(() => document.getElementById('res-other').click()); await shot(); await collect('starters');
     await page.evaluate(() => { G.UI.chrome(true); G.Flow.goMenu(); });
     await page.evaluate(() => document.querySelector('[data-legal]').click()); await shot(); await collect('legal');
