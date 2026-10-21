@@ -28,7 +28,6 @@
  * Cooperativo (estrella, como coop.js): cada uno ejecuta sus ataques y los demás los ven como
  * fantasma. Lo que les pasa a los enemigos lo decide el anfitrión:
  *   invitado → anfitrión  { k:'labst', id, s:'z'|'c', v }   dormir / confundir a un enemigo suyo
- *                         { k:'labwx', w, d }               un clima (el anfitrión lo reparte, 'wx')
  *   anfitrión → todos     { k:'labes', z:[ids], c:[ids] }   quién duerme y quién está confuso
  * La ola y el remolino arrastran en el anfitrión también con el fantasma de un invitado.
  * Textos sólo en inglés (fork/LAB.md). Prueba: fork/test-lab.cjs y fork/test-lab-coop.cjs.
@@ -305,24 +304,49 @@ G.LabKinds = (() => {
   };
 
   // ---------------- weather ----------------
-  const WX = ['rain', 'sun', 'sand', 'snow'];
-  function setWeather(kind, dur) {
-    if (!WX.includes(kind) || G.Rift.inArena || G.Judgment.active) return false;
-    const c = G.Weather.current;
-    if (c && c.kind === kind && c.left > 4) return false;
-    G.Weather.debugStart(kind, dur);                    // en el anfitrión también lo manda ('wx')
-    return true;
-  }
+  // Danza Lluvia, Día Soleado, Tormenta Arena, Paisaje Nevado: antes traían el clima de verdad (el
+  // evento de la arena, 16 s cada 22 s, para todos): casi siempre puesto y demasiado fuerte. Ahora
+  // un rato de su clima a tu alrededor (`wxzone`, te sigue): la lluvia y el sol potencian el Agua y
+  // el Fuego que se usan dentro (×1,3, como los campos), la arena desgasta a los enemigos de dentro
+  // y la nieve los frena. El clima de la arena sigue siendo sólo el que sale al azar.
+  const WXZ = {
+    rain: { boost: 'water', color: '#4fa8ff' },
+    sun:  { boost: 'fire', color: '#ffb43d' },
+    sand: { chip: true, color: '#d8b46a' },
+    snow: { slow: true, color: '#cfefff' }
+  };
   X.weather = {
     target: false, reach: m => 999,
     run(pl, m, ghost) {
-      G.FX.ring(pl.x, pl.y, pl.r, pl.r * 5, col(m), 0.5, 4);
-      if (ghost) return;
-      const dur = Math.round(m.dur || 16);
-      if (G.Coop.active && !G.Coop.isHost) G.Net.toHost({ k: 'labwx', w: m.wx, d: dur });
-      else if (!setWeather(m.wx, dur)) m.t = 1;          // ya lo hay: se vuelve a mirar en 1 s
+      if (!WXZ[m.wx]) return;
+      for (const f of fields) if (f.kind === 'wxzone' && f.owner === pl && f.m.id === m.id) f.gone = true;
+      const r = m.radius || 130;
+      fields.push({ kind: 'wxzone', owner: pl, ghost, m, t: 0, life: m.dur || 4, x: pl.x, y: pl.y, r, wx: m.wx, tick: 0 });
+      G.FX.ring(pl.x, pl.y, 8, r, WXZ[m.wx].color, 0.5, 4);
     }
   };
+  /** Las zonas de clima en las que está (x, y) (las tuyas y las de tus compañeros). */
+  const wxAt = (x, y) => fields.filter(f => f.kind === 'wxzone' && !f.gone && ((x - f.x) / f.r) ** 2 + ((y - f.y) / (f.r * 0.62)) ** 2 <= 1);
+  function tickWx(f, dt) {
+    if (f.owner.dead) return true;
+    f.x = f.owner.x; f.y = f.owner.y;                     // te sigue
+    const z = WXZ[f.wx];
+    if (G.Camera.sees(f.x, f.y, f.r) && Math.random() < dt * 14) {
+      const a = Math.random() * 6.2832, rr = Math.random() * f.r, x = f.x + Math.cos(a) * rr, y = f.y + Math.sin(a) * rr * 0.6;
+      if (f.wx === 'rain') G.FX.sp('drop', 'water', x, y - 40, { vy: 160, life: 0.25, angle: Math.PI / 2 });
+      else if (f.wx === 'snow') G.FX.px(x, y - 30, '#ffffff', { vy: 30, life: 0.9 });
+      else if (f.wx === 'sand') G.FX.px(x, y - 6, z.color, { vx: 70, vy: -6, life: 0.6 });
+      else G.FX.px(x, y, z.color, { vy: -26, life: 0.7 });
+    }
+    if ((f.tick -= dt) > 0 || f.ghost) return false;
+    f.tick = 0.5;
+    for (const e of G.EnemyMgr.queryCircle(f.x, f.y, f.r)) {
+      if (e.dead) continue;
+      if (z.chip) C.hit(f.owner, e, (f.m.dmg || 6) * f.owner.atkFor(f.m), z.color, e.x - f.x, e.y - f.y, 0, f.m);
+      if (z.slow) e.applySlow(f.m.slow || 0.35, 0.6);
+    }
+    return false;
+  }
 
   // ---------------- terrain ----------------
   const TERRAIN = {
@@ -556,7 +580,8 @@ G.LabKinds = (() => {
   P.atkFor = function (m) {
     const k = atkFor.call(this, m);
     if (!m || !fields.length) return k;
-    return terrainsAt(this.x, this.y).some(f => TERRAIN[f.terr].boost === m.type) ? k * 1.3 : k;
+    return terrainsAt(this.x, this.y).some(f => TERRAIN[f.terr].boost === m.type)
+      || wxAt(this.x, this.y).some(f => WXZ[f.wx].boost === m.type) ? k * 1.3 : k;
   };
   // Al tocarte con un escudo puesto: Barrera Espinosa daña, Búnker envenena, Escudo Real frena.
   const strike = E.strike;
@@ -656,6 +681,7 @@ G.LabKinds = (() => {
       if (!done) {
         if (f.kind === 'leap') done = tickLeap(f, dt);
         else if (f.kind === 'wave') done = tickWave(f, dt);
+        else if (f.kind === 'wxzone') done = tickWx(f, dt);
         else if (f.kind === 'sleepzone' && f.t >= f.delay) {
           G.FX.ring(f.x, f.y, 4, f.r, col(f.m), 0.4, 3);
           const v = G.VFX.forMove(f.m);     // su dibujo: notas para cantar, esporas, sombras...
@@ -683,8 +709,8 @@ G.LabKinds = (() => {
     for (const f of fields) {
       if (!G.Camera.sees(f.x, f.y, (f.r || f.w || 60) + 60) && f.kind !== 'wave') continue;
       ctx.save();
-      if (f.kind === 'terrain') {
-        const a = Math.min(1, (f.life - f.t) * 1.5, f.t * 4), c = TERRAIN[f.terr].color;
+      if (f.kind === 'terrain' || f.kind === 'wxzone') {
+        const a = Math.min(1, (f.life - f.t) * 1.5, f.t * 4), c = f.kind === 'wxzone' ? WXZ[f.wx].color : TERRAIN[f.terr].color;
         ctx.globalAlpha = 0.13 * a; ctx.fillStyle = c;
         ctx.beginPath(); ctx.ellipse(f.x, f.y, f.r, f.r * 0.62, 0, 0, 6.2832); ctx.fill();
         ctx.globalAlpha = 0.5 * a; ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -t * 20;
@@ -752,7 +778,7 @@ G.LabKinds = (() => {
         // Ya viene con lo de los jefes aplicado (en el invitado): aquí se aplica tal cual.
         if (msg.s === 'z') { e.labSleep = Math.max(e.labSleep || 0, v); e.stunT = Math.max(e.stunT || 0, v); e._sleepAt = now(); }
         else if (msg.s === 'c') e.labConf = Math.max(e.labConf || 0, v);
-      } else if (msg.k === 'labwx') setWeather(msg.w, Math.min(60, Math.max(3, +msg.d || 0)));
+      }
     } else if (msg.k === 'labes' && from === G.Net.hostUid) {
       const z = new Set(msg.z || []), c = new Set(msg.c || []);
       for (const e of G.EnemyMgr.all()) {
@@ -764,6 +790,6 @@ G.LabKinds = (() => {
     }
   });
 
-  return { LADDERS, EVO, PASSIVE, TERRAIN, sleep, confuse, terrainsAt, randomMove, setWeather,
+  return { LADDERS, EVO, PASSIVE, TERRAIN, WXZ, sleep, confuse, terrainsAt, wxAt, randomMove,
            get fieldCount() { return fields.length; }, fields: () => fields };
 })();

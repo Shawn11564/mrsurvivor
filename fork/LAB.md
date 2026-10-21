@@ -160,7 +160,7 @@ wrapped for them). The moves are in `lab-moves.js`, with their PokeAPI ids, so l
 | guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter: half damage, then a blast with `mult` × what you took |
 | sleep | Hypnosis, Sing, Sleep Powder, Spore, Yawn | a marked zone; enemies there sleep `stun` s; a hit wakes them (a burn or poison tick doesn't) |
 | (confusion) | Confuse Ray, Supersonic, Teeter Dance, Sweet Kiss | old kinds with `conf`: the enemy staggers, doesn't attack you and hits its neighbours |
-| weather | Rain Dance, Sunny Day, Sandstorm, Snowscape | starts that weather (`G.Weather`) for `dur` s |
+| weather | Rain Dance, Sunny Day, Sandstorm, Snowscape | a zone of that weather around you (`wxzone`, it follows you) for `dur` (4) s every `cd` (14) s: rain / sun ×1.3 to Water / Fire moves used inside, sand chips the enemies inside (`dmg` every 0.5 s), snow slows them. Never the arena's weather (until 2026-10-21 it started `G.Weather` for everyone, 16 s of every 22: nearly always on, too strong) |
 | terrain | Electric, Grassy, Psychic, Misty Terrain | a circle for `dur` s: Electric/Psychic moves ×1.3, healing, or 25% less damage, for anyone inside |
 | wave | Surf, Muddy Water, Sludge Wave | a wide wave that rolls forward, hitting and carrying enemies |
 | metronome | Metronome | a random move from the whole game each cast (co-op sees the same one) |
@@ -171,8 +171,8 @@ or sets the weather would otherwise mean no attacks while it's the active one. A
 only when an enemy or an enemy shot is close, in the active slot too (its own timer, `_gt`; the
 game's own targeting never casts it, since its target can be a rock or a chest).
 
-Co-op: sleep, confusion and weather change what the host owns. A guest sends `{ k:'labst', id,
-s:'z'|'c', v }` and `{ k:'labwx', w, d }` to the host; the host applies them and sends `{ k:'labes',
+Co-op: sleep and confusion change what the host owns. A guest sends `{ k:'labst', id,
+s:'z'|'c', v }` to the host; the host applies them and sends `{ k:'labes',
 z, c }` (who's asleep or confused) every 0.3 s while there are any. The wave, like the vortex,
 carries enemies on the host, also with a guest's ghost.
 
@@ -418,8 +418,8 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   (shiny ×1.1 and +1 reroll, radiant ×1.2 and +2) and on the pause screen.
 - `node fork/test-lab-coop.cjs` (server + Firebase emulator): host on / guest off gives a Lab run
   for both with the lobby line, each with their own ability; the guest's Swift is drawn and deals
-  damage on the host; the guest's sleep, confusion and Rain Dance reach the host's enemies and
-  weather; its Fly, evolution and Mega Evolution are seen on the host; no group leaderboard. Host
+  damage on the host; the guest's sleep and confusion reach the host's enemies, its Rain Dance is
+  rain around the guest on the host's screen (not the arena's weather); its Fly, evolution and Mega Evolution are seen on the host; no group leaderboard. Host
   off / guest on gives a normal run.
 - `node fork/test-gameplay.cjs` checks that a normal run has no Mega Evolution; `test-admin.cjs`
   that an admin's Mega Stone does nothing in a normal run.

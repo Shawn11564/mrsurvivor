@@ -150,7 +150,8 @@ async function finish(all) {
 
     // ---------------- 2b. the new kinds and phases in co-op (fork/LAB.md, phases 4-7) ----------------
     // The host owns the enemies and the weather: what a guest's move does to them goes to the
-    // host ({ k:'labst' } / { k:'labwx' }) and comes back to the guest ({ k:'labes' }, 'wx').
+    // host ({ k:'labst' }) and comes back to the guest ({ k:'labes' }). Weather moves are only a
+    // zone around their user now (others see it as a ghost), never the arena's weather.
     console.log('Guest: sleep, confusion, weather, leap, evolution, Mega');
     const learn = (p, id) => p.evaluate(id => { const pl = G.Game.player; pl.slots.length = 0; pl.moves.length = 0; pl.addMove(id); }, id);
     await learn(guest, 'hypnosis');
@@ -164,8 +165,9 @@ async function finish(all) {
     await host.evaluate(() => G.Weather.reset());
     await guest.evaluate(() => G.Weather.reset());
     await learn(guest, 'rain-dance');
-    check((await Promise.all(ALL.map(p => settle(p, () => G.Weather.current && G.Weather.current.kind === 'rain', undefined, 6000)))).every(Boolean),
-      'the guest\'s Rain Dance brings rain for both (the host starts it)');
+    check(await settle(host, u => G.LabKinds.fields().some(f => f.kind === 'wxzone' && f.wx === 'rain' && f.owner === G.Coop.mate(u).pl), guest.uid, 6000),
+      'the host sees the guest\'s Rain Dance as rain around the guest');
+    check((await Promise.all(ALL.map(p => p.evaluate(() => !G.Weather.current)))).every(Boolean), 'and it doesn\'t start the arena\'s weather for anyone');
     await learn(guest, 'fly');
     check(await settle(host, u => !!G.Coop.mate(u).pl._labLeap, guest.uid, 6000), 'the host sees the guest fly up (its ghost leaves the ground)');
     await learn(guest, 'water-gun');

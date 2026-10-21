@@ -24,7 +24,7 @@
 //   7. New move kinds (js/fork/lab/kinds.js), each on dummies that don't move or hurt: leap (Fly),
 //      recoil (Double-Edge; Rock Head), ramp (Fury Cutter), guard (Protect from another slot,
 //      Counter), sleep (Hypnosis: a burn doesn't wake them, a hit does), confusion (Confuse Ray),
-//      weather (Rain Dance), terrain (Electric, Misty), wave (Surf), Metronome, Transform; every
+//      weather zones (Rain Dance, Sandstorm, Snowscape: around you, never the arena's), terrain (Electric, Misty), wave (Surf), Metronome, Transform; every
 //      Lab move at its top level in a real run; a new kind evolving (Fly → Sky Attack).
 //   8. Signature moves: only for their line (Blast Burn only for Charizard), gold "Signature"
 //      card, Pikachu's own QuickStrike animation for Volt Tackle, evolving at the top level.
@@ -312,7 +312,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     };
     // A quiet arena: no spawns, events, rifts or weather while these run. Weather that starts on its
     // own is cleared (a sandstorm or hail chips HP every 2 s, which once passed for Double-Edge
-    // recoil under Rock Head); weather a move asks for (Rain Dance: debugStart, force) still runs.
+    // recoil under Rock Head); weather a test asks for (debugStart, force) still runs.
     const W = G.Weather, wxUpdate = W.update, wxStart = W.debugStart, wxForce = W.force;
     let wxAsked = false, wxSeen = false;
     W.debugStart = function () { wxAsked = true; wxSeen = false; return wxStart.apply(this, arguments); };
@@ -439,10 +439,26 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     const conf = ca.labConf > 0 ? ca : cb, other = conf === ca ? cb : ca, oh = other.hp;
     await new Promise(r => setTimeout(r, 1200));
     out.conf = { touch: conf.touchCd > 0, hits: Math.round(oh - other.hp) };
-    // weather: Rain Dance brings rain.
+    // weather (2026-10-21): a few seconds of it around you, never the arena's weather. Rain: Water ×1.3
+    // inside; Sandstorm wears down the enemies inside; Snowscape slows them.
     G.EnemyMgr.clear(); G.Weather.reset();
     m = __only('rain-dance');
-    out.rain = await __until(() => G.Weather.current && G.Weather.current.kind === 'rain', 3000);
+    const zoneOf = wx => G.LabKinds.fields().find(f => f.kind === 'wxzone' && f.wx === wx);
+    const rz = await __until(() => zoneOf('rain'), 3000);
+    const wg = G.Moves.instance('water-gun'), wIn = pl.atkFor(wg), z = zoneOf('rain');
+    if (z) z.gone = true;
+    const wOut = pl.atkFor(wg);
+    out.rain = { zone: !!rz, boost: +(wIn / wOut).toFixed(2), arena: !!G.Weather.current, follows: !!z && Math.abs(z.x - pl.x) < 1 };
+    m = __only('sandstorm');
+    const se = __dummy(...at(60)), shp = se.hp;
+    await __until(() => zoneOf('sand'), 3000);
+    await new Promise(r => setTimeout(r, 1200));
+    out.sand = { hurt: Math.round(shp - se.hp), arena: !!G.Weather.current };
+    m = __only('snowscape');
+    const ne = __dummy(...at(60));
+    await __until(() => ne.slow > 0, 3000);
+    out.snow = { slow: ne.slow, arena: !!G.Weather.current };
+    pl.slots.length = 0; pl.moves.length = 0;
     G.Weather.reset();
     // terrain: Electric Terrain: Electric moves ×1.3 inside; Misty: 25% less damage inside.
     m = __only('electric-terrain');
@@ -489,7 +505,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(kinds.counter.stored === 40 && kinds.counter.took > 0 && kinds.counter.blast > 0, `Counter: takes half, stores the hit (${kinds.counter.stored}) and sends it back in a blast (${kinds.counter.blast})`);
   check(kinds.sleep.n >= 2 && kinds.sleep.stun && kinds.sleep.burnKeeps && kinds.sleep.hitWakes, `Hypnosis: they fall asleep (can't act), a burn tick doesn't wake them, a hit does (${JSON.stringify(kinds.sleep)})`);
   check(kinds.conf.touch && kinds.conf.hits > 0, `Confuse Ray: the confused one doesn't touch you and hits the one next to it (${kinds.conf.hits} damage)`);
-  check(kinds.rain, 'Rain Dance brings rain');
+  check(kinds.rain.zone && kinds.rain.boost === 1.3 && !kinds.rain.arena && kinds.rain.follows,
+    `Rain Dance: rain around you (it follows you), Water ×1.3 inside, and not the arena's weather: ${JSON.stringify(kinds.rain)}`);
+  check(kinds.sand.hurt > 0 && !kinds.sand.arena, `Sandstorm wears down an enemy inside, no arena weather: ${JSON.stringify(kinds.sand)}`);
+  check(kinds.snow.slow > 0 && !kinds.snow.arena, `Snowscape slows an enemy inside, no arena weather: ${JSON.stringify(kinds.snow)}`);
   check(kinds.terrain === 1.3 && kinds.misty === 0.75, `Electric Terrain: Electric moves ×${kinds.terrain} inside; Misty Terrain: ×${kinds.misty} damage taken inside`);
   check(kinds.wave.hit && kinds.wave.pushed > 40, `Surf hits and carries the enemy away (${kinds.wave.pushed} px)`);
   check(kinds.metronome.called >= 3 && kinds.metronome.dealt > 0, `Metronome calls a different move each time (${kinds.metronome.called} different), its damage counted on it (${kinds.metronome.dealt})`);

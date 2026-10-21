@@ -134,14 +134,15 @@ G.LabMoves = [
     cd: 1.0, dmg: 14, speed: 260, life: 2.0, size: 7, homing: 5, conf: 2.4, look: { proj: 'ring', pal: 'fairy' }, evo: ['Alluring Voice', 'cd'] },
 
   // ---- weather: pone un clima (se lanza solo desde cualquier hueco) ----
+  // Clima a tu alrededor un rato (js/fork/lab/kinds.js `wxzone`), no el de la arena (2026-10-21).
   { id: 'rain-dance', name: 'Rain Dance', type: 'water', kind: 'weather', cat: null, wx: 'rain',
-    desc: 'Summons rain: Water moves hit 50% harder and Fire ones half. Works from any slot.', cd: 22, dur: 16 },
+    desc: 'Rain falls around you for a few seconds: Water moves used inside hit 30% harder. Works from any slot.', cd: 14, dur: 4, radius: 130 },
   { id: 'sunny-day', name: 'Sunny Day', type: 'fire', kind: 'weather', cat: null, wx: 'sun',
-    desc: 'Summons harsh sunlight: Fire moves hit 50% harder and Water ones half. Works from any slot.', cd: 22, dur: 16 },
+    desc: 'Harsh sunlight around you for a few seconds: Fire moves used inside hit 30% harder. Works from any slot.', cd: 14, dur: 4, radius: 130 },
   { id: 'sandstorm', name: 'Sandstorm', type: 'rock', kind: 'weather', cat: null, wx: 'sand',
-    desc: 'Summons a sandstorm: Rock, Ground and Steel moves hit 30% harder and the rest slowly lose HP. Works from any slot.', cd: 22, dur: 16 },
+    desc: 'A sandstorm whirls around you for a few seconds, wearing down the enemies inside. Works from any slot.', cd: 14, dur: 4, radius: 130, dmg: 6 },
   { id: 'snowscape', name: 'Snowscape', type: 'ice', kind: 'weather', cat: null, wx: 'snow',
-    desc: 'Summons snow: Ice moves hit 50% harder; the rest slowly lose HP and slow down. Works from any slot.', cd: 22, dur: 16 },
+    desc: 'Snow falls around you for a few seconds, slowing the enemies inside. Works from any slot.', cd: 14, dur: 4, radius: 130, slow: 0.35 },
 
   // ---- terrain: un círculo en el suelo que te ayuda (y a tus compañeros) ----
   { id: 'electric-terrain', name: 'Electric Terrain', type: 'electric', kind: 'terrain', cat: null, terr: 'electric',
