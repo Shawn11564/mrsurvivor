@@ -271,6 +271,10 @@ walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the r
 glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
 (server) checks where it stands, the unlock, the hearts and the switch.
 
+**Half are new** (Lab first, `js/fork/half-new.js`): with Lab on, half of the Legendaries you pull are ones
+you don't have yet, while the banner has any (`G.GachaPick`, a one-line hook in `js/systems/gacha.js`);
+the odds screen says so. `node fork/test-half-new.cjs` (server) measures it over 4000 pulls.
+
 **Upgrade all** (Lab first, `js/fork/upgrade-all.js`): with Lab on, Upgrades has a button that maxes every
 upgrade of the Pokémon at once, after confirming the total in coins (or saying how many more it needs);
 it repaints when the list does. `node fork/test-upgrade-all.cjs` (server).
