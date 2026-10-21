@@ -5,7 +5,9 @@
  * azar (G.Items.roll). save.prest[dex] = 0..3.
  * Fusión de dos copias (G.forkMerge): merge() de js/core/db.js se queda con el nivel mayor de cada
  * mejora, así que una copia vieja con todo comprado desharía el reinicio. Si las copias no tienen el
- * mismo prestigio de un Pokémon, sus mejoras son las de la copia con más prestigio.
+ * mismo prestigio de un Pokémon, sus mejoras son las de la copia con más prestigio (o, con el mismo, la que
+ * más veces las ha reiniciado con gemas: save.ureset, js/fork/lab/gems.js).
+ * Con el ajuste Lab encendido (gemas, Lab primero) subir de prestigio cuesta además 100 gemas.
  * Dónde: un panel bajo la lista de Mejoras, ★ en su casilla de la colección (G.Radiant.cell, el
  * gancho que menu.js ya llama) y en el selector de Mejoras. En la run: G.Game.startRun.
  * Prueba: fork/test-prestige.cjs.
@@ -16,13 +18,16 @@ G.Prestige = (() => {
   const save = () => G.DB.save;
   const level = dex => { const s = save(), v = s && s.prest && s.prest[dex]; return Math.max(0, Math.min(MAX, v | 0)); };
   const maxedAll = dex => { const lv = G.DB.upgradesOf(dex) || {}; return G.Upgrades.LIST.every(u => (lv[u.id] || 0) >= u.max); };
-  const can = dex => level(dex) < MAX && maxedAll(dex);
+  const GEMS = 100;
+  const gemCost = () => (G.Settings.get('lab') ? GEMS : 0);       // gemas: Lab primero
+  const can = dex => level(dex) < MAX && maxedAll(dex) && ((save() && save().gems) | 0) >= gemCost();
 
   function prestige(dex) {
     if (!can(dex)) return false;
     const s = save();
     s.prest = s.prest && typeof s.prest === 'object' ? s.prest : {};
     s.prest[dex] = level(dex) + 1;
+    s.gems = ((s.gems | 0) - gemCost());
     s.pupg = s.pupg || {};
     s.pupg[dex] = {};
     G.DB.commit(true);
@@ -56,13 +61,18 @@ G.Prestige = (() => {
   const merge = G.forkMerge;
   G.forkMerge = function (r, a, b) {
     if (merge) merge.apply(this, arguments);
-    const pa = (a && a.prest) || {}, pb = (b && b.prest) || {};
-    const dexes = new Set(Object.keys(pa).concat(Object.keys(pb)));
+    // La "época" de las mejoras de cada Pokémon: su prestigio y, dentro de él, sus reinicios con gemas.
+    const epoch = (s, d) => ((s && s.prest && s.prest[d]) | 0) * 1000 + ((s && s.ureset && s.ureset[d]) | 0);
+    const keys = s => Object.keys((s && s.prest) || {}).concat(Object.keys((s && s.ureset) || {}));
+    const dexes = new Set(keys(a).concat(keys(b)));
     if (!dexes.size) return;
-    r.prest = r.prest || {};
+    r.prest = r.prest || {}; r.ureset = r.ureset || {};
     for (const d of dexes) {
-      const x = pa[d] | 0, y = pb[d] | 0;
-      r.prest[d] = Math.max(x, y);
+      const x = epoch(a, d), y = epoch(b, d);
+      r.prest[d] = Math.max(((a && a.prest) || {})[d] | 0, ((b && b.prest) || {})[d] | 0);
+      r.ureset[d] = Math.max(((a && a.ureset) || {})[d] | 0, ((b && b.ureset) || {})[d] | 0);
+      if (!r.prest[d]) delete r.prest[d];
+      if (!r.ureset[d]) delete r.ureset[d];
       if (x !== y) { r.pupg = r.pupg || {}; r.pupg[d] = JSON.parse(JSON.stringify(((x > y ? a : b).pupg || {})[d] || {})); }
     }
   };
@@ -83,8 +93,11 @@ G.Prestige = (() => {
       list.insertAdjacentElement('afterend', box);
     }
     const p = level(dex), ok = can(dex);
+    const cost = gemCost(), gems = (save().gems | 0);
     const state = p >= MAX ? G.T('Prestigio máximo: empieza cada run con un objeto al azar.')
-      : ok ? G.T('Todo comprado: puede subir de prestigio.') : G.T('Compra todas sus mejoras para poder subir de prestigio.');
+      : ok ? G.T('Todo comprado: puede subir de prestigio.')
+      : maxedAll(dex) && gems < cost ? `Lab: prestige costs ${cost} gems (you have ${gems}).`
+      : G.T('Compra todas sus mejoras para poder subir de prestigio.');
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <div><b>${G.T('Prestigio')} <span class="prest-stars" style="color:#ffcb3d">${stars(p)}</span></b>
@@ -164,5 +177,5 @@ G.Prestige = (() => {
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  return { MAX, K, level, can, prestige, maxedAll };
+  return { MAX, K, GEMS, gemCost, level, can, prestige, maxedAll };
 })();

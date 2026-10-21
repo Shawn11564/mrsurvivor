@@ -130,6 +130,7 @@ G.DB = (() => {
     s.tickets.t1 = n(s.tickets.t1);
     s.tickets.t10 = n(s.tickets.t10);
     s.tickets.t25 = n(s.tickets.t25);   // fork: ticket arcoíris ×25 (js/fork/rainbow.js)
+    s.gems = n(s.gems);                 // fork: gemas (js/fork/lab/gems.js)
     if (isObj(s.led)) {
       for (const dev of Object.keys(s.led)) {
         const e = s.led[dev];
@@ -203,7 +204,8 @@ G.DB = (() => {
     c: [s => s.coins, (s, v) => { s.coins = v; }],
     t1: [s => s.tickets.t1, (s, v) => { s.tickets.t1 = v; }],
     t10: [s => s.tickets.t10, (s, v) => { s.tickets.t10 = v; }],
-    t25: [s => s.tickets.t25 || 0, (s, v) => { s.tickets.t25 = v; }]   // fork: arcoíris ×25
+    t25: [s => s.tickets.t25 || 0, (s, v) => { s.tickets.t25 = v; }],   // fork: arcoíris ×25
+    gm: [s => s.gems || 0, (s, v) => { s.gems = v; }]                  // fork: gemas
   };
   // Este aparato (navegador): un nombre al azar que se queda guardado.
   const DEV = (() => {

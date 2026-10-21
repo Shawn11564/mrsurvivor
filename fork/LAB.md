@@ -377,6 +377,15 @@ as is, up to 80%, and stacking it made you nearly untouchable. **Speed** stops a
 speed card no longer comes up. The defense card says "toughness". Hooks: the `reduction` and `spd`
 getters, `G.LevelUp.offer`. `node fork/test-toughness.cjs` (server).
 
+## Gems (2026-10-21, from doofcraft)
+
+A rare currency from Lab runs (`js/fork/lab/gems.js`, `save.gems`, in the save's currency ledger as
+`gm`): 0.7% of enemies drop one, bosses always one, legendaries two. In Upgrades (Lab on): 100 gems
+reset a Pokémon's upgrades and give back every coin they cost (`save.ureset[dex]` counts resets), and
+prestige costs 100 gems too. When two copies of the save merge, each Pokémon's upgrades come from the
+copy with the later "epoch" (prestige, then resets; `G.forkMerge` in `js/fork/prestige.js`).
+`node fork/test-gems.cjs` (server).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
