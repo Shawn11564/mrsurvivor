@@ -10,8 +10,9 @@
 //   3. Level-up cards in a Lab run: each arrow in the chip after its word ("New · Fire ▲ · Special ▲"),
 //      at half size (9×9); no switch or button left; nothing with Lab off.
 //   4. The move tooltip, with a real mouse over the slot: each arrow after its word, at 9.
-//   5. The enemy arrows over a super-effective enemy: our green arrow at 9, centred over it at full
-//      health (above the healer's heart if it has one), left of its health bar once it's hurt.
+//   5. The enemy arrows over a super-effective enemy, in a Lab run and in a normal one (they're in
+//      every run since 2026-10-21): our green arrow at 9, centred over it at full health (above the
+//      healer's heart if it has one), left of its health bar once it's hurt.
 //   6. The built index.html (node fork/build.cjs): no setting left, and its CSS places the arrows.
 // Set SHOTS=<dir> to save screenshots of the cards, the tooltip and the enemies.
 const path = require('path');
@@ -159,40 +160,45 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-tip.png') });
     await page.mouse.move(640, 150);
 
-    console.log('5. Enemy arrows');
-    // Grass enemies (Ember: x2) at full health, hurt, and a healer; where the green arrow lands, in world units.
-    const en = await page.evaluate(async () => {
-      const pl = G.Game.player;
-      G.EnemyMgr.clear();
-      let def = null;
-      // A Grass-only enemy: from the arena's cast, or its hordes (the cast changes with the arena).
-      const defs = G.Enemies.cast.flatMap(t => t.list).concat(...G.Enemies.hordeTypes(600).map(t => G.Enemies.hordeDefs(t, 600)));
-      for (const d of defs) {
-        const ty = d.types || (G.DEX_BY[d.dex] || {}).types || [];
-        if (!def && ty.length === 1 && ty[0] === 'grass') def = d;
-      }
-      const mk = (dx, dy, f) => { const e = new G.Enemy(def, pl.x + dx, pl.y + dy, G.Enemies.scale(0)); e.spd = 0; f(e); G.EnemyMgr.add(e); return e; };
-      const full = mk(-80, -50, () => {}), hurt = mk(80, -50, e => { e.hp = e.maxHp / 2; }), heal = mk(0, 70, e => { e.behavior = 'healer'; });
-      const green = G.Icons.canvas('lb-g'), seen = [], od = CanvasRenderingContext2D.prototype.drawImage;
-      CanvasRenderingContext2D.prototype.drawImage = function (img, x, y, w, h) {
-        if (img === green) seen.push({ x, y, w, h });
-        return od.apply(this, arguments);
-      };
-      await new Promise(r => setTimeout(r, 300));
-      CanvasRenderingContext2D.prototype.drawImage = od;
-      // Drawn in the world transform, so x, y, w, h are world units. The last frame's, per enemy (by position).
-      const at = e => {
-        const d = seen.filter(s => Math.abs(s.x + s.w / 2 - e.x) < 40 && Math.abs(s.y - (e.y - e.bodyH)) < 40).pop();
-        return d && { cx: +(d.x + d.w / 2 - e.x).toFixed(2), right: +(d.x + d.w).toFixed(2), bottom: +(d.y + d.h - (e.y - e.bodyH)).toFixed(2), w: d.w, h: d.h };
-      };
-      const w = e => Math.max(22, e.r * 2);
-      return { name: full.name, full: at(full), hurt: at(hurt), hurtBarLeft: +(hurt.x - w(hurt) / 2 - 1).toFixed(2), heal: at(heal) };
-    });
-    check(en.full && en.full.w === 9 && en.full.h === 9, `${en.name} (Grass, vs Ember) gets the green arrow at half size, 9`, en.full);
-    check(en.full && en.full.cx === 0 && en.full.bottom === -6.6, 'full health (no bar yet): centred over it, its bottom where the bar will be', en.full);
-    check(en.hurt && Math.abs(en.hurt.right - en.hurtBarLeft) < 0.01 && Math.abs(en.hurt.bottom - (-8.3 + 4.5)) < 0.01, 'hurt: left of its health bar, centred on it', [en.hurt, en.hurtBarLeft]);
-    check(en.heal && en.heal.cx === 0 && en.heal.bottom === -19, 'a healer at full health: centred, above its heart', en.heal);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy.png') });
+    console.log('5. Enemy arrows (a Lab run, then a normal one: the small arrows are in every run)');
+    const enemyArrows = async label => {
+      // Grass enemies (Ember: x2) at full health, hurt, and a healer; where the green arrow lands, in world units.
+      const en = await page.evaluate(async () => {
+        const pl = G.Game.player;
+        G.EnemyMgr.clear();
+        let def = null;
+        // A Grass-only enemy: from the arena's cast, or its hordes (the cast changes with the arena).
+        const defs = G.Enemies.cast.flatMap(t => t.list).concat(...G.Enemies.hordeTypes(600).map(t => G.Enemies.hordeDefs(t, 600)));
+        for (const d of defs) {
+          const ty = d.types || (G.DEX_BY[d.dex] || {}).types || [];
+          if (!def && ty.length === 1 && ty[0] === 'grass') def = d;
+        }
+        const mk = (dx, dy, f) => { const e = new G.Enemy(def, pl.x + dx, pl.y + dy, G.Enemies.scale(0)); e.spd = 0; f(e); G.EnemyMgr.add(e); return e; };
+        const full = mk(-80, -50, () => {}), hurt = mk(80, -50, e => { e.hp = e.maxHp / 2; }), heal = mk(0, 70, e => { e.behavior = 'healer'; });
+        const green = G.Icons.canvas('lb-g'), seen = [], od = CanvasRenderingContext2D.prototype.drawImage;
+        CanvasRenderingContext2D.prototype.drawImage = function (img, x, y, w, h) {
+          if (img === green) seen.push({ x, y, w, h });
+          return od.apply(this, arguments);
+        };
+        await new Promise(r => setTimeout(r, 300));
+        CanvasRenderingContext2D.prototype.drawImage = od;
+        // Drawn in the world transform, so x, y, w, h are world units. The last frame's, per enemy (by position).
+        const at = e => {
+          const d = seen.filter(s => Math.abs(s.x + s.w / 2 - e.x) < 40 && Math.abs(s.y - (e.y - e.bodyH)) < 40).pop();
+          return d && { cx: +(d.x + d.w / 2 - e.x).toFixed(2), right: +(d.x + d.w).toFixed(2), bottom: +(d.y + d.h - (e.y - e.bodyH)).toFixed(2), w: d.w, h: d.h };
+        };
+        const w = e => Math.max(22, e.r * 2);
+        return { name: full.name, full: at(full), hurt: at(hurt), hurtBarLeft: +(hurt.x - w(hurt) / 2 - 1).toFixed(2), heal: at(heal) };
+      });
+      check(en.full && en.full.w === 9 && en.full.h === 9, `${label}: ${en.name} (Grass, vs Ember) gets the green arrow at half size, 9`, en.full);
+      check(en.full && en.full.cx === 0 && en.full.bottom === -6.6, 'full health (no bar yet): centred over it, its bottom where the bar will be', en.full);
+      check(en.hurt && Math.abs(en.hurt.right - en.hurtBarLeft) < 0.01 && Math.abs(en.hurt.bottom - (-8.3 + 4.5)) < 0.01, 'hurt: left of its health bar, centred on it', [en.hurt, en.hurtBarLeft]);
+      check(en.heal && en.heal.cx === 0 && en.heal.bottom === -19, 'a healer at full health: centred, above its heart', en.heal);
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy.png') });
+    };
+    await enemyArrows('Lab');
+    await start(4, false, 'ember');
+    await enemyArrows('normal run');
 
     console.log('6. Built index.html');
     // G is sealed in app.min.js (fork/build.cjs), so as a player would: guest, the starter quiz,

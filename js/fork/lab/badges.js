@@ -13,6 +13,8 @@
  * (gancho de una línea en hud.js drawTip) y las flechas de la tabla de tipos sobre los enemigos
  * (gancho de una línea en enemy.js: enemyMark). Todas a la mitad de su tamaño (el PNG de 18×18,
  * a 9): a la izquierda de la barra de vida del enemigo, o centradas sobre él si aún no la tiene.
+ * Las de los enemigos, en todas las partidas desde el 21-10-2026 (las del juego, más grandes y siempre
+ * a la izquierda de donde iría la barra, tapaban al enemigo); las de los movimientos, sólo en el Lab.
  * Textos sólo en inglés, como el resto del Lab. Prueba: fork/test-badges.cjs.
  */
 G.LabBadges = (() => {
@@ -105,7 +107,7 @@ G.LabBadges = (() => {
   // ---------------- flechas de los enemigos ----------------
   // 'eff:up:x2' -> 'lb-g'. enemy.js pide G.Icons.canvas (para el tamaño) y G.Icons.draw con el mismo nombre.
   const effName = n => {
-    if (!on() || typeof n !== 'string' || !n.startsWith('eff:')) return n;
+    if (typeof n !== 'string' || !n.startsWith('eff:')) return n;      // en todas las partidas
     const t = EFF[n.split(':')[2]];
     return t ? 'lb-' + t : n;
   };
@@ -119,7 +121,6 @@ G.LabBadges = (() => {
    * sin barra, centrada sobre él donde irá la barra (o encima del icono de curandero / escudero / invocador).
    */
   function enemyMark(ctx, e, eff, w) {
-    if (!on()) return false;
     const n = effName(eff), s = size(n), bar = e.y - e.bodyH - 10;   // la barra: 3,4 de alto
     if (e.boss || e.hp < e.maxHp) paint(ctx, n, e.x - w / 2 - s.w - 1, bar + 1.7 - s.h / 2);
     else paint(ctx, n, e.x - s.w / 2, (SUPPORT[e.behavior] ? e.y - e.bodyH - 18 - 1 : bar + 3.4) - s.h);
