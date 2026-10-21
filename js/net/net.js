@@ -347,6 +347,7 @@ G.Net = (() => {
     /** ¿Va por el relé (o no hay conexión)? Entonces se manda menos a menudo. */
     slow(u) { const p = peers.get(u); return !p || p.mode !== 'direct'; },
     peers() { return [...peers.keys()]; },
+    peerStats(u) { const p = peers.get(u); return p && p.pc ? p.pc.getStats() : Promise.resolve(null); },   // fork: js/fork/net-stats.js
     get open_() { return !!roomId; },
     get isHost() { return isHost; },
     get uid() { return uid; },
