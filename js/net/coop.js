@@ -282,7 +282,7 @@ G.Coop = (() => {
           if (!e || e.dead) break;
           if (ev[2] === 'b') e.applyBurn(ev[3]);
           else if (ev[2] === 'p') e.applyPoison(ev[3]);
-          else if (ev[2] === 's') e.applySlow(ev[3]);
+          else if (ev[2] === 's') e.applySlow(ev[3], ev[4] > 0 && ev[4] <= 6 ? ev[4] : undefined);   // fork: dur
           else if (ev[2] === 't') e.applyStun(ev[3]);
           break;
         }
@@ -423,7 +423,7 @@ G.Coop = (() => {
   // invitado
   // El último va el movimiento (derrotados por movimiento, ver js/fork/run-stats.js).
   function hit(e, d, color, dx, dy, knock) { outEv.push(['h', e.id, d, color, r1(dx), r1(dy), knock || 0, e.lastMove || 0]); }
-  function status(e, kind, val) { outEv.push(['s', e.id, kind, val]); }
+  function status(e, kind, val, dur) { outEv.push(dur > 0 ? ['s', e.id, kind, val, dur] : ['s', e.id, kind, val]); }   // fork: dur (js/fork/slow-look.js)
 
   // anfitrión
   function hurtShown(e, d, color) { emitNear(['hn', e.id, d, color], e.x, e.y, hitFrom); }

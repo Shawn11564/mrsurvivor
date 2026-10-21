@@ -6,7 +6,9 @@
  * 2. G.MoveText.tipNotes: lo que dice el recuadro de un movimiento en la barra (hud.js drawTip)
  *    bajo el tipo: con qué estadística pega y qué lo potencia, y si a tu Pokémon le va peor.
  *    (Ningún objeto es sólo físico o sólo especial: Cinta Elección o Vidasfera suben todo.)
- * Prueba: fork/test-moves.cjs.
+ * 3. Cartas de subir de nivel: el chip "Tu tipo" va con el tipo, y la nota del lado flojo dice que es
+ *    por la categoría (G.LevelUp.offer, antes que js/fork/lab/lab.js).
+ * Prueba: fork/test-moves.cjs, fork/test-move-truth.cjs, fork/test-slow-look.cjs.
  */
 (() => {
   // ---------------- 1. descripciones ----------------
@@ -60,6 +62,15 @@
   const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
   // Cuerpo a cuerpo (player.js hurt) y las familias cercanas del Lab (G.LabKinds2.CLOSE): -25 % de daño recibido.
   const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
+  // El lado flojo, por categoría (antes "Peor para X: sólo hace un N %", que parecía hablar del movimiento).
+  const OFF = {
+    physical: 'Ataque físico: {x} sólo hace un {x} % del daño con estos (lo suyo es el especial).',
+    special: 'Ataque especial: {x} sólo hace un {x} % del daño con estos (lo suyo es el físico).'
+  };
+  const offNote = (mon, cat) => {
+    const f = G.Stats.fit(mon, cat);
+    return f < 0.95 ? OFF[cat].replace('{x}', mon.name).replace('{x}', Math.round(f * 100)) : '';
+  };
   const close = m => m.kind === 'melee' || !!(G.LabKinds2 && G.LabKinds2.CLOSE.has(m.kind));
 
   /** [[texto en español, color]] para el movimiento m de pl. */
@@ -69,7 +80,7 @@
       out.push([m.cat === 'physical' ? PHYS : SPEC, COL[m.cat]]);
       // Como la carta de subir de nivel (levelup.js fitNote): mismo texto, ya traducido.
       const f = G.Stats.fit(mon, m.cat);
-      if (mon && f < 0.95) out.push([`Peor para ${mon.name}: sólo hace un ${Math.round(f * 100)} % del daño (lo suyo es el ataque ${G.Stats.sideOf(mon) === 'special' ? 'especial' : 'físico'}).`, COL.weak]);
+      if (mon && f < 0.95) out.push([offNote(mon, m.cat), COL.weak]);
       if (close(m)) out.push([CLOSE, COL.close]);
     } else if (BUFF[m.stat] && (m.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[m.stat])) {
       out.push([BOTH, COL.good]);                        // Avivar, Filete Fuera (Lab): los dos lados
@@ -104,6 +115,16 @@
      'Corpo a corpo: finché è attiva subisci il 25% di danni in meno.',
      'Corpo a corpo: enquanto estiver ativo, você recebe 25% menos dano.',
      '近身：启用时受到的伤害减少25%。', '近身：啟用時受到的傷害減少25%。'],
+    [OFF.physical, 'Physical move: {x} hits for only {x}% with these (it’s a special attacker).',
+     'Attaque physique : {x} ne fait que {x} % des dégâts avec celles-ci (c’est un attaquant spécial).',
+     'Mossa fisica: {x} fa solo il {x} % dei danni con queste (è un attaccante speciale).',
+     'Golpe físico: {x} só causa {x} % do dano com estes (é um atacante especial).',
+     '物理招式：{x}使用这类招式只有 {x} % 伤害（它擅长特殊攻击）。', '物理招式：{x}使用這類招式只有 {x} % 傷害（牠擅長特殊攻擊）。'],
+    [OFF.special, 'Special move: {x} hits for only {x}% with these (it’s a physical attacker).',
+     'Attaque spéciale : {x} ne fait que {x} % des dégâts avec celles-ci (c’est un attaquant physique).',
+     'Mossa speciale: {x} fa solo il {x} % dei danni con queste (è un attaccante fisico).',
+     'Golpe especial: {x} só causa {x} % do dano com estes (é um atacante físico).',
+     '特殊招式：{x}使用这类招式只有 {x} % 伤害（它擅长物理攻击）。', '特殊招式：{x}使用這類招式只有 {x} % 傷害（牠擅長物理攻擊）。'],
     [BOTH, 'Boosts your physical and special moves.', 'Renforce vos attaques physiques et spéciales.',
      'Potenzia i tuoi attacchi fisici e speciali.', 'Fortalece seus ataques físicos e especiais.',
      '强化你的物理和特殊招式。', '強化你的物理和特殊招式。'],
@@ -114,5 +135,27 @@
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  G.MoveText = { tipNotes };
+
+  // ---------------- 3. cartas de subir de nivel: "Tu tipo" ----------------
+  // El chip "Tu tipo" pedía además que fuera de su lado fuerte (fit >= 95 %): con un Pokémon
+  // Dragón/Agua especial, Garra Dragón (física) salía sin el chip y con una nota de "71 %" que
+  // parecía hablar del movimiento. Ahora el chip va con el tipo (cualquiera de los dos) y la nota
+  // dice que es por la categoría. Envuelve G.LevelUp.offer antes que js/fork/lab/lab.js (que lo
+  // quita en las firmas). La misma nota en el recuadro de la barra (tipNotes, arriba).
+  const OLD = /Peor para [^<]*? \(lo suyo es el ataque (?:especial|físico)\)\./;
+  const offer = G.LevelUp.offer;
+  G.LevelUp.offer = function (pl) {
+    const out = offer.apply(this, arguments);
+    if (!Array.isArray(out) || !pl || !pl.mon) return out;
+    for (const c of out) {
+      if (c.type !== 'new' || !c.key) continue;
+      const d = G.Moves.BY_ID[c.key.slice(4)];
+      if (!d) continue;
+      c.own = d.kind !== 'buff' && pl.mon.types.includes(d.type);
+      if (typeof c.desc === 'string' && d.cat) c.desc = c.desc.replace(OLD, offNote(pl.mon, d.cat));
+    }
+    return out;
+  };
+
+  G.MoveText = { tipNotes, offNote };
 })();

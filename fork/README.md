@@ -257,6 +257,13 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+`node fork/test-slow-look.cjs` (server; co-op part with the Firebase emulator) checks Mist Ball's
+40 % slow for 2 s (`js/fork/slow-look.js`: a `slowDur` field, passed to `applySlow` through
+`G.RunStats.tag`, and to the host as the optional 5th field of `G.Coop.status` in `js/net/coop.js`),
+the ice-blue ring at a slowed enemy's feet (guests too, status bit 8), and the level-up cards' "Your
+type" chip for any of your types, with the weak-side note saying it's the category ("Physical move:
+Tatsugiri hits for only 71% with these"; `js/fork/move-text.js` part 3, wrapping `G.LevelUp.offer`).
+
 `node fork/test-moves.cjs` (with the server running) casts moves through the real combat code
 in headless Edge:
 - every move that burns, poisons, slows or stuns really leaves that state on the enemy
