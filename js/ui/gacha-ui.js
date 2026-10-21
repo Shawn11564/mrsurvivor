@@ -132,5 +132,5 @@ G.GachaUI = (() => {
     refresh();
   }
 
-  return { init, open, get open_() { return !$('pull-fx').classList.contains('hidden'); } };
+  return { init, open, pull: (n, use) => pull(n, use), get open_() { return !$('pull-fx').classList.contains('hidden'); } };
 })();

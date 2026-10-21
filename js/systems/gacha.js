@@ -13,12 +13,14 @@
  * Se tira con TICKETS (se consiguen jugando):
  *   ×1   1 ticket
  *   ×10  10 tickets normales, o 1 ticket ×10 (eliges con qué)
+ *   ×25  1 ticket arcoíris (fork: al menos una Legendaria; js/fork/rainbow.js)
  */
 G.Gacha = (() => {
   /** ¿Qué gasta una tirada de n? → { t1, t10 } o null si no te llega. */
   /** @param use  't1' (tickets normales) o 't10' (un ticket ×10, sólo para la ×10) */
   function costOf(save, n, use = 't1') {
     const t = save.tickets || { t1: 0, t10: 0 };
+    if (n === 25) return use === 't25' && t.t25 >= 1 ? { t1: 0, t10: 0, t25: 1 } : null;   // fork: arcoíris (js/fork/rainbow.js)
     if (n === 10 && use === 't10') return t.t10 >= 1 ? { t1: 0, t10: 1 } : null;
     return t.t1 >= n ? { t1: n, t10: 0 } : null;
   }
@@ -93,6 +95,7 @@ G.Gacha = (() => {
     if (!cost) return null;
     save.tickets.t1 -= cost.t1;
     save.tickets.t10 -= cost.t10;
+    if (cost.t25) save.tickets.t25 -= cost.t25;
     save.pity = save.pity || {};
     save.shiny = save.shiny || {};
     save.pity[gen] = save.pity[gen] || 0;
@@ -104,6 +107,7 @@ G.Gacha = (() => {
       const leg = legendRate(save.pity[gen]);
       if (leg >= 100) want = 5;
       else if (n === 10 && i === n - 1 && !out.some(r => r.rarity >= 4)) want = rollRarity(4, leg);
+      else if (n === 25 && i === n - 1 && !out.some(r => r.rarity === 5)) want = 5;      // fork: la ×25 trae una Legendaria
       else want = rollRarity(1, leg);
 
       const { rarity, list } = poolNear(want, gen);
