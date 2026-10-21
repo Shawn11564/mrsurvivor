@@ -266,6 +266,11 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+**A secret** (`js/fork/bewear.js`): in every run a Bewear waits about 3000 px south of the start;
+walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the row comes after the radiant
+glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
+(server) checks where it stands, the unlock, the hearts and the switch.
+
 **Prestige** (`js/fork/prestige.js`): with every upgrade of a Pokémon bought, Upgrades offers to prestige
 it (a panel under the list, with a confirm): its upgrades go back to 0 (no coins back) and it gets +5% HP,
 damage, speed and damage cut per level in its runs (`G.Game.startRun`, wrapped once the page has loaded:
