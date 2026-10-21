@@ -93,8 +93,7 @@ G.SettingsUI = (() => {
         + toggle('calm', 'Menos sacudidas y destellos', 'La cámara tiembla menos y los fogonazos son suaves.')
         + toggle('fps', 'Mostrar FPS', 'Fotogramas por segundo, en la esquina de abajo.')
         + toggle('pauseCount', 'Cuenta atrás al quitar la pausa', 'Al volver de la pausa, 3 segundos con todo quieto antes de seguir. Las demás cuentas atrás (vínculos, objetos) no cambian.')
-        + `<div class="set-row"><div class="grow"><b>Tamaño de los iconos</b><small>Los ataques y el objeto de abajo, durante la partida.</small></div></div>`
-        + choice('hudSize', [[0.8, 'Pequeño'], [1, 'Mediano'], [1.3, 'Grande']])
+        + G.UIScale.settingsRows(section, choice)                     // fork: GUI (icon size, GUI scale), js/fork/ui-scale.js
         + (G.RadiantGlow ? G.RadiantGlow.settingsRow(section) : '')   // fork: brillo de los radiantes (js/fork/radiant-glow.js)
         + (canFull() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>Sin barras del navegador.</small></div>
              <button class="btn small" id="set-full">${isFull() ? 'Salir' : 'Activar'}</button></div>`
@@ -134,7 +133,8 @@ G.SettingsUI = (() => {
         + (G.Markers ? G.Markers.settingsRow(choice) : '');           // fork: acercar marcadores (js/fork/markers.js)
     } else if (tab === 'a11y') {
       box.innerHTML = section('Apuntado')
-        + toggle('aimManual', 'Apuntar a mano', 'Tus ataques van hacia el ratón (o hacia donde empujes el stick derecho del mando) en vez de al enemigo más cercano. Si sueltas el stick y no mueves el ratón, vuelve a apuntar solo. La cadena y los meteoros siguen buscando a los enemigos solos.');
+        + toggle('aimManual', 'Apuntar a mano', 'Tus ataques van hacia el ratón (o hacia donde empujes el stick derecho del mando) en vez de al enemigo más cercano. Si sueltas el stick y no mueves el ratón, vuelve a apuntar solo. La cadena y los meteoros siguen buscando a los enemigos solos.')
+        + (G.ManualFire ? G.ManualFire.settingsRow(toggle) : '');    // fork: Auto-shoot (js/fork/manual-fire.js)
     } else if (tab === 'acc') {
       renderAccount(box);
     } else {

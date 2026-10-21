@@ -6,7 +6,7 @@
 //   node fork/test-ui-scale.cjs [base-url]          SHOTS=<dir> for screenshots
 //
 //   1. 1280×720: scale 1, exactly as before (the HUD drawn without a scale, no page zoom).
-//   2. 2560×1440: scale ≈1.69 for the HUD and the pages; the move slots' buttons are where they're
+//   2. 2560×1440: scale ≈1.44 (the default, 0.85 × the fit) for the HUD and the pages; the move slots' buttons are where they're
 //      drawn, bigger (a real mouse click on the second slot switches to it, and hovering it shows its
 //      tooltip); a level-up card is bigger and a real click on it picks it.
 //   3. The built index.html at 2560×1440: its pages are zoomed too.
@@ -83,7 +83,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     console.log('2. 2560×1440');
     page = await open(2560, 1440);
     const b = await frame(page);
-    const K = Math.min(2560 / 1400, 1440 / 850);
+    const K = Math.min(2560 / 1400, 1440 / 850) * 0.85;       // the default: DEF × the fit (ui-scale.js), the GUI scale slider in the middle
     check(Math.abs(b.k - K) < 1e-9 && Math.abs(+b.zoom - K) < 1e-3, `scale ${K.toFixed(2)} for the HUD and the pages`, { k: b.k, zoom: b.zoom });
     check(Math.abs(b.nameScale - b.dpr * K) < 1e-6, 'the HUD is drawn at that scale', { nameScale: b.nameScale, dpr: b.dpr });
     check(Math.abs(b.slots[1].w - a.slots[1].w * K) < 0.01, 'the move slots are that much bigger', { at1280: a.slots[1].w, at2560: b.slots[1].w });

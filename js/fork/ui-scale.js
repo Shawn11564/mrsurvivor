@@ -1,9 +1,18 @@
 /* ============ ui-scale.js — the interface sized to the screen (MrSurvivor fork) ============
  * The world already looks the same on any screen (G.Camera.resize: VIEW_W wide), but the
  * interface was in fixed pixels: at 2560×1440 the HP, the moves, the menus, the level cards
- * and their icons were tiny. Now everything is scaled by k = the screen (in CSS px) against
- * REF_W×REF_H, never less than 1 or more than MAX: 1 up to 1400×850 (as before), ≈1.27 at 1920×1080,
- * ≈1.69 at 2560×1440, ≈2.5 at 4K.
+ * and their icons were tiny. Now everything is scaled by k. The largest k that still fits is the screen
+ * (in CSS px) against REF_W×REF_H ("fit": ≈1.27 at 1920×1080, ≈1.69 at 2560×1440, ≈2.54 at 4K); at fit a
+ * 1400×850 layout fills the whole screen, which was too big (Settings top to bottom), so by default
+ * k = DEF × fit, never under 1 (screens up to 1400×850 stay as before): ≈1.08, ≈1.44, ≈2.16.
+ *
+ *   GUI scale  Settings > Graphics > GUI, a slider 0-100 (G.Settings 'uiScale', 50 by default, in the
+ *           middle). Left of the middle k goes down to LOW × the default; right of it up to the fit, never
+ *           past it, so nothing runs off the screen. On a screen up to 1400×850 the right half can't go
+ *           bigger (it says so). Applied when you let go (while dragging, the box would move under you).
+ *   Squeeze A box that only just doesn't fit (a row too many at this scale) is zoomed down until it does
+ *           (to SQUEEZE at most) instead of growing a scroll bar for one row; boxes far too long scroll as
+ *           before. On every screen G.UI.show opens, on resize and when the scale changes.
  *
  *   HUD     (canvas: js/ui/hud.js and what the fork adds to it) is drawn with ctx.scale(k). Meanwhile,
  *           everything it reads from the screen is in its coordinates: the width and height (w/k, h/k), the
@@ -20,8 +29,18 @@
  * Tests: fork/test-ui-scale.cjs, fork/test-settings-fit.cjs (Settings, pause and News fit at 4K).
  */
 G.UIScale = (() => {
-  const REF_W = 1400, REF_H = 850, MAX = 3;
-  const k = (w, h) => G.U.clamp(Math.min(w / REF_W, h / REF_H), 1, MAX);
+  const REF_W = 1400, REF_H = 850, MAX = 3, DEF = 0.85, LOW = 0.7, SQUEEZE = 0.8;
+  const pos = () => { const v = +G.Settings.get('uiScale'); return Number.isFinite(v) ? G.U.clamp(v, 0, 100) : 50; };
+  // The scale for a w×h screen: [smallest, default, largest] at slider 0, 50 and 100.
+  function range(w, h) {
+    const fit = Math.min(w / REF_W, h / REF_H, MAX), top = Math.max(1, fit), def = Math.max(1, fit * DEF);
+    return [def * LOW, def, top];
+  }
+  function at(w, h, v = pos()) {
+    const [lo, def, top] = range(w, h);
+    return v <= 50 ? lo + (def - lo) * v / 50 : def + (top - def) * (v - 50) / 50;
+  }
+  const k = (w, h) => at(w, h);
 
   // ---------------- the HUD ----------------
 
@@ -108,5 +127,53 @@ G.UIScale = (() => {
   addEventListener('resize', page);
   page();
 
-  return { k, REF_W, REF_H, MAX, get now() { return k(innerWidth, innerHeight); } };
+  // ---------------- squeeze ----------------
+
+  function squeeze(b, min = SQUEEZE) {
+    b.style.zoom = '';
+    if (b.scrollHeight <= b.clientHeight + 1 || b.clientHeight / b.scrollHeight < min - 0.05) return;
+    for (let z = 1, i = 0; i < 12 && b.scrollHeight > b.clientHeight + 1 && z > min; i++) {
+      z = Math.max(min, z * Math.max(0.9, b.clientHeight / b.scrollHeight));
+      b.style.zoom = String(z);
+    }
+  }
+  // A screen's boxes (the main menu's are one level down); data-fit="own" fit themselves (js/fork/over-fit.js).
+  const BOXES = '.scr:not(.hidden) > .box:not([data-fit="own"]), .scr:not(.hidden) > * > .box:not([data-fit="own"])';
+  const squeezeAll = () => document.querySelectorAll(BOXES).forEach(b => squeeze(b));
+  let pending = 0;
+  const later = () => { if (pending) return; pending = requestAnimationFrame(() => { pending = 0; squeezeAll(); setTimeout(squeezeAll, 300); }); };
+  // Screens open through G.UI.show or by dropping .hidden themselves (Settings, legal, News...): watch them all.
+  const watch = new MutationObserver(later);
+  const watchAll = () => document.querySelectorAll('.scr').forEach(el => watch.observe(el, { attributes: true, attributeFilter: ['class'] }));
+  watchAll();
+  new MutationObserver(watchAll).observe(document.body, { childList: true });
+  addEventListener('resize', later);
+
+  // ---------------- Settings > Graphics > GUI ----------------
+
+  const pct = v => Math.round(at(innerWidth, innerHeight, v) / at(innerWidth, innerHeight, 50) * 100) + '%';
+  function settingsRows(section, choice) {
+    const v = pos(), [, def, top] = range(innerWidth, innerHeight);
+    queueMicrotask(() => {                                   // on the page by now (render() just put it there)
+      const r = document.getElementById('set-uiscale'), out = document.getElementById('set-uiscale-v');
+      if (!r) return;
+      r.oninput = () => { out.textContent = pct(+r.value); };
+      r.onchange = () => { G.Settings.set('uiScale', +r.value); G.Audio.sfx('click'); G.SettingsUI.open(); };
+      document.getElementById('set-uiscale-reset').onclick = () => { G.Settings.set('uiScale', 50); G.SettingsUI.open(); };
+    });
+    return section('GUI')
+      + `<div class="set-row"><div class="grow"><b>Icon size</b></div>${choice('hudSize', [[0.8, 'Small'], [1, 'Medium'], [1.3, 'Large']]).replace('set-chips', 'set-chips ui-inline')}</div>`
+      + `<div class="set-row"><div class="grow"><b>GUI scale</b><small>How big the menus, cards and HUD are. The middle is the size for your screen, and it never gets bigger than fits.${top <= def + 1e-6 ? ' Your window is too small to go bigger.' : ''}</small></div>
+           <input type="range" id="set-uiscale" min="0" max="100" step="1" value="${v}" aria-label="GUI scale" style="max-width:160px">
+           <b id="set-uiscale-v" style="min-width:48px;text-align:right">${pct(v)}</b>
+           <button class="btn small ghost" id="set-uiscale-reset" title="Back to the middle"${v === 50 ? ' disabled' : ''}>Reset</button></div>`;
+  }
+  css.textContent += ' .set-chips.ui-inline { margin: 0; flex-wrap: wrap; justify-content: flex-end; }'
+    // What's new opens with the top bar on screen: start under it, like Missions or the Pokédex (style.css),
+    // instead of max-height: calc(100dvh - 90px), which at full length went 11 px under the bar.
+    + ' @media (min-height: 521px) { #scr-news { padding-top: 66px; } #scr-news > .news-box { max-height: 100%; } }';
+
+  G.Settings.on(key => { if (key === 'uiScale') { page(); later(); } });
+
+  return { k, at, range, squeeze, settingsRows, REF_W, REF_H, MAX, DEF, LOW, get now() { return k(innerWidth, innerHeight); } };
 })();

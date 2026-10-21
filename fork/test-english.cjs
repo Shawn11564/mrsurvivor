@@ -19,6 +19,11 @@
 //    and the login screen, main menu, every menu screen and Settings tab, the What's new and legal
 //    screens, a run (canvas text, level-up cards, pause, a Lab run) and the game over screen show no
 //    Spanish: no ñ ¿ ¡ á í ó ú, no Spanish words, nothing the dictionary would still translate.
+//    And "no Spanish left": every text upstream's game can show (its source's strings and templates,
+//    dev.html's text: spanishSources) and its data (achievements, missions, items, moves, upgrades,
+//    the personality test), through the game's English, has no Spanish word left (one in upstream's
+//    comments or a dictionary's keys that no English text uses). The walk can't see a text that is in
+//    no dictionary at all; this can. What it found is in js/fork/en-fixes.js and js/fork/trait-names.js.
 //    --list prints everything flagged (and the texts seen) instead of just the first few.
 const fs = require('fs'), os = require('os'), path = require('path'), vm = require('vm');
 const { spawnSync } = require('child_process');
@@ -160,6 +165,163 @@ function forkTexts() {
   return [...out];
 }
 
+/**
+ * What could still show in Spanish, for "no Spanish left" (part 4). The walk only flags what
+ * SPANISH knows or what the dictionary would still change, so a text that is in no English
+ * dictionary at all ("Impulsivo", "Shinies conseguidos") went by. This gathers every text upstream's
+ * game could show: its string literals, its templates (whole, with {x} for each ${...}, and the text
+ * between their tags) and dev.html's text. Not console messages, the Spanish half of a
+ * ['Spanish', 'English'] pair (the changelog, login notices) or of `en ? 'English' : 'Spanish'`.
+ * And two vocabularies: the words English uses (the English dictionaries, every fork string, the
+ * Pokémon, those English halves) and the Spanish ones (upstream's comments, dev.html's text and the
+ * dictionaries' keys), less the English ones. Part 4 runs the texts through the game's English and
+ * flags any that still has a Spanish word. js/fork/en-fixes.js and trait-names.js fix what it found.
+ * loaded: the dictionaries the page loaded, [[keys, English values], ...].
+ */
+function spanishSources(loaded) {
+  const acorn = require(require.resolve('acorn', { paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')] }));
+  const words = s => (String(s).toLowerCase().match(/[\p{L}’']+/gu) || []).map(w => w.replace(/^['’]+|['’]+$/g, '')).filter(w => w.length > 1);
+  const english = new Set(), spanish = new Set(), texts = new Map();
+  const tidy = s => String(s).replace(/\s+/g, ' ').trim();
+  // A text and the other ways it may reach the screen (a template whose ends are HTML: without them).
+  const add = (alts, where) => {
+    alts = [...new Set(alts.map(tidy))].filter(s => /\p{L}{2}/u.test(s) && !/[{}<>=;\\]|=>|^[.#[(]/.test(s.replace(/\{x\}/g, '')));
+    if (!alts.length || texts.has(alts[0])) return;
+    const s = alts[0];
+    if (!/\s/.test(s) && !uiKeys.has(s)) return;                         // one word: only a UI text (a dictionary's key), not code
+    if (/^[a-z0-9 _-]+$/.test(s) && /-/.test(s)) return;                   // CSS class lists
+    if (NEVER_SHOWN_TEXTS.includes(s)) return;
+    texts.set(s, { where, alts });
+  };
+  // The dictionaries: Spanish keys, English values. (Their keys aren't texts to check: the changelog's
+  // Spanish column and texts the game no longer has are in them.)
+  const dicts = [], uiKeys = new Set();
+  const sb = { G: { I18n: { add: (d, l = 'en') => dicts.push([d, l]) } }, console };
+  sb.window = sb; vm.createContext(sb);
+  for (const f of fs.readdirSync(path.join(ROOT, 'js/data')).filter(f => /^lang-.*\.js$/.test(f))) vm.runInContext(read('js/data/' + f), sb, { filename: f });
+  for (const [d, l] of dicts) for (const [k, v] of Object.entries(d)) {
+    words(k).forEach(w => spanish.add(w));
+    uiKeys.add(k);
+    if (l === 'en') words(v).forEach(w => english.add(w));
+  }
+  for (const m of read('js/data/pokedex.js').matchAll(/"name":"([^"]+)"/g)) words(m[1]).forEach(w => english.add(w));
+  const files = (dir, out = []) => {
+    for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      const r = dir + '/' + e.name;
+      if (e.isDirectory()) files(r, out);
+      else if (r.endsWith('.js') && !/app\.min|\/lang-|\/lang\/|pokedex|sprites-meta|lab-data|lab-anims|mega-sprites|radiant-list/.test(r)) out.push(r);
+    }
+    return out;
+  };
+  const tokens = f => [...acorn.tokenizer(read(f), { ecmaVersion: 'latest', onComment: (block, text) => { if (!f.startsWith('js/fork/')) words(text).forEach(w => spanish.add(w)); } })];
+  // Every dictionary the page loaded (the fork's too): keys are Spanish, English values English. The
+  // fork's other strings are English (it writes in English), but not the Spanish keys of its tables.
+  for (const [keys, enValues] of loaded) {
+    keys.forEach(k => { uiKeys.add(k); words(k).forEach(w => spanish.add(w)); });
+    enValues.forEach(v => words(v).forEach(w => english.add(w)));
+  }
+  for (const f of files('js/fork')) for (const t of tokens(f)) {
+    if ((t.type.label === 'string' || t.type.label === 'template') && !uiKeys.has(String(t.value).trim())) words(t.value).forEach(w => english.add(w));
+  }
+
+  for (const f of files('js').filter(f => !f.startsWith('js/fork/'))) {
+    const toks = tokens(f);
+    const L = i => toks[i] && toks[i].type.label;
+    const skip = new Set();
+    // The literal starting at i (a string, or a template from its `): [text, last index, its own
+    // chunks' indices (not those of templates nested in its ${...})], or null. A template's ${...} is
+    // {x}, or a tag when it puts HTML there (an icon, a sprite, '<b>...'): the text either side of it
+    // is then a text of its own on the page, like the text either side of a tag.
+    const literal = i => {
+      if (L(i) === 'string') return [String(toks[i].value), i, [i]];
+      if (L(i) !== '`') return null;
+      const chunks = [], own = [];
+      let j = i + 1, slotHtml = false;
+      for (let depth = 0; j < toks.length; j++) {
+        const l = L(j);
+        if (depth === 0 && l === '`') break;
+        if (l === '${') { if (++depth === 1) { slotHtml = false; chunks.push(null); } }
+        else if (l === '{') { if (depth) depth++; }
+        else if (l === '}') { if (depth && --depth === 0) chunks[chunks.lastIndexOf(null)] = slotHtml ? '<x>' : '{x}'; }
+        else if (depth === 0 && l === 'template') { chunks.push(String(toks[j].value || '')); own.push(j); }
+        else if (depth && /^(html|spriteCanvas|Icons)$|<\w/.test(String(toks[j].value || ''))) slotHtml = true;
+      }
+      return [chunks.map(c => c === null ? '{x}' : c).join(''), j, own];
+    };
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i];
+      if (skip.has(i)) continue;
+      // console.x(...) and Error(...): not shown.
+      const call = L(i) === 'name' && t.value === 'console' && L(i + 1) === '.' && L(i + 3) === '(' ? i + 3
+        : L(i) === 'name' && /Error$/.test(t.value) && L(i + 1) === '(' ? i + 1 : 0;
+      if (call) {
+        for (let depth = 0, j = call; j < toks.length; j++) {
+          if (L(j) === '(') depth++;
+          else if (L(j) === ')' && --depth === 0) { i = j; break; }
+        }
+        continue;
+      }
+      // ['Spanish' + ..., 'English' + ...]: only the English one shows.
+      if (L(i) === '[') {
+        let j = i + 1, commas = [], ok = true;
+        for (; j < toks.length && L(j) !== ']'; j++) { if (L(j) === ',') commas.push(j); else if (L(j) !== 'string' && L(j) !== '+/-') { ok = false; break; } }
+        // (Texts, with spaces: a pair of words like a starter's traits ['impulsivo', 'valiente'] is Spanish.)
+        const spaced = k => L(k) === 'string' && /\s/.test(toks[k].value);
+        if (ok && commas.length === 1 && spaced(i + 1) && spaced(commas[0] + 1)) {
+          for (let k = commas[0] + 1; k < j; k++) if (L(k) === 'string') words(toks[k].value).forEach(w => english.add(w));
+          i = j;
+          continue;
+        }
+      }
+      // en ? 'English' : 'Spanish'
+      if (L(i) === 'name' && t.value === 'en' && L(i + 1) === '?') {
+        // Each branch: literals joined with +. The first is English, the second never shows here.
+        const branch = (j, take) => {
+          for (;;) {
+            const lit = literal(j);
+            if (!lit) return j;
+            if (take) words(lit[0]).forEach(w => english.add(w));
+            j = lit[1] + 1;
+            if (L(j) !== '+/-') return j;
+            j++;
+          }
+        };
+        const j = branch(i + 2, true);
+        if (L(j) === ':') i = branch(j + 1, false) - 1;
+        continue;
+      }
+      const lit = literal(i);
+      if (!lit) continue;
+      const [s, end, own] = lit;
+      own.forEach(k => skip.add(k));
+      // Each text between tags. Strings that are pieces of 'Text ' + name + ' more' (or ternary branches,
+      // a ? 'this' : 'that') are marked: part 4 lets a piece of a translated template go by.
+      const joined = L(i) === 'string' && (['+/-', '?', ':'].includes(L(i - 1)) || ['+/-', ':'].includes(L(end + 1)));
+      for (const part of s.split(/<[^>]*>/)) add([part], joined ? f + ' (piece)' : f);
+    }
+  }
+  // (Not the moderators' screen, #scr-mod.)
+  const html = read('dev.html').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->|<section id="scr-mod"[\s\S]*?<\/section>/g, '');
+  for (const m of html.matchAll(/>([^<]+)</g)) { words(m[1]).forEach(w => spanish.add(w)); add([m[1]], 'dev.html'); }
+  for (const m of html.matchAll(/(?:title|placeholder|aria-label|alt)="([^"]+)"/g)) add([m[1]], 'dev.html');
+  for (const w of english) spanish.delete(w);
+  for (const w of SAME_IN_ENGLISH) spanish.delete(w);
+  return { texts: [...texts.values()], spanish: [...spanish] };
+}
+// Words that read the same in English (names), and texts English players never see.
+const SAME_IN_ENGLISH = ['rb', 'poké', 'pokeapi', 'kanto', 'johto', 'hoenn', 'sinnoh', 'teselia', 'kalos', 'alola', 'galar', 'paldea', 'hisui', 'jpter', 'gmail', 'google'];
+const NEVER_SHOWN_TEXTS = [
+  'filas del ranking',              // js/net/social.js deleteAccount: a step's name, for console.warn
+  'Moderación'                      // dev.html #rk-mod: the admin's button to the moderators' screen
+];
+const NEVER_SHOWN_EN = [
+  /^js\/ui\/mod-ui\.js$/,           // the moderators' hidden screen (#scr-mod), not for players
+  /^js\/noframe\.js$/,              // "not the official site" in every language, one per language
+  /^js\/boot\.js$/,                 // the loading line in every language
+  /^js\/core\/locales\.js$/,        // language names, each in its own language
+  /^js\/core\/firebase-config\.js$/ // upstream's example config
+];
+
 // ---------------------------------------------------------------- 4. the game
 async function game() {
   console.log('4. The game, with a Spanish browser and nothing saved');
@@ -227,6 +389,50 @@ async function game() {
       if (LIST) for (const s of bad.out) console.log('    ' + s);
     }
 
+    // No Spanish left: every text upstream's game can show (spanishSources) and its data tables
+    // (achievements, missions, items, moves, upgrades, the personality test), through the game's
+    // English: none may still have a Spanish word. js/fork/en-fixes.js, js/fork/trait-names.js.
+    const src = spanishSources(await page.evaluate(() => window.__dicts.map(([d, l]) =>
+      [Object.keys(d), l === 'en' ? Object.values(d).filter(v => typeof v === 'string') : []])));
+    const SPANISH_ONLY = new Set(src.spanish);
+    {
+      const texts = src.texts.filter(t => !NEVER_SHOWN_EN.some(re => re.test(t.where.replace(/ \(piece\)$/, ''))));
+      const res = await page.evaluate(texts => {
+        // English keys with slots: a template whose finished sentences each have their entry ("Peor
+        // para {x}: ... el ataque físico."), or a piece of 'Text ' + name + ' more', is covered by them.
+        const keys = [];
+        for (const [d, l] of window.__dicts) if (l === 'en') for (const k of Object.keys(d)) if (/\{(?:x|name)\}/.test(k)) keys.push(k.replace(/\{name\}/g, '{x}'));
+        const esc = s => s.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&');
+        const covered = (s, piece) => (piece && s.length > 3 && keys.some(k => k.includes(s))) ||
+          (s.includes('{x}') && (re => keys.some(k => re.test(k)))(new RegExp('^' + s.split('{x}').map(esc).join('.+?') + '$')));
+        const out = [];
+        const put = (alts, where) => {
+          alts = alts.filter(s => typeof s === 'string' && /\p{L}/u.test(s));
+          if (alts.length) out.push({ s: alts[0], where, en: alts.map(s => covered(s, where.endsWith('(piece)')) ? '' : G.I18n.t(s.trim())) });
+        };
+        for (const t of texts) put(t.alts, t.where);
+        for (const a of G.AchDefs.LIST) { put([a.name], 'achievement'); put([a.desc], 'achievement'); put([a.title], 'achievement title'); }
+        for (const m of [...G.MissionDefs.daily, ...G.MissionDefs.weekly]) for (const n of [1, ...(m.goals || [])]) put([m.text(n, 'fire')], 'mission');
+        for (const it of G.Items.LIST) for (const k of ['name', 'desc', 'short']) put([it[k]], 'item');
+        for (const u of G.Upgrades.LIST) for (const k of ['name', 'desc']) put([u[k]], 'upgrade');
+        for (const m of Object.values(G.Moves.BY_ID)) { put([m.name], 'move'); put([m.desc], 'move'); }
+        for (const [k, v] of Object.entries(G.TRAIT_TEXT)) { put([k[0].toUpperCase() + k.slice(1)], 'trait'); put([v], 'trait'); }
+        for (const q of G.PERSONALITY_TEST) { put([q.q], 'personality test'); q.a.forEach(a => put([a.t], 'personality test')); }
+        for (const s of G.STARTERS) put([s.traits.join(', ')], 'starter traits');
+        // Built from pieces where they're drawn: a level-up card's tag (js/systems/levelup.js), the
+        // HUD's buff chips (js/ui/hud.js LBL).
+        put(['Nv.' + 3 + ' > ' + 4], 'level-up tag');
+        for (const l of ['ATK', 'AT.E', 'VEL', 'DEF', 'REG']) put([l + ' ×' + 2], 'HUD buff chip');
+        return out;
+      }, texts);
+      const words = s => (String(s).toLowerCase().match(/[\p{L}’']+/gu) || []).map(w => w.replace(/^['’]+|['’]+$/g, ''));
+      // Flagged when every way it can show still has a Spanish word.
+      const left = res.filter(r => r.en.every(t => words(t).some(w => SPANISH_ONLY.has(w))));
+      check(res.length > 2000 && !left.length, `no Spanish left in the game's texts and data (${res.length} through the English pass)`,
+        left.length ? left.slice(0, 15).map(r => `${r.s.slice(0, 60)} → ${r.en[0].slice(0, 60)} @ ${r.where}`) : undefined);
+      if (LIST) for (const r of left) console.log('    ' + JSON.stringify(r.s) + ' → ' + JSON.stringify(r.en[0]) + '  @ ' + r.where + '  {' + [...new Set(words(r.en[0]).filter(w => SPANISH_ONLY.has(w)))].join(',') + '}');
+    }
+
     if (NO_WALK) { check(!errors.length, 'no page errors', errors); return; }
     const flagged = new Map(), seen = new Set(), areas = [];
     // Visible text of the open screens (DOM text and the attributes the game translates), and the canvas.
@@ -253,7 +459,8 @@ async function game() {
       for (const [s, t] of texts) {
         seen.add(s);
         // (The dictionary's word-by-word pass may only change a capital: "joystick" → "Joystick".)
-        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t.toLowerCase() !== s.toLowerCase() ? 'translatable' : null;
+        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t.toLowerCase() !== s.toLowerCase() ? 'translatable'
+          : (s.toLowerCase().match(/[\p{L}’']+/gu) || []).some(w => SPANISH_ONLY.has(w)) ? 'Spanish word' : null;
         if (why && !flagged.has(s)) flagged.set(s, `${where} [${why}]${t !== s ? ' → ' + t : ''}`);
       }
       areas.push(`${where}: ${texts.length} (${seen.size - before} new)`);
@@ -325,7 +532,8 @@ async function game() {
       await page.evaluate(() => G.RunUI.closeLevelUp());
       await page.keyboard.press('Escape'); await shot(); await collect(label + ' pause');
       await page.keyboard.press('Escape'); await page.waitForTimeout(3600);
-      await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e9); });
+      // (A shiny caught first, for the game over's "Shinies caught" list and its toast.)
+      await page.evaluate(() => { G.onShinyCaught({ dex: 25, name: 'Pikachu' }); const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e9); });
       await page.waitForFunction(() => G.UI.isOpen('scr-over'), null, { timeout: 15000 }).catch(() => {});
       await page.waitForTimeout(1500); await collect(label + ' game over');
       await page.evaluate(() => G.Flow.goMenu());
