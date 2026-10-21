@@ -202,7 +202,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
       // The games' multiplier, written the way the arrow shows it.
       const raw = e.types.reduce((a, t) => a * (G.Types.CHART[atk][t] ?? 1), 1);
       const txt = { 4: 'x4', 2: 'x2', 0.5: '1/2', 0.25: '1/4', 0: 'x0' }[raw];
-      out[k] = { id: e.id, name: e.name, types: e.types, icon: txt && 'eff:' + (raw > 1 ? 'up' : 'down') + ':' + txt };
+      // Since 2026-10-21 every run draws Lab's small arrows (js/fork/lab/badges.js effName: 'eff:up:x2' -> 'lb-g').
+      out[k] = { id: e.id, name: e.name, types: e.types, icon: txt && G.LabBadges.effName('eff:' + (raw > 1 ? 'up' : 'down') + ':' + txt) };
     }
     return { atk, out };
   });
@@ -213,14 +214,16 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     // The arrow belongs to the enemy whose draw() is running when it's drawn (matching by
     // distance picked the neighbour for big Pokémon, whose arrow sits further out).
     const seen = {};
-    const orig = G.Icons.draw, od = G.Enemy.prototype.draw;
+    const di = CanvasRenderingContext2D.prototype.drawImage, od = G.Enemy.prototype.draw;
+    const arrows = G.LabBadges.NAMES.map(n => [n, G.Icons.canvas(n)]);
     let cur = null;
     G.Enemy.prototype.draw = function () { cur = this; try { return od.apply(this, arguments); } finally { cur = null; } };
-    G.Icons.draw = function (ctx, name) {
-      if (name.startsWith('eff:') && cur) seen[cur.id] = name;
-      return orig.apply(this, arguments);
+    CanvasRenderingContext2D.prototype.drawImage = function (img, x, y, w, h) {
+      const a = cur && arrows.find(([, c]) => c === img);
+      if (a) seen[cur.id] = a[0], seen[cur.id + ':size'] = [w, h];
+      return di.apply(this, arguments);
     };
-    setTimeout(() => { G.Icons.draw = orig; G.Enemy.prototype.draw = od; res(seen); }, 400);
+    setTimeout(() => { CanvasRenderingContext2D.prototype.drawImage = di; G.Enemy.prototype.draw = od; res(seen); }, 400);
   }));
 
   let seen = await drawnFor();
@@ -237,11 +240,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     await page.screenshot({ path: path.join(SHOTS, 'type-arrows.png'), clip: box });
   }
 
-  // Every arrow the game can show builds, and stays small (it sits beside the HP bar).
-  const sizes = await page.evaluate(() => ['eff:up:x4', 'eff:up:x2', 'eff:down:1/2', 'eff:down:1/4', 'eff:down:x0']
-    .map(n => { const c = G.Icons.canvas(n); return [n, c.width, c.height]; }));
-  console.log('  arrow sizes: ' + sizes.map(([n, w, h]) => `${n} ${w}x${h}`).join(', '));
-  check(sizes.every(([, w, h]) => w >= 9 && w <= 16 && h >= 9 && h <= 14), 'all arrows between 9 and 16 px');
+  // The arrows are drawn small (half of their 18 px picture, or of the 13 px code drawing).
+  const sizes = [o.super, o.weak].filter(Boolean).map(x => seen[x.id + ':size']);
+  console.log('  arrow sizes: ' + JSON.stringify(sizes));
+  check(sizes.length === 2 && sizes.every(s => s && s[0] >= 6 && s[0] <= 9 && s[1] >= 6 && s[1] <= 9), 'the arrows are drawn small (6.5 to 9 px)');
   if (SHOTS) {
     // The five arrows side by side, 4x, for a look at the digits.
     await page.evaluate(() => {

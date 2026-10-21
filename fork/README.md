@@ -260,6 +260,13 @@ English only so upstream's Spanish keys stay), the tooltip's close-range line (-
 and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
 `move-looks.js` draws it from `G.Combat.fields`).
 
+`node fork/test-card-rarity.cjs` (server) checks the rarities of the run's upgrade cards
+(`js/fork/card-rarity.js`: Common ×1 60 %, Uncommon ×1.25 25 %, Rare ×1.5 10 %, Epic ×2 4 %, Legendary
+×3 1 %; the gacha's names and colours): the odds over 8000 real offers, the multiplied text and effect
+(an Epic Potencia: "+20% damage", ×1.2, counts 2 towards its cap of 40), never past a cap, and the
+painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
+number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
+
 `node fork/test-death-cause.cjs` (server; co-op part with the Firebase emulator) checks what knocked
 you out (`js/fork/death-cause.js`): `Player.hurt` doesn't know who hits, so hooks just before each hit
 say it (`Enemy.strike` for a touch, `Enemy.shoot` marks its shots, `Enemy.hazard` its area attacks,
