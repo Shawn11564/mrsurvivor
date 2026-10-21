@@ -386,6 +386,17 @@ prestige costs 100 gems too. When two copies of the save merge, each Pokémon's 
 copy with the later "epoch" (prestige, then resets; `G.forkMerge` in `js/fork/prestige.js`).
 `node fork/test-gems.cjs` (server).
 
+## Resume after a reload (2026-10-21, from doofcraft)
+
+A solo Lab run is saved in the browser every 5 s and when the tab closes (`js/fork/lab/resume.js`,
+`localStorage ms.resume`; not in a rift, before Arceus, or with a choice screen open). Back at the menu,
+"Unfinished Lab run" offers **Resume** (time, map seed, position, level, HP, multipliers, cards, moves
+with levels and evolutions, slots, item, bonds, coins and the `_lab*` state come back; enemies start
+fresh at that hour) or **End run** (resumed and ended at once, with the usual rewards). Tickets were
+banked when picked up, so they don't count again. The clock is set with `debugTime` (no leaderboard;
+Lab never counts anyway). Co-op can't be resumed: the host runs it. `node fork/test-resume.cjs`
+(server) reloads a real page.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
