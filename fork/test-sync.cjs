@@ -8,6 +8,9 @@
  *      `node tools/build.js` (so its index.html/app.min.js change too, as in a real release).
  *   3. `node fork/sync.cjs --from fake` must merge with no conflicts, and the result must
  *      carry every probe, branded, with the fork's credit and no upstream name or contact.
+ *      It must also stay English first (fork/english.cjs): the English default in
+ *      js/core/locales.js, an English / with our link preview, and the fork's README.md
+ *      kept over upstream's (merge=ours), though the probe release edits it.
  *   4. A fork edit on the same line as upstream's must stop the sync and name the file.
  */
 const { execFileSync, spawnSync } = require('child_process');
@@ -26,6 +29,7 @@ const edit = (f, anchor, insert) => {
 let failures = 0;
 const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); if (!ok) failures++; };
 const FORK_FILES = ['fork/brand.cjs', 'fork/build.cjs', 'fork/sync.cjs', 'fork/test-sync.cjs', 'fork/README.md',
+  'fork/english.cjs', 'assets/fork/og-image.jpg', 'js/core/locales.js', 'README.md',
   'css/brand.css', '.gitattributes', 'js/core/firebase-config.js', 'CLAUDE.local.md'];
 
 try {
@@ -52,6 +56,7 @@ try {
   edit('dev.html', '<h3>Contenido de terceros</h3>', '<p>upstream-probe-dev</p>\n    ');
   edit('js/ui/ui.js', '  const CONTACT =', '  // upstream-probe-js\n');
   edit('contacto/index.html', '<ul class="contact">', '<p>upstream-probe-contacto</p>\n  ');
+  fs.appendFileSync(path.join(TMP, 'README.md'), '\nupstream-probe-readme\n');
   console.log('test-sync: releasing the fake upstream with tools/build.js…');
   r = node(['tools/build.js']);
   if (r.status !== 0) throw new Error('upstream build failed:\n' + r.stderr.slice(-2000));
@@ -74,6 +79,12 @@ try {
   check(read('index.html').includes('Required Notice: Copyright 2026 JPTER78'), 'legal credit + Required Notice in index.html');
   check(/css\/brand\.css\?v=/.test(read('index.html')) && /css\/brand\.css\?v=/.test(read('en/index.html')), 'brand.css linked in both game pages');
   check(read('CNAME').trim() === 'play.mrshawn.dev', 'CNAME is the fork domain');
+  const idx = read('index.html');
+  check(/<html lang="en">/.test(idx) && idx.includes('<meta property="og:title" content="MrSurvivor – Survive the Pokémon hordes">')
+    && idx.includes('<meta property="og:image" content="https://play.mrshawn.dev/assets/fork/og-image.jpg">'), 'index.html is English, with our link preview');
+  check(read('js/core/locales.js').includes("const lang = normalize(saved) || 'en';"), 'English is still the default language (js/core/locales.js)');
+  const lf = s => s.replace(/\r\n/g, '\n');
+  check(lf(read('README.md')) === lf(fs.readFileSync(path.join(SRC, 'README.md'), 'utf8')), "the fork's README.md survived upstream's edit (merge=ours)");
   const g = spawnSync('git', ['grep', '-lE', 'PokéSurvivor|pokesurvivor\\.com|jpieratorregrosa', 'HEAD', '--',
     '*.html', '*.webmanifest', '*.xml', '*.txt', 'js/lang', ':!dev.html'], { cwd: TMP, encoding: 'utf8' });
   check(g.status === 1, 'no served file names upstream or its contact' + (g.stdout ? ':\n' + g.stdout : ''));

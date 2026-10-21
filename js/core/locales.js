@@ -26,8 +26,9 @@ window.PS_LOCALES = (() => {
   }
   let saved;
   try { saved = localStorage.getItem('ps.lang'); } catch (e) { /* storage can be blocked */ }
-  const lang = normalize(saved) || (/\/en(\/|$)/.test(location.pathname) ? 'en' : null)
-    || normalize((navigator.languages && navigator.languages[0]) || navigator.language || 'es') || 'en';
+  // MrSurvivor: English first. English unless the player picked another language in Settings
+  // (upstream used the browser's language, Spanish by default). fork/test-english.cjs checks it.
+  const lang = normalize(saved) || 'en';
   document.documentElement.lang = lang;
   if (lang !== 'es' && lang !== 'en') {
     const me = document.currentScript, v = me && /[?&]v=([\w-]+)/.exec(me.src);

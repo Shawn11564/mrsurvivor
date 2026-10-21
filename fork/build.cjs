@@ -10,11 +10,14 @@
  *      just write (contacto/, manifest, CNAME...) start from upstream's pristine copy
  *      at the last merged upstream commit, so re-running is deterministic.
  *   3. css/brand.css is linked after style.css in the game pages.
- * Fails if a SPECIFIC rule in brand.cjs no longer matches upstream.
+ *   4. English first (fork/english.cjs): / gets the English game page's head and link preview,
+ *      and the manifest, 404, sitemap and site pages put English first.
+ * Fails if a SPECIFIC rule in brand.cjs or a REQUIRED one in english.cjs no longer matches upstream.
  */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const { BRAND, brand, fired, SPECIFIC } = require('./brand.cjs');
+const EN = require('./english.cjs');
 
 const ROOT = path.join(__dirname, '..');
 const rel = p => path.relative(ROOT, p).replace(/\\/g, '/');
@@ -81,6 +84,14 @@ function* walk(dir) {
   }
 }
 
+// English first (fork/english.cjs): the game at / gets the head of the English game page
+// make_seo_pages.py just wrote (en/index.html), before both are branded below.
+{
+  const idx = path.join(ROOT, 'index.html'), en = path.join(ROOT, 'en', 'index.html');
+  if (!fs.existsSync(en) || fs.statSync(en).mtimeMs < started) throw new Error('fork: make_seo_pages.py wrote no en/index.html to take the English head from');
+  fs.writeFileSync(idx, EN.rootFromEnglish(realRead(idx, 'utf8'), realRead(en, 'utf8')));
+}
+
 const cssHash = crypto.createHash('sha1').update(realRead(path.join(ROOT, 'css', 'brand.css'))).digest('hex').slice(0, 10);
 const BRAND_LINK = `<link rel="stylesheet" href="css/brand.css?v=${cssHash}">`;
 let pages = 0;
@@ -89,8 +100,9 @@ for (const file of walk(ROOT)) {
   if (r === 'dev.html' || !SERVED.test(path.basename(r)) && !SERVED.test(r)) continue;
   const fresh = fs.statSync(file).mtimeMs >= started;
   const src = (!fresh && pristine(r)) || realRead(file, 'utf8');
-  let out = brand(src, r);
+  let out = EN.english(brand(src, r), r);
   if (r === 'CNAME') out = BRAND.domain;       // as GitHub Pages writes it (no newline)
+  if (r === '404.html') out = EN.NOT_FOUND;
   // Game pages (index.html, en/index.html) get the colour layer.
   out = out.replace(/<link rel="stylesheet" href="css\/brand\.css\?v=[^"]*">\n?/g, '');
   out = out.replace(/(<link rel="stylesheet" href="css\/style\.css\?v=[^"]+">)/, `$1\n${BRAND_LINK}`);
@@ -103,6 +115,12 @@ if (missing.length) {
   for (const i of missing) console.error(`  [${i}] ${SPECIFIC[i][0]}: ${SPECIFIC[i][1].slice(0, 80)}`);
   process.exit(1);
 }
+const enMissing = EN.REQUIRED.filter(n => !EN.fired.has(n));
+if (enMissing.length) {
+  console.error('fork: these English-first rules no longer match upstream, update fork/english.cjs: ' + enMissing.join(', '));
+  process.exit(1);
+}
+if (!fs.existsSync(path.join(ROOT, EN.OG_IMAGE))) { console.error(`fork: ${EN.OG_IMAGE} is missing (node fork/make-og-image.cjs)`); process.exit(1); }
 // The bundle must not carry upstream's name or domain (checked before obfuscation).
 const bundle = realRead(path.join(ROOT, 'tools', 'cache', 'app.js'), 'utf8');
 const leaks = ['PokéSurvivor', 'pokesurvivor.com', 'jpieratorregrosa'].filter(s => bundle.includes(s));

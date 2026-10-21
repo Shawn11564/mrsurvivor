@@ -23,6 +23,8 @@
 /novedades/** merge=ours
 /apoyar/** merge=ours
 /contacto/** merge=ours
+# The README is the fork's own (English, about MrSurvivor), not a rebuilt file: keep it as it is.
+/README.md merge=ours
 
 # The Asset Admin's launchers (fork/ARTIST.md): the Mac one only runs with LF line endings,
 # the Windows one wants CRLF, whatever the cloning PC's git does.

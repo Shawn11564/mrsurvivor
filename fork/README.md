@@ -14,6 +14,9 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/brand.cjs` | name, domain, contact, credit lines, the find→replace rules |
 | `css/brand.css` | mrshawn.dev colours, loaded after upstream's `style.css` |
 | `fork/build.cjs` | runs upstream's build with the branding applied |
+| `fork/english.cjs` | English first: the build gives `/` the English game page's head and link preview, and makes the manifest, 404, sitemap (English as the default, hreflang x-default) and site pages English first, without upstream's donation lines (see "English first" below) |
+| `fork/make-og-image.cjs` | makes `assets/fork/og-image.jpg`, the 1200×630 picture shown when someone pastes a link: a real run in headless Edge with our name, domain and the English tagline (upstream's `assets/og-image.jpg` is Spanish and says PokéSurvivor). Rerun it with the server up to refresh it |
+| `README.md` | the fork's own README (English, about MrSurvivor); `merge=ours`, so upstream's README edits never land here |
 | `fork/sync.cjs` | merges upstream, rebuilds, commits |
 | `.gitattributes` | generated files are `merge=ours`, so merges don't conflict on them |
 | `js/core/firebase-config.js` | the one upstream file we edit (our Firebase project) |
@@ -67,6 +70,31 @@ records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md).
 - **"brand rules no longer match upstream":** upstream reworded a line the credit hooks
   into. Update that rule's `from` text in `fork/brand.cjs` and re-run the build.
 
+## English first
+
+English is MrSurvivor's primary and default language. Upstream writes the game in Spanish and
+translates it on the fly (`js/core/i18n.js`, `js/data/lang-*.js`), so the fork keeps their Spanish
+source and changes what players get:
+
+- **The game starts in English** unless the player picks another language in Settings → Graphics →
+  Language (`ps.lang`). Upstream used the browser's language, Spanish by default; one line in
+  `js/core/locales.js` changes that. Players who picked Spanish (or French, Italian...) keep it.
+- **The site** (`fork/english.cjs`, run by `fork/build.cjs`): `/` is the English game page (title,
+  description, link preview, structured data, loading screen, `<noscript>`) with our preview picture
+  (`assets/fork/og-image.jpg`), `en/index.html` names `/` as the canonical page, and the manifest,
+  404, sitemap and site pages put English first.
+- **New text is English only**: no Spanish and no translations into the other languages
+  (`CLAUDE.local.md`). Other languages fall back to English for it.
+
+`node fork/test-english.cjs` (server; `node fork/build.cjs` first) checks it: every browser language
+gets English with nothing saved and a saved choice still wins; upstream's `tests/i18n.test.cjs` passes
+except its "locale precedence" test (it expects the browser's language); the built pages (head, link
+preview and its picture, manifest, 404, sitemap, no donations); every English text the game can show
+comes out of the dictionary unchanged (its word-by-word pass turned the fork's "Leaf Tornado" into
+"Leaf Gust"); and, in headless Edge with a Spanish browser, the login, menus, every Settings tab,
+What's new, the personality test, legal, the radiant ritual and a normal and a Lab run show no Spanish
+(`--no-walk` skips that part, `--list` prints what it saw).
+
 ## Upstream changes we switch off
 
 - **Their TURN server** (co-op through `ice.pokesurvivor.com`, upstream 2026-10-20/21). It's upstream's
@@ -79,6 +107,10 @@ records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md).
   `G.CHANGELOG` (upstream's `js/data/changelog.js` stays untouched, so merges stay clean), with any
   date left empty. Now: the 2026-10-21 "co-op goes through our server" note.
   `node fork/test-changelog-filter.cjs` (server) checks the What's new screen and its dot.
+- **The browser's language** picking the game's language (Spanish by default): the game starts in
+  English (see "English first").
+- **Donations**: upstream's Ko-fi/Sponsors accounts (`fork/brand.cjs` empties them, so the game hides
+  the button) and the site's donation lines and support page (`fork/english.cjs`).
 
 ## Check
 

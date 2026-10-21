@@ -1,8 +1,8 @@
 {
   "name": "MrSurvivor",
   "short_name": "MrSurvivor",
-  "description": "Fan game gratuito: sobrevive a las hordas con tu compañero Pokémon. Sin anuncios.",
-  "lang": "es",
+  "description": "A free fan game: survive the hordes with your Pokémon partner. No ads, nothing to buy.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

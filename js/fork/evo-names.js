@@ -53,4 +53,8 @@
     G.I18n.add(names, l);
     G.I18n.add(names, l, 'move');          // G.T(name, 'move'): cartas y HUD
   });
+  // The English names stay as they are when the game sends its text through the dictionary again on
+  // the way to the screen: its word-by-word pass made "Leaf Tornado" "Leaf Gust" (Tornado is Gust's
+  // Spanish name). fork/test-english.cjs checks every English text for this.
+  G.I18n.add(Object.fromEntries(ROWS.map(r => [r[2], r[2]])), 'en');
 })();

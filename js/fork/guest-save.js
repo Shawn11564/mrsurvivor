@@ -156,6 +156,14 @@ G.GuestSave = (() => {
      '你正在以{x}身份游玩：进度仅保存在此浏览器。创建账号或登录后会转入账号。', '你正在以{x}身分遊玩：進度僅保存在此瀏覽器。建立帳號或登入後會轉入帳號。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
+  // Settings → Account writes the guest sentence around <b>invitado</b>, and the page is translated a
+  // text node at a time, so its tail needs an entry of its own (upstream's sentence has one in lang-en.js).
+  // English only (CLAUDE.local.md); other languages fall back to it. fork/test-english.cjs found it.
+  G.I18n.add({
+    'Estás jugando como': 'You\'re playing as a',
+    ': tu progreso se guarda sólo en este navegador. Crea una cuenta o entra en la tuya y pasará a ella.':
+      ': your progress is saved in this browser only. Create an account or log in and it moves there.'
+  }, 'en');
 
   return { store, load, safe, get kept() { return kept; } };
 })();
