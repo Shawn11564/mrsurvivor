@@ -869,8 +869,9 @@ G.Game = (() => {
       y = (pl.y - G.LIFT * 0.5 - G.Camera.top() + Math.sin(pl.aim) * 90) * k;
     } else ({ x, y } = G.Input.mouse());
     ctx.save();
+    if (G.AimStyle) ({ x, y } = G.AimStyle.frame(ctx, x, y));      // fork: tamaño de la mira (js/fork/aim-style.js)
     ctx.lineCap = 'round';
-    for (const [col, lw] of [['rgba(0,0,0,.65)', 4], ['#ffe9a8', 1.6]]) {
+    for (const [col, lw] of [['rgba(0,0,0,.65)', 4], [G.AimStyle ? G.AimStyle.color() : '#ffe9a8', 1.6]]) {   // fork: su color
       ctx.strokeStyle = col; ctx.lineWidth = lw;
       ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.2832); ctx.stroke();
       ctx.beginPath();

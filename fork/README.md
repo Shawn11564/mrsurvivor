@@ -273,6 +273,11 @@ rings and beams are tagged when born by who is casting (`G.Combat.tick` with you
 own pass with every `globalAlpha` multiplied. `node fork/test-fx-opacity.cjs` (server) reads the alpha
 the canvas really uses for each.
 
+**Crosshair and right stick** (everyone, `js/fork/aim-style.js`): Settings → Controls has the crosshair's
+colour (6) and size (3) (two one-line hooks in `drawAimMark`, `js/game.js`) and "Aim with the right stick"
+(on): pushing the controller's right stick aims by hand even with "Manual aim" off, letting go aims on its
+own again (`Player.handAim`). `node fork/test-aim-style.cjs` (server).
+
 **Stats panel** (everyone, `js/fork/stats-panel.js`): a Settings → Graphics switch (off by default) that
 draws, under the HP bar in a run, your damage, speed, HP, defense, cooldown, regen and crits as they are
 now, and the upgrade cards you've taken (in `G.HUD.belowHp`, after Lab's evolution bar).
