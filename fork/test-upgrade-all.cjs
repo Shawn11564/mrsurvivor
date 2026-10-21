@@ -25,7 +25,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await pastStart(page, '#btn-guest');
     await page.$eval('#btn-guest', e => e.click());
     await page.waitForFunction(() => G.DB.save && G.UpgradeAll, null, { timeout: 30000 });
-    await page.evaluate(() => { const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.partner = 4; s.starter = 4; s.coins = 0; s.pupg = {}; s.gems = 100; G.Settings.set('lab', false);   // gems: with Lab on, prestige costs 100 (js/fork/lab/gems.js) G.DB.commit(); G.Flow.goMenu(); });
+    await page.evaluate(() => { const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.partner = 4; s.starter = 4; s.coins = 0; s.pupg = {}; s.gems = 100; /* with Lab on, prestige costs 100 gems (js/fork/lab/gems.js) */ G.Settings.set('lab', false); G.DB.commit(); G.Flow.goMenu(); });
     const open = () => page.evaluate(() => { G.UI.hideAll(); G.Flow.goMenu(); document.querySelector('#scr-menu [data-go="upgrades"]').click(); });
     const panel = () => page.evaluate(() => { const b = document.getElementById('upgall-panel'), btn = b && b.querySelector('[data-all]');
       return b && { what: b.querySelector('.upgall-what').textContent, btn: btn && { off: btn.disabled, text: btn.textContent.trim() } }; });
