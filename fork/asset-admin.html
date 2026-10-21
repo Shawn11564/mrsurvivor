@@ -236,7 +236,7 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
   const overrideUrl = n => overrides[n] ? '/' + overrides[n].file + '?v=' + overrides[n].v : null;
   /** A code icon as the artist would edit it: the custom PNG if there is one, else the drawing ×k. */
   async function iconBytes(n, k) {
-    if (overrides[n]) return [iconFile(n, overrides[n].w / CODE_BY[n].w), await bytes(overrideUrl(n))];
+    if (overrides[n]) { const k = overrides[n].w / CODE_BY[n].w; return [iconFile(n, Number.isInteger(k) ? k : 1), await bytes(overrideUrl(n))]; }
     return [iconFile(n, k), new Uint8Array(await (await pngOf(scaled(n, k))).arrayBuffer())];
   }
 
@@ -319,7 +319,7 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
         const img = await loadImg(assetUrl(rel)), k = fit(a.w, a.h);
         x.drawImage(img, 0, 0, a.w, a.h, (c.width - a.w * k) / 2, (c.height - a.h * k) / 2, a.w * k, a.h * k);
       } else if (id.startsWith('icon:')) {
-        const n = id.slice(5), src = overrides[n] ? await loadImg(overrideUrl(n)) : G.Icons.canvas(n), cw = CODE_BY[n].w, ch = CODE_BY[n].h, k = fit(cw, ch);
+        const n = id.slice(5), src = overrides[n] ? await loadImg(overrideUrl(n)) : G.Icons.canvas(n), o = overrides[n], cw = o && o.own ? o.w : CODE_BY[n].w, ch = o && o.own ? o.h : CODE_BY[n].h, k = fit(cw, ch);
         x.imageSmoothingEnabled = !!overrides[n];
         x.drawImage(src, (c.width - cw * k) / 2, (c.height - ch * k) / 2, cw * k, ch * k);
       } else {
@@ -357,7 +357,7 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
       const n = open.slice(5), c = CODE_BY[n], o = overrides[n];
       const big = scaled(n, Math.max(1, Math.floor(96 / Math.max(c.w, c.h)))).toDataURL();
       html = `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h2>${esc(n)} <span class="sub">${esc(c.group)}</span></h2><span class="spacer"></span><button class="small" id="close-d">Close</button></div>
-        <p class="sub">Drawn by the game's code at ${c.w}×${c.h}. A new version is a PNG of ${c.w}×${c.h} or a whole multiple (×4 = ${c.w * 4}×${c.h * 4}): the game shows it at the same size, and a bigger one stays sharp on big screens.</p>` +
+        <p class="sub">Drawn by the game's code at ${c.w}×${c.h}. A new version is a PNG of ${c.w}×${c.h} or a whole multiple (×4 = ${c.w * 4}×${c.h * 4}): the game shows it at the same size, and a bigger one stays sharp on big screens. Any other size up to ${c.w * 2}×${c.h * 2} is shown at its own size, pixel for pixel (an empty border around the drawing is trimmed first).</p>` +
         `<div class="files">` + fileRow(open, o ? 'Custom PNG' : 'Code drawing', o ? `${o.w}×${o.h}` : `${c.w}×${c.h}`, o ? overrideUrl(n) : big,
           o ? '<button class="small dlc" data-k="1">Download</button>' : '<button class="small dlc" data-k="1">Download ×1</button><button class="small dlc" data-k="4">Download ×4</button>',
           o ? '<button class="small unov">Back to the code drawing</button>' : '') + '</div>';
@@ -436,7 +436,8 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
     const res = [], renamed = [];
     for (const [f, name] of list) {
       if (/\.zip$/i.test(name)) {
-        try { const r = await api('stage', { method: 'POST', body: await f.arrayBuffer(), headers: { 'x-name': encodeURIComponent(name) } }); res.push(...r.results); st = r.state; }
+        try { const r = await api('stage', { method: 'POST', body: await f.arrayBuffer(), headers: { 'x-name': encodeURIComponent(name) } }); for (const x of r.results) if (x.ok && x.note) renamed.push(`${x.from.split('/').pop()}: ${x.note}`);
+          res.push(...r.results); st = r.state; }
         catch (e) { res.push({ from: name, ok: false, error: e.message }); }
         continue;
       }
@@ -448,7 +449,7 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
       if (aim && aim.icon) h['x-icon'] = encodeURIComponent(aim.icon);
       try {
         const r = await api('stage', { method: 'POST', body: p.bytes, headers: h });
-        for (const x of r.results) { x.from = base; if (x.ok && (proper !== base || p.note)) renamed.push(`${base} → saved as ${proper}${p.note ? ', ' + p.note : ''}`); }
+        for (const x of r.results) { x.from = base; if (x.ok && (proper !== base || p.note)) renamed.push(`${base} → saved as ${proper}${p.note ? ', ' + p.note : ''}`); else if (x.ok && x.note) renamed.push(`${base}: ${x.note}`); if (x.ok && x.note && (proper !== base || p.note)) renamed[renamed.length - 1] += '; ' + x.note; }
         res.push(...r.results); st = r.state;
       } catch (e) { res.push({ from: name, ok: false, error: e.message }); }
     }
@@ -493,7 +494,7 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
     if (!s.length) $('pending').hidden = true;
     $('pending').innerHTML = s.length ? '<table>' + s.map(x => `<tr data-key="${esc(x.key)}"><td>${esc(x.icon ? 'icon ' + x.icon : x.target)}</td>
       <td><img src="${x.icon ? (overrideUrl(x.icon) || scaled(x.icon, 2).toDataURL()) : assetUrl(x.target)}" alt=""> → <img src="${stagedUrl(x.key)}" alt=""></td>
-      <td class="sub">${x.w}×${x.h}${x.k > 1 ? ` (×${x.k})` : ''} · from ${esc(x.from.split('/').pop())}</td><td><button class="small un">Discard</button></td></tr>`).join('') + '</table>' : '';
+      <td class="sub">${x.w}×${x.h}${x.own ? ' (its own size)' : x.k > 1 ? ` (×${x.k})` : ''} · from ${esc(x.from.split('/').pop())}</td><td><button class="small un">Discard</button></td></tr>`).join('') + '</table>' : '';
     $('pending').querySelectorAll('.un').forEach(b => b.onclick = async () => { st = await post('unstage', { keys: [b.closest('tr').dataset.key] }); render(); });
     const ch = g && !g.error ? g.changed : [];
     $('pub-n').textContent = ch.length ? `${ch.length} file${ch.length > 1 ? 's' : ''} changed, not published` : 'Nothing to publish';
@@ -590,7 +591,8 @@ pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge
     render(); syncUi(st.sync);
   }
   // State from the other tabs (a radiant imported there), every few seconds.
-  setInterval(async () => { if (ready() && !document.hidden) { try { st = await api('state'); bar(); } catch (e) { /* stopped */ } } }, 5000);
+  // (syncUi too: the banners always match the state the page holds.)
+  setInterval(async () => { if (ready() && !document.hidden) { try { st = await api('state'); bar(); syncUi(st.sync); } catch (e) { /* stopped */ } } }, 5000);
 
   // ---------------- tabs ----------------
   let cur = 'gallery';

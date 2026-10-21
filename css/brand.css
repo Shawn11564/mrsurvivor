@@ -53,12 +53,8 @@ p.fork-credit { font-size: 0.9em; }
 /* Signature moves in the pause list (gold ring), and the extra lines (evolution, candies, shiny). */
 .lab-pool .lab-sig { border-radius: 50%; box-shadow: 0 0 0 2px #ffd23f; }
 .lab-more { margin-top: 3px; }
-/* Move badges mockup (js/fork/lab/badges.js): both forms are on each level-up card, and the
-   "Plain arrows only" setting (body.lb-plain) picks which one shows. */
-.lb-s { display: inline-flex; gap: 2px; vertical-align: -2px; }
-.lb-a { display: none; vertical-align: -2px; margin-left: 2px; }
-body.lb-plain .lb-s { display: none; }
-body.lb-plain .lb-a { display: inline; }
+/* Move badges (js/fork/lab/badges.js): the arrow after each word in a level-up card's chip. */
+.lb-a { vertical-align: -3px; margin-left: 2px; }
 
 /* Radiant forms and the Radiant Ritual (js/fork/radiant.js): warm gold instead of the shiny's ice blue. */
 .stage.radiant { box-shadow: 0 0 0 3px #3a1d00, 0 0 26px rgba(255,179,71,.6), inset 0 0 0 2px rgba(255,255,255,.1); }

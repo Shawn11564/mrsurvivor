@@ -72,8 +72,11 @@ fs.writeFileSync(path.join(U, 'bulk.zip'), zipOf({
   '__MACOSX/._x.png': Buffer.from('junk')
 }));
 fs.writeFileSync(path.join(U, 'whatever-name.png'), NEW.attack150);
-fs.writeFileSync(path.join(U, 'code-icon__lb-g-type@4x.png'), NEW.icon);
-fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 255]));
+fs.writeFileSync(path.join(U, 'code-icon__lb-y@4x.png'), NEW.icon);
+fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(30, 30, [0, 0, 0, 255]));      // over twice the coin's 12×12
+// An 18×18 drawing on a 32×32 canvas (how the artist sent the arrows): trimmed, kept at its own size.
+NEW.arrow = (() => { const px = Buffer.alloc(32 * 32 * 4); for (let y = 8; y < 26; y++) for (let x = 7; x < 25; x++) px.set([60, 230, 60, 255], (y * 32 + x) * 4); return encode({ w: 32, h: 32, px }); })();
+fs.writeFileSync(path.join(U, 'code-icon__lb-g.png'), NEW.arrow);
 
 (async () => {
   const srv = spawn(process.execPath, [path.join(T, 'fork/asset-admin.cjs'), '--port', '0', '--no-open'], { cwd: T,
@@ -107,7 +110,7 @@ fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 25
     await page.goto(url);
     await page.waitForSelector('#gate-steps li');
     const gate = await page.evaluate(() => ({ shown: !document.getElementById('gate').hidden, text: document.getElementById('gate').textContent }));
-    const blocked = await raw('/api/stage', { method: 'POST', body: NEW.icon, headers: { 'x-name': 'code-icon__lb-g-type@4x.png' } });
+    const blocked = await raw('/api/stage', { method: 'POST', body: NEW.icon, headers: { 'x-name': 'code-icon__lb-y@4x.png' } });
     check(gate.shown && /Fetching the latest version from GitHub/.test(gate.text), 'the page is blocked behind the sync\'s progress', gate.text.slice(0, 160));
     check(blocked.status === 423 && /syncing/i.test(blocked.body), 'a change while it syncs: refused (423)', blocked.status);
     await page.waitForFunction(() => document.getElementById('gate').hidden, null, { timeout: 30000 });
@@ -169,21 +172,24 @@ fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 25
     console.log('6. Code icons');
     await page.click('#cats button[data-cat="code"]');
     const code = await page.evaluate(() => AssetAdmin.code().map(c => c.n));
-    check(code.length > 300 && ['coin', 'lb-g-type', 'type:fire', 'move:ember', 'eff:down:1/2'].every(n => code.includes(n)), `${code.length} code icons, interface, badges, types, moves and arrows`, code.length);
-    await page.fill('#q', 'lb-g-type');
+    check(code.length > 300 && ['coin', 'lb-y', 'type:fire', 'move:ember', 'eff:down:1/2'].every(n => code.includes(n)), `${code.length} code icons, interface, badges, types, moves and arrows`, code.length);
+    await page.fill('#q', 'lb-y');
     await page.waitForFunction(() => document.querySelectorAll('#grid .tile').length === 1);
-    await page.click('.tile[data-id="icon:lb-g-type"]');
+    await page.click('.tile[data-id="icon:lb-y"]');
     const [dl4] = await Promise.all([page.waitForEvent('download'), page.click('#detail .dlc[data-k="4"]')]);
     const d4 = decode(fs.readFileSync(await dl4.path()));
-    check(dl4.suggestedFilename() === 'code-icon__lb-g-type@4x.png' && d4.w === 52 && d4.h === 52, 'the ×4 download: 52×52, named code-icon__lb-g-type@4x.png', [dl4.suggestedFilename(), d4.w, d4.h]);
-    await page.setInputFiles('#up-file', [path.join(U, 'code-icon__lb-g-type@4x.png'), path.join(U, 'code-icon__coin.png')]);
-    await page.waitForFunction(() => /1 new version staged, 1 not/.test(document.getElementById('results').textContent), null, { timeout: 15000 });
+    check(dl4.suggestedFilename() === 'code-icon__lb-y@4x.png' && d4.w === 52 && d4.h === 52, 'the ×4 download: 52×52, named code-icon__lb-y@4x.png', [dl4.suggestedFilename(), d4.w, d4.h]);
+    await page.setInputFiles('#up-file', [path.join(U, 'code-icon__lb-y@4x.png'), path.join(U, 'code-icon__coin.png'), path.join(U, 'code-icon__lb-g.png')]);
+    await page.waitForFunction(() => /2 new versions staged, 1 not/.test(document.getElementById('results').textContent), null, { timeout: 15000 });
     const r6 = await page.textContent('#results');
-    const ic = await page.evaluate(() => AssetAdmin.state().staged.find(s => s.key === 'icon:lb-g-type'));
-    check(ic && ic.k === 4 && ic.w === 52, 'a ×4 PNG of lb-g-type: staged (×4)', ic && { k: ic.k, w: ic.w });
+    const ic = await page.evaluate(() => AssetAdmin.state().staged.find(s => s.key === 'icon:lb-y'));
+    check(ic && ic.k === 4 && ic.w === 52, 'a ×4 PNG of lb-y: staged (×4)', ic && { k: ic.k, w: ic.w });
     const coin = await page.evaluate(() => AssetAdmin.code().find(c => c.n === 'coin'));
-    check(new RegExp(`coin.*has to be ${coin.w}×${coin.h} or a whole multiple`).test(r6.replace(/\s+/g, ' ')),
-      `a 20×20 coin: refused (not a multiple of ${coin.w}×${coin.h})`, r6.replace(/\s+/g, ' ').slice(0, 200));
+    check(new RegExp(`coin.*it's 30×30: coin is ${coin.w}×${coin.h}\\. Use that, a whole multiple.*or a size of its own up to ${coin.w * 2}×${coin.h * 2}`).test(r6.replace(/\s+/g, ' ')),
+      `a 30×30 coin: refused (over twice ${coin.w}×${coin.h}, not a multiple)`, r6.replace(/\s+/g, ' ').slice(0, 260));
+    const own = await page.evaluate(() => AssetAdmin.state().staged.find(s => s.key === 'icon:lb-g'));
+    check(own && own.own && own.w === 18 && own.h === 18 && /trimmed 32×32 to its drawing, 18×18; shown at its own size, 18×18 instead of 13×13/.test(r6),
+      'an 18×18 arrow on a 32×32 canvas: trimmed to 18×18, kept at its own size (and said so)', own && { own: own.own, w: own.w, note: own.note });
 
     console.log('7. Apply');
     await page.click('#apply');
@@ -195,8 +201,10 @@ fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 25
     const ICO = () => JSON.parse(fs.readFileSync(path.join(T, 'js/fork/icon-overrides.json'), 'utf8'));
     const hash = b => require('crypto').createHash('sha1').update(b).digest('hex').slice(0, 10);
     check(REV()['assets/pokemon/150/Idle.png'] === hash(NEW.idle150) && Object.keys(REV()).length === 3, 'their hashes in asset-rev.json', REV());
-    check(ICO()['lb-g-type'] && ICO()['lb-g-type'].file === 'assets/icons/code/lb-g-type.png' && same('assets/icons/code/lb-g-type.png', NEW.icon) && ICO()['lb-g-type'].w === 52,
-      'the icon: assets/icons/code/lb-g-type.png and its entry', ICO());
+    check(ICO()['lb-y'] && ICO()['lb-y'].file === 'assets/icons/code/lb-y.png' && same('assets/icons/code/lb-y.png', NEW.icon) && ICO()['lb-y'].w === 52,
+      'the icon: assets/icons/code/lb-y.png and its entry', ICO());
+    const g = ICO()['lb-g'], gp = fs.existsSync(path.join(T, 'assets/icons/code/lb-g.png')) && decode(fs.readFileSync(path.join(T, 'assets/icons/code/lb-g.png')));
+    check(g && g.own === true && g.w === 18 && gp && gp.w === 18 && gp.h === 18, 'the own-size arrow: an 18×18 PNG, own: true in its entry', g);
     check(await page.evaluate(() => AssetAdmin.state().staged.length) === 0, 'nothing staged after');
 
     console.log('8. The other person publishes meanwhile');
@@ -217,9 +225,9 @@ fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 25
     check(/^Published/.test(out), 'published', out.slice(0, 200));
     const remote = (...a) => sh(ORIGIN, ...a);
     const msg = remote('log', '-1', '--format=%s', 'main');
-    check(msg === 'Assets: Charizard (#6) Walk; Mewtwo (#150) Attack, Idle; code icons lb-g-type', 'the message names them', msg);
+    check(msg === 'Assets: Charizard (#6) Walk; Mewtwo (#150) Attack, Idle; code icons lb-g, lb-y', 'the message names them', msg);
     const inCommit = remote('show', '--name-only', '--format=', 'main').split('\n').sort();
-    check(JSON.stringify(inCommit) === JSON.stringify(['assets/icons/code/lb-g-type.png', 'assets/pokemon/150/Attack.png', 'assets/pokemon/150/Idle.png', 'assets/pokemon/6/Walk.png', 'js/fork/asset-rev.json', 'js/fork/icon-overrides.json']),
+    check(JSON.stringify(inCommit) === JSON.stringify(['assets/icons/code/lb-g.png', 'assets/icons/code/lb-y.png', 'assets/pokemon/150/Attack.png', 'assets/pokemon/150/Idle.png', 'assets/pokemon/6/Walk.png', 'js/fork/asset-rev.json', 'js/fork/icon-overrides.json']),
       'only the tool\'s files are in it', inCommit);
     check(/work in progress/.test(fs.readFileSync(path.join(T, 'notes.txt'), 'utf8')) && /notes\.txt/.test(git('status', '--porcelain')), 'the unrelated change is still there, uncommitted');
     await page.waitForFunction(() => /Nothing to publish/.test(document.getElementById('pub-n').textContent), null, { timeout: 10000 });
@@ -284,12 +292,12 @@ fs.writeFileSync(path.join(U, 'code-icon__coin.png'), solid(20, 20, [0, 0, 0, 25
       'the file and its hash are back to what\'s live; nothing else touched', git('status', '--porcelain'));
 
     console.log('13. Back to the code drawing');
-    await page.click('#cats button[data-cat="code"]'); await page.fill('#q', 'lb-g-type');
+    await page.click('#cats button[data-cat="code"]'); await page.fill('#q', 'lb-y');
     await page.waitForFunction(() => document.querySelectorAll('#grid .tile').length === 1);
-    await page.click('.tile[data-id="icon:lb-g-type"]');
+    await page.click('.tile[data-id="icon:lb-y"]');
     await page.click('#detail .unov');
-    await page.waitForFunction(() => !AssetAdmin.overrides()['lb-g-type']);
-    check(!ICO()['lb-g-type'] && !fs.existsSync(path.join(T, 'assets/icons/code/lb-g-type.png')), 'the PNG and its entry are gone (publish to send it)');
+    await page.waitForFunction(() => !AssetAdmin.overrides()['lb-y']);
+    check(!ICO()['lb-y'] && !fs.existsSync(path.join(T, 'assets/icons/code/lb-y.png')), 'the PNG and its entry are gone (publish to send it)');
     check(!errs.length, 'no page errors', errs);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

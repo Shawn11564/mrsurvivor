@@ -1,18 +1,17 @@
 #!/usr/bin/env node
-// The move badges mockup in Lab runs (js/fork/lab/badges.js), in headless Edge on dev.html.
+// The move badges in Lab runs (js/fork/lab/badges.js), in headless Edge on dev.html.
 //
 //   python -m http.server 8123          (in the repo root, in another terminal)
 //   node fork/test-badges.cjs [base-url]
 //
-//   1. The 16 icons build: 4 plain arrows and 7 move badges at 13×13, 5 enemy arrows that stay small.
-//   2. Which badges real Pokémon get: Charmander's Ember (type + special, both green), Charizard's
-//      (no type badge: two types, no bonus), a weak-side move (yellow, red under 65%), buffs.
-//   3. Level-up cards in a Lab run: symbols after the name; the B key / setting switches to plain
-//      arrows inside the chip ("New · Fire ▲ · Special ▲"); nothing with Lab off.
-//   4. The move tooltip, with a real mouse over the slot: the badges, or the plain arrows next to
-//      their words.
-//   5. The enemy arrows: what enemy.js draws over a super-effective enemy is our canvas.
-//   6. The built index.html (node fork/build.cjs) has the badges and links their CSS itself.
+//   1. The 4 arrows build (13×13 code drawings).
+//   2. Which arrows real Pokémon get: Charmander's Ember (type + special, both green), Charizard's
+//      (no type arrow: two types, no bonus), a weak-side move (yellow, red under 65%), buffs.
+//   3. Level-up cards in a Lab run: each arrow in the chip after its word ("New · Fire ▲ · Special ▲");
+//      no switch or button left; nothing with Lab off.
+//   4. The move tooltip, with a real mouse over the slot: each arrow after its word.
+//   5. The enemy arrows: what enemy.js draws over a super-effective enemy is our green arrow.
+//   6. The built index.html (node fork/build.cjs): no setting left, and its CSS places the arrows.
 // Set SHOTS=<dir> to save screenshots of the cards, the tooltip and the enemies.
 const path = require('path');
 const { chromium, pastStart } = require('./pw.cjs');
@@ -47,15 +46,11 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       G.EnemyMgr.clear();
     }, [dex, lab, moveId]);
 
-    console.log('1. Icons');
+    console.log('1. The arrows');
     const icons = await page.evaluate(() => G.LabBadges.NAMES.map(n => { const c = G.Icons.canvas(n); return [n, c.width, c.height]; }));
-    check(icons.length === 16, '16 icons', icons.length);
-    const small = icons.filter(([n]) => /^lb-[gmyr](-(type|phys|spec))?$/.test(n));
-    check(small.length === 11 && small.every(([, w, h]) => w === 13 && h === 13), '4 plain arrows + 7 move badges, all 13×13', small);
-    const eff = icons.filter(([n]) => /\d/.test(n));
-    check(eff.length === 5 && eff.every(([, w, h]) => w <= 19 && h <= 16), '5 enemy arrows, at most 19×16', eff);
+    check(icons.map(i => i[0]).join() === 'lb-g,lb-m,lb-y,lb-r' && icons.every(([, w, h]) => w === 13 && h === 13), 'the 4 arrows, 13×13 code drawings', icons);
 
-    console.log('2. Which badges');
+    console.log('2. Which arrows');
     const mk = await page.evaluate(() => {
       const M = (dex, id) => G.LabBadges.marks(G.DEX_BY[dex], G.Moves.BY_ID[id]);
       // The Pokémon whose weak side is weakest (the only red cases).
@@ -66,78 +61,60 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const mid = G.DEX.find(m => { const f = Math.min(m.pa, m.sa) / m.atk; return f >= 0.65 && f < 0.95; });
       const mcat = mid.pa < mid.sa ? 'physical' : 'special';
       const mmove = G.Moves.ALL.find(m => m.cat === mcat && m.kind !== 'buff');
-      const gengar = G.DEX_BY[94];
       return {
         charmander: M(4, 'ember'), charizard: M(6, 'ember'),
-        worst: [worst.name, +(Math.min(worst.pa, worst.sa) / worst.atk).toFixed(2), G.LabBadges.marks(worst, wmove).cat, wcat],
-        mid: [mid.name, +(Math.min(mid.pa, mid.sa) / mid.atk).toFixed(2), G.LabBadges.marks(mid, mmove).cat, mcat],
-        gengarSide: G.Stats.sideOf(gengar),
+        worst: [worst.name, +(Math.min(worst.pa, worst.sa) / worst.atk).toFixed(2), G.LabBadges.marks(worst, wmove).cat],
+        mid: [mid.name, +(Math.min(mid.pa, mid.sa) / mid.atk).toFixed(2), G.LabBadges.marks(mid, mmove).cat],
+        gengarSide: G.Stats.sideOf(G.DEX_BY[94]),
         nasty: M(94, 'nasty-plot'), swords: M(94, 'swords-dance'), agility: M(94, 'agility')
       };
     });
-    check(mk.charmander.type === 'lb-g-type' && mk.charmander.cat === 'lb-g-spec', "Charmander's Ember: green type + green special", mk.charmander);
-    check(!mk.charizard.type && mk.charizard.cat === 'lb-g-spec', "Charizard's Ember: no type badge (two types), green special", mk.charizard);
-    check(mk.mid[2] === 'lb-y-' + (mk.mid[3] === 'physical' ? 'phys' : 'spec'), 'weak side at 65-95 %: yellow', mk.mid);
-    check(mk.worst[1] < 0.65 && mk.worst[2] === 'lb-r-' + (mk.worst[3] === 'physical' ? 'phys' : 'spec'), 'weak side under 65 %: red', mk.worst);
-    check(mk.gengarSide === 'special' && mk.nasty.cat === 'lb-g-spec' && mk.swords.cat === 'lb-y-phys' && !mk.agility.cat && !mk.agility.type,
+    check(mk.charmander.type === 'lb-g' && mk.charmander.cat === 'lb-g', "Charmander's Ember: green after the type and after Special", mk.charmander);
+    check(!mk.charizard.type && mk.charizard.cat === 'lb-g', "Charizard's Ember: none after the type (two types), green after Special", mk.charizard);
+    check(mk.mid[2] === 'lb-y', 'weak side at 65-95 %: yellow', mk.mid);
+    check(mk.worst[1] < 0.65 && mk.worst[2] === 'lb-r', 'weak side under 65 %: red', mk.worst);
+    check(mk.gengarSide === 'special' && mk.nasty.cat === 'lb-g' && mk.swords.cat === 'lb-y' && !mk.agility.cat && !mk.agility.type,
       'Gengar: Nasty Plot green, Swords Dance yellow, Agility nothing', [mk.nasty, mk.swords, mk.agility]);
 
     console.log('3. Level-up cards');
-    await page.evaluate(() => G.Settings.set(G.LabBadges.KEY, false));
-    // Shows the level-up screen until it has a new-move card, and reads the cards.
+    // Shows the level-up screen until a hand has a new-move card with arrows (by its .lb-a, not its
+    // text: the chip's "Nuevo ·" is translated later, by i18n's observer, and this loop never lets it run).
     const cards = () => page.evaluate(async () => {
       const p = G.Game.player;
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 80; i++) {
         G.Game.state = 'levelup';
         G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {});
-        if (document.querySelector('#cards .lb-s, #cards .card .tag-chip')) {
-          const any = [...document.querySelectorAll('#cards .card')].some(c => /New ·/.test(c.textContent));
-          if (any || i > 30) break;
-        }
+        if (!G.Lab.active || document.querySelector('#cards .lb-a')) break;
       }
       await new Promise(r => setTimeout(r, 50));
-      const vis = el => !!el && getComputedStyle(el).display !== 'none';
-      return [...document.querySelectorAll('#cards .card')].map(c => {
-        const chip = c.querySelector('.tag-chip');
-        return {
-          name: c.querySelector('.nm').firstChild.textContent.trim(), chip: chip.textContent.trim(),
-          s: [...c.querySelectorAll('.lb-s img')].map(i => i.getAttribute('src')), sVis: vis(c.querySelector('.lb-s')),
-          a: [...c.querySelectorAll('.lb-a')].map(i => i.getAttribute('src')), aVis: [...c.querySelectorAll('.lb-a')].some(vis)
-        };
-      }).concat([{ btn: vis(document.getElementById('lvl-badges')), btnText: (document.getElementById('lvl-badges') || {}).textContent }]);
+      return {
+        cards: [...document.querySelectorAll('#cards .card')].map(c => {
+          const chip = c.querySelector('.tag-chip');
+          return { name: c.querySelector('.nm').firstChild.textContent.trim(), chip: chip.textContent.trim(), html: chip.innerHTML,
+            a: [...chip.querySelectorAll('.lb-a')].map(i => i.getAttribute('src')) };
+        }),
+        btn: !!document.getElementById('lvl-badges')
+      };
     });
     const urls = await page.evaluate(() => Object.fromEntries(G.LabBadges.NAMES.map(n => [G.Icons.url(n), n])));
-    const named = list => list.map(u => urls[u] || '?');
     await start(4, true);
     let c = await cards();
-    let btn = c.pop();
-    const ember = c.find(x => x.s.length);
-    check(btn.btn && /arrows \+ symbols/.test(btn.btnText), 'Lab run: the switch is on the level-up screen ("arrows + symbols")', btn.btnText);
-    check(!!ember && ember.sVis && !ember.aVis, 'a new-move card shows the symbol badges, not the plain arrows', ember && { name: ember.name, sVis: ember.sVis, aVis: ember.aVis });
-    const want = ember && await page.evaluate(n => {
+    const card = c.cards.find(x => x.a.length);
+    check(!c.btn, 'no switch on the level-up screen any more');
+    const want = card && await page.evaluate(n => {
       const d = Object.values(G.Moves.BY_ID).find(m => G.T(m.name, 'move') === n);
       const k = d && G.LabBadges.marks(G.Game.player.mon, d);
-      return k && { s: [k.type, k.cat].filter(Boolean), a: [k.type, k.cat].filter(Boolean).map(x => x.split('-').slice(0, 2).join('-')),
+      return k && { a: [k.type, k.cat].filter(Boolean), type: !!k.type,
         chip: G.I18n.f('Nuevo · {x}', G.T(G.U.TYPE_NAME[d.type])) + ' · ' + G.T(d.cat ? G.Stats.NAME[d.cat] : 'Mejora') };
-    }, ember.name);
-    check(want && JSON.stringify(named(ember.s)) === JSON.stringify(want.s), `${ember && ember.name}: badges ${want && want.s}`, named(ember ? ember.s : []));
-    check(want && JSON.stringify(named(ember.a)) === JSON.stringify(want.a), `${ember && ember.name}: plain arrows ${want && want.a} in the chip`, named(ember ? ember.a : []));
-    check(want && ember.chip.replace(/\s+/g, ' ') === want.chip, `chip text stays "${want && want.chip}"`, ember && ember.chip);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards-symbols.png') });
-    await page.keyboard.press('b');
-    c = await page.evaluate(() => {
-      const vis = el => !!el && getComputedStyle(el).display !== 'none';
-      return { plain: G.Settings.get(G.LabBadges.KEY), s: [...document.querySelectorAll('#cards .lb-s')].some(vis),
-        a: [...document.querySelectorAll('#cards .lb-a')].some(vis), btn: document.getElementById('lvl-badges').textContent };
-    });
-    check(c.plain && !c.s && c.a && /arrows only/.test(c.btn), 'B: plain arrows in the chip, symbols hidden, button says "arrows only"', c);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards-plain.png') });
-    await page.keyboard.press('b');
-    check(await page.evaluate(() => !G.Settings.get(G.LabBadges.KEY)), 'B again: back to symbols');
+    }, card.name);
+    check(want && JSON.stringify(card.a.map(u => urls[u])) === JSON.stringify(want.a), `${card && card.name}: arrows ${want && want.a} in the chip`, card && card.a.map(u => urls[u]));
+    // Each after its word: the type arrow right after the type, the other after " · Special".
+    check(want && card.chip.replace(/\s+/g, ' ') === want.chip && (want.type ? /^[^<]*<img[^>]*>\s*<span[^>]*> · [^<]*<\/span><img/ : /<span[^>]*> · [^<]*<\/span><img/).test(card.html),
+      `chip text stays "${want && want.chip}", each arrow after its word`, card && card.html.slice(0, 160));
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards.png') });
     await start(4, false);
     c = await cards();
-    btn = c.pop();
-    check(!btn.btn && c.every(x => !x.s.length && !x.a.length), 'Lab off: no badges, no switch', btn);
+    check(c.cards.every(x => !x.a.length), 'Lab off: no arrows');
 
     console.log('4. Tooltip');
     const hover = () => page.evaluate(() => {
@@ -153,33 +130,30 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       setTimeout(() => { G.I18n.rawCanvas = ot; G.Icons.draw = oi; res({ txt, ico }); }, 300);
     }));
     await start(4, true, 'ember');
-    await page.evaluate(() => { G.UI.hideAll(); G.Game.state = 'playing'; G.Game.debugSpeed(0); G.Settings.set(G.LabBadges.KEY, false); });
-    let pos = await hover();
+    await page.evaluate(() => { G.UI.hideAll(); G.Game.state = 'playing'; G.Game.debugSpeed(0); });
+    const pos = await hover();
     await page.mouse.move(pos.x, pos.y);
-    let t = await tip();
+    const t = await tip();
     const firstOf = (list, n) => list.find(([s]) => s === n);
-    check(firstOf(t.ico, 'lb-g-type') && firstOf(t.ico, 'lb-g-spec') && !firstOf(t.ico, 'lb-g'), 'symbols: the tooltip draws the type and special badges', [...new Set(t.ico.map(x => x[0]))]);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-tip-symbols.png') });
-    await page.evaluate(() => G.Settings.set(G.LabBadges.KEY, true));
-    t = await tip();
     const names = await page.evaluate(() => [G.T(G.U.TYPE_NAME.fire), G.T(G.Stats.NAME.special)]);
     const fire = firstOf(t.txt, names[0]), spec = firstOf(t.txt, names[1]);
     const arrows = t.ico.filter(([n]) => n === 'lb-g').map(x => x[1]);
     const a1 = Math.min(...arrows), a2 = Math.max(...arrows);
     check(arrows.length >= 2 && fire && spec && fire[1] < a1 && a1 < spec[1] && spec[1] < a2,
-      `plain arrows: "${names[0]}" ▲ "${names[1]}" ▲, each arrow after its word`, { fire, spec, arrows: [a1, a2] });
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-tip-plain.png') });
+      `"${names[0]}" ▲ "${names[1]}" ▲, each arrow after its word`, { fire, spec, arrows: [a1, a2] });
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-tip.png') });
     await page.mouse.move(640, 150);
 
     console.log('5. Enemy arrows');
     // A Grass enemy (Ember: x2), drawn over a few frames; which images enemy.js put on the canvas.
-    const enemy = plainMode => page.evaluate(async plainMode => {
-      G.Settings.set(G.LabBadges.KEY, plainMode);
+    const en = await page.evaluate(async () => {
       const pl = G.Game.player;
       G.EnemyMgr.clear();
       let def = null;
-      for (const tier of G.Enemies.cast) for (const d of tier.list) {
-        const ty = (G.DEX_BY[d.dex] || {}).types || [];
+      // A Grass-only enemy: from the arena's cast, or its hordes (the cast changes with the arena).
+      const defs = G.Enemies.cast.flatMap(t => t.list).concat(...G.Enemies.hordeTypes(600).map(t => G.Enemies.hordeDefs(t, 600)));
+      for (const d of defs) {
+        const ty = d.types || (G.DEX_BY[d.dex] || {}).types || [];
         if (!def && ty.length === 1 && ty[0] === 'grass') def = d;
       }
       const e = new G.Enemy(def, pl.x + 60, pl.y - 40, G.Enemies.scale(0));
@@ -188,20 +162,14 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       CanvasRenderingContext2D.prototype.drawImage = function (img) { seen.add(img); return od.apply(this, arguments); };
       await new Promise(r => setTimeout(r, 300));
       CanvasRenderingContext2D.prototype.drawImage = od;
-      const has = n => seen.has(G.Icons.canvas(n));
-      return { name: e.name, sym: has('lb-g-x2'), plain: has('lb-g') };
-    }, plainMode);
-    let en = await enemy(false);
-    check(en.sym && !en.plain, `symbols: ${en.name} (Grass, vs Ember) gets the green x2 arrow`, en);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy-symbols.png') });
-    en = await enemy(true);
-    check(en.plain && !en.sym, `plain arrows: ${en.name} gets the green arrow without the number`, en);
-    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy-plain.png') });
-    await page.evaluate(() => G.Settings.set(G.LabBadges.KEY, false));
+      return { name: e.name, green: seen.has(G.Icons.canvas('lb-g')) };
+    });
+    check(en.green, `${en.name} (Grass, vs Ember) gets the green arrow`, en);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-enemy.png') });
 
     console.log('6. Built index.html');
     // G is sealed in app.min.js (fork/build.cjs), so as a player would: guest, the starter quiz,
-    // Settings → Experimental. The CSS is checked on two spans with the badges' classes.
+    // Settings → Experimental. The CSS is checked on a span with the arrows' class.
     const built = await browser.newPage({ viewport: { width: 1100, height: 700 } });
     built.on('pageerror', e => errs.push('index.html: ' + e.message));
     await built.goto(BASE + '/index.html', { waitUntil: 'load' });
@@ -216,21 +184,13 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await built.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
     await built.click('#btn-settings');
     await built.click('#set-tabs [data-t="lab"]');
-    const row = await built.locator('#set-body .switch[data-k="labPlainArrows"]').count();
+    const rows = await built.locator('#set-body .switch').evaluateAll(b => b.map(x => x.dataset.k));
     const css = await built.evaluate(() => {
-      const d = document.createElement('span');
-      d.innerHTML = '<span class="lb-s">s</span><span class="lb-a">a</span>';
-      document.body.appendChild(d);
-      const disp = () => [d.querySelector('.lb-s'), d.querySelector('.lb-a')].map(e => getComputedStyle(e).display);
-      const sym = disp();
-      document.body.classList.add('lb-plain');
-      const plain = disp();
-      document.body.classList.remove('lb-plain'); d.remove();
-      return { sym, plain };
+      const d = document.createElement('img'); d.className = 'lb-a'; document.body.appendChild(d);
+      const s = getComputedStyle(d), out = { display: s.display, align: s.verticalAlign }; d.remove(); return out;
     });
-    check(row === 1, 'index.html: the "Plain arrows only" switch is in Settings → Experimental', row);
-    check(css.sym[0] !== 'none' && css.sym[1] === 'none' && css.plain[0] === 'none' && css.plain[1] !== 'none',
-      'index.html: its brand.css shows the symbols, or the plain arrows with body.lb-plain', css);
+    check(rows.includes('lab') && !rows.includes('labPlainArrows'), 'index.html: Settings → Experimental has Lab mode and no arrows switch', rows);
+    check(css.display !== 'none' && css.align === '-3px', 'index.html: its brand.css places the arrows', css);
     await built.close();
 
     check(errs.length === 0, 'no page errors', errs.slice(0, 3));

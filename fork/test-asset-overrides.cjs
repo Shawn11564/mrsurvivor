@@ -8,7 +8,7 @@
 //      game asked for it before the list came in (it's asked for again).
 //   2. A code icon in icon-overrides.json: G.Icons.html/url give its PNG, at the code icon's
 //      size; G.Icons.draw draws the PNG at the same place and size; the <img> already on screen
-//      and the CSS variable change; a Lab card's badge uses it too.
+//      and the CSS variable change; a Lab card's arrow uses it too (an own-size PNG at its own size).
 //   3. Bad entries are ignored: a path out of assets/icons/code/, a bad hash, a path with "..".
 //   4. With the service worker (which keeps art forever): the sheet with ?v= is fetched and
 //      kept as its own entry, so the new version reaches a player who had the old one.
@@ -26,12 +26,13 @@ const V = 'abc123def0';
 const REV = { 'assets/pokemon/4/Idle.png': V, 'assets/../fork/x.png': 'abc123', 'assets/pokemon/4/Walk.png': 'NOT-HEX' };
 const ICONS = {
   coin: { file: 'assets/icons/code/coin.png', v: '1111111111', w: 48, h: 48 },
-  'lb-g-type': { file: 'assets/icons/code/lb-g-type.png', v: '2222222222', w: 52, h: 52 },
+  'lb-y': { file: 'assets/icons/code/lb-y.png', v: '2222222222', w: 52, h: 52 },
+  'lb-g': { file: 'assets/icons/code/lb-g.png', v: '4444444444', w: 18, h: 18, own: true },    // its own size (the artist's arrows)
   heart: { file: '../../evil.png', v: '3333333333', w: 12, h: 12 },
   star: { file: 'assets/icons/code/star.png', v: 'zz', w: 12, h: 12 }
 };
 
-async function game(browser, { rev = REV, icons = ICONS, hold = false } = {}) {
+async function game(browser, { rev = REV, icons = ICONS, hold = false, slowArt = 0 } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block', locale: 'en-US' });
   const page = await ctx.newPage();
   const errs = [], reqs = [];
@@ -41,8 +42,10 @@ async function game(browser, { rev = REV, icons = ICONS, hold = false } = {}) {
   const held = new Promise(r => { release = r; });
   await page.route('**/js/fork/asset-rev.json*', async r => { if (hold) await held; r.fulfill({ contentType: 'application/json', body: JSON.stringify(rev) }); });
   await page.route('**/js/fork/icon-overrides.json*', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(icons) }));
+  // slowArt: badge-art.js (which adds the arrows to G.Icons) comes late, so the lists are in first.
+  if (slowArt) await page.route('**/js/fork/lab/badge-art.js*', async r => { await new Promise(ok => setTimeout(ok, slowArt)); r.continue(); });
   await page.route('**/assets/icons/code/*.png*', r => { const n = r.request().url().match(/code\/([^/?]+)\.png/)[1];
-    r.fulfill({ contentType: 'image/png', body: n === 'coin' ? solid(48, 48, [255, 0, 200, 255]) : solid(52, 52, [0, 255, 255, 255]) }); });
+    r.fulfill({ contentType: 'image/png', body: n === 'coin' ? solid(48, 48, [255, 0, 200, 255]) : n === 'lb-g' ? solid(18, 18, [0, 200, 0, 255]) : solid(52, 52, [0, 255, 255, 255]) }); });
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.AssetOverrides && G.DB, null, { timeout: 30000 });
   await page.addStyleTag({ url: BASE + '/css/brand.css' });
@@ -80,26 +83,41 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const x = c.getContext('2d'), seen = [], od = x.drawImage;
       x.drawImage = function (img, ...a) { seen.push([img.src || 'canvas', ...a.map(Math.round)]); return od.apply(this, arguments); };
-      G.Icons.draw(x, 'lb-g-type', 10, 10, 26);
+      G.Icons.draw(x, 'lb-y', 10, 10, 26);
       const px = x.getImageData(20, 20, 1, 1).data;
       out.draw = seen; out.px = [...px];
-      out.size = [G.Icons.canvas('lb-g-type').width, G.Icons.canvas('coin').width];
+      out.size = [G.Icons.canvas('lb-y').width, G.Icons.canvas('coin').width];
+      // Its own size: 18 where the game asks for 13, 36 where it asks for 26, and that's what layouts measure.
+      const seen2 = []; x.drawImage = function (img, ...a) { seen2.push(a.map(Math.round)); return od.apply(this, arguments); };
+      G.Icons.draw(x, 'lb-g', 0, 0, 13);
+      const wh = h => h.match(/width="(\d+)" height="(\d+)"/).slice(1).join('x');
+      out.own = { h13: wh(G.Icons.html('lb-g', 13)), h26: wh(G.Icons.html('lb-g', 26)), canvas: G.Icons.canvas('lb-g').width, draw: seen2[0] };
       out.domOld = [...document.querySelectorAll('img.pix')].filter(i => /code\/coin\.png/.test(i.src)).length;
       return out;
     });
-    check(ic.names.join() === 'coin,lb-g-type', 'the two good ones are used (a path out of code/ and a bad hash: not)', ic.names);
+    check(ic.names.join() === 'coin,lb-g,lb-y', 'the two good ones are used (a path out of code/ and a bad hash: not)', ic.names);
     check(/code\/coin\.png\?v=1111111111/.test(ic.html) && /width="24" height="24"/.test(ic.html) && /code\/coin\.png/.test(ic.url) && /code\/coin\.png/.test(ic.css),
       'coin: html (its PNG, at the code icon\'s 24×24), url and the CSS variable', [ic.html.slice(0, 90), ic.url.slice(0, 90), ic.css.slice(0, 90)]);
-    check(ic.draw.length === 1 && /code\/lb-g-type\.png/.test(ic.draw[0][0]) && ic.draw[0].slice(1).join() === '10,10,26,26' && ic.px[0] === 0 && ic.px[1] === 255,
+    check(ic.draw.length === 1 && /code\/lb-y\.png/.test(ic.draw[0][0]) && ic.draw[0].slice(1).join() === '10,10,26,26' && ic.px[0] === 0 && ic.px[1] === 255,
       'draw: the PNG, at the same place and size as the code drawing (10,10 26×26)', ic.draw);
     check(ic.size.join() === '13,12', 'G.Icons.canvas keeps the code icon\'s size (layout doesn\'t move)', ic.size);
+    check(ic.own.h13 === '18x18' && ic.own.h26 === '36x36' && ic.own.canvas === 18 && ic.own.draw && ic.own.draw[2] === 18,
+      'a PNG with its own size (18×18 for a 13×13 arrow): shown 18 / 36, measured 18', ic.own);
     await startRun(g.page, 4, true);
     await g.page.evaluate(() => { const p = G.Game.player; G.Game.state = 'levelup';
-      // Until a card has both badges (a Fire move: type + special).
-      for (let i = 0; i < 60; i++) { G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {}); if ([...document.querySelectorAll('#cards .lb-s')].some(s => s.children.length === 2)) break; } });
-    const card = await g.page.$$eval('#cards .lb-s', ss => ss.filter(s => s.children.length === 2).map(s => [...s.children].map(i => i.getAttribute('src'))));
-    check(card.length && /code\/lb-g-type\.png/.test(card[0][0]) && /^data:/.test(card[0][1]), 'a Lab card: the type badge is the PNG, the other one the code drawing', card.map(c => c.map(s => s.slice(0, 50))));
+      // Until a card's chip has a green arrow (Charmander: a Fire or a special move).
+      for (let i = 0; i < 60; i++) { G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {}); if ([...document.querySelectorAll('#cards .lb-a')].some(a => /code\/lb-g\.png/.test(a.getAttribute('src')))) break; } });
+    const card = await g.page.$$eval('#cards .lb-a', as => as.filter(a => /code\/lb-g\.png/.test(a.getAttribute('src'))).map(a => [a.getAttribute('src').split('/').pop(), a.width, a.height]));
+    check(card.length && card.every(([, w, h]) => w === 18 && h === 18), 'a Lab card\'s green arrow is the PNG, at its own 18×18', card);
     check(!g.errs.length, 'no page errors', g.errs);
+    await g.ctx.close();
+
+    console.log('   the lists in before the script that adds the arrows has run');
+    g = await game(browser, { slowArt: 2500 });
+    await g.page.evaluate(() => G.AssetOverrides.loaded);
+    await g.page.waitForFunction(() => /code\/coin\.png/.test(document.documentElement.style.getPropertyValue('--ico-coin')), null, { timeout: 10000 }).catch(() => {});
+    const late = await g.page.evaluate(() => ({ y: G.Icons.canvas('lb-y').width, g: G.Icons.canvas('lb-g').width, code: G.LabBadgeArt.NAMES.join() }));
+    check(late.y === 13 && late.g === 18, 'the arrows are right (13, and 18 for the own-size one), not ui/icons.js\'s stand-in star (12)', late);
     await g.ctx.close();
 
     console.log('   asked for before the list came in');

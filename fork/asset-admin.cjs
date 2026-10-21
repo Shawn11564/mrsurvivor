@@ -189,7 +189,7 @@ function state() {
 }
 const syncView = () => Object.assign({}, sync, { steps: sync.steps.map(s => ({ text: s.text, state: s.state })) });
 
-/** "Assets: Mewtwo (#150) Idle, shiny Walk; app icons icon-192; code icons lb-g-type" */
+/** "Assets: Mewtwo (#150) Idle, shiny Walk; app icons icon-192; code icons lb-g, lb-y" */
 function assetSummary(changed) {
   const mons = new Map(), app = [], code = [];
   for (const f of changed) {

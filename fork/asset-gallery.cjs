@@ -5,11 +5,13 @@
  *   - a file keeps its exact size (a sprite sheet's frame grid is fixed in js/data/sprites-meta.js);
  *     applying it writes it in place and puts its hash in js/fork/asset-rev.json, so players get
  *     it past the service worker's cache (js/fork/asset-overrides.js)
- *   - a code icon's PNG is its size ×1 to ×16 (same shape); applying it writes
+ *   - a code icon's PNG is its size ×1 to ×16 (same shape), or a size of its own (up to twice the
+ *     code icon's; the game shows it 1:1, own: true). A PNG that's neither is trimmed of its empty
+ *     border first (an 18×18 arrow on a 32×32 canvas). Applying it writes
  *     assets/icons/code/<name>.png and its entry in js/fork/icon-overrides.json
  * Names: a download is called what an upload must be called to land back on it, so a folder
  * of edited files can be dropped in one go: pokemon__150__Idle.png (assets/pokemon/150/Idle.png;
- * a real path inside a zip works too) and code-icon__lb-g-type.png (or @4x for a bigger one).
+ * a real path inside a zip works too) and code-icon__lb-y.png (or @4x for a bigger one).
  * Check: node fork/test-asset-admin.cjs.
  */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
@@ -103,7 +105,7 @@ function match(name) {
 const staged = new Map();                         // key ('assets/...' or 'icon:<name>') -> entry
 const stagedBytes = () => [...staged.values()].reduce((s, e) => s + e.buf.length, 0);
 const view = e => ({ key: e.key, target: e.target || null, icon: e.icon || null, from: e.from, w: e.w, h: e.h,
-  old: e.old, k: e.k || null, bytes: e.buf.length });
+  old: e.old, k: e.k || null, own: !!e.own, note: e.note || '', bytes: e.buf.length });
 
 /** Checks buf as a new version of `to` ({ target } or { icon }): the entry, or { error }. */
 function vet(to, buf, from) {
@@ -122,10 +124,37 @@ function vet(to, buf, from) {
   }
   const nv = natives[to.icon];
   if (!nv) return { error: `no code icon called "${to.icon}"` };
-  const k = sz[0] / nv[0];
-  if (!Number.isInteger(k) || k < 1 || k > 16 || sz[1] !== nv[1] * k)
-    return { error: `it's ${sz[0]}×${sz[1]}: ${to.icon} has to be ${nv[0]}×${nv[1]} or a whole multiple (×2 = ${nv[0] * 2}×${nv[1] * 2}, ×4 = ${nv[0] * 4}×${nv[1] * 4}...)` };
-  return { key: 'icon:' + to.icon, icon: to.icon, buf, w: sz[0], h: sz[1], old: nv, k, from };
+  const mult = (w, h) => { const k = w / nv[0]; return Number.isInteger(k) && k >= 1 && k <= 16 && h === nv[1] * k ? k : 0; };
+  let k = mult(sz[0], sz[1]);
+  if (k) return { key: 'icon:' + to.icon, icon: to.icon, buf, w: sz[0], h: sz[1], old: nv, k, from };
+  // Not a multiple: drawn on a bigger canvas (32×32 with an 18×18 arrow in it)? Its drawing, trimmed.
+  const t = trim(buf), note = t.trimmed ? `trimmed ${sz[0]}×${sz[1]} to its drawing, ${t.w}×${t.h}` : '';
+  if ((k = mult(t.w, t.h))) return { key: 'icon:' + to.icon, icon: to.icon, buf: t.buf, w: t.w, h: t.h, old: nv, k, from, note };
+  // Its own size: shown 1:1 (×2 where the game draws the icon double), up to twice the code icon's.
+  if (t.w > nv[0] * 2 || t.h > nv[1] * 2 || t.w * 2 < nv[0] || t.h * 2 < nv[1])
+    return { error: `it's ${t.w}×${t.h}${t.trimmed ? ' (without its empty border)' : ''}: ${to.icon} is ${nv[0]}×${nv[1]}. Use that, a whole multiple (×2 = ${nv[0] * 2}×${nv[1] * 2}, ×4 = ${nv[0] * 4}×${nv[1] * 4}...), or a size of its own up to ${nv[0] * 2}×${nv[1] * 2}` };
+  return { key: 'icon:' + to.icon, icon: to.icon, buf: t.buf, w: t.w, h: t.h, old: nv, k: 1, own: true, from,
+    note: (note ? note + '; ' : '') + `shown at its own size, ${t.w}×${t.h} instead of ${nv[0]}×${nv[1]}` };
+}
+
+// ---------------- PNGs ----------------
+function encode({ w, h, px }) {                   // RGBA 8-bit, no filter
+  const raw = Buffer.alloc((w * 4 + 1) * h);
+  for (let y = 0; y < h; y++) px.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4);
+  const chunk = (t, d) => { const l = Buffer.alloc(4); l.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t, 'latin1'), d]);
+    const c = Buffer.alloc(4); c.writeUInt32BE(require('zlib').crc32(td) >>> 0); return Buffer.concat([l, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', require('zlib').deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+/** The PNG without its fully transparent border: { buf, w, h, trimmed }. */
+function trim(buf) {
+  const img = imp.decode(buf), { w, h, px } = img;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return { buf, w, h, trimmed: false };
+  const tw = x1 - x0 + 1, th = y1 - y0 + 1, out = Buffer.alloc(tw * th * 4);
+  for (let y = 0; y < th; y++) px.copy(out, y * tw * 4, ((y + y0) * w + x0) * 4, ((y + y0) * w + x1 + 1) * 4);
+  return { buf: encode({ w: tw, h: th, px: out }), w: tw, h: th, trimmed: true };
 }
 
 /**
@@ -144,7 +173,7 @@ function stage(buf, name, aim) {
     if (stagedBytes() + b.length > MAX_STAGED) { out.push({ from: n, ok: false, error: 'over 1 GB staged: apply what you have first' }); continue; }
     const was = staged.has(e.key);
     staged.set(e.key, e);
-    out.push({ from: n, ok: true, key: e.key, replaced: was });
+    out.push({ from: n, ok: true, key: e.key, replaced: was, note: e.note || '' });
   }
   return out;
 }
@@ -165,7 +194,7 @@ function apply(keys) {
       const rel = `${CODE}/${safe(e.icon)}.png`;
       fs.mkdirSync(path.join(ROOT, CODE), { recursive: true });
       fs.writeFileSync(path.join(ROOT, rel), e.buf);
-      ico[e.icon] = { file: rel, v: hash(e.buf), w: e.w, h: e.h };
+      ico[e.icon] = Object.assign({ file: rel, v: hash(e.buf), w: e.w, h: e.h }, e.own ? { own: true } : {});
     }
     staged.delete(k);
     done.push(k);

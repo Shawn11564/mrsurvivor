@@ -5,9 +5,10 @@
  *     nunca), así que cada imagen de la lista se pide con ?v=<huella>: para la caché es otra URL y
  *     llega la nueva. Se hace en el setter de HTMLImageElement.src (todas las hojas se cargan con
  *     new Image() + src); las que se pidieron antes de que llegara la lista se vuelven a pedir.
- *   - js/fork/icon-overrides.json { 'lb-g-type': { file, v, w, h } }: un PNG en lugar de un icono
+ *   - js/fork/icon-overrides.json { 'lb-y': { file, v, w, h } }: un PNG en lugar de un icono
  *     dibujado con código (G.Icons). Ocupa lo mismo que el original (su tamaño de siempre, ×1, ×2...)
- *     y se dibuja desde el PNG, que puede ser más fino (×4): se suaviza al reducirlo. Envuelve
+ *     y se dibuja desde el PNG, que puede ser más fino (×4): se suaviza al reducirlo; o, con own,
+ *     del tamaño del PNG (un dibujo más grande que el de código, sin perder píxeles). Envuelve
  *     G.Icons.canvas/draw/html/url, y los <img> que ya estaban pintados se cambian al cargar.
  * Las dos listas se comprueban antes de usarlas: rutas de assets/ con .png y huellas hexadecimales
  * (los iconos, sólo de assets/icons/code/). Sin red o sin las listas, todo como siempre.
@@ -51,16 +52,21 @@ G.AssetOverrides = (() => {
   const I = G.Icons, oCanvas = I.canvas, oDraw = I.draw, oHtml = I.html, oUrl = I.url;
   const icons = {};                                 // nombre -> { img, url, w, h, ready }
   const cvs = new Map();
-  const native = n => oCanvas.call(I, n);           // el dibujo de código: el tamaño de siempre
-  const snap = (w, size) => w * Math.max(1, Math.round(size / w));
+  // El tamaño base: el del dibujo de código, o el del PNG si trae el suyo (own: un 18×18 en vez de 13×13,
+  // que se ve 1:1, o ×2 donde el icono va al doble; el resto del juego mide con G.Icons.canvas).
+  const native = n => { const o = icons[n]; return o && o.own ? { width: o.w, height: o.h } : oCanvas.call(I, n); };
+  // El ancho en pantalla para `size`: el múltiplo nítido del de código (×1, ×2...), y con own ese mismo
+  // múltiplo del PNG (un 18×18 se ve a 18 donde el de código va a 13, a 36 donde va a 26).
+  const shown = (n, size) => { const o = icons[n], m = Math.max(1, Math.round(size / oCanvas.call(I, n).width)); return (o && o.own ? o.w : oCanvas.call(I, n).width) * m; };
   const ready = n => icons[n] && icons[n].ready ? icons[n] : null;
   const CSS = { coin: '--ico-coin', cursor: '--ico-cursor' };   // los de ui/icons.js installCss
 
   /** Los <img> ya pintados con el dibujo de código pasan al PNG (y las variables de CSS). */
   function swapDom(n, o) {
-    const old = oUrl.call(I, n);
+    const old = oUrl.call(I, n), code = oCanvas.call(I, n);
     for (const img of document.querySelectorAll('img.pix')) {
       if (img.getAttribute('src') !== old) continue;
+      if (o.own) { const m = Math.max(1, Math.round(img.width / code.width)); img.width = o.w * m; img.height = o.h * m; }
       img.setAttribute('src', o.url);
       if (o.w > img.width * (devicePixelRatio || 1)) img.style.imageRendering = 'auto';
     }
@@ -69,7 +75,8 @@ G.AssetOverrides = (() => {
   function loadIcons(j) {
     for (const [n, e] of Object.entries(j || {})) {
       if (!e || !CODE.test(e.file) || !HEX.test(e.v) || !(e.w > 0 && e.h > 0 && e.w <= 4096 && e.h <= 4096)) continue;
-      const o = { img: new Image(), url: ROOT + e.file + '?v=' + e.v, w: e.w, h: e.h, ready: false };
+      if (e.own && (e.w > 512 || e.h > 512)) continue;
+      const o = { img: new Image(), url: ROOT + e.file + '?v=' + e.v, w: e.w, h: e.h, own: !!e.own, ready: false };
       o.img.onload = () => { o.ready = true; cvs.delete(n); swapDom(n, o); };
       o.img.src = o.url;
       icons[n] = o;
@@ -95,8 +102,8 @@ G.AssetOverrides = (() => {
     const o = ready(n);
     if (!o) return oDraw.apply(this, arguments);
     const nv = native(n);
-    let s2 = snap(nv.width, size);
-    if (fit && Math.abs(s2 - size) > size * 0.2) s2 = size;
+    let s2 = shown(n, size);
+    if (fit && !o.own && Math.abs(s2 - size) > size * 0.2) s2 = size;
     x += (size - s2) / 2; y += (size - s2) / 2;
     const prev = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = o.w > s2 * (Math.abs(ctx.getTransform().a) || 1) + 0.5;
@@ -106,7 +113,7 @@ G.AssetOverrides = (() => {
   I.html = function (n, size = 20, cls = '') {
     const o = icons[n];
     if (!o) return oHtml.apply(this, arguments);
-    const nv = native(n), w = snap(nv.width, size), h = w * nv.height / nv.width;
+    const nv = native(n), w = shown(n, size), h = w * nv.height / nv.width;
     const smooth = o.w > w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
     return `<img class="pix ${cls}" src="${o.url}" width="${w}" height="${h}" alt="" draggable="false"${smooth}>`;
   };
@@ -122,7 +129,14 @@ G.AssetOverrides = (() => {
   // ---------------- las listas ----------------
   const get = f => fetch(ROOT + 'js/fork/' + f + '?t=' + Date.now(), { cache: 'no-store' })
     .then(r => r.ok ? r.json() : {}).catch(() => ({}));
-  const loaded = Promise.all([get('asset-rev.json'), get('icon-overrides.json')]).then(([r, i]) => {
+  // No antes de que hayan corrido todos los scripts (DOMContentLoaded): los iconos que se añaden
+  // después (badge-art.js) se pedirían antes de existir y ui/icons.js se quedaría para siempre con
+  // su sustituto (una estrella). Los scripts defer corren con readyState ya 'interactive', así que
+  // sólo 'complete' quiere decir que ya pasó; si no, lo primero de DOMContentLoaded y load.
+  const scripts = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => {
+    addEventListener('DOMContentLoaded', r, { once: true }); addEventListener('load', r, { once: true });
+  });
+  const loaded = Promise.all([get('asset-rev.json'), get('icon-overrides.json'), scripts]).then(([r, i]) => {
     const clean = {};
     for (const [p, v] of Object.entries(r || {})) if (ASSET.test(p) && !p.includes('..') && HEX.test(v)) clean[p] = v;
     rev = clean;
