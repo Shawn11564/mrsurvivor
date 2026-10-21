@@ -67,6 +67,19 @@ records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md).
 - **"brand rules no longer match upstream":** upstream reworded a line the credit hooks
   into. Update that rule's `from` text in `fork/brand.cjs` and re-run the build.
 
+## Upstream changes we switch off
+
+- **Their TURN server** (co-op through `ice.pokesurvivor.com`, upstream 2026-10-20/21). It's upstream's
+  paid server and asking it for credentials sends the player's login token there, so one line at the
+  top of `turnUser()` in `js/net/net.js` (`G.FORK_NO_TURN`) turns it off everywhere, `dev.html` too:
+  co-op stays direct-only, with their retry logic. `node fork/test-net-turn-off.cjs` (no server) runs
+  upstream's `tests/net.test.cjs` as shipped (nothing ever calls `fetch`/`getIdToken`; only their 4
+  "own TURN" tests fail, as they should) and with the switch back on (all of them pass).
+- **"What's new" lines that aren't true here**: `js/fork/changelog-filter.js` drops them from
+  `G.CHANGELOG` (upstream's `js/data/changelog.js` stays untouched, so merges stay clean), with any
+  date left empty. Now: the 2026-10-21 "co-op goes through our server" note.
+  `node fork/test-changelog-filter.cjs` (server) checks the What's new screen and its dot.
+
 ## Check
 
 `node fork/test-sync.cjs` replays a real upstream merge in a throwaway clone. It checks
