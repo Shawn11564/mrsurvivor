@@ -5,8 +5,8 @@
 //   node fork/test-radiant.cjs [base-url]
 //
 // No radiant sheets are in the repo yet, so the page is served a radiant list with Bulbasaur,
-// Charmander and Charizard (with its Lab sheet and Mega), and their r/ sheets are the normal
-// ones (the test only follows which file is asked for).
+// Charmander and Charizard (with its Lab sheet and Mega), and their r/ sheets are their SHINY
+// ones (s/): real sheets that differ from the normal ones, so attack colours can be worked out.
 //   1. The ritual: 10 chosen shinies (no 11th), the shiny-legendary warning and its
 //      confirmation, the roll (10 shinies gone, normal kept, sac dates, one radiant of the pool),
 //      the warning switched off, a duplicate's coins, and an empty pool.
@@ -16,6 +16,10 @@
 //      sheets from {dex}/r/, Normal/Shiny turn it off, the collection badge.
 //   4. Runs: your Pokémon plays with {dex}/r (and m{dex}/r when it Mega Evolves), and the
 //      co-op lobby card says rad.
+//   5. Attack colours (js/fork/lab/shiny.js): the most striking colour wins (a radiant Mewtwo
+//      with a black or dark-grey body and a red tail attacks in red); in a Lab run a radiant's
+//      moves take its radiant palette and it gets none of the shiny's extras, even if you own
+//      the shiny and had picked it.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const FAKE = { 1: {}, 4: {}, 6: { lab: ['SpAttack'], mega: true } };
@@ -33,7 +37,7 @@ async function open(browser, list) {
   await page.route(/\/assets\/pokemon\/(m?\d+)\/r\/(.+\.png)/, r => {
     const m = r.request().url().match(/\/assets\/pokemon\/(m?\d+)\/r\/(.+\.png)/);
     asked.push(m[1] + '/r/' + m[2]);
-    r.continue({ url: r.request().url().replace('/r/', '/') });
+    r.continue({ url: r.request().url().replace('/r/', '/s/') });
   });
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.Radiant, null, { timeout: 30000 });
@@ -170,6 +174,50 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   check(lobby.off === null, 'and not when you play it normal', lobby.off);
   check(!errs.length, 'no page errors', errs);
   await page.close();
+
+  console.log('Attack colours');
+  const col = await open(browser, FAKE);
+  const mew = await col.page.evaluate(async () => {
+    const img = new Image(); img.src = 'assets/pokemon/150/Idle.png'; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const a = x.getImageData(0, 0, c.width, c.height);
+    // Mewtwo's body (white, light grey, grey, dark shade) and purple (3 tones), recoloured.
+    const RED = { '175,111,183': [200, 40, 48], '135,63,135': [140, 24, 32], '215,151,223': [240, 96, 104] };
+    const BODY = {
+      'dark greys': { '255,255,255': [88, 88, 96], '215,223,223': [52, 52, 60], '151,159,167': [34, 34, 42], '71,103,111': [22, 22, 28] },
+      'near-pure black': { '255,255,255': [60, 60, 60], '215,223,223': [20, 20, 20], '151,159,167': [12, 12, 12], '71,103,111': [6, 6, 6] },
+      'blue-tinted blacks': { '255,255,255': [90, 96, 128], '215,223,223': [52, 56, 80], '151,159,167': [34, 36, 56], '71,103,111': [22, 22, 36] }
+    };
+    const out = {};
+    for (const [name, body] of Object.entries(BODY)) {
+      const map = Object.assign({}, body, RED), b = new ImageData(new Uint8ClampedArray(a.data), a.width, a.height);
+      for (let i = 0; i < b.data.length; i += 4) {
+        const to = map[b.data[i] + ',' + b.data[i + 1] + ',' + b.data[i + 2]];
+        if (to) { b.data[i] = to[0]; b.data[i + 1] = to[1]; b.data[i + 2] = to[2]; }
+      }
+      out[name] = G.LabShiny.paletteFrom(a, b)[2];
+    }
+    return out;
+  });
+  const isRed = h => { const [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); return r > 150 && r > g * 2 && r > b * 2; };
+  for (const [name, mid] of Object.entries(mew)) check(isRed(mid), `radiant Mewtwo, ${name} body and red tail: red attacks`, mid);
+  const lab = await col.page.evaluate(async d => {
+    const s = G.DB.save;
+    s.radiant = { [d]: { at: 1, from: 'test' } }; G.DB.grantShiny(d, 'test');
+    s.partner = d; s.partnerShiny = true; G.ShinyPref.set(d, true); G.Radiant.set(d, true);
+    G.Settings.set('lab', true); G.DB.commit();
+    G.Game.startRun();
+    const p = G.Game.player;
+    for (let i = 0; i < 50 && !p._labPal; i++) await new Promise(r => setTimeout(r, 200));
+    return { lab: G.Lab.active, anim: p.anim.dex, shiny: p.shiny, labShiny: !!p._labShiny, rad: !!p._labRadiant, pal: p._labPal,
+      looks: p.moves.map(m => m.look && m.look.pal), colors: G.VFX.PAL[p._labPal], reroll: p.rerollBonus || 0 };
+  }, 4);
+  check(lab.lab && lab.anim === '4/r' && lab.rad && lab.pal === 'radiant4' && lab.looks.every(x => x === 'radiant4'),
+    'Lab run with a radiant: its moves take its radiant palette', lab);
+  check(!lab.shiny && !lab.labShiny && !lab.reroll, "and it gets none of the shiny's extras, though you own the shiny and had picked it");
+  check(!col.errs.length, 'no page errors', col.errs);
+  await col.page.close();
 
   console.log('No radiants yet');
   const empty = await open(browser, {});

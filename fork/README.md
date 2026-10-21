@@ -21,9 +21,11 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `fork/fetch-lab.cjs` | downloads PokeAPI's learnsets/abilities/evolutions and SpriteCollab's animation list into `tools/cache/lab/`, writes `js/fork/lab/lab-data.js` for Lab mode (rerun it when upstream adds moves) |
 | `fork/fetch-lab-anims.py` | downloads the extra PMD animations Lab mode's signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
 | `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (Lab mode, phase 8) |
-| `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip, already named for a radiant form (`assets/pokemon/{dex}/r/`, `{dex}/r/lab/`, Mega in `m{dex}/r/`), with `CREDITS.txt`. Unzip the recoloured sheets in the repo root and build: they become a radiant (below) |
-| `fork/radiants.cjs` | finds the radiant forms in `assets/pokemon/{dex}/r/` (every standard sheet, each the size of the normal one; `r/lab/` and `m{dex}/r/` optional) and writes `js/fork/radiant-list.js`, the ritual's pool. `fork/build.cjs` runs it; it prints what it leaves out (`--strict` fails instead) |
-| `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
+| `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip laid out for the artist: one folder per Pokémon, `assets/0150_mewtwo/` (Lab sheets in `lab/`, the Mega in `mega/`, ticked by default), with `README.txt` (the rules) and `CREDITS.txt` |
+| `fork/radiant-admin.cjs` | `node fork/radiant-admin.cjs` opens the **Radiant Admin** page (`fork/radiant-admin.html`), served on this PC only (127.0.0.1, random key in the link), never on the site: drop the artists' zips, see every Pokémon in them checked (the importer's code) with an animated preview of each sheet, normal next to radiant, pick which to import and each one's rarity (its weight in the ritual, with the resulting odds), change the rarity of radiants already in, then **Publish**: commits only the radiant files (sheets, `radiants.json`, `radiant-list.js`), whatever else is changed, and pushes main. Players get them once Pages has deployed, with no rebuild (below) |
+| `fork/import-radiant.cjs` | `node fork/import-radiant.cjs <zip or folder>... [--dry-run] [--strict]` brings the artist's recolours in: reads the dex from the folder name (`0150_…`, any wrapper folder, several Pokémon per zip, the Kit's older `assets/pokemon/{dex}/r/` layout too), checks every sheet against the normal one (missing or wrong-size sheets turn that Pokémon away; a changed outline, with the frame's cell, or an unrecoloured sheet is a warning), copies them to `assets/pokemon/{dex}/r/`, `r/lab/`, `m{dex}/r/` and runs `fork/radiants.cjs`. Then build, try it, commit and push: that is how a radiant ships |
+| `fork/radiants.cjs` | finds the radiant forms in `assets/pokemon/{dex}/r/` (every standard sheet, each the size of the normal one; `r/lab/` and `m{dex}/r/` optional) and writes `js/fork/radiant-list.js` (bundled) and `js/fork/radiants.json` (the same list, which the game also reads when it loads and when the ritual opens, so a published radiant works without a rebuild), each with its rarity (kept from `radiants.json`, else the Pokémon's). `fork/build.cjs` runs it; it prints what it leaves out (`--strict` fails instead) |
+| `js/fork/radiant.js` | radiant forms: a third variant (Normal / Shiny / Radiant in the menu and the collection), played in runs and seen in co-op. The **Radiant Ritual** (main menu) sacrifices 10 shinies you choose for one radiant at random from all of them, weighted by each radiant's rarity (`WEIGHT`: Common 40, Uncommon 25, Rare 15, Epic 7, Legendary 3), warns (and asks to confirm) before a shiny legendary goes, and gives 3000 coins for one you already have. Hooks: one line each in `js/ui/menu.js`, `merge()` in `js/core/db.js` (a sacrificed shiny doesn't come back from another device's copy) and the reload-safe screens in `js/core/updater.js`. English only, like Lab mode |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -81,8 +83,24 @@ you have the shiny of shows and plays shiny unless you picked Normal for it, whi
 0.15 % a pull with pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`).
 
 `node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type, rarity and
-"mega"; each Pokémon's rarity (the game's colours); the .zip's names and bytes (Charizard with and without its Mega, Bulbasaur); every species'
-list against the sheets on disk.
+"mega"; each Pokémon's rarity (the game's colours); the .zip's names and bytes (`0006_charizard/`, with and without its Mega, Bulbasaur) and its README; every species'
+list against the sheets on disk, and that the importer reads each name back to the right Pokémon.
+
+`node fork/test-radiant-admin.cjs` checks the Radiant Admin page with its real server, in a throwaway copy of the repo
+that is its own git repo with a bare `origin` and an unrelated change: only the key and this PC's name get in; dropped
+zips (Kit layout, older layout, a broken one) give the right cards; the preview draws normal and radiant frames;
+rarities and the odds line; import writes the sheets and both lists; a rarity change from the table; publish commits
+only the radiant files (the unrelated change stays) and pushes, and waits for a tick when other commits aren't pushed yet.
+
+`node fork/test-radiant-live.cjs` (server) checks the game side on `dev.html` with the built list empty: radiants from
+`radiants.json` are in the pool with their rarities and odds, the roll follows the weights, one published while the game
+is open shows up when the ritual opens, a run uses its `r/` sheets, and a missing `radiants.json` breaks nothing.
+
+`node fork/test-import-radiant.cjs` checks the importer in a throwaway copy of the repo, on recoloured
+zips made from the real sheets: the Kit's layout in a wrapper folder with two Pokémon (Lab and Mega placed,
+a mismatched name and a missing Mega warned), the older layout, an unzipped folder; wrong-size and missing
+sheets, unknown numbers and empty zips turned away with nothing written; a broken Mega left out on its own;
+a moved frame named by its cell, an unrecoloured sheet, `--strict` and `--dry-run`.
 
 `node fork/test-radiant.cjs` (server) checks radiants and the ritual on `dev.html` with a stand-in radiant list:
 choosing 10 shinies, the legendary warning and its confirmation, the roll, the warning off, a duplicate,

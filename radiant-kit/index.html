@@ -7,11 +7,14 @@
 <title>Radiant Sprite Kit</title>
 <!--
   radiant-kit/ — fork-only tool page (MrSurvivor). Search a Pokémon and download its DEFAULT
-  sprite sheets in one .zip, already named where a radiant form's sheets will go:
-    assets/pokemon/{dex}/r/{Anim}.png        the 7 standard sheets (Idle, Walk, Attack...)
-    assets/pokemon/{dex}/r/lab/{Anim}.png    its Lab signature-move sheet, if it has one
-    assets/pokemon/m{dex}/r/{Anim}.png       its Mega/Primal form (checkbox), if it has one
-  Unzip the .zip in the repo root after recolouring. "r/" mirrors the shiny's "s/".
+  sprite sheets in one .zip, in one folder per Pokémon named for people (0150_mewtwo):
+    assets/0150_mewtwo/{Anim}.png         the 7 standard sheets (Idle, Walk, Attack...)
+    assets/0150_mewtwo/lab/{Anim}.png     its Lab signature-move sheet, if it has one
+    assets/0150_mewtwo/mega/{Anim}.png    its Mega/Primal form (checkbox, on by default), if it has one
+  plus README.txt (the rules for the artist) and CREDITS.txt. The artist recolours and sends any
+  .zip back; the local Radiant Admin (node fork/radiant-admin.cjs) or node fork/import-radiant.cjs
+  reads the number before "_", checks every sheet and copies them to assets/pokemon/{dex}/r/
+  (r/lab/, m{dex}/r/), where the game reads radiants.
   The list of sheets comes from the same data the game uses (sprites-meta.js, mega-sprites.js,
   lab-anims.js), so it never misses a sheet. Check: node fork/test-radiant-kit.cjs.
 -->
@@ -68,8 +71,9 @@ td.n { white-space: nowrap; color: var(--muted); }
 <main>
   <h1>Radiant Sprite Kit</h1>
   <p class="sub">Download a Pokémon's default sprite sheets to recolour into a radiant form. The files in the .zip
-    already have the names and folders the radiant form uses (<code>assets/pokemon/{dex}/r/</code>), so once
-    they're recoloured you unzip them into the game folder as they are.</p>
+    come in one folder named for the Pokémon (<code>assets/0150_mewtwo/</code>), with a README for the artist. Once
+    they're recoloured, bring the .zip in with the Radiant Admin on your PC (<code>node fork/radiant-admin.cjs</code>): it checks
+    every sheet, previews it and publishes it.</p>
 
   <div class="box">
     <input type="search" id="q" placeholder="Name, # number, type or rarity (e.g. Charizard, 6, #150, fire, epic, mega)" autocomplete="off" autofocus>
@@ -122,19 +126,23 @@ td.n { white-space: nowrap; color: var(--muted); }
     return f === 'Primal' ? 'Primal ' + p.name : 'Mega ' + p.name + (f.startsWith('Mega_') ? ' ' + f.slice(5) : '');
   };
   const lab = dex => (G.LAB_ANIMS[dex] && G.LAB_ANIMS[dex].a) || {};
+  // The folder name, 0150_mewtwo: fork/import-radiant.cjs (slug, folder) reads the number back.
+  const slug = name => String(name).normalize('NFD').replace(/\p{M}/gu, '').replace(/♀/g, '-f').replace(/♂/g, '-m')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const folder = p => String(p.dex).padStart(4, '0') + '_' + slug(p.name);
 
   /** Every sheet to recolour: [label, source path, path in the .zip, geometry]. */
   function sheets(p, withMega) {
-    const out = [], m = G.SPRITE_META[p.dex];
+    const out = [], m = G.SPRITE_META[p.dex], dir = 'assets/' + folder(p);
     // The 7 standard sheets, in the game's order, then any other the data has.
     const names = ANIMS.filter(a => m.a[a]).concat(Object.keys(m.a).filter(a => !ANIMS.includes(a)));
-    for (const a of names) out.push([a, `assets/pokemon/${p.dex}/${a}.png`, `assets/pokemon/${p.dex}/r/${a}.png`, m.a[a]]);
+    for (const a of names) out.push([a, `assets/pokemon/${p.dex}/${a}.png`, `${dir}/${a}.png`, m.a[a]]);
     for (const [a, g] of Object.entries(lab(p.dex)))
-      out.push([a + ' (Lab)', `assets/pokemon/${p.dex}/lab/${a}.png`, `assets/pokemon/${p.dex}/r/lab/${a}.png`, g]);
+      out.push([a + ' (Lab)', `assets/pokemon/${p.dex}/lab/${a}.png`, `${dir}/lab/${a}.png`, g]);
     if (withMega && hasMega(p.dex)) {
       const mm = G.SPRITE_META['m' + p.dex];
       for (const a of ANIMS.filter(a => mm.a[a]).concat(Object.keys(mm.a).filter(a => !ANIMS.includes(a))))
-        out.push([a + ' (Mega)', `assets/pokemon/m${p.dex}/${a}.png`, `assets/pokemon/m${p.dex}/r/${a}.png`, mm.a[a]]);
+        out.push([a + ' (Mega)', `assets/pokemon/m${p.dex}/${a}.png`, `${dir}/mega/${a}.png`, mm.a[a]]);
     }
     return out;
   }
@@ -197,7 +205,7 @@ td.n { white-space: nowrap; color: var(--muted); }
     face($('face'), p.dex, 96);
     const mega = hasMega(p.dex);
     $('mega').disabled = !mega;
-    if (!mega) $('mega').checked = false;
+    $('mega').checked = mega;                      // on by default: a radiant without it Mega Evolves to the normal colours
     $('mega-opt').classList.toggle('off', !mega);
     $('mega-text').textContent = mega ? `Include the Mega files (${megaName(p)})` : 'Include the Mega files (no Mega for this Pokémon)';
     $('status').textContent = '';
@@ -229,8 +237,34 @@ td.n { white-space: nowrap; color: var(--muted); }
       lines.push('', megaName(p) + ':', '  ' + (r ? r[2] : 'see CREDITS-MEGAS.md'));
     }
     lines.push('', 'A recolour of these sprites must credit these artists and stay non-commercial.',
-      'Unzip in the game folder: the sheets land in assets/pokemon/{dex}/r/ (and m{dex}/r/ for the Mega).');
+      'Bring it into the game with the Radiant Admin: node fork/radiant-admin.cjs');
     return lines.join('\n') + '\n';
+  }
+
+  // ---------------- README.txt (the rules, for the artist) ----------------
+  function readme(p, withMega) {
+    const f = folder(p), list = sheets(p, withMega);
+    return [
+      `Radiant ${p.name} (#${p.dex}): recolour kit`,
+      '',
+      'Recolour every sheet in this folder:',
+      ...list.map(([label, , out, g]) => `  ${out.padEnd(f.length + 26)} ${label.padEnd(16)} ${g.w * g.n}×${g.h * g.r}`),
+      '',
+      'Rules (the import checks them and turns away sheets that break them):',
+      '  - Only change colours. Keep every file the same size and the same name.',
+      '  - Keep the outline: don\'t move, add or erase pixels. Transparent stays transparent.',
+      '  - Each sheet is a grid: one column per frame, 8 rows (directions: down, down-right,',
+      '    right, up-right, up, up-left, left, down-left). Frames must stay in their cells.',
+      '  - Save as PNG with transparency (any PNG editor is fine; no interlacing).',
+      `  - Keep the folder name "${f}": the number at the start tells the game which Pokémon it is.`,
+      ...(hasMega(p.dex) && !withMega ? ['', `This kit has no Mega sheets: radiant ${p.name} will Mega Evolve into the normal colours.`] : []),
+      ...(withMega ? ['', `mega/ is ${megaName(p)}: recolour it to match.`] : []),
+      '',
+      'When you\'re done, zip the "assets" folder (or this whole folder) and send it back.',
+      'Several Pokémon in one zip is fine. CREDITS.txt lists the original artists: the sprites',
+      'are CC BY-NC 4.0, so the recolour must credit them and stay non-commercial.',
+      ''
+    ].join('\r\n');                                 // Windows line ends: Notepad shows them right everywhere
   }
 
   // ---------------- .zip (stored, no compression: PNGs are already compressed) ----------------
@@ -271,10 +305,11 @@ td.n { white-space: nowrap; color: var(--muted); }
         if (!r.ok) throw new Error(`${src}: ${r.status}`);
         files.push({ name, data: new Uint8Array(await r.arrayBuffer()) });
       }
+      files.push({ name: 'README.txt', data: new TextEncoder().encode(readme(p, withMega)) });
       files.push({ name: 'CREDITS.txt', data: new TextEncoder().encode(await credits(p, withMega)) });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(zip(files));
-      a.download = `radiant-${p.dex}-${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}${withMega ? '-mega' : ''}.zip`;
+      a.download = `${folder(p)}.zip`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 60000);
       $('status').textContent = `${list.length} sheets downloaded.`;
@@ -294,7 +329,7 @@ td.n { white-space: nowrap; color: var(--muted); }
   $('results').addEventListener('click', e => { const b = e.target.closest('button'); if (b) choose(G.DEX_BY[+b.dataset.dex]); });
   $('mega').addEventListener('change', table);
   $('dl').addEventListener('click', download);
-  window.RadiantKit = { search, sheets, zip, credits, choose };   // for fork/test-radiant-kit.cjs
+  window.RadiantKit = { search, sheets, zip, credits, readme, folder, choose };   // for fork/test-radiant-kit.cjs
   list();
   const start = G.DEX_BY[+location.hash.slice(1)];
   if (start && G.SPRITE_META[start.dex]) choose(start);

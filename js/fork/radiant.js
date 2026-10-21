@@ -2,7 +2,9 @@
  * Un radiante es una tercera variante de un Pokémon (normal, shiny, radiante) con sus propias
  * hojas recoloreadas en assets/pokemon/{dex}/r/ (las de su firma del Lab en r/lab/ y las de su
  * mega en m{dex}/r/), hechas con el kit (radiant-kit/index.html). Cuáles existen lo dice
- * G.RADIANTS (js/fork/radiant-list.js, lo genera fork/radiants.cjs al hacer el build).
+ * G.RADIANTS (js/fork/radiant-list.js, lo genera fork/radiants.cjs al hacer el build), más los
+ * de js/fork/radiants.json (refresh: lo que se publica con fork/radiant-admin.cjs sin rehacer el
+ * build). Cada uno lleva su rareza (1-5): su peso en el ritual (WEIGHT).
  *
  *   Sprites   cada radiante se registra en G.SPRITE_META con la clave '{dex}/r' (y 'm{dex}/r'),
  *             con la geometría de la forma normal: G.Sprites lo carga de {dex}/r/{Anim}.png sin
@@ -10,7 +12,7 @@
  *   Partida   save.radiant: dex -> { at, from } (los que tienes); save.radOff: dex -> 1 si
  *             prefieres no usarlo (como save.shinyOff: si lo tienes, se usa por defecto).
  *   Ritual    sacrificas 10 shinies (los eliges tú) y sale UNO al azar entre TODOS los
- *             radiantes que existen. Los sacrificados pierden el shiny (el Pokémon normal se
+ *             radiantes que existen, más o menos probable según su rareza. Los sacrificados pierden el shiny (el Pokémon normal se
  *             queda); save.sac: dex -> fecha del sacrificio. Si sale uno que ya tenías, DUP_COINS.
  *             Avisa antes de sacrificar un shiny legendario (se puede desactivar: G.Settings
  *             'radWarn', de este aparato) y pide confirmarlo.
@@ -37,9 +39,9 @@ G.Radiant = (() => {
   const key = dex => dex + '/r';
   /** ¿Existe el radiante de dex (con sus hojas registradas)? */
   const has = dex => !!(LIST[dex] && G.SPRITE_META[key(dex)]);
-  for (const dex in LIST) {
+  function register(dex) {
     const m = G.SPRITE_META[dex];
-    if (!m) continue;
+    if (!m) return;
     const a = {};
     for (const k in m.a) if (!k.startsWith('lab/')) a[k] = m.a[k];
     const lab = G.LAB_ANIMS && G.LAB_ANIMS[dex];
@@ -47,6 +49,36 @@ G.Radiant = (() => {
     G.SPRITE_META[key(dex)] = { s: m.s, a, hv: m.hv };
     const mm = G.SPRITE_META['m' + dex];
     if (LIST[dex].mega && mm) G.SPRITE_META[key('m' + dex)] = { s: mm.s, a: Object.assign({}, mm.a), hv: mm.hv };
+  }
+  for (const dex in LIST) register(dex);
+
+  // Los publicados después de este build (fork/radiant-admin.cjs sube js/fork/radiants.json sin
+  // rehacer app.min.js): se leen al cargar y al abrir el ritual, y se suman a la lista.
+  async function refresh() {
+    try {
+      const own = document.querySelector('script[src*="app.min.js"], script[src*="js/game.js"]');
+      const r = await fetch(new URL('fork/radiants.json', own ? own.src : location.href).href + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return false;
+      const j = await r.json();
+      let changed = false;
+      for (const d in j) {
+        if (!G.DEX_BY[d] || JSON.stringify(LIST[d]) === JSON.stringify(j[d])) continue;
+        LIST[d] = j[d]; register(d); changed = true;
+      }
+      return changed;
+    } catch (e) { return false; }                      // sin red o sin el archivo: los del build
+  }
+
+  // Rareza de cada radiante (1-5; la pone fork/radiant-admin.cjs, si no la del Pokémon): su peso en el ritual.
+  const WEIGHT = { 1: 40, 2: 25, 3: 15, 4: 7, 5: 3 };
+  const tier = dex => (LIST[dex] && LIST[dex].rarity) || (G.DEX_BY[dex] && G.DEX_BY[dex].rarity) || 1;
+  const weight = dex => WEIGHT[tier(dex)] || WEIGHT[1];
+  /** Probabilidad (0-1) de que el ritual dé dex, entre los de pool. */
+  const chance = (dex, all = pool()) => all.includes(+dex) ? weight(dex) / all.reduce((s, d) => s + weight(d), 0) : 0;
+  function draw(all) {
+    let r = Math.random() * all.reduce((s, d) => s + weight(d), 0);
+    for (const d of all) if ((r -= weight(d)) < 0) return d;
+    return all[all.length - 1];
   }
 
   /** G.Admin.repaint: la clave del sprite de p (base = su Pokémon o su mega) si va radiante. */
@@ -104,7 +136,7 @@ G.Radiant = (() => {
     s.sac = s.sac || {};
     for (const d of dexes) { delete s.shiny[d]; s.sac[d] = now; }
     if (dexes.includes(s.partner)) s.partnerShiny = false;
-    const dex = all[Math.floor(Math.random() * all.length)];
+    const dex = draw(all);                           // según su rareza (WEIGHT)
     s.radiant = s.radiant || {};
     const dup = !!s.radiant[dex];
     if (dup) s.coins += DUP_COINS;
@@ -153,6 +185,7 @@ G.Radiant = (() => {
   });
   function paint(p) {
     p.radiant = true;
+    p.shiny = false;                                  // se ve radiante: no cuenta como shiny (ni sus extras del Lab)
     G.Sprites.preload([key(p.dex)], 8000);
     for (const k of LIST[p.dex].lab || []) G.Sprites.sheet(key(p.dex), 'lab/' + k);
     G.Admin.repaint(p);
@@ -296,6 +329,7 @@ G.Radiant = (() => {
     confirming = false;
     G.UI.show(SCR);
     render();
+    refresh().then(ch => { if (ch && G.UI.isOpen(SCR)) render(); });
   }
   function close() {
     if (rolling) return;
@@ -324,7 +358,7 @@ G.Radiant = (() => {
     for (const d of all) {
       const w = document.createElement('span');
       w.className = 'rad-prize' + (owns(d) ? ' got' : '');
-      w.title = G.DEX_BY[d].name + (owns(d) ? ' (you have it)' : '');
+      w.title = `${G.DEX_BY[d].name}: ${(chance(d, all) * 100).toFixed(1)}% chance` + (owns(d) ? ' (you have it)' : '');
       w.appendChild(G.UI.spriteCanvas(d, 56, 52, { scale: 1, radiant: true }));
       $('rad-pool').appendChild(w);
     }
@@ -409,6 +443,7 @@ G.Radiant = (() => {
 
   // El botón del menú principal, detrás del Gacha.
   document.addEventListener('DOMContentLoaded', () => {
+    refresh();
     const gacha = document.querySelector('#scr-menu [data-go=gacha]');
     if (!gacha || $('menu-radiant')) return;
     const b = document.createElement('button');
@@ -418,5 +453,5 @@ G.Radiant = (() => {
     gacha.after(b);
   });
 
-  return { NEED, DUP_COINS, key, has, owns, wants, set, pool, sacrifice, look, menu, cell, detail, open: openRitual };
+  return { NEED, DUP_COINS, WEIGHT, key, has, owns, wants, set, pool, tier, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
 })();

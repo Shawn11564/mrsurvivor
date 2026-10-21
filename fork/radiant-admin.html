@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiant Admin</title>
+<!--
+  fork/radiant-admin.html — served ONLY by fork/radiant-admin.cjs on this PC (127.0.0.1), never
+  part of the site. Drop the artists' zips, check and preview every radiant, pick rarities,
+  import into the checkout, then publish (commit the radiant files + push). The API key comes
+  in the link the server opens (#k=...). Check: node fork/test-radiant-admin.cjs.
+-->
+<style>
+@font-face { font-family: Pixelify; src: url(/assets/fonts/PixelifyPS-400.ttf); }
+@font-face { font-family: Pixelify; src: url(/assets/fonts/PixelifyPS-700.ttf); font-weight: 700; }
+:root { --bg: #0c111b; --box: #151f30; --box2: #1d2c46; --text: #e6f0fb; --muted: #9db0c9; --accent: #79b8ff;
+  --edge: #2f4466; --radiant: #ffb347; --bad: #ff7b7b; --warn: #ffd23f; --good: #5fe08a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 Pixelify, "Segoe UI", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+h1 { margin: 0 0 2px; font-size: 30px; color: var(--radiant); text-shadow: 2px 2px 0 #5a2f00; }
+h2 { font-size: 19px; margin: 0 0 8px; }
+p { margin: 0 0 8px; }
+.sub { color: var(--muted); }
+code { background: var(--box2); padding: 0 4px; border-radius: 3px; font-size: 13px; }
+.box { background: var(--box); border: 1px solid var(--edge); border-radius: 8px; padding: 14px; margin-top: 14px; }
+button, select { font: inherit; color: var(--text); background: var(--box2); border: 1px solid var(--edge); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+button.go { font-weight: 700; color: #2a1500; background: var(--radiant); border: 0; padding: 8px 16px; font-size: 16px; }
+#drop { border: 2px dashed var(--edge); border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; }
+#drop.over { border-color: var(--radiant); background: rgba(255,179,71,.06); }
+.cards { display: grid; gap: 10px; margin-top: 10px; }
+.card { background: var(--box2); border: 1px solid var(--edge); border-radius: 8px; padding: 10px 12px; }
+.card.blocked { border-color: #6b2d2d; }
+.head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.head b { font-size: 17px; }
+.tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: rgba(121,184,255,.18); color: #bfe3ff; }
+.tag.new { background: rgba(95,224,138,.18); color: #b6f5c9; }
+.tag.rep { background: rgba(255,179,71,.18); color: #ffd9a8; }
+.spacer { flex: 1; }
+ul.msgs { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.err { color: var(--bad); } .wrn { color: var(--warn); } .ok { color: var(--good); }
+.prev { margin-top: 8px; display: none; }
+.prev.on { display: block; }
+.sheets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.sheets button { font-size: 12px; padding: 2px 8px; }
+.sheets button.on { border-color: var(--radiant); color: var(--radiant); }
+.stage { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.stage figure { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
+.stage canvas { background: repeating-conic-gradient(#1a2538 0 25%, #142033 0 50%) 0 0 / 16px 16px; border-radius: 6px; image-rendering: pixelated; display: block; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--edge); }
+th { color: var(--muted); font-weight: 400; }
+td.n { white-space: nowrap; }
+pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--edge); border-radius: 6px; padding: 8px; font-size: 12px; margin: 8px 0 0; max-height: 220px; overflow: auto; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Radiant Admin</h1>
+  <p class="sub">Local tool on this PC (not on the site). Drop the artists' zips, check them, import, then publish.</p>
+
+  <div class="box">
+    <h2>Radiants in the game</h2>
+    <div id="current"></div>
+  </div>
+
+  <div class="box">
+    <h2>1. Drop the zips</h2>
+    <div id="drop">Drop .zip files here, or click to choose<br><span class="sub">The Radiant Sprite Kit's layout: assets/0150_mewtwo/... (several Pokémon per zip is fine)</span></div>
+    <input type="file" id="file" accept=".zip" multiple hidden>
+    <div class="cards" id="cards"></div>
+    <div class="row" id="import-row" hidden>
+      <button class="go" id="import">Import</button>
+      <span class="sub" id="odds"></span>
+    </div>
+    <pre id="import-out" hidden></pre>
+  </div>
+
+  <div class="box">
+    <h2>2. Publish</h2>
+    <div id="git"></div>
+    <div class="row">
+      <button class="go" id="publish">Publish (commit + push)</button>
+      <label id="ahead-ok" hidden><input type="checkbox" id="ahead-box"> <span id="ahead-text"></span></label>
+    </div>
+    <pre id="pub-out" hidden></pre>
+  </div>
+</main>
+
+<script>window.G = {};</script>
+<script src="/js/data/pokedex.js"></script>
+<script src="/js/data/sprites-meta.js"></script>
+<script src="/js/fork/mega-sprites.js"></script>
+<script src="/js/fork/lab/lab-anims.js"></script>
+<script>
+(() => {
+  const KEY = (location.hash.match(/k=([0-9a-f]+)/) || [])[1] || '';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const RARITY = { 1: ['Common', '#9fb1c9'], 2: ['Uncommon', '#5fe08a'], 3: ['Rare', '#4fb4ff'], 4: ['Epic', '#c47bff'], 5: ['Legendary', '#ffcb3d'] };
+  const DEX = {}; for (const p of G.DEX) DEX[p.dex] = p;
+  const api = async (p, opts = {}) => {
+    const r = await fetch('/api/' + p, Object.assign({}, opts, { headers: Object.assign({ 'x-key': KEY }, opts.headers || {}) }));
+    const j = await r.json().catch(() => ({ error: r.statusText }));
+    if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), { data: j });
+    return j;
+  };
+  const raritySelect = (val, cls) => `<select class="${cls}">` + [1, 2, 3, 4, 5].map(n =>
+    `<option value="${n}"${n === +val ? ' selected' : ''} style="color:${RARITY[n][1]}">${'★'.repeat(n)} ${RARITY[n][0]}</option>`).join('') + '</select>';
+
+  let st = null;                                  // /api/state
+  const found = [];                               // checked Pokémon from the zips
+
+  // ---------------- odds (same weights as the game, js/fork/radiant.js WEIGHT) ----------------
+  function odds(pool) {                           // { dex: rarity } -> { dex: % }
+    const w = d => st.weights[pool[d]] || st.weights[1];
+    const sum = Object.keys(pool).reduce((s, d) => s + w(d), 0);
+    const out = {}; for (const d in pool) out[d] = sum ? 100 * w(d) / sum : 0;
+    return out;
+  }
+  const pct = v => v.toFixed(1) + '%';
+
+  // ---------------- what's in the game ----------------
+  function current() {
+    const list = st.radiants, ds = Object.keys(list).map(Number).sort((a, b) => a - b);
+    if (!ds.length) { $('current').innerHTML = '<p class="sub">None yet. The ritual has nothing to give until one is published.</p>'; return; }
+    const o = odds(Object.fromEntries(ds.map(d => [d, list[d].rarity])));
+    $('current').innerHTML = `<table><thead><tr><th>Pokémon</th><th>Sheets</th><th>Rarity (ritual weight)</th><th>Ritual odds</th></tr></thead><tbody>` +
+      ds.map(d => `<tr data-dex="${d}"><td>${esc((DEX[d] || {}).name || '#' + d)} <span class="sub">#${d}</span></td>` +
+        `<td class="sub">standard${list[d].lab ? ', Lab' : ''}${list[d].mega ? ', Mega' : ''}</td><td>${raritySelect(list[d].rarity, 'cur-rar')}</td><td class="n">${pct(o[d])}</td></tr>`).join('') +
+      `</tbody></table><div class="row"><button id="save-rar" disabled>Save rarities</button><span class="sub" id="rar-note"></span></div>`;
+    const sel = [...document.querySelectorAll('.cur-rar')];
+    sel.forEach(s => s.onchange = () => { $('save-rar').disabled = !sel.some(x => +x.value !== list[x.closest('tr').dataset.dex].rarity); });
+    $('save-rar').onclick = async () => {
+      const rarities = Object.fromEntries(sel.map(x => [x.closest('tr').dataset.dex, +x.value]));
+      try { const r = await api('rarity', { method: 'POST', body: JSON.stringify({ rarities }) }); st = r.state; render(); $('rar-note').textContent = 'Saved. Publish to send it to the game.'; }
+      catch (e) { $('rar-note').textContent = e.message; }
+    };
+  }
+
+  // ---------------- the zips ----------------
+  async function add(files) {
+    for (const f of files) {
+      try {
+        const r = await api('check', { method: 'POST', body: await f.arrayBuffer(), headers: { 'Content-Type': 'application/zip', 'x-name': encodeURIComponent(f.name) } });
+        if (!r.mons.length) found.push({ file: f.name, empty: true, ignored: r.ignored });
+        for (const m of r.mons) {
+          for (let i = found.length - 1; i >= 0; i--) if (found[i].dex === m.dex) found.splice(i, 1);  // a newer zip replaces it
+          found.push(Object.assign(m, { file: f.name, pick: m.ok, chosen: m.rarity }));
+        }
+      } catch (e) { found.push({ file: f.name, empty: true, error: e.message }); }
+    }
+    cards();
+  }
+
+  function cards() {
+    $('cards').innerHTML = '';
+    for (const m of found) {
+      const el = document.createElement('div');
+      if (m.empty) {
+        el.className = 'card blocked';
+        el.innerHTML = `<div class="head"><b>${esc(m.file)}</b></div><ul class="msgs"><li class="err">${esc(m.error || 'No Pokémon folder in it. Expected assets/0150_mewtwo/Idle.png (the Kit\'s layout).')}</li></ul>`;
+        $('cards').appendChild(el); continue;
+      }
+      el.className = 'card' + (m.ok ? '' : ' blocked');
+      el.dataset.dex = m.dex;
+      el.innerHTML = `<div class="head">
+          <label><input type="checkbox" class="pick"${m.pick ? ' checked' : ''}${m.ok ? '' : ' disabled'}> <b>${esc(m.name || '#' + m.dex)}</b></label>
+          <span class="sub">#${m.dex} · ${esc(m.file)}</span>
+          ${m.ok ? `<span class="tag ${m.exists ? 'rep' : 'new'}">${m.exists ? 'replaces the current radiant' : 'new radiant'}</span>` : '<span class="tag" style="color:var(--bad)">can\'t import</span>'}
+          ${m.ok ? `<span class="tag">${m.count} sheets${m.lab.length ? ' · Lab' : ''}${m.mega ? ' · Mega' : ''}</span>` : ''}
+          <span class="spacer"></span>
+          ${m.ok ? raritySelect(m.chosen, 'rar') : ''}
+          <button class="pv">Preview</button>
+        </div>
+        <ul class="msgs">${m.errors.map(e => `<li class="err">${esc(e)}</li>`).join('')}${m.warnings.map(w => `<li class="wrn">${esc(w)}</li>`).join('')}${!m.errors.length && !m.warnings.length ? '<li class="ok">All sheets check out.</li>' : ''}</ul>
+        <div class="prev"><div class="sheets"></div><div class="stage"></div></div>`;
+      const pick = el.querySelector('.pick'), rar = el.querySelector('.rar');
+      pick.onchange = () => { m.pick = pick.checked; footer(); };
+      if (rar) rar.onchange = () => { m.chosen = +rar.value; footer(); };
+      el.querySelector('.pv').onclick = () => preview(el, m);
+      $('cards').appendChild(el);
+    }
+    footer();
+  }
+
+  function footer() {
+    const picks = found.filter(m => m.pick && m.ok);
+    $('import-row').hidden = !found.some(m => m.ok);
+    $('import').disabled = !picks.length;
+    $('import').textContent = picks.length ? `Import ${picks.length} radiant${picks.length === 1 ? '' : 's'}` : 'Import';
+    if (!picks.length) { $('odds').textContent = ''; return; }
+    const pool = Object.fromEntries(Object.entries(st.radiants).map(([d, e]) => [d, e.rarity]));
+    for (const m of picks) pool[m.dex] = m.chosen;
+    const o = odds(pool);
+    $('odds').textContent = 'Ritual odds after this: ' + picks.map(m => `${m.name} ${pct(o[m.dex])}`).join(', ') +
+      ` (${Object.keys(pool).length} radiants in all)`;
+  }
+
+  $('import').onclick = async () => {
+    const picks = found.filter(m => m.pick && m.ok).map(m => ({ id: m.id, dex: m.dex, rarity: m.chosen }));
+    $('import').disabled = true;
+    const out = $('import-out'); out.hidden = false; out.textContent = 'Importing…';
+    try {
+      const r = await api('import', { method: 'POST', body: JSON.stringify({ picks }) });
+      out.textContent = r.done.map(d => `#${d.dex} ${d.name}: ${d.count} sheets copied`).join('\n') + '\n' + r.out;
+      for (const d of r.done) { const i = found.findIndex(m => m.dex === d.dex); if (i >= 0) found.splice(i, 1); }
+      st = r.state; render(); cards();
+    } catch (e) { out.textContent = 'Import failed: ' + e.message; $('import').disabled = false; }
+  };
+
+  // ---------------- previews: the game's frame data, normal next to radiant ----------------
+  const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
+  const geo = (dex, part, anim) => part === 'mega' ? (G.SPRITE_META['m' + dex] || { a: {} }).a[anim]
+    : part === 'lab' ? ((G.LAB_ANIMS[dex] || {}).a || {})[anim] : (G.SPRITE_META[dex] || { a: {} }).a[anim];
+  const normalSrc = (dex, part, anim) => `/assets/pokemon/${part === 'mega' ? 'm' + dex : dex}/${part === 'lab' ? 'lab/' : ''}${anim}.png`;
+  const label = s => (s.part === 'base' ? '' : s.part === 'lab' ? 'Lab ' : 'Mega ') + s.anim;
+  const img = src => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+  let playing = null;
+
+  function preview(el, m) {
+    const box = el.querySelector('.prev');
+    if (box.classList.toggle('on') === false) return;
+    const order = s => (['base', 'lab', 'mega'].indexOf(s.part) * 20) + (ANIMS.indexOf(s.anim) + 1 || 19);
+    const list = m.sheets.filter(s => geo(m.dex, s.part, s.anim)).sort((a, b) => order(a) - order(b));
+    const bar = box.querySelector('.sheets');
+    bar.innerHTML = list.map((s, i) => `<button data-i="${i}">${esc(label(s))}</button>`).join('');
+    bar.onclick = e => { const b = e.target.closest('button'); if (b) show(+b.dataset.i); };
+    async function show(i) {
+      bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+      const s = list[i], g = geo(m.dex, s.part, s.anim), scale = Math.max(2, Math.floor(160 / Math.max(g.w, g.h)));
+      const stage = box.querySelector('.stage');
+      stage.innerHTML = ['Normal', 'Radiant'].map(t => `<figure><canvas width="${g.w * scale}" height="${g.h * scale}"></canvas>${t}</figure>`).join('') +
+        `<figure><canvas width="${Math.min(g.w * g.n, 640)}" height="${Math.round(Math.min(g.w * g.n, 640) / (g.w * g.n) * g.h * g.r)}" class="sheet"></canvas>Radiant sheet</figure>`;
+      const [a, b, whole] = stage.querySelectorAll('canvas');
+      let ims;
+      try { ims = await Promise.all([img(normalSrc(m.dex, s.part, s.anim)), img(`/api/file/${m.id}/${m.dex}/${s.part}/${encodeURIComponent(s.anim)}?k=${KEY}`)]); }
+      catch (e) { stage.insertAdjacentHTML('beforeend', '<p class="err">Couldn\'t load this sheet.</p>'); return; }
+      const wx = whole.getContext('2d'); wx.imageSmoothingEnabled = false; wx.drawImage(ims[1], 0, 0, whole.width, whole.height);
+      // Each frame for its duration (PMD ticks, 1/60 s); the direction turns every loop.
+      const id = {}; playing = id;
+      let f = 0, row = 0, t = performance.now();
+      const draw = () => {
+        for (const [cv, im] of [[a, ims[0]], [b, ims[1]]]) {
+          const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+          x.drawImage(im, f * g.w, row * g.h, g.w, g.h, 0, 0, cv.width, cv.height);
+        }
+      };
+      draw();
+      const tick = now => {
+        if (playing !== id || !box.classList.contains('on') || !a.isConnected) return;
+        const dur = ((g.d && g.d[f]) || 6) * 1000 / 60;
+        if (now - t >= dur) { t = now; f++; if (f >= g.n) { f = 0; row = (row + 1) % g.r; } draw(); }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    if (list.length) show(0); else box.querySelector('.stage').innerHTML = '<p class="sub">No sheets the game uses.</p>';
+  }
+
+  // ---------------- publish ----------------
+  function gitBox() {
+    const g = st.git;
+    if (!g || g.error) { $('git').innerHTML = `<p class="err">git: ${esc(g ? g.error : 'unavailable')}</p>`; $('publish').disabled = true; return; }
+    const files = g.changed;
+    $('git').innerHTML = `<p>Branch <code>${esc(g.branch)}</code>. ` + (files.length
+      ? `<b>${files.length}</b> radiant file${files.length === 1 ? '' : 's'} to publish:</p><pre>${files.map(esc).join('\n')}</pre>`
+      : 'No radiant changes to publish.</p>') +
+      '<p class="sub">Only these files are committed, whatever else is changed in your checkout. Players get them when GitHub Pages has deployed (a minute or two), no rebuild needed.</p>';
+    $('ahead-ok').hidden = !g.ahead;
+    $('ahead-text').textContent = g.ahead ? `Also push ${g.ahead} other commit${g.ahead === 1 ? '' : 's'} not pushed yet: ${g.aheadLog.join(' · ')}` : '';
+    $('publish').disabled = !files.length || g.branch !== 'main' || (g.ahead && !$('ahead-box').checked);
+  }
+  $('ahead-box').onchange = gitBox;
+  $('publish').onclick = async () => {
+    $('publish').disabled = true;
+    const out = $('pub-out'); out.hidden = false; out.textContent = 'Committing and pushing…';
+    try {
+      const r = await api('publish', { method: 'POST', body: JSON.stringify({ allowAhead: $('ahead-box').checked }) });
+      out.innerHTML = `<span class="ok">Published ${esc(r.sha)}: ${esc(r.msg)}</span>\nLive at play.mrshawn.dev once GitHub Pages has deployed (a minute or two).\n${esc(r.out)}`;
+      st = r.state; render();
+    } catch (e) { out.innerHTML = `<span class="err">${esc(e.message)}</span>`; if (e.data && e.data.state) { st = e.data.state; render(); } }
+  };
+
+  function render() { current(); gitBox(); footer(); }
+
+  const drop = $('drop');
+  drop.onclick = () => $('file').click();
+  $('file').onchange = e => { add([...e.target.files]); e.target.value = ''; };
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+  drop.ondragleave = () => drop.classList.remove('over');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); add([...e.dataTransfer.files].filter(f => /\.zip$/i.test(f.name))); };
+
+  api('state').then(s => { st = s; render(); }, e => {
+    document.querySelector('main').insertAdjacentHTML('afterbegin', `<p class="err">Can't reach the admin server (${esc(e.message)}). Start it with <code>node fork/radiant-admin.cjs</code> and use the link it opens.</p>`);
+  });
+  window.RadiantAdmin = { found, odds: p => odds(p), state: () => st };   // for fork/test-radiant-admin.cjs
+})();
+</script>
+</body>
+</html>

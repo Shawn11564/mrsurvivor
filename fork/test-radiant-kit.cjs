@@ -5,9 +5,10 @@
 //   node fork/test-radiant-kit.cjs [base-url]
 //
 //   1. Search finds Pokémon by name, by number (6, #6), by type and by "mega".
-//   2. Charizard with "Mega" ticked downloads a .zip with its 7 sheets in 6/r/, its Lab sheet
-//      in 6/r/lab/, its Mega's 7 in m6/r/ and CREDITS.txt, each byte for byte the default
-//      sheet; unticked, no Mega files. A Pokémon with no Mega has the box disabled.
+//   2. Charizard ("Mega" ticked by default) downloads 0006_charizard.zip with its 7 sheets in
+//      assets/0006_charizard/, its Lab sheet in lab/, its Mega's 7 in mega/, README.txt and
+//      CREDITS.txt, each byte for byte the default sheet; unticked, no Mega files. A Pokémon
+//      with no Mega has the box disabled. fork/test-import-radiant.cjs imports what it makes.
 //   3. Every species' list matches the sheets on disk (nothing missing, nothing extra).
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const { chromium } = require('./pw.cjs');
@@ -86,36 +87,41 @@ const crc32 = b => (zlib.crc32 ? zlib.crc32(b) : null);
   await page.click('#results button');
   const head = await page.evaluate(() => ({ color: getComputedStyle(document.querySelector('#p-name span')).color, rar: document.getElementById('p-rar').textContent }));
   check(head.color === RAR[zard][1] && head.rar.includes(RAR[zard][0]) && head.rar.includes('★'.repeat(zard)), 'the chosen Pokémon: coloured name, stars and rarity', head);
-  check(await page.isEnabled('#mega'), 'Charizard: the Mega box can be ticked');
-  await page.check('#mega');
+  check(await page.isEnabled('#mega') && await page.isChecked('#mega'), 'Charizard: the Mega box is ticked by default');
   let z = await grab();
-  check(z.name === 'radiant-6-charizard-mega.zip', 'zip name', z.name);
-  check(ANIMS.every(a => same(z.files, `assets/pokemon/6/${a}.png`, `assets/pokemon/6/r/${a}.png`)), 'the 7 sheets, as assets/pokemon/6/r/{Anim}.png');
-  check(same(z.files, 'assets/pokemon/6/lab/SpAttack.png', 'assets/pokemon/6/r/lab/SpAttack.png'), 'its Lab sheet, as 6/r/lab/SpAttack.png');
-  check(ANIMS.every(a => same(z.files, `assets/pokemon/m6/${a}.png`, `assets/pokemon/m6/r/${a}.png`)), 'the Mega\'s 7 sheets, as assets/pokemon/m6/r/{Anim}.png');
+  check(z.name === '0006_charizard.zip', 'zip name', z.name);
+  check(ANIMS.every(a => same(z.files, `assets/pokemon/6/${a}.png`, `assets/0006_charizard/${a}.png`)), 'the 7 sheets, as assets/0006_charizard/{Anim}.png');
+  check(same(z.files, 'assets/pokemon/6/lab/SpAttack.png', 'assets/0006_charizard/lab/SpAttack.png'), 'its Lab sheet, as 0006_charizard/lab/SpAttack.png');
+  check(ANIMS.every(a => same(z.files, `assets/pokemon/m6/${a}.png`, `assets/0006_charizard/mega/${a}.png`)), 'the Mega\'s 7 sheets, as 0006_charizard/mega/{Anim}.png');
+  const readme = z.files['README.txt'] && z.files['README.txt'].data.toString();
+  check(!!readme && readme.includes('0006_charizard') && readme.includes('mega/Idle.png') && readme.includes('Only change colours'), 'README.txt lists the sheets and the rules');
   const cred = z.files['CREDITS.txt'] && z.files['CREDITS.txt'].data.toString();
   check(!!cred && cred.includes('CHUNSOFT') && cred.includes('Kevin0itachi'), 'CREDITS.txt names the sprite and Mega artists');
-  check(Object.keys(z.files).length === 16, 'nothing else in it', Object.keys(z.files));
+  check(Object.keys(z.files).length === 17, 'nothing else in it', Object.keys(z.files));
 
   await page.uncheck('#mega');
   z = await grab();
-  check(z.name === 'radiant-6-charizard.zip' && !Object.keys(z.files).some(f => f.includes('/m6/')), 'unticked: no Mega files', Object.keys(z.files).length);
+  check(z.name === '0006_charizard.zip' && !Object.keys(z.files).some(f => f.includes('/mega/')), 'unticked: no Mega files', Object.keys(z.files).length);
 
   await page.fill('#q', '#1');
   await page.press('#q', 'Enter');
   await page.waitForFunction(() => document.getElementById('p-name').textContent.startsWith('Bulbasaur'));
   check(!(await page.isEnabled('#mega')), 'Bulbasaur (no Mega): the box is disabled');
   z = await grab();
-  check(Object.keys(z.files).sort().join() === ANIMS.map(a => `assets/pokemon/1/r/${a}.png`).concat('CREDITS.txt').sort().join(),
-    'Bulbasaur: just its 7 sheets and the credits');
+  check(Object.keys(z.files).sort().join() === ANIMS.map(a => `assets/0001_bulbasaur/${a}.png`).concat('README.txt', 'CREDITS.txt').sort().join(),
+    'Bulbasaur: just its 7 sheets, the README and the credits');
 
   console.log('Every species');
-  const all = await page.evaluate(() => G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => [p.dex, RadiantKit.sheets(p, true).map(s => [s[1], s[2]])]));
+  const all = await page.evaluate(() => G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => [p.dex, RadiantKit.sheets(p, true).map(s => [s[1], s[2]]), RadiantKit.folder(p)]));
   const bad = [];
-  for (const [dex, list] of all) {
+  const { place } = require('./import-radiant.cjs');
+  for (const [dex, list, folder] of all) {
     for (const [src, out] of list) {
       if (!fs.existsSync(path.join(ROOT, src))) bad.push('missing ' + src);
-      if (out !== src.replace(/^assets\/pokemon\/(m?\d+)\//, 'assets/pokemon/$1/r/')) bad.push('name ' + out);
+      if (out !== src.replace(/^assets\/pokemon\/m\d+\//, `assets/${folder}/mega/`).replace(/^assets\/pokemon\/\d+\//, `assets/${folder}/`)) bad.push('name ' + out);
+      // The importer reads the same Pokémon back from the folder name.
+      const at = place(out);
+      if (!at || at.dex !== dex) bad.push('importer reads ' + out + ' as ' + JSON.stringify(at));
     }
     // Every sheet on disk for this species is in the list (the shiny s/ folder aside).
     for (const dir of [`${dex}`, `${dex}/lab`, `m${dex}`]) {
