@@ -10,7 +10,12 @@
  *     y Polvo Veloz (Ditto)... Salen en cofres y jefes (G.Items.roll), 1 de cada 3 veces si es tuyo.
  *   - EXPERIENCIA para los flojos: hasta +60 % según sus stats base (underdog).
  *   - CARAMELOS: con el ajuste Lab encendido, cada repetido del gacha da un caramelo de su línea
- *     evolutiva (save.lab.candy[dex]); en una partida Lab, cada uno +3 % de vida y daño (hasta 10).
+ *     evolutiva (save.lab.candy[dex]). Se gastan en la pantalla de Mejoras (con Lab encendido) en la
+ *     estadística que elijas: Vida, Ataque, Ataque Especial, Defensa o Velocidad, hasta 10 puntos por
+ *     línea evolutiva (save.lab.cpts[línea]); el punto n de una estadística cuesta n caramelos, y
+ *     Reiniciar los devuelve todos. En una partida Lab: por punto +3 % de vida, +3 % al daño físico o
+ *     especial, +2 % de reducción de daño o +2 % de velocidad (hasta el 21-10-2026 cada caramelo daba
+ *     +3 % de vida y daño, sin elegir).
  *
  * Cooperativo: { k:'labevo', u, dex } al anfitrión, que lo reparte (como js/fork/mega.js): todos
  * ven a tu Pokémon evolucionado. Textos sólo en inglés (fork/LAB.md). Prueba: fork/test-lab.cjs.
@@ -19,7 +24,15 @@ G.LabGrowth = (() => {
   const D = G.LabData;
   const esc = s => G.Lab.esc(s);
   const UNDERDOG_REF = 480, UNDERDOG_K = 1.1, UNDERDOG_MAX = 0.6;
-  const CANDY_K = 0.03, CANDY_MAX = 10;
+  const CANDY_K = 0.03, CANDY_MAX = 10;     // puntos por línea
+  // Lo que da cada punto en una partida Lab.
+  const CSTAT = {
+    hp:   { name: 'HP', per: 0.03, text: k => `+${Math.round(k * 100)}% HP` },
+    atk:  { name: 'Attack', per: 0.03, text: k => `+${Math.round(k * 100)}% physical damage` },
+    satk: { name: 'Sp. Atk', per: 0.03, text: k => `+${Math.round(k * 100)}% special damage` },
+    def:  { name: 'Defense', per: 0.02, text: k => `${Math.round(k * 100)}% less damage taken` },
+    spd:  { name: 'Speed', per: 0.02, text: k => `+${Math.round(k * 100)}% speed` }
+  };
   const ITEM_P = 1 / 3;
   const STAY = { def: 0.15, hp: 0.15 };    // Piedra Eterna: -15 % de daño recibido y +15 % de vida
 
@@ -149,9 +162,38 @@ G.LabGrowth = (() => {
   const byFam = {};
   for (const d in D.fam) (byFam[D.fam[d]] = byFam[D.fam[d]] || []).push(+d);
   const line = d => byFam[D.fam[d]] || [d];
+  /** Caramelos ganados por toda la línea de dex (lo que se ha gastado, aparte: spent). */
   function candies(dex) {
     const c = (G.DB.save && G.DB.save.lab && G.DB.save.lab.candy) || {};
-    return Math.min(CANDY_MAX, line(dex).reduce((s, d) => s + (c[d] | 0), 0));
+    return line(dex).reduce((s, d) => s + (c[d] | 0), 0);
+  }
+  const lineKey = dex => Math.min(...line(dex));
+  function labOf(s) { return (s.lab = s.lab && typeof s.lab === 'object' ? s.lab : {}); }
+  /** Puntos de la línea de dex: { hp, atk, satk, def, spd }. */
+  function points(dex) {
+    const s = G.DB.save, p = s && s.lab && s.lab.cpts && s.lab.cpts[lineKey(dex)];
+    const out = {};
+    for (const k in CSTAT) out[k] = Math.max(0, Math.min(CANDY_MAX, (p && p[k]) | 0));
+    return out;
+  }
+  const total = p => Object.values(p).reduce((a, b) => a + b, 0);
+  const costOf = (dex, k) => points(dex)[k] + 1;                    // el punto n cuesta n
+  const spent = dex => Object.values(points(dex)).reduce((a, n) => a + n * (n + 1) / 2, 0);
+  const left = dex => Math.max(0, candies(dex) - spent(dex));
+  /** Un punto más en k (si quedan puntos y caramelos). */
+  function spend(dex, k) {
+    const p = points(dex);
+    if (!CSTAT[k] || total(p) >= CANDY_MAX || left(dex) < p[k] + 1) return false;
+    const lab = labOf(G.DB.save), cp = lab.cpts = lab.cpts && typeof lab.cpts === 'object' ? lab.cpts : {};
+    cp[lineKey(dex)] = Object.assign(p, { [k]: p[k] + 1 });
+    G.DB.commit();
+    return true;
+  }
+  /** Los puntos de la línea vuelven a ser caramelos. */
+  function reset(dex) {
+    const lab = labOf(G.DB.save);
+    if (lab.cpts) delete lab.cpts[lineKey(dex)];
+    G.DB.commit();
   }
   const pull = G.Gacha.pull;
   G.Gacha.pull = function (save) {
@@ -235,9 +277,11 @@ G.LabGrowth = (() => {
   function start(pl) {
     pl._labStay = false;
     underdog(pl, 0);
-    const n = candies(pl.dex);
-    if (n) { pl.atkMul *= 1 + CANDY_K * n; pl.addMaxHp(Math.round(pl.maxHp * CANDY_K * n)); }
-    pl._labCandy = n;
+    const p = points(pl.dex);
+    if (p.hp) pl.addMaxHp(Math.round(pl.maxHp * CSTAT.hp.per * p.hp));
+    if (p.def) pl.dmgReduce = Math.min(0.7, pl.dmgReduce + CSTAT.def.per * p.def);
+    if (p.spd) pl.spdMul *= 1 + CSTAT.spd.per * p.spd;
+    pl._labCandy = total(p) ? p : null;                 // atk / satk: en atkFor (abajo)
   }
 
   G.Lab.pauseLine(pl => {
@@ -246,9 +290,18 @@ G.LabGrowth = (() => {
     if (pl._labStay) out.push('Everstone: not evolving this run.');
     else if (t.length) out.push('Evolves at level ' + Math.min(...t.map(x => x[1])) + ' into ' + t.map(x => esc(G.DEX_BY[x[0]].name)).join(' / ') + '.');
     if (pl._labUnder > 0) out.push('Underdog: +' + Math.round(pl._labUnder * 100) + '% XP.');
-    if (pl._labCandy) out.push('Candies: ' + pl._labCandy + ' (+' + Math.round(pl._labCandy * CANDY_K * 100) + '% HP and damage).');
+    if (pl._labCandy) out.push('Candies: ' + Object.keys(CSTAT).filter(k => pl._labCandy[k]).map(k => CSTAT[k].text(CSTAT[k].per * pl._labCandy[k])).join(', ') + '.');
     return out.join(' ');
   });
 
-  return { targets, levelFor, canEvolve, evolveTo, cards, candies, underdogK, ITEMS, itemsFor, start, STAY, CANDY_K };
+  // Ataque / Ataque Especial de los caramelos: sólo a los movimientos de esa categoría.
+  const candyAtkFor = P.atkFor;
+  P.atkFor = function (m) {
+    const k = candyAtkFor.apply(this, arguments), c = this._labCandy;
+    if (!c || !m) return k;
+    return m.cat === 'physical' ? k * (1 + CSTAT.atk.per * c.atk) : m.cat === 'special' ? k * (1 + CSTAT.satk.per * c.satk) : k;
+  };
+
+  return { targets, levelFor, canEvolve, evolveTo, cards, candies, underdogK, ITEMS, itemsFor, start, STAY, CANDY_K,
+           CANDY_MAX, CSTAT, points, costOf, spent, left, spend, reset, lineKey };
 })();

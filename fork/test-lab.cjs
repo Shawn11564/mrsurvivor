@@ -30,7 +30,7 @@
 //      card, Pikachu's own QuickStrike animation for Volt Tackle, evolving at the top level.
 //   9. Lower tiers (js/fork/lab/growth.js): Charmander evolves during the run (card, sprite, HP,
 //      ability, pool), then Charizard with Blast Burn; Everstone; Eviolite, Light Ball, items in
-//      chests; underdog XP; candies from gacha duplicates and their bonus.
+//      chests; underdog XP; candies from gacha duplicates and the bonus of the points they buy.
 //  10. Shinies (js/fork/lab/shiny.js): shiny Charizard's moves use its shiny palette; +10% XP,
 //      +10% coins, +1 reroll.
 //  11. Mega Evolution, Lab only (js/fork/mega.js): the menu marks with Lab on, the 1 in 30 drop
@@ -635,7 +635,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const under = { cat: (await xpOf(10, true)) / (await xpOf(10, false)), zard: (await xpOf(6, true)) / (await xpOf(6, false)) };
   await page.evaluate(() => G.Settings.set('lab', true));
   check(Math.abs(under.cat - 1.6) < 0.01 && Math.abs(under.zard - 1) < 0.01, `underdog XP: Caterpie ×${under.cat.toFixed(2)}, Charizard ×${under.zard.toFixed(2)}`);
-  // Candies: duplicates from the gacha with Lab on give one for that line; each +3% HP and damage in a Lab run.
+  // Candies: duplicates from the gacha with Lab on give one for that line; spent on stats in Upgrades
+  // (fork/test-candy.cjs): 5 points of Sp. Atk = +15% to special moves in a Lab run.
   const candy = await page.evaluate(() => {
     const s = G.DB.save, keep = { owned: Object.assign({}, s.owned), shiny: Object.assign({}, s.shiny || {}), t: s.tickets.t1, coins: s.coins };
     for (const p of G.DEX) { s.owned[p.dex] = s.owned[p.dex] || { at: 1 }; if (G.Sprites.hasShiny(p.dex)) (s.shiny = s.shiny || {})[p.dex] = { at: 1 }; }
@@ -650,13 +651,14 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     return { before, off, on, line: G.LabGrowth.candies(6) };
   });
   check(candy.off === candy.before && candy.on === candy.before + 10 && candy.line === 5, `10 duplicate pulls: no candy with Lab off, 10 with it on; Charmander's candies count for Charizard (${JSON.stringify(candy)})`);
-  const withCandy = await page.evaluate(() => { G.DB.save.partner = 4; G.Game.startRun(); return null; }).then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 30000 }))
-    .then(() => page.evaluate(() => ({ atk: G.Game.player.atkMul, n: G.Game.player._labCandy })));
+  const withCandy = await page.evaluate(() => { const s = G.DB.save; s.lab.candy = { 4: 15 }; s.lab.cpts = { [G.LabGrowth.lineKey(4)]: { satk: 5 } }; s.partner = 4; G.Game.startRun(); return null; })
+    .then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 30000 }))
+    .then(() => page.evaluate(() => ({ atk: G.Game.player.atkFor(G.Moves.instance('ember')), n: G.Game.player._labCandy && G.Game.player._labCandy.satk })));
   await endRun(); await toMenu();
-  await page.evaluate(() => { G.DB.save.lab.candy = {}; });
+  await page.evaluate(() => { G.DB.save.lab.candy = {}; G.DB.save.lab.cpts = {}; });
   await startRun(4);
-  const noCandy = await page.evaluate(() => G.Game.player.atkMul);
-  check(withCandy.n === 5 && Math.abs(withCandy.atk / noCandy - 1.15) < 0.001, `5 candies: ×${(withCandy.atk / noCandy).toFixed(2)} damage in a Lab run`);
+  const noCandy = await page.evaluate(() => G.Game.player.atkFor(G.Moves.instance('ember')));
+  check(withCandy.n === 5 && Math.abs(withCandy.atk / noCandy - 1.15) < 0.001, `5 Sp. Atk points: ×${(withCandy.atk / noCandy).toFixed(2)} to special moves in a Lab run`);
   if (SHOTS) {
     await page.evaluate(() => { G.Game.player.level = 7; G.RunUI.showLevelUp(7, G.LevelUp.offer(G.Game.player), () => {}); });
     await page.waitForTimeout(700);

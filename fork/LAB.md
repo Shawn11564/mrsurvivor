@@ -47,6 +47,7 @@ status table as work lands.
 | `js/fork/lab/lab-moves.js` | `G.LabMoves`: moves that only exist in Lab (data only; phases 4 and 5) |
 | `js/fork/lab/anims.js` | `G.LabAnims`: signature moves' own PMD animations (phase 5) |
 | `js/fork/lab/growth.js` | `G.LabGrowth`: in-run evolution, Everstone, items, underdog XP, candies (phase 6) |
+| `js/fork/lab/candy-ui.js` | `G.LabCandyUI`: the candy panel in Upgrades (spend on a stat, Reset) |
 | `js/fork/lab/shiny.js` | `G.LabShiny`: shiny move colours and bonuses (phase 7) |
 | `js/fork/lab/underdog.js` | `G.LabUnderdog`: the underdog XP shown on the XP bar, the ladder before a Lab run and the tag on the Play button (phase 6) |
 | `js/fork/lab/evo-hud.js` | `G.LabEvoHud`: the progress to the next evolution, on screen right under the HP bar, before the stat boosts (buffs and altar power move down for it through `G.HUD.belowHp` in `js/ui/hud.js`) (phase 6) |
@@ -219,7 +220,12 @@ them. A shiny without that sheet (most) uses the next choice.
   direct `G.Game.startRun` calls skip the ladder.
 - **Candies:** with the Lab setting on, every duplicate from the gacha gives a candy for that
   species (`save.lab.candy`, kept with the rest of the save; when two devices' saves are merged, the
-  newer one's candies win). In a Lab run, each candy of the line is +3% HP and damage, 10 at most.
+  newer one's candies win). Since 2026-10-21 they are spent in Upgrades (Lab on), in a panel under
+  the list (`js/fork/lab/candy-ui.js`): pick the stat, up to 10 points per evolution line
+  (`save.lab.cpts[line]`); point n of a stat costs n candies, and Reset gives them all back. In a Lab
+  run, per point: HP +3%, Attack +3% to physical moves, Sp. Atk +3% to special ones, Defense +2%
+  damage cut, Speed +2% (until then each candy was +3% HP and damage, chosen for you).
+  `node fork/test-candy.cjs` (server) checks the panel, the costs, the 10 points, Reset and the bonuses.
 
 ## Phase 7: shinies
 
