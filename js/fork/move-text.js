@@ -56,6 +56,7 @@
   const SPEC = 'Especial: pega con tu Ataque Especial. Lo potencia Maquinación.';
   const BUFF = { patk: 'Potencia tus ataques físicos.', satk: 'Potencia tus ataques especiales.' };
   const BUFF_CAT = { patk: 'physical', satk: 'special' };
+  const BOTH = 'Potencia tus ataques físicos y especiales.';
   const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
   // Cuerpo a cuerpo (player.js hurt) y las familias cercanas del Lab (G.LabKinds2.CLOSE): -25 % de daño recibido.
   const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
@@ -70,6 +71,8 @@
       const f = G.Stats.fit(mon, m.cat);
       if (mon && f < 0.95) out.push([`Peor para ${mon.name}: sólo hace un ${Math.round(f * 100)} % del daño (lo suyo es el ataque ${G.Stats.sideOf(mon) === 'special' ? 'especial' : 'físico'}).`, COL.weak]);
       if (close(m)) out.push([CLOSE, COL.close]);
+    } else if (BUFF[m.stat] && (m.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[m.stat])) {
+      out.push([BOTH, COL.good]);                        // Avivar, Filete Fuera (Lab): los dos lados
     } else if (BUFF[m.stat]) {
       out.push([BUFF[m.stat], COL[BUFF_CAT[m.stat]]]);
       if (mon && G.Stats.sideOf(mon) === BUFF_CAT[m.stat])
@@ -101,6 +104,9 @@
      'Corpo a corpo: finché è attiva subisci il 25% di danni in meno.',
      'Corpo a corpo: enquanto estiver ativo, você recebe 25% menos dano.',
      '近身：启用时受到的伤害减少25%。', '近身：啟用時受到的傷害減少25%。'],
+    [BOTH, 'Boosts your physical and special moves.', 'Renforce vos attaques physiques et spéciales.',
+     'Potenzia i tuoi attacchi fisici e speciali.', 'Fortalece seus ataques físicos e especiais.',
+     '强化你的物理和特殊招式。', '強化你的物理和特殊招式。'],
     [BUFF.patk, 'Boosts your physical moves.', 'Renforce vos attaques physiques.', 'Potenzia i tuoi attacchi fisici.',
      'Fortalece seus ataques físicos.', '强化你的物理招式。', '強化你的物理招式。'],
     [BUFF.satk, 'Boosts your special moves.', 'Renforce vos attaques spéciales.', 'Potenzia i tuoi attacchi speciali.',

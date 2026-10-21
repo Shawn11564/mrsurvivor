@@ -529,7 +529,7 @@ G.LabKinds = (() => {
     } else {
       for (let i = 0; i < 3; i++) {
         const a = t * 4 + i * 2.094;
-        G.VFX.draw(ctx, 'heart', 'fairy', this.x + Math.cos(a) * 10, y0 + Math.sin(a) * 3, { scale: 0.5 });
+        G.VFX.draw(ctx, 'ring', 'psychic', this.x + Math.cos(a) * 10, y0 + Math.sin(a) * 3, { scale: 0.45 });   // confuso (los corazones parecían curar)
       }
     }
     ctx.restore();
@@ -545,7 +545,7 @@ G.LabKinds = (() => {
         if (now() - (g.noteAt || 0) > 500) { g.noteAt = now(); G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Protected', col(g.m)); }
         return;
       }
-      if (!g.m.cat || !cat || g.m.cat === cat) g.stored += amount;
+      if (g.m.storeAll || !g.m.cat || !cat || g.m.cat === cat) g.stored += amount;
       amount *= 0.5;
     }
     // Campo de Niebla: menos daño mientras estés dentro.
@@ -658,7 +658,8 @@ G.LabKinds = (() => {
         else if (f.kind === 'wave') done = tickWave(f, dt);
         else if (f.kind === 'sleepzone' && f.t >= f.delay) {
           G.FX.ring(f.x, f.y, 4, f.r, col(f.m), 0.4, 3);
-          for (let k = 0; k < 6; k++) G.FX.sp('note', 'psychic', f.x + G.U.rand(-f.r, f.r) * 0.6, f.y - 6, { vy: -50, life: 0.6 });
+          const v = G.VFX.forMove(f.m);     // su dibujo: notas para cantar, esporas, sombras...
+          for (let k = 0; k < 6; k++) G.FX.sp(v.proj, v.pal, f.x + G.U.rand(-f.r, f.r) * 0.6, f.y - 6, { vy: -50, life: 0.6 });
           if (!f.ghost) for (const e of G.EnemyMgr.queryCircle(f.x, f.y, f.r)) {
             if (e.dead) continue;
             if (f.dmg > 0) C.hit(f.owner, e, f.dmg, col(f.m), e.x - f.x, e.y - f.y, 0, f.m);

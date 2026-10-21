@@ -329,6 +329,31 @@ Screens and shouts reach teammates as ghost casts: a teammate's Reflect protects
 near them, and a teammate's Growl marks your copies of the enemies too. Healing is your own. Not
 checked with two players yet.
 
+## Texts and looks match the code (2026-10-21)
+
+A review of every Lab move against its code (and the normal game's, `fork/test-move-truth.cjs`):
+- **Texts** now say what happens: Counter / Mirror Coat halve every hit (only the stored part is
+  by category); sleep zones hurt and the sleep ends on its own or on a hit; Bounce and Flare Blitz
+  always paralyze / burn ("may" was wrong); recoil never knocks you out; confusion also stops the
+  enemy attacking you; homing moves "home in" (they can still hit walls, so not "never miss");
+  Rest sleeps 2.2 s; Techno Blast pierces one; Shadow Force's three strikes each hit an area; the
+  leech moves' 5 %-a-second cap; the stuns of Photon Geyser, Seismic Toss, Circle Throw, Focus Punch.
+- **Code** where the text was the intent: Metal Burst stores every hit (`storeAll`); Scary Face's
+  "stronger" upgrades also slow more (shouts scale `slow` by `amount`, up to 0.8); King's Shield and
+  Baneful Bunker have no attack category (they deal no damage).
+- **Own upgrades and evolution** (`ups` / `evoMod` in `lab-moves.js`, read by `lab.js` and
+  `kinds2.js`) where the family's did nothing: the protect guards (no "+damage" on a move that deals
+  none), Rest (shorter sleep, earlier), Shell Trap (its "charges faster" shortened the trap).
+- **Evolution names** that promised something else: Dream Eater → Psychic Noise, Slack Off (yawn) →
+  Snore, Sleep Talk → Slack Off (Rest really heals), Focus Energy → Safeguard, Gear Grind → Confide,
+  Final Gambit → Low Kick, Healing Wish → Heal Bell, Perish Song → Round, Wave Crash → Water Pulse,
+  Prismatic Laser → Lumina Crash, Steel Beam → Spin Out, Drill Run (Dig, same as Magnitude's) →
+  Stomping Tantrum.
+- **Looks**: Sweet Kiss is a fairy ring (hearts = healing, like Draining Kiss); confused enemies
+  show rings, not hearts; sleep zones and shouts draw their `look` (Spore and Sleep Powder puff
+  spores, Dark Void shadows, Feather Dance wind...); Wish shows stars when wished and hearts when it
+  heals; Sky Attack's beam is light, not fire.
+
 ## Move badges
 
 In a Lab run, each thing that makes a move better or worse for **your** Pokémon gets a small arrow

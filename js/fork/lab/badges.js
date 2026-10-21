@@ -34,6 +34,8 @@ G.LabBadges = (() => {
       if (mon.types.length === 1 && d.type === mon.types[0]) out.type = 'lb-g';
       const f = G.Stats.fit(mon, d.cat);
       out.cat = f >= 0.95 ? 'lb-g' : f >= 0.65 ? 'lb-y' : 'lb-r';
+    } else if (d.kind === 'buff' && BUFF_CAT[d.stat] && (d.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[d.stat])) {
+      out.cat = 'lb-g';                                  // los dos lados (Avivar, Filete Fuera): bueno para todos
     } else if (d.kind === 'buff' && BUFF_CAT[d.stat]) {
       out.cat = G.Stats.fit(mon, BUFF_CAT[d.stat]) >= 0.95 ? 'lb-g' : 'lb-y';
     }

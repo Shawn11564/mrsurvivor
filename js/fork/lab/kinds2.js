@@ -85,9 +85,11 @@ G.LabKinds2 = (() => {
     shout:  { t: '×1.3 stronger and a bigger area', m: { amount: 1.3, radius: 1.3 } },
     endure: { t: 'Half the recharge', m: { cd: 0.5 } }
   };
+  // Un movimiento puede traer su propia evolución (evoMod, js/fork/lab/lab-moves.js): manda sobre la de su familia.
+  const evoOf = m => m.evoMod || (m.def && m.def.evoMod) || EVO[m.kind];
   const evoInfo = G.Moves.evoInfo;
   G.Moves.evoInfo = function (m, statsTaken) {
-    const ev = EVO[m.kind], e = G.Moves.EVO[m.id];
+    const ev = evoOf(m), e = G.Moves.EVO[m.id];
     if (!ev) return evoInfo.apply(this, arguments);
     if (!e || m.evolved || m.lvl < m.def.maxLvl) return null;
     const [name, needs] = e;
@@ -96,7 +98,7 @@ G.LabKinds2 = (() => {
   };
   const evolve = G.Moves.evolve;
   G.Moves.evolve = function (m) {
-    const ev = EVO[m.kind], e = G.Moves.EVO[m.id];
+    const ev = evoOf(m), e = G.Moves.EVO[m.id];
     if (!ev) return evolve.apply(this, arguments);
     if (!e || m.evolved) return false;
     for (const k in ev.m) m[k] = (m[k] != null ? m[k] : 1) * ev.m[k];
@@ -245,7 +247,8 @@ G.LabKinds2 = (() => {
     target: true, reach: m => 0,                      // nunca desde Combat.tickMove: lo lanza C.tick (abajo)
     run(pl, m, ghost) {
       G.FX.ring(pl.x, pl.y, pl.r * 3, pl.r, '#5fe08a', 0.4, 3);
-      for (let i = 0; i < 5; i++) G.FX.sp('heart', 'grass', pl.x + G.U.rand(-12, 12), pl.y - G.U.rand(0, pl.bodyH), { vy: -60, life: 0.7 });
+      // Deseo: estrellas al pedirlo; los corazones, cuando cura de verdad (en wishes, abajo).
+      for (let i = 0; i < 5; i++) G.FX.sp(m.delay ? 'star' : 'heart', m.delay ? 'fairy' : 'grass', pl.x + G.U.rand(-12, 12), pl.y - G.U.rand(0, pl.bodyH), { vy: -60, life: 0.7 });
       if (ghost) return;
       let amt = pl.maxHp * (m.amount || 0.25) * healK(m);
       if (m.meek) {
@@ -286,11 +289,14 @@ G.LabKinds2 = (() => {
     run(pl, m, ghost) {
       const r = m.radius || 120, c = col(m);
       G.FX.ring(pl.x, pl.y - pl.bodyH * 0.4, 6, r, c, 0.35, 3);
-      for (let i = 0; i < 4; i++) G.FX.sp('note', 'normal', pl.x + G.U.rand(-10, 10), pl.y - pl.bodyH, { vy: -50, vx: G.U.rand(-40, 40), life: 0.5 });
+      // Notas para los gritos; las caras y los gestos traen su dibujo (look).
+      const v = m.look ? G.VFX.forMove(m) : { proj: 'note', pal: 'normal' };
+      for (let i = 0; i < 4; i++) G.FX.sp(v.proj, v.pal, pl.x + G.U.rand(-10, 10), pl.y - pl.bodyH, { vy: -50, vx: G.U.rand(-40, 40), life: 0.5 });
       for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, r)) {
         if (e.dead) continue;
         mark(e, m);
-        if (!ghost && m.slow) e.applySlow(m.slow, m.dur || 6);
+        // "Más fuerte" (amount, sus mejoras) también frena más (Cara Susto), hasta 0,8.
+        if (!ghost && m.slow) e.applySlow(Math.min(0.8, m.slow * (m.amount || 1)), m.dur || 6);
       }
     }
   };
@@ -511,7 +517,10 @@ G.LabKinds2 = (() => {
     binds = binds.filter(b => !tickBind(b, dt));
     for (const s of screens) s.t += dt;
     screens = screens.filter(s => !s.gone && s.t < s.life && s.owner && !s.owner.dead);
-    for (const w of wishes) if ((w.t -= dt) <= 0 && !w.pl.dead) w.pl.heal(w.amt);
+    for (const w of wishes) if ((w.t -= dt) <= 0 && !w.pl.dead) {
+      w.pl.heal(w.amt);
+      for (let i = 0; i < 5; i++) G.FX.sp('heart', 'grass', w.pl.x + G.U.rand(-12, 12), w.pl.y - G.U.rand(0, w.pl.bodyH), { vy: -60, life: 0.7 });
+    }
     wishes = wishes.filter(w => w.t > 0);
     tickMarks(dt);
     tickSeeds(dt);

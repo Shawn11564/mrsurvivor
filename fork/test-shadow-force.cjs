@@ -77,7 +77,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       return { sig: sig && sig.dex, pfSig: !!pfDef.sig, giratina: learns(487, 'shadow-force'), gengar: learns(94, 'shadow-force'), descs: [G.Moves.BY_ID['shadow-force'].desc, pfDef.desc] };
     });
     check(JSON.stringify(who.sig) === '[487]' && !who.pfSig && who.giratina && !who.gengar, 'Shadow Force is Giratina\'s alone; Phantom Force is not a signature', who);
-    check(who.descs[0] !== who.descs[1] && /three enemies/.test(who.descs[0]), 'their descriptions say how they differ', who.descs);
+    check(who.descs[0] !== who.descs[1] && /three times/.test(who.descs[0]), 'their descriptions say how they differ', who.descs);   // up to three strikes, each on everything where you land
     console.log('4. No evolution named after another move');
     const ev = await page.evaluate(() => {
       const en = (s) => G.T(s, 'move');

@@ -37,7 +37,7 @@ G.Lab = (() => {
   const BALLS = ['projectile', 'homing', 'bounce'];
   for (const d of G.LabMoves) {
     const like = G.Moves.ALL.find(m => m.kind === d.kind);
-    const ups = G.LabKinds.LADDERS[d.kind] || (like && like.ups);
+    const ups = d.ups || G.LabKinds.LADDERS[d.kind] || (like && like.ups);
     if (!ups) { console.warn('[Lab] no move of kind ' + d.kind + ' to copy upgrades from: ' + d.id); continue; }
     const m = Object.assign({}, d, { lab: true, ups, maxLvl: ups.length + 1 });
     delete m.evo;

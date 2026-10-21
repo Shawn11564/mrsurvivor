@@ -86,7 +86,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const rt = await page.evaluate(async () => {
       const pl = G.Game.player, frame = () => new Promise(r => requestAnimationFrame(() => r()));
       G.Spawner.update = () => {};
-      (function alive() { pl.invuln = 99; pl.hp = pl.maxHp; requestAnimationFrame(alive); })();
+      window.__alive = true;
+      (function alive() { if (!window.__alive) return; pl.invuln = 99; pl.hp = pl.maxHp; requestAnimationFrame(alive); })();
       await new Promise(r => setTimeout(r, 3300));          // past the start countdown
       G.EnemyMgr.clear(); G.Combat.clearFields();
       const def = G.Enemies.cast[0].list[0], e = new G.Enemy(def, pl.x + 90, pl.y, G.Enemies.scale(0));
@@ -108,6 +109,96 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     });
     check(rt.zone && rt.shape === 'rock' && rt.falls >= 3 && rt.high > rt.low, 'a rock falls onto the zone during its warning', rt);
     check(rt.stunned, 'then the enemy is trapped (stunned)', rt.stunned);
+    console.log('5. Lab moves');
+    const lab = await page.evaluate(() => {
+      const all = Object.values(G.Moves.BY_ID);
+      const heals = m => !!(m.drain || m.leech || m.heal || m.kind === 'heal');
+      const isHeart = v => [v.proj, v.aura, v.buff].includes('heart');
+      const hearts = all.filter(m => isHeart(G.VFX.forMove(m)) && !heals(m)).map(m => m.id);
+      const names = {};
+      for (const m of all) { const e = G.Moves.EVO[m.id]; if (e) names[m.id] = G.T(e[0], 'move'); }
+      const seen = {}, dup = [];
+      for (const [id, n] of Object.entries(names)) { if (seen[n]) dup.push([seen[n], id, n]); else seen[n] = id; }
+      const lie = Object.entries(names).filter(([id, n]) => /^(Dream Eater|Sleep Talk|Final Gambit|Healing Wish|Perish Song|Focus Energy)$/.test(n)
+        || (n === 'Slack Off' && id !== 'rest'));
+      const d = id => G.Moves.BY_ID[id].desc;
+      const at = (id, lvl) => G.Moves.instance(id, lvl);
+      const maxed = id => { const m = at(id, G.Moves.BY_ID[id].maxLvl); return G.Moves.evoInfo(m, { def: 1, hp: 1, atk: 1, cd: 1 }); };
+      return {
+        hearts, dup, lie,
+        texts: { counter: d('counter'), bounce: d('bounce'), flare: d('flare-blitz'), rest: d('rest'), techno: d('techno-blast'), swift: d('swift') },
+        cat: [G.Moves.BY_ID['kings-shield'].cat, G.Moves.BY_ID['baneful-bunker'].cat],
+        protect: { ups: G.Moves.BY_ID.protect.ups.map(u => u.t), dur4: +at('protect', 5).dur.toFixed(3), evo: (maxed('protect') || {}).text },
+        rest: { r2: at('rest', 2).rest, below4: at('rest', 4).below, evo: (maxed('rest') || {}).text },
+        trap: +(at('shell-trap', 3).charge / G.Moves.BY_ID['shell-trap'].charge).toFixed(2),
+        sky: G.VFX.forMove(G.Moves.BY_ID['sky-attack']).beam,
+        tipWorkUp: G.MoveText.tipNotes(at('work-up', 1), null).map(r => G.T(r[0]))
+      };
+    });
+    check(!lab.hearts.length, 'no move at all (Lab included) is drawn with hearts unless it heals: Sweet Kiss is a ring now', lab.hearts);
+    check(!lab.dup.length, 'no two moves (Lab included) evolve into the same English name', lab.dup);
+    check(!lab.lie.length, 'no Lab evolution is named after a move that heals, faints or attacks asleep when it doesn\'t', lab.lie);
+    check(/every hit/.test(lab.texts.counter) && !/ may /.test(lab.texts.bounce + lab.texts.flare) && /2\.2 seconds/.test(lab.texts.rest) &&
+      /first enemy/.test(lab.texts.techno) && !/never miss/.test(lab.texts.swift), 'Lab texts say what the code does', lab.texts);
+    check(lab.cat.every(c => c === null), 'King\'s Shield and Baneful Bunker deal no damage: no Attack category', lab.cat);
+    check(!lab.protect.ups.some(t => /damage/.test(t)) && lab.protect.dur4 > 0.9 * 1.4 && lab.protect.evo === 'Lasts longer and recharges faster',
+      'Protect\'s upgrades and evolution do what they say (no "+damage" on a move that deals none)', lab.protect);
+    check(lab.rest.r2 === 1.7 && lab.rest.below4 === 0.45 && lab.rest.evo === 'Half the recharge', 'Rest\'s own upgrades (shorter sleep, earlier) and evolution', lab.rest);
+    check(lab.trap === 1.3, 'Shell Trap\'s upgrade keeps the trap set longer (it used to shorten it)', lab.trap);
+    check(lab.sky === 'star', 'Sky Attack: a line of light, not fire (it doesn\'t burn)', lab.sky);
+    check(lab.tipWorkUp.some(s => /physical and special/.test(s)), 'Work Up\'s tooltip says it boosts both sides', lab.tipWorkUp);
+
+    const live = await page.evaluate(async () => {
+      const pl = G.Game.player, frame = () => new Promise(r => requestAnimationFrame(() => r()));
+      const wait = async n => { for (let i = 0; i < n; i++) await frame(); };
+      window.__alive = false;
+      G.EnemyMgr.clear(); G.Combat.clearFields();
+      const def = G.Enemies.cast[0].list[0];
+      const enemy = (dx) => { const e = new G.Enemy(def, pl.x + dx, pl.y, G.Enemies.scale(0)); e.hp = e.maxHp = 1e7; e.spd = 0; G.EnemyMgr.add(e); return e; };
+      const out = {};
+      // Metal Burst stores special hits too (Counter only physical ones).
+      for (const id of ['metal-burst', 'counter']) {
+        pl.invuln = 0; pl.god = false; pl.hp = pl.maxHp;
+        const g = { t: 1, m: G.Moves.instance(id, 1), stored: 0 };
+        pl._labGuard = g;
+        pl.hurt(10, null, false, 'special');
+        out[id] = g.stored > 0;
+        pl._labGuard = null;
+      }
+      // Particles: what the sleep zone and the confused enemy draw.
+      const sps = [], draws = [];
+      const sp = G.FX.sp, draw = G.VFX.draw;
+      G.FX.sp = function (shape) { sps.push(shape); return sp.apply(this, arguments); };
+      G.VFX.draw = function (ctx, shape) { draws.push(shape); return draw.apply(this, arguments); };
+      pl.invuln = 99;
+      const e1 = enemy(70);
+      const spore = G.Moves.instance('spore', 1);
+      pl.slots = [[spore]]; pl.moves = [spore]; pl.active = 0;
+      for (let i = 0; i < 300 && !(e1.labSleep > 0); i++) await frame();
+      out.sleep = e1.labSleep > 0; out.sleepSps = [...new Set(sps)];
+      pl.slots = []; pl.moves = [];
+      sps.length = 0; draws.length = 0;
+      e1.labSleep = 0; e1.stunT = 0; e1.labConf = 3;
+      await wait(20);
+      out.confDraws = [...new Set(draws)];
+      // Wish: stars when wished, hearts when it heals.
+      G.EnemyMgr.clear(); sps.length = 0;
+      const wish = G.Moves.instance('wish', 1);
+      pl.slots = [[wish]]; pl.moves = [wish]; pl.active = 0;
+      pl.invuln = 0; pl.hp = pl.maxHp * 0.4;
+      for (let i = 0; i < 200 && !sps.includes('star'); i++) { pl.invuln = 99; await frame(); }
+      out.wishCast = [...new Set(sps)]; sps.length = 0;
+      const hp0 = pl.hp;
+      await new Promise(r => setTimeout(r, 2400));
+      out.wishPay = [...new Set(sps)]; out.healed = pl.hp > hp0;
+      G.FX.sp = sp; G.VFX.draw = draw;
+      return out;
+    });
+    check(live['metal-burst'] && !live.counter, 'Metal Burst stores every hit, Counter only physical ones (as their texts say)', live);
+    check(live.sleep && live.sleepSps.includes('bubble') && !live.sleepSps.includes('note'), 'Spore\'s sleep zone puffs spores, not music notes', live.sleepSps);
+    check(live.confDraws.includes('ring') && !live.confDraws.includes('heart'), 'a confused enemy shows rings, not hearts', live.confDraws);
+    check(live.wishCast.includes('star') && !live.wishCast.includes('heart') && live.wishPay.includes('heart') && live.healed,
+      'Wish: stars when you wish, hearts when it heals 2 s later', { cast: live.wishCast, pay: live.wishPay, healed: live.healed });
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();
