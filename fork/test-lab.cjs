@@ -763,6 +763,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await sw.click();
   await built.click('#set-close');
   await built.click('#scr-menu [data-go="play"]');
+  // With Lab on, Play first shows the Underdog XP ladder (js/fork/lab/underdog.js, fork/test-underdog.cjs).
+  await built.waitForSelector('#ud-ladder:not(.hidden)', { timeout: 10000 });
+  check((await built.textContent('#ud-ladder .ud-row.me')).length > 0, 'the built game shows the Underdog XP ladder before a Lab run');
+  await built.click('#ud-go');
   await built.waitForFunction(() => { const h = document.getElementById('lab-hud'); return h && !h.classList.contains('hidden'); }, null, { timeout: 30000 })
     .catch(() => {});
   const tagText = await built.evaluate(() => { const h = document.getElementById('lab-hud'); return h && !h.classList.contains('hidden') ? h.textContent : null; });
