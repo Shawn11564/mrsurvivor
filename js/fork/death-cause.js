@@ -8,6 +8,8 @@
  *                 invitados, 'hz'); la que acaba de estallar y te pilla (G.Hazards.all)
  *   trampa        G.Interact.trapEffect
  *   Juicio de Arceus  G.Judgment activo y golpe puro
+ *   lo que se diga  G.DeathCause.by(s, fn): el golpe que da fn viene de s (el Eternabeam de
+ *                 js/fork/lab/eternatus.js)
  * pl.deathLog guarda los últimos golpes { name, dex, how, dmg, boss }. Al caer sale un aviso
  * ("Te ha debilitado X (contacto)") y la pantalla final lleva "Lo que te debilitó" con los
  * últimos golpes (G.RunUI.showOver). En grupo, cada uno los suyos.
@@ -17,6 +19,7 @@
   const KEEP = 5;
   let actor = null;                    // el enemigo que está golpeando ahora mismo (contacto)
   let trap = false;
+  let forced = null;                   // G.DeathCause.by
 
   const E = G.Enemy.prototype;
   const strike = E.strike;
@@ -52,6 +55,7 @@
 
   /** De dónde viene el golpe que está entrando en pl. */
   function source(pl, pure) {
+    if (forced) return Object.assign({}, forced);
     if (actor && !actor.dead && G.U.dist2(actor.x, actor.y, pl.x, pl.y) < (actor.r + pl.r + 30) ** 2) return Object.assign(who(actor), { how: 'touch' });
     if (trap) return { name: null, how: 'trap' };
     const shot = G.Projectiles.all().find(p => !p.friendly && G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) ** 2);
@@ -79,7 +83,9 @@
   };
 
   // ---------------- textos ----------------
-  const HOW = { touch: 'contacto', shot: 'disparo', area: 'ataque en área', trap: 'trampa', judgment: 'Juicio de Arceus' };
+  // (beam y raid: el Lab, sólo en inglés.)
+  const HOW = { touch: 'contacto', shot: 'disparo', area: 'ataque en área', trap: 'trampa', judgment: 'Juicio de Arceus',
+                beam: 'Eternabeam', raid: 'time ran out' };
   const name = s => s.how === 'trap' ? G.T('Una trampa') : s.how === 'judgment' ? G.T('Arceus') : s.name ? G.T(s.name) : G.T('Un enemigo');
   function announce(s) {
     G.UI.toast(G.I18n.f('Te ha debilitado {x} ({x}).', name(s), G.T(HOW[s.how])), 4200);
@@ -121,4 +127,6 @@
     ['Jefe', 'Boss', 'Boss', 'Boss', 'Chefe', '首领', '首領']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
+
+  G.DeathCause = { by(s, fn) { forced = s; try { return fn(); } finally { forced = null; } } };
 })();

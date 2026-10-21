@@ -320,7 +320,8 @@ number; a card upstream changes (its text no longer the expected one) stays Comm
 `node fork/test-death-cause.cjs` (server; co-op part with the Firebase emulator) checks what knocked
 you out (`js/fork/death-cause.js`): `Player.hurt` doesn't know who hits, so hooks just before each hit
 say it (`Enemy.strike` for a touch, `Enemy.shoot` marks its shots, `Enemy.hazard` its area attacks,
-also in the host's 'hz' message to guests, `G.Interact.trapEffect`, Arceus's Judgment). Three runs
+also in the host's 'hz' message to guests, `G.Interact.trapEffect`, Arceus's Judgment, and
+`G.DeathCause.by(source, fn)` for a hit that says it itself: the Lab's Eternabeam). Three runs
 ended by a touch, a shot and an area attack: the popup ("Knocked out by X (contact)") and the
 game-over screen's "What knocked you out" with the last hits; and a co-op guest knocked out by the
 host's boss.

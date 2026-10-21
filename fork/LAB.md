@@ -420,6 +420,29 @@ rift legend (beating it doesn't count as beating that legendary), and not a boss
 None in a rift or during Arceus. The host decides; guests get it like any enemy
 (`js/fork/lab/wild-legends.js`). `node fork/test-wild-legends.cjs` (server; co-op with the emulator).
 
+## The Eternatus raid (2026-10-21, from doofcraft)
+
+In a Lab run, Arceus's Judgment never comes: at 30:00 everyone goes to a dark arena against **Eternatus**
+(`js/fork/lab/eternatus.js`).
+- 3 obelisks (still enemies that don't move or hit, drawn as stone pillars with HP bars) each heal it
+  1.5% of its HP a second until broken; red tethers show which still do.
+- Every 15 s (the first after 10) it stands still and charges the **Eternabeam** for 3 s, then hits the
+  whole arena: 75% of your HP, pure, unless a crystal (solid, 6 of them) or one of the arena's stone
+  pillars is between you and it. While it charges, the safe shadow behind each crystal shows in green.
+- 3 minutes. Beat it: a ×25 rainbow ticket each, back to the map, and the run goes on (Arceus never
+  comes, rifts open again, `pl._labEternatus` so a resumed run doesn't fight it twice). Time runs out:
+  the run ends (everyone knocked out by "Eternatus (time ran out)"). Falling in the arena is falling.
+- Its HP: 3× a rift legendary's, or 45 s of your best single-target damage (measured as the Judgment
+  does), whichever is more; each obelisk 8% of that floor or 5 s of your damage.
+- While it lasts `G.Judgment.active` is true, so waves, events, weather, biome changes and wild
+  legendaries stop, and the Judgment's soft speed cap applies.
+- Co-op: the host runs it (`{ k:'labeter', a: start | ids | beam | win | lose | back }`); Eternatus
+  and the obelisks are ordinary enemies; each player checks the beam against their own Pokémon.
+
+`node fork/test-eternatus.cjs` (server; co-op with the emulator): no raid at 29:50; at 30:00 the raid
+instead of Arceus; healing and broken obelisks; the beam in the open and behind a crystal; winning
+(ticket, back, no Arceus, rifts again); losing (the run ends); a normal run still gets Arceus; co-op.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
