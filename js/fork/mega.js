@@ -1,7 +1,6 @@
 /* ============ mega.js — megapiedras y megaevolución (fork MrSurvivor) ============
- * SÓLO EN EL MODO LAB (fork/LAB.md): fuera de una partida Lab la piedra no cae y, si la
- * llevas (el menú de admin la puede soltar), no hace nada; y lo de "puede megaevolucionar"
- * del menú sólo sale con el ajuste Lab encendido.
+ * En todas las partidas desde el 21-10-2026 (antes sólo en el modo Lab, fork/LAB.md, que la
+ * probó primero), y lo de "puede megaevolucionar" del menú también.
  * Al vencer al legendario de una grieta, si tu Pokémon puede megaevolucionar (tiene
  * sprite de mega en SpriteCollab: G.MEGA_FORMS, js/fork/mega-sprites.js, lo genera
  * fork/fetch-megas.py) y no la llevas ya, a partir del minuto 5 de la partida hay
@@ -14,7 +13,7 @@
  * Si la cambias por otro objeto, vuelve a ser como era.
  * Cooperativo: { k:'mega', u, on } al anfitrión, que lo reparte; todos ven tu mega.
  * Ganchos: Rift won (riftWon), G.Game.offerItem; el aspecto lo pinta G.Admin.repaint.
- * Prueba: fork/test-lab.cjs (solitario; fork/test-gameplay.cjs, que fuera del Lab no hay nada)
+ * Prueba: fork/test-lab.cjs (solitario, Lab; fork/test-gameplay.cjs, en una partida normal)
  * y fork/test-lab-coop.cjs (grupo).
  */
 G.Mega = (() => {
@@ -24,7 +23,7 @@ G.Mega = (() => {
   const DROP_T = 300, DROP_P = 1 / 30;   // la piedra: desde el minuto 5, 1 entre 30 por grieta ganada
   const NAME = 'Megapiedra', DESC = 'Tu Pokémon megaevoluciona mientras la lleve: +25 % de daño, +10 % de velocidad, +15 % de vida y +8 % de defensa.';
   const SAY = '¡Megaevolución!', SAY_PRIMAL = '¡Regresión primigenia!';
-  const CAN = 'Puede megaevolucionar', HINT = 'Puede megaevolucionar en el modo Lab: desde el minuto 5, cada legendario de grieta que venzas con él tiene 1 entre 30 de soltar su Megapiedra.';
+  const CAN = 'Puede megaevolucionar', HINT = 'Puede megaevolucionar: desde el minuto 5, cada legendario de grieta que venzas con él tiene 1 entre 30 de soltar su Megapiedra.';
   // Columnas: español, inglés, francés, italiano, portugués (Brasil), chino simplificado y tradicional.
   const ROWS = [
     [NAME, 'Mega Stone', 'Méga-Gemme', 'Megapietra', 'Mega Pedra', '超级石', '超級石'],
@@ -37,12 +36,12 @@ G.Mega = (() => {
     [SAY, 'Mega Evolution!', 'Méga-Évolution !', 'Megaevoluzione!', 'Megaevolução!', '超级进化！', '超級進化！'],
     [SAY_PRIMAL, 'Primal Reversion!', 'Primo-Résurgence !', 'Archeorisveglio!', 'Reversão Primitiva!', '原始回归！', '原始回歸！'],
     [CAN, 'Can Mega Evolve', 'Peut méga-évoluer', 'Può megaevolversi', 'Pode megaevoluir', '可以超级进化', '可以超級進化'],
-    [HINT, 'Can Mega Evolve in Lab mode: from minute 5 on, each rift legendary you beat with it has a 1 in 30 chance to drop its Mega Stone.',
-     'Peut méga-évoluer en mode Lab : dès la 5e minute, chaque légendaire de faille vaincu avec lui a 1 chance sur 30 de lâcher sa Méga-Gemme.',
-     'Può megaevolversi in modalità Lab: dal 5º minuto, ogni leggendario di fenditura sconfitto con lui ha 1 probabilità su 30 di lasciare la sua Megapietra.',
-     'Pode megaevoluir no modo Lab: a partir do minuto 5, cada lendário de fenda derrotado com ele tem 1 chance em 30 de deixar sua Mega Pedra.',
-     '在Lab模式下可以超级进化：第5分钟起，带它击败的每只裂缝传说宝可梦都有1/30的几率掉落它的超级石。',
-     '在Lab模式下可以超級進化：第5分鐘起，帶它擊敗的每隻裂縫傳說寶可夢都有1/30的機率掉落它的超級石。']
+    [HINT, 'Can Mega Evolve: from minute 5 on, each rift legendary you beat with it has a 1 in 30 chance to drop its Mega Stone.',
+     'Peut méga-évoluer : dès la 5e minute, chaque légendaire de faille vaincu avec lui a 1 chance sur 30 de lâcher sa Méga-Gemme.',
+     'Può megaevolversi: dal 5º minuto, ogni leggendario di fenditura sconfitto con lui ha 1 probabilità su 30 di lasciare la sua Megapietra.',
+     'Pode megaevoluir: a partir do minuto 5, cada lendário de fenda derrotado com ele tem 1 chance em 30 de deixar sua Mega Pedra.',
+     '可以超级进化：第5分钟起，带它击败的每只裂缝传说宝可梦都有1/30的几率掉落它的超级石。',
+     '可以超級進化：第5分鐘起，帶它擊敗的每隻裂縫傳說寶可夢都有1/30的機率掉落它的超級石。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
@@ -51,8 +50,8 @@ G.Mega = (() => {
 
   // "Puede megaevolucionar", fuera de la partida (js/ui/menu.js; estilos en css/brand.css):
   // la megapiedra en su casilla de la colección, un chip en el compañero del menú y una
-  // línea en su ficha que dice cómo conseguirla. Vacíos si no tiene mega o si el Lab está apagado.
-  const shown = dex => can(dex) && !!G.Settings.get('lab');
+  // línea en su ficha que dice cómo conseguirla. Vacíos si no tiene mega.
+  const shown = dex => can(dex);
   const stone = (size = 14) => G.Icons.html('megastone', size);
   const badge = dex => shown(dex) ? `<span class="mega-badge" title="${CAN}">${stone(18)}</span>` : '';
   const chip = dex => shown(dex) ? `<span class="mega-chip" title="${CAN}">${stone()} Mega</span>` : '';
@@ -68,9 +67,9 @@ G.Mega = (() => {
 
   // ---------------- megaevolución ----------------
 
-  /** Tu Pokémon megaevoluciona (al ponerse la piedra), sólo en una partida Lab. */
+  /** Tu Pokémon megaevoluciona (al ponerse la piedra). */
   function evolve(p) {
-    if (p.mega || !can(p.dex) || !G.Lab.active) return;
+    if (p.mega || !can(p.dex)) return;
     const hp = Math.round(p.maxHp * HP);
     p.mega = { mon: p.mon, hp };
     if (TYPES[p.dex]) p.mon = Object.assign({}, p.mon, { types: TYPES[p.dex] });
@@ -126,9 +125,9 @@ G.Mega = (() => {
   // ---------------- la piedra, al ganar una grieta ----------------
 
   let pending = false;
-  /** Rift won: en una partida Lab, si tu Pokémon puede megaevolucionar y no la llevas, desde el minuto 5 y con 1 entre 30, su piedra. */
+  /** Rift won: si tu Pokémon puede megaevolucionar y no la llevas, desde el minuto 5 y con 1 entre 30, su piedra. */
   function riftWon(pl) {
-    if (G.Lab.active && can(pl.dex) && pl.item !== 'megastone' && G.Game.st.time >= DROP_T && Math.random() < DROP_P) pending = true;
+    if (can(pl.dex) && pl.item !== 'megastone' && G.Game.st.time >= DROP_T && Math.random() < DROP_P) pending = true;
   }
   // Se ofrece de vuelta en el mapa, sin otra pantalla delante (vínculo, cartas...).
   setInterval(() => {

@@ -140,7 +140,12 @@ Toned down from the games: Huge/Pure Power ×1.6 instead of ×2; Wonder Guard ha
 
 Added with phase 4: Rock Head (recoil moves cost no HP) and Reckless (recoil moves ×1.2), so 70.
 
-## Mega Evolution (Lab only)
+## Mega Evolution (Lab first, in every run since 2026-10-21)
+
+Promoted (from doofcraft's list, "the Lab way"): the Mega Stone drops in normal runs too, by the same rule,
+and the "can Mega Evolve" marks show with Lab off (`js/fork/mega.js`; `fork/test-gameplay.cjs` checks it in a
+normal run).
+
 
 `js/fork/mega.js`. A won rift can offer your Pokémon's Mega Stone only in a Lab run (from minute 5,
 1 in 30), and holding one only Mega Evolves in a Lab run (`G.Lab.active`). The "can Mega Evolve"

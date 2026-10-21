@@ -666,11 +666,12 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check([...rolled].every(d => ownedAll.includes(d)) && rolled.size >= 2, `"All": 12 rolls give only owned Pokémon, and vary (${[...rolled].join(', ')} of ${ownedAll.join(', ')})`);
   await page.evaluate(() => { G.Game.quit(); });
 
-  // ---------------- Mega Stones only in Lab mode (js/fork/mega.js) ----------------
-  // Mega Evolution is a Lab-mode feature (fork/LAB.md; the full Mega checks are in
-  // fork/test-lab.cjs). Here, with Lab off: no "can Mega Evolve" marks in the menu, a won rift
-  // never offers the stone (even past minute 5 on the luckiest roll), and holding one does nothing.
-  console.log('Mega Stones (not in normal runs)');
+  // ---------------- Mega Stones in normal runs (js/fork/mega.js) ----------------
+  // Mega Evolution was tried in Lab mode first (fork/LAB.md; the full Mega checks are in
+  // fork/test-lab.cjs) and is in every run since 2026-10-21. Here, with Lab off: the "can Mega
+  // Evolve" marks show, a won rift past minute 5 on the luckiest roll offers the stone, and holding
+  // it Mega Evolves (Mega Gengar's sprite, more damage).
+  console.log('Mega Stones (in normal runs)');
   // XP (the legendary's, enemies') opens the level-up cards: pick the first, as a player would,
   // until `cond` holds (or `ms` runs out).
   const playOn = (cond, ms = 30000) => page.evaluate(([cond, ms]) => new Promise(r => {
@@ -694,24 +695,25 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.waitForTimeout(150);
   const marks = await page.evaluate(() => ({ chip: !!document.querySelector('#menu-partner-info .mega-chip'),
     html: G.Mega.badge(94) + G.Mega.chip(94) + G.Mega.hint(94) }));
-  check(!marks.chip && marks.html === '', 'Lab off: no "can Mega Evolve" chip, badge or hint for Gengar');
+  check(marks.chip && /Can Mega Evolve|Puede megaevolucionar/.test(marks.html), 'Lab off: Gengar shows it can Mega Evolve (chip, badge and hint)', marks.html.slice(0, 120));
   await page.evaluate(p => { G.DB.save.partner = p; }, prevPartner);
 
   await page.evaluate(() => { G.Flow.goMenu(); G.Game.startRun(null, { dex: 94, shiny: false }); });
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player.dex === 94, null, { timeout: 15000 });
   const noMega = await page.evaluate(async () => {
     const pl = G.Game.player; pl.god = true; G.Game.debugSpeed(1);
+    const atk = pl.atkMul;                // before: with no item held, the stone is put on at once
     const rnd = Math.random; Math.random = () => 0;
     try { G.Game.debugTime(400); G.Mega.riftWon(pl); } finally { Math.random = rnd; }
     await new Promise(r => setTimeout(r, 800));
     const offered = G.UI.isOpen('scr-item') || pl.item === 'megastone';
-    const atk = pl.atkMul; pl.equip('megastone');
-    const r = { offered, lab: G.Lab.active, mega: !!pl.mega, key: pl.anim.dex, atk: pl.atkMul === atk };
+    if (pl.item !== 'megastone') pl.equip('megastone');
+    const r = { offered, lab: G.Lab.active, mega: !!pl.mega, key: pl.anim.dex, atk: +(pl.atkMul / atk).toFixed(2) };
     pl.equip(null);
     return r;
   });
-  check(!noMega.lab && !noMega.offered, 'a normal run: a rift won at 6:40 on the luckiest roll offers no Mega Stone');
-  check(!noMega.mega && noMega.key === 94 && noMega.atk, 'holding a Mega Stone in a normal run does nothing (still Gengar, same damage)');
+  check(!noMega.lab && noMega.offered, 'a normal run: a rift won at 6:40 on the luckiest roll offers the Mega Stone', noMega);
+  check(noMega.mega && noMega.key !== 94 && noMega.atk === 1.25, 'holding it Mega Evolves (Mega Gengar, ×1.25 damage)', noMega);
 
   // ---------------- Countdown after a bond or an item choice (solo) ----------------
   console.log('Countdown after choosing');
