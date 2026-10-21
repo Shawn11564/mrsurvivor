@@ -121,6 +121,9 @@ G.Prestige = (() => {
     if (id === 'scr-upgrades') Promise.resolve().then(() => {
       sure = false;
       render();
+      // Al comprar una mejora suelta, menu.js rehace la lista: el panel vuelve a mirar si ya está todo.
+      const list = $('upg-list');
+      if (list && !list._prest) { list._prest = true; new MutationObserver(render).observe(list, { childList: true }); }
       const sel = $('upg-mon');
       if (sel && !sel._prest) { sel._prest = true; sel.addEventListener('change', () => { sure = false; Promise.resolve().then(render); }); }
     });

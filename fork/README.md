@@ -271,6 +271,10 @@ walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the r
 glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
 (server) checks where it stands, the unlock, the hearts and the switch.
 
+**Upgrade all** (Lab first, `js/fork/upgrade-all.js`): with Lab on, Upgrades has a button that maxes every
+upgrade of the Pokémon at once, after confirming the total in coins (or saying how many more it needs);
+it repaints when the list does. `node fork/test-upgrade-all.cjs` (server).
+
 **Prestige** (`js/fork/prestige.js`): with every upgrade of a Pokémon bought, Upgrades offers to prestige
 it (a panel under the list, with a confirm): its upgrades go back to 0 (no coins back) and it gets +5% HP,
 damage, speed and damage cut per level in its runs (`G.Game.startRun`, wrapped once the page has loaded:
