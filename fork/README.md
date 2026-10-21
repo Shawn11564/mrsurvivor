@@ -110,6 +110,9 @@ you have the shiny of shows and plays shiny unless you picked Normal for it, whi
 0.15 % a pull, soft pity from pull 180 (+2 percentage points a pull, taken from the other rarities in
 proportion; `SOFT_PITY`/`SOFT_STEP`/`legendRate`) and pity at 220 (`RATES`/`PITY_5` in `js/systems/gacha.js`;
 the odds screen's lines, `js/ui/gacha-ui.js`, are translated in `js/fork/gacha-text.js`).
+Under the pity line, a bar of 22 segments of 10 pulls fills with the banner's count, gold from 180
+(`js/fork/pity-bar.js`, a one-line hook in `refresh` of `js/ui/gacha-ui.js`); `node fork/test-pity-bar.cjs`
+(server) checks the segments, the 180 mark, filling, switching banners and a real pull.
 
 `node fork/test-radiant-kit.cjs` (server) checks the Radiant Sprite Kit: search by name, number, type, rarity and
 "mega"; each Pokémon's rarity (the game's colours); the .zip's names and bytes (`0006_charizard/`, with and without its Mega, Bulbasaur) and its README; every species'

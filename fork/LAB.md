@@ -356,6 +356,9 @@ A review of every Lab move against its code (and the normal game's, `fork/test-m
 
 ## Move badges
 
+The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
+2026-10-21, not only Lab; the move arrows (cards, tooltip) stay Lab-only.
+
 In a Lab run, each thing that makes a move better or worse for **your** Pokémon gets a small arrow
 next to the word it judges: "New · Fire ▲ · Special ▲" on a level-up card's chip, and the same in
 the move tooltip (`badges.js`). There are 4 arrows (`badge-art.js`, 13×13 code drawings in

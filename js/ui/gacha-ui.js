@@ -58,6 +58,7 @@ G.GachaUI = (() => {
     $('gacha-pity').textContent = `Tiradas sin legendaria en ${banner.name}: ${pity} / ${G.Gacha.PITY_5}`;
     const next = G.Gacha.legendRate(pity + 1);   // Fork: pity blando (js/systems/gacha.js)
     if (next > G.Gacha.RATES[4][1] && next < 100) $('gacha-pity').append(document.createElement('br'), `Legendaria en la próxima tirada: ${+next.toFixed(2)}%`);
+    if (G.PityBar) G.PityBar.draw($('gacha-pity'), pity);   // fork: la barra (js/fork/pity-bar.js)
 
     $('gacha-rates').innerHTML = '<h3>Probabilidades</h3>' + G.Gacha.RATES.slice().reverse().map(([r, w]) => `
       <div><span style="color:${G.Gacha.RARITY_COLOR[r]}">${G.UI.stars(r, 10)} ${G.Gacha.RARITY_NAME[r]}</span>
