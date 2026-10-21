@@ -22,7 +22,7 @@
     ["bubble", "Salpicar", "Water Spout", "Giclédo", "Zampillo", "Water Spout", "喷水", "噴水"],   // was Surf
     ["hydro-pump", "Tajo Acuático", "Aqua Cutter", "Tranch'Aqua", "Idrotaglio", "Aqua Cutter", "水波刀", "水波刀"],   // was Hydro Cannon ★
     ["giga-drain", "Ciclón de Hojas", "Leaf Tornado", "Phytomixeur", "Vorticerba", "Leaf Tornado", "青草搅拌器", "青草攪拌器"],   // was Frenzy Plant ★
-    ["discharge", "Carga Parábola", "Parabolic Charge", "Parabocharge", "Caricaparabola", "Parabolic Charge", "抛物面充电", "拋物面充電"],   // was Electric Terrain
+    ["discharge", "Onda Voltio", "Shock Wave", "Onde de Choc", "Ondashock", "Shock Wave", "电击波", "電擊波"],   // was Electric Terrain, then Parabolic Charge (it heals in the games; this doesn't)
     ["thunderbolt", "Alto Voltaje", "Rising Voltage", "Monte-Tension", "Elettroimpennata", "Rising Voltage", "电力上升", "電力上升"],   // was Zap Cannon ★
     ["wing-attack", "Pico Taladro", "Drill Peck", "Bec Vrille", "Perforbecco", "Drill Peck", "啄钻", "啄鑽"],   // was Brave Bird
     ["dazzling-gleam", "Bruma Explosiva", "Misty Explosion", "Explo-Brume", "Nebbioscoppio", "Misty Explosion", "薄雾炸裂", "薄霧炸裂"],   // was Misty Terrain
@@ -37,6 +37,12 @@
     ["freeze-dry", "Vaho Gélido", "Frost Breath", "Souffle Glacé", "Alitogelido", "Frost Breath", "冰息", "冰息"],   // was Sheer Cold ★
     ["outrage", "Vasto Impacto", "Breaking Swipe", "Abattage", "Vastoimpatto", "Breaking Swipe", "广域破坏", "廣域破壞"],   // was Dragon Darts ★
     ["night-slash", "Giro Vil", "Brutal Swing", "Centrifugifle", "Vorticolpo", "Brutal Swing", "狂舞挥打", "狂舞揮打"],   // was Darkest Lariat ★
+    // Repaso de 2026-10-21: nombres que prometían curar o repetían el de otra evolución.
+    ["energy-ball", "Hoja Mágica", "Magical Leaf", "Feuille Magik", "Fogliamagica", "Magical Leaf", "魔法叶", "魔法葉"],   // was Giga Drain (no healing here)
+    ["u-turn", "Plancha", "Lunge", "Furie-Bond", "Assalto", "Lunge", "猛扑", "猛撲"],   // was Leech Life (no healing here)
+    ["hex", "Homenaje Póstumo", "Last Respects", "Hommage Posthume", "Omaggio ai KO", "Last Respects", "扫墓", "掃墓"],   // was Poltergeist, like Shadow Ball's
+    ["whirlwind", "Viento Afín", "Tailwind", "Vent Arrière", "Ventoincoda", "Tailwind", "顺风", "順風"],   // was Hurricane, like Gust's in English
+    ["mirror-shot", "Anclaje", "Anchor Shot", "Ancrage", "Colpo d’Ancora", "Anchor Shot", "掷锚", "擲錨"],   // was Steel Beam, like Flash Cannon's in English (and it's no beam)
     ["dragon-dance", "Estruendo Escama", "Clangorous Soul", "Dracacophonie", "Dracofonia", "Clangorous Soul", "魂舞烈音爆", "魂舞烈音爆"]   // was Bulk Up (Lab, phase 9)
   ];
   const RENAME = Object.fromEntries(ROWS.map(r => [r[0], r[1]]));

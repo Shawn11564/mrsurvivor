@@ -248,6 +248,15 @@ generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `d
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.
 
+`node fork/test-move-truth.cjs` (server) checks that moves say and show what they do (the
+2026-10-21 review): no move is drawn with hearts unless it heals (Grass Knot, once Giga Drain, now
+has rising leaves: `js/fork/move-looks.js`, through `m.look`); no evolution is named after a healing
+move it isn't, and no two share an English name (`js/fork/evo-names.js`); the English texts that
+left out knockback, dash invulnerability or the beam evolution's cooldown (`js/fork/move-text.js`,
+English only so upstream's Spanish keys stay), the tooltip's close-range line (-25 % damage taken);
+and in a run Rock Tomb's rock falls during the warning (stun zones never drew their shape:
+`move-looks.js` draws it from `G.Combat.fields`).
+
 `node fork/test-moves.cjs` (with the server running) casts moves through the real combat code
 in headless Edge:
 - every move that burns, poisons, slows or stuns really leaves that state on the enemy

@@ -17,7 +17,7 @@
     'Rayo psíquico ancho y contundente.': 'A wide psychic beam that’s hard to miss.',
     'Raíces que atrapan y machacan todo lo que tienes cerca.': 'Roots lash up from the ground and pound everything near you.',
     'Esquirlas rapidísimas que persiguen al enemigo.': 'Fires ice shards in rapid succession that chase the enemy.',
-    'Un muñeco que se queda disparando por ti.': 'Leaves a doll behind you that shoots nearby enemies on its own.',
+    'Un muñeco que se queda disparando por ti.': 'Leaves a stand-in behind you that shoots nearby enemies on its own.',
     'No hace daño: acumula ATAQUE (físico) más rápido que Danza Espada.': 'Deals no damage: builds (physical) ATTACK in quicker, smaller steps than Swords Dance.',
     'Rayo helado que congela casi del todo.': 'An icy beam that heavily slows foes.',
     'Campo eléctrico permanente alrededor de ti.': 'An electric field around you that shocks everything nearby.',
@@ -28,7 +28,22 @@
     'Bola de fuego al enemigo más cercano.': 'A fireball at the nearest enemy that burns.',
     'Llamas que giran a tu alrededor. Defensa constante.': 'Flames that spin around you and burn what they touch.',
     'Explota en llamas en todas las direcciones.': 'Bursts of flame in every direction that burn foes.',
-    'Corres envuelto en fuego y dejas un rastro de llamas.': 'You run wrapped in fire, leaving a trail of flames that burns foes.'
+    'Corres envuelto en fuego y dejas un rastro de llamas.': 'You run wrapped in fire, leaving a trail of flames that burns foes.',
+    // Repaso de 2026-10-21 (que el texto diga lo que hace el código):
+    'Destello a tu alrededor.': 'A dazzling flash around you that hurts everything nearby.',
+    'Remolinos de viento que te escoltan.': 'Whirlwinds that circle you and blow back the foes they hit.',
+    'Embiste en arco a todo lo que tengas delante.': 'Slams everything in an arc in front of you, knocking it back.',
+    'Esfera de energía que nunca falla.': 'An energy sphere that hunts down the nearest foe.',
+    'Placaje con todo el peso: lento, corto y brutal.': 'A full-weight tackle: slow, short and brutal, sending foes flying.',
+    'Golpe seco y potente al frente.': 'A sharp, powerful blow straight ahead that knocks foes back.',
+    'Cruzas como un rayo hacia el enemigo y golpeas todo el camino.': 'You dash at the enemy like lightning and hit everything on the way, briefly untouchable.',
+    'Te lanzas en picado y cortas todo lo que cruzas.': 'You dive and slash everything you pass through, briefly untouchable.',
+    'Te lanzas envuelto en llamas y quemas todo el camino.': 'You dash wrapped in flames, burning everything in your path, briefly untouchable.',
+    'Cruzas entre los enemigos golpeando a todos los del camino.': 'You dash through the enemies, hitting everyone in your path, briefly untouchable.',
+    'Una sombra que se escurre por el suelo hasta el enemigo.': 'A shadow that darts after the enemy.',
+    'Dos meteoros de acero que aplastan donde caen.': 'Steel meteors that crush where they land.',
+    'Dos cuchillas de aire que buscan al enemigo.': 'Blades of air that seek out the enemy.',
+    '×1,8 daño, rayo un 50% más grueso y más largo': '×1.8 damage, a 50% wider and longer beam, and 15% less cooldown'
   };
   G.I18n.add(EN, 'en');
 
@@ -41,7 +56,10 @@
   const SPEC = 'Especial: pega con tu Ataque Especial. Lo potencia Maquinación.';
   const BUFF = { patk: 'Potencia tus ataques físicos.', satk: 'Potencia tus ataques especiales.' };
   const BUFF_CAT = { patk: 'physical', satk: 'special' };
-  const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f' };
+  const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
+  // Cuerpo a cuerpo (player.js hurt) y las familias cercanas del Lab (G.LabKinds2.CLOSE): -25 % de daño recibido.
+  const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
+  const close = m => m.kind === 'melee' || !!(G.LabKinds2 && G.LabKinds2.CLOSE.has(m.kind));
 
   /** [[texto en español, color]] para el movimiento m de pl. */
   function tipNotes(m, pl) {
@@ -51,6 +69,7 @@
       // Como la carta de subir de nivel (levelup.js fitNote): mismo texto, ya traducido.
       const f = G.Stats.fit(mon, m.cat);
       if (mon && f < 0.95) out.push([`Peor para ${mon.name}: sólo hace un ${Math.round(f * 100)} % del daño (lo suyo es el ataque ${G.Stats.sideOf(mon) === 'special' ? 'especial' : 'físico'}).`, COL.weak]);
+      if (close(m)) out.push([CLOSE, COL.close]);
     } else if (BUFF[m.stat]) {
       out.push([BUFF[m.stat], COL[BUFF_CAT[m.stat]]]);
       if (mon && G.Stats.sideOf(mon) === BUFF_CAT[m.stat])
@@ -77,6 +96,11 @@
      'Speciale: usa il tuo Attacco Speciale. Potenziato da Congiura.',
      'Especial: usa seu Ataque Especial. Fortalecido por Nasty Plot.',
      '特殊：使用你的特攻。诡计可以强化。', '特殊：使用你的特攻。詭計可以強化。'],
+    [CLOSE, 'Close range: you take 25% less damage while it’s active.',
+     'Corps à corps : tant qu’elle est active, vous subissez 25 % de dégâts en moins.',
+     'Corpo a corpo: finché è attiva subisci il 25% di danni in meno.',
+     'Corpo a corpo: enquanto estiver ativo, você recebe 25% menos dano.',
+     '近身：启用时受到的伤害减少25%。', '近身：啟用時受到的傷害減少25%。'],
     [BUFF.patk, 'Boosts your physical moves.', 'Renforce vos attaques physiques.', 'Potenzia i tuoi attacchi fisici.',
      'Fortalece seus ataques físicos.', '强化你的物理招式。', '強化你的物理招式。'],
     [BUFF.satk, 'Boosts your special moves.', 'Renforce vos attaques spéciales.', 'Potenzia i tuoi attacchi speciali.',

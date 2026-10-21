@@ -908,5 +908,5 @@ G.Combat = (() => {
 
   return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields,
            EXTRA, run, hit, reach, spotFor, segDist2, inArc,           // fork: para las familias del Lab
-           get fieldCount() { return fields.length; } };
+           get fieldCount() { return fields.length; }, get fields() { return fields; } };   // fork: fields (js/fork/move-looks.js)
 })();
