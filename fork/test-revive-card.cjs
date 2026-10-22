@@ -114,6 +114,8 @@ const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('lab', lab
     });
     check(!r.dead && r.hp === 0.5 && r.inv >= 2.99 && r.held === 0 && r.state === 'playing', 'back up at once: 50% HP, 3 s untouchable, the revive spent, still playing', r);
     check(r.pushed > 30, 'the enemy next to you was thrown back', r.pushed);
+    // (After the revive's 3 s grace, js/fork/revive-grace.js: nothing hurts until then.)
+    await page.waitForFunction(() => !(G.Game.player.graceT > 0), null, { timeout: 8000 });
     await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e7, null, true); });
     check(await page.waitForFunction(() => G.Game.state === 'over' || !document.getElementById('scr-over').classList.contains('hidden'), null, { timeout: 8000 }).then(() => true, () => false),
       'knocked out again (no revive left): game over');
