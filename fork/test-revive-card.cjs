@@ -6,6 +6,7 @@
 //   (co-op part: npx firebase-tools emulators:start --project demo-ps --only auth,firestore,database)
 //
 //   1. Solo Lab run: the card can come up (forced here) and taking it puts a revive in its slot.
+//      It's a Legendary card: 1 in 100 hands, and on screen the gold "Legendary" chip and border.
 //   2. Knocked out: back up at once with 50% HP, 3 s untouchable, the enemy next to you thrown back;
 //      the revive is spent. Knocked out again: game over.
 //   3. Not in a normal run: the card never comes up.
@@ -80,6 +81,23 @@ const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('lab', lab
       return { card: !!card, title: card && card.title, held: pl.selfRevive };
     });
     check(c.card && c.title === 'Revive' && c.held === 1, 'the Revive card comes up and taking it holds one', c);
+    const odds = await page.evaluate(() => {
+      const pl = G.Game.player, n = 20000;
+      pl.selfRevive = 0;
+      let hits = 0;
+      for (let i = 0; i < n; i++) if (G.LevelUp.offer(pl).some(x => x.key === 'rare:revive')) hits++;
+      return { rate: G.ReviveCard.RATE, seen: +(hits / n).toFixed(4) };
+    });
+    check(odds.rate === 0.01 && odds.seen > 0.006 && odds.seen < 0.014, 'Legendary odds: about 1 hand in 100', odds);
+    await page.evaluate(() => { const pl = G.Game.player; G.ReviveCard.forceNext(); G.RunUI.showLevelUp(pl.level, G.LevelUp.offer(pl), () => {}); });
+    await page.waitForTimeout(300);
+    const look = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('#cards .card')].find(e => /Revive/.test(e.textContent)), chip = el && el.querySelector('.tag-chip');
+      return el && { chip: chip.textContent.trim(), bg: chip.style.background, shadow: el.style.boxShadow, cls: el.className };
+    });
+    check(look && look.chip === 'Legendary' && /255, 203, 61|#ffcb3d/i.test(look.bg) && /255, 203, 61|#ffcb3d/i.test(look.shadow) && /rarity-5/.test(look.cls) && !/\brare\b/.test(look.cls),
+      'on screen: chip "Legendary" in gold, gold border', look);
+    await page.evaluate(() => { G.RunUI.closeLevelUp(); G.Game.player.selfRevive = 1; });
 
     console.log('2. Knocked out');
     const r = await page.evaluate(async () => {

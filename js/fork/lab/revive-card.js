@@ -1,6 +1,8 @@
 /* ============ revive-card.js — the Revive card (Lab first, MrSurvivor fork) ============
- * In a Lab run, sometimes (RATE per batch, from level 5, if you don't already carry one) the last
+ * In a Lab run, rarely (RATE per batch, from level 5, if you don't already carry one) the last
  * level-up card is "Revive": you keep it in its own slot (a heart next to your HP).
+ * It's a Legendary card: the Legendary odds of js/fork/card-rarity.js (1 %) and its gold look
+ * (card-rarity's paint does the chip and border, from rarity 5).
  *   - Solo: when you fall, you get up at once with 50 % HP, 3 s untouchable, and the enemies
  *     around you are thrown back. It's used up.
  *   - In co-op: when you fall you choose when to use it (R, or the on-screen button) or wait for a
@@ -9,16 +11,17 @@
  * js/fork/ui-scale.js). Texts in English, like Lab. Test: fork/test-revive-card.cjs.
  */
 G.ReviveCard = (() => {
-  const RATE = 1 / 25, MIN_LEVEL = 5, HP = 0.5, SAFE = 3, PUSH_R = 150;
+  const LEGEND = G.CardRarity.TIERS[4], RATE = LEGEND.w / 100, MIN_LEVEL = 5, HP = 0.5, SAFE = 3, PUSH_R = 150;
+  const GOLD = G.Gacha.RARITY_COLOR[LEGEND.r];
   let force = false;
   const can = pl => !!(pl && G.Lab && G.Lab.active && !pl.remote && !(pl.selfRevive > 0) && pl.level >= MIN_LEVEL);
 
   function card() {
     return {
-      w: 0, type: 'up', rare: true, key: 'rare:revive', icon: 'heart', color: '#ff8acb', tag: 'Rare',
+      w: 0, type: 'up', key: 'rare:revive', icon: 'heart', rarity: LEGEND.r, color: GOLD, tag: G.Gacha.RARITY_NAME[LEGEND.r],
       title: 'Revive',
       desc: 'Kept in its own slot: when you fall, get back up with 50% HP, 3 s untouchable, and the enemies around you are thrown back. In co-op you choose when to use it.',
-      apply: p => { p.selfRevive = 1; G.FX.ring(p.x, p.y, 8, 90, '#ff8acb', 0.6, 5); G.Audio.sfx('legend'); }
+      apply: p => { p.selfRevive = 1; G.FX.ring(p.x, p.y, 8, 90, GOLD, 0.6, 5); G.Audio.sfx('legend'); }
     };
   }
   const offer = G.LevelUp.offer;

@@ -367,7 +367,8 @@ A review of every Lab move against its code (and the normal game's, `fork/test-m
 
 ## Revive card (2026-10-21, from doofcraft)
 
-In a Lab run, from level 5, sometimes (1 in 25 hands) the last level-up card is **Revive**
+In a Lab run, from level 5, rarely (1 in 100 hands, the Legendary odds of the upgrade cards; it wears
+their gold Legendary look) the last level-up card is **Revive**
 (`js/fork/lab/revive-card.js`): a revive kept in its own slot (a heart next to your HP). Solo, it
 fires in the hit that knocks you out: back up with 50% HP, 3 s untouchable, enemies within 150
 thrown back. In co-op you choose: R (or the on-screen button) while down, or wait for a teammate
