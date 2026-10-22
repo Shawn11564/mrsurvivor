@@ -60,7 +60,7 @@ G.ReviveCard = (() => {
   G.HUD.draw = function (ctx, w, h, pl) {
     const r = draw.apply(this, arguments);
     if (!pl || !(pl.selfRevive > 0)) return r;
-    const sa = G.Touch.safeArea(), x = 16 + sa.left + 48 + 168 + 8, y = 20 + sa.top + 14;
+    const sa = G.Touch.safeArea(), x = 16 + sa.left + 48 + (G.HUD.hpAbove ? 0 : 168 + 8), y = 20 + sa.top + 14;   // right of the level (where the HP bar was: js/fork/hp-above.js)
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x - 2, y - 2, 20, 18);
     G.Icons.draw(ctx, 'heart', x, y, 14);

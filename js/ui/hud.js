@@ -68,11 +68,13 @@ G.HUD = (() => {
     ctx.fillStyle = '#ffcb3d';
     ctx.fillText('Nv. ' + pl.level, px, py + 26);
 
+    if (!G.HUD.hpAbove) {     // fork: la vida va encima de tu Pokémon (js/fork/hp-above.js)
     bar(ctx, px + 48, py + 17, 168, 11, pl.hp / pl.maxHp, '#ff5f6d');
     ctx.font = F(700, 10);
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.textAlign = 'center';
     ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), px + 48 + 84, py + 26);
+    }
 
     // Fork: lo que va entre la vida y los buffs (la evolución del Lab, js/fork/lab/evo-hud.js): su alto.
     const by = py + 34 + (G.HUD.belowHp ? G.HUD.belowHp(ctx, pl, px, py + 34) : 0);
