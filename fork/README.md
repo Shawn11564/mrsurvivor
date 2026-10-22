@@ -377,8 +377,8 @@ its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `nod
 
 `node fork/test-card-rarity.cjs` (server) checks the rarities of the run's upgrade cards
 (`js/fork/card-rarity.js`: Common ×1 60 %, Uncommon ×1.25 25 %, Rare ×1.5 10 %, Epic ×2 4 %, Legendary
-×3 1 %; the gacha's names and colours): the odds over 8000 real offers, the multiplied text and effect
-(an Epic Potencia: "+20% damage", ×1.2, counts 2 towards its cap of 40), never past a cap, and the
+×2 1 % (×3 until 2026-10-22, plan G10); the gacha's names and colours): the odds over 8000 real offers, the multiplied text and effect
+(an Epic or Legendary Potencia: "+20% damage", ×1.2, counts 2 towards its cap of 40), never past a cap, and the
 painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
 

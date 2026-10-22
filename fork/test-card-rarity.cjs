@@ -68,6 +68,31 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     });
     check(epic && epic.tag === 'Épica' && epic.en === '+20% damage with every move.', 'an Epic Potencia says +20% damage (in English too)', epic);
     check(epic && epic.mul === 1.2 && epic.counted === 2, 'taking it gives ×1.2 damage and counts 2 towards the cap', epic);
+    // Legendary is ×2 since 2026-10-22 (was ×3): same number as Epic, its own colour.
+    const leg = await page.evaluate(() => {
+      const pl = G.Game.player, R = G.CardRarity, roll = R.roll;
+      R.roll = () => R.TIERS[4];
+      let c = null;
+      for (let i = 0; i < 300 && !c; i++) c = G.LevelUp.offer(pl).find(x => x.key === 'stat:atk');
+      R.roll = roll;
+      if (!c) return null;
+      const before = pl.atkMul, t0 = pl.statsTaken.atk || 0;
+      c.apply(pl);
+      return { rarity: c.rarity, rk: c.rk, en: G.T(c.desc), mul: +(pl.atkMul / before).toFixed(4), counted: (pl.statsTaken.atk || 0) - t0 };
+    });
+    check(leg && leg.rarity === 5 && leg.rk === 2 && leg.en === '+20% damage with every move.' && leg.mul === 1.2 && leg.counted === 2,
+      'a Legendary Potencia is ×2: says +20% damage, gives ×1.2 and counts 2 towards the cap', leg);
+    const legCap = await page.evaluate(() => {
+      const pl = G.Game.player, R = G.CardRarity, roll = R.roll;
+      pl.statsTaken.atk = 38;                     // two left: a ×2 Legendary fits whole
+      // The real roll, with its die on the Legendary 1 %: it drops a rarity only if it doesn't fit.
+      R.roll = m => { const r = Math.random; Math.random = () => 0.995; try { return roll(m); } finally { Math.random = r; } };
+      let c = null;
+      for (let i = 0; i < 300 && !c; i++) c = G.LevelUp.offer(pl).find(x => x.key === 'stat:atk');
+      R.roll = roll;
+      return c && { rarity: c.rarity, rk: c.rk };
+    });
+    check(legCap && legCap.rarity === 5 && legCap.rk === 2, 'with two Potencia left, a Legendary still fits whole', legCap);
 
     console.log('3. The cap');
     const cap = await page.evaluate(() => {

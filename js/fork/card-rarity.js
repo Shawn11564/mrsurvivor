@@ -1,6 +1,7 @@
 /* ============ card-rarity.js — rarities for the stat upgrade cards (MrSurvivor fork) ============
  * The run's stat upgrade cards (Vigor, Potencia, Carrera... G.LevelUp.STATS) come with a rarity:
- *   Common ×1 (60 %) · Uncommon ×1.25 (25 %) · Rare ×1.5 (10 %) · Epic ×2 (4 %) · Legendary ×3 (1 %)
+ *   Common ×1 (60 %) · Uncommon ×1.25 (25 %) · Rare ×1.5 (10 %) · Epic ×2 (4 %) · Legendary ×2 (1 %)
+ * (Legendary was ×3 until 2026-10-22; the owner chose doofcraft's ×2, plan G10.)
  * The effect and its text scale by the multiplier (Epic Potencia: "+20% de daño"), the chip names the
  * rarity and the card wears its colour (the gacha's rarity colours). The caps don't change: a card
  * counts its multiplier in statsTaken (Potencia has 40), and if it doesn't fit whole it drops a rarity.
@@ -11,7 +12,7 @@
  * Test: fork/test-card-rarity.cjs.
  */
 G.CardRarity = (() => {
-  const TIERS = [{ r: 1, k: 1, w: 60 }, { r: 2, k: 1.25, w: 25 }, { r: 3, k: 1.5, w: 10 }, { r: 4, k: 2, w: 4 }, { r: 5, k: 3, w: 1 }];
+  const TIERS = [{ r: 1, k: 1, w: 60 }, { r: 2, k: 1.25, w: 25 }, { r: 3, k: 1.5, w: 10 }, { r: 4, k: 2, w: 4 }, { r: 5, k: 2, w: 1 }];
   const fmt = v => String(+v.toFixed(2));
   // id: base (the game's text), t (the same with {x}), n (its number), apply(pl, k)
   const S = {
