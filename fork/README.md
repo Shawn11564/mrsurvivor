@@ -270,6 +270,8 @@ Missions/Achievements/Profile open on their last tab, and the Pokémon screen ke
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in
 `js/ui/menu.js`; all in this device's localStorage, the search box isn't kept).
 
+`node fork/test-count-in.cjs` (server) checks the 3 s "Resuming…" count-in (`js/game.js` countInAfter): after the pause menu, a level-up card, a held item to swap or a bond, done within 10 s the run goes straight back to playing, after more than 10 s the count-in plays (the 10 s pass on the game's clock, not for real). Co-op holds and level-ups: `fork/test-coop.cjs`.
+
 `node fork/test-gameplay.cjs` (with the server running) plays the game in headless Edge:
 - the Power sort in the collection (`js/ui/menu.js`)
 - the type-matchup arrows over enemies (`typeMark` in `js/entities/enemy.js`, arrows in

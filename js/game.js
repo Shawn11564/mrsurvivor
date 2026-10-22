@@ -81,7 +81,7 @@ G.Game = (() => {
   /** Pausa sola (sólo en solitario: en grupo los demás siguen). */
   function autoPause() {
     G.Touch.reset();
-    if ((state === 'playing' || state === 'resuming') && !G.Coop.active) { state = 'paused'; G.RunUI.showPause(); }
+    if ((state === 'playing' || state === 'resuming') && !G.Coop.active) { state = 'paused'; pausedAt = performance.now(); G.RunUI.showPause(); }
   }
 
   /**
@@ -91,7 +91,8 @@ G.Game = (() => {
   const RESUME_S = 3;
   let resumeT = 0;
   // Fork: Ajustes → Gráficos → "Cuenta atrás al quitar la pausa" (pauseCount) la quita, sólo la de la pausa.
-  function resumeRun() { G.UI.hideAll(); if (G.Settings.get('pauseCount') === false) state = 'playing'; else countIn(); }
+  // Fork (TODO 47): and a pause shorter than LONG_PICK seconds goes straight back to playing.
+  function resumeRun() { G.UI.hideAll(); if (G.Settings.get('pauseCount') === false) state = 'playing'; else countInAfter(pausedAt); }
   /**
    * Fork: ¿queda en tu pantalla algo de la grieta o de un vínculo? El fogonazo de la vuelta, la
    * pantalla del vínculo o un vínculo que aún no se ha podido abrir (detrás de las cartas de nivel,
@@ -112,6 +113,13 @@ G.Game = (() => {
   function countIn() { state = 'resuming'; resumeT = RESUME_S; }
   const LONG_PICK = 10;
   let levelAt = 0;                   // grupo: cuándo se abrieron las cartas de nivel
+  /**
+   * Fork (TODO 47): the count-in only after a long stop. A reward picked (level-up card, item,
+   * bond; solo too), a group hold or a pause that took LONG_PICK seconds or less goes straight back
+   * to playing, so quick picks don't break the flow. Test: fork/test-count-in.cjs.
+   */
+  let pausedAt = 0, choiceAt = 0, heldAt = 0;
+  function countInAfter(since) { if (performance.now() - since > LONG_PICK * 1000) countIn(); else state = 'playing'; }
 
   /** La cuenta atrás: fondo algo oscurecido y el número, que salta un poco al cambiar. */
   function drawResume() {
@@ -149,7 +157,7 @@ G.Game = (() => {
       else { G.RunUI.showPause(true); G.Audio.sfx('pause'); }
       return;
     }
-    if (state === 'playing' || state === 'resuming') { state = 'paused'; G.RunUI.showPause(); G.Audio.sfx('pause'); }
+    if (state === 'playing' || state === 'resuming') { state = 'paused'; pausedAt = performance.now(); G.RunUI.showPause(); G.Audio.sfx('pause'); }
     else if (state === 'paused') resumeRun();
   }
 
@@ -319,6 +327,7 @@ G.Game = (() => {
     mateLeft() {},
     /** Grupo: quién está eligiendo fusión. Mientras haya alguien, todo parado. */
     hold(names) {
+      if (names && names.length && !holdBy.length) heldAt = performance.now();
       holdBy = names || [];
       const mine = G.UI.isOpen('scr-bond');
       if (holdBy.length) {
@@ -328,7 +337,7 @@ G.Game = (() => {
         if (!mine && others.length) G.Spawner.say('Pausa: ' + others.join(', ') + ' ' + (others.length > 1 ? 'están eligiendo…' : 'está eligiendo…'), 999, true);
         else if (!others.length) G.Spawner.say(awayBy ? awayText() : '', awayBy ? 999 : 0, true);   // sólo tú: sin aviso viejo
       } else {
-        if (state === 'held' && !awayBy) countIn();     // el último ha elegido: cuenta atrás para todos
+        if (state === 'held' && !awayBy) countInAfter(heldAt);     // el último ha elegido: cuenta atrás para todos (si ha tardado)
         G.Spawner.say(awayBy ? awayText() : '', awayBy ? 999 : 0, true);
       }
     },
@@ -464,11 +473,12 @@ G.Game = (() => {
     if (pl.dead) return;
     pendingLevels--;
     state = 'levelup';
+    const at = performance.now();
     G.Audio.sfx('levelup');
     G.RunUI.showLevelUp(pl.level, G.LevelUp.offer(pl), card => {
       G.Audio.sfx('confirm');
       card.apply(pl);
-      state = 'playing';
+      countInAfter(at);
     });
   }
 
@@ -490,7 +500,7 @@ G.Game = (() => {
       return;
     }
     // Se para el juego; en grupo, para todos hasta que cada uno elige (G.Coop.holdStart).
-    state = 'choice';
+    state = 'choice'; choiceAt = performance.now();
     if (G.Coop.active) G.Coop.holdStart();
     G.Audio.sfx('levelup');
     G.RunUI.showBond(opt, picked => {
@@ -502,7 +512,7 @@ G.Game = (() => {
         G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
         G.Spawner.say('¡Vínculo! ' + group.length + ' movimientos a la vez', 2.6, true);
       }
-      if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
+      if (state === 'choice') { if (holdBy.length) state = 'held'; else countInAfter(choiceAt); }
       // (Con otro vínculo por abrir sigues "eligiendo": lo suelta G.Coop.holdSync en frame.)
       if (G.Coop.active && !bondBusy()) G.Coop.holdEnd();
     });
@@ -525,7 +535,7 @@ G.Game = (() => {
     if (state !== 'playing' && state !== 'held') return;
     if (openItem && !G.UI.isOpen('scr-item')) {
       const o = openItem;
-      if (o.mine) { state = 'choice'; if (G.Coop.active) G.Coop.holdStart(); }
+      if (o.mine) { state = 'choice'; choiceAt = performance.now(); if (G.Coop.active) G.Coop.holdStart(); }
       G.RunUI.showItemChoice(o.cur, o.next, o.take);
       return;
     }
@@ -545,7 +555,7 @@ G.Game = (() => {
         G.Progress.event('item', { id: got });
       }
       if (!mine) { afterLevelUp(); return; }
-      if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
+      if (state === 'choice') { if (holdBy.length) state = 'held'; else countInAfter(choiceAt); }
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
@@ -555,7 +565,7 @@ G.Game = (() => {
     // fusiones). Antes en grupo seguía y te pegaban mientras elegías.
     if (state === 'playing' || state === 'held') {
       mine = true;
-      state = 'choice';
+      state = 'choice'; choiceAt = performance.now();
       if (G.Coop.active) G.Coop.holdStart();
     }
     openItem = { cur: pl.item, next: id, take, get mine() { return mine; } };

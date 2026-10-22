@@ -16,4 +16,9 @@
      '退出暫停時，先靜止3秒再繼續。其他倒數（羈絆、道具）不變。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
+  // Since TODO 47 a pause of 10 s or less never counts in (js/game.js countInAfter): the description says so,
+  // in English for every language (the old translations above no longer fit).
+  const DESC = 'When you leave a pause that lasted over 10 s, 3 seconds with everything frozen before play goes on. '
+    + 'Shorter pauses carry straight on. The countdown after a long pick (cards, items, bonds) stays.';
+  ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach(l => G.I18n.add({ [ROWS[1][0]]: DESC }, l));
 })();

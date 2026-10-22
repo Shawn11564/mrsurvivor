@@ -130,9 +130,18 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     G.I18n.rawCanvas = function (c, k, t) { if (k === 'fillText') seen.push(String(t)); return o.apply(this, arguments); };
     setTimeout(() => { G.I18n.rawCanvas = o; res([...new Set(seen)]); }, 250);
   }));
+  // The count-in only follows a stop of over 10 s (js/game.js countInAfter, TODO 47): later(s) moves the
+  // game's clock (performance.now) on by s seconds, so a long pause doesn't take a real 10 s here.
+  const later = s => page.evaluate(s => { if (!window.__skew) { const o = performance.now.bind(performance); window.__skew = 0; performance.now = () => o() + window.__skew; } window.__skew += s * 1000; }, s);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(150);                                   // keys are read on the next frame
   check(await page.evaluate(() => G.Game.state === 'paused' && G.UI.isOpen('scr-pause')), 'Esc pauses');
+  await page.click('#btn-resume');
+  await page.waitForTimeout(80);
+  check(await page.evaluate(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-pause')), 'a pause of under 10 s: straight back to playing, no countdown');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  await later(11);
   await page.click('#btn-resume');
   const x0 = await page.evaluate(() => G.Game.player.x);
   const r0 = Date.now();
@@ -157,9 +166,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.waitForTimeout(150);
   const back = await page.evaluate(() => ({ st: G.Game.state, pause: G.UI.isOpen('scr-pause') }));
   check(back.st === 'paused' && back.pause, 'Esc during the countdown goes back to the pause screen');
+  await later(11);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(150);
-  check(await page.evaluate(() => G.Game.state === 'resuming'), 'Esc on the pause screen also resumes through the countdown');
+  check(await page.evaluate(() => G.Game.state === 'resuming'), 'Esc on the pause screen also resumes through the countdown (after 10 s)');
   if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'resume-countdown.png') }); }
   await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 5000 });
   // Settings → Graphics → "Countdown after pausing" (pauseCount, fork) turns off only the pause's countdown.
@@ -173,6 +183,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     `Settings → Graphics has "${pcText}" (on by default) and clicking it turns it off`);
   await page.evaluate(() => { if (G.Game.state !== 'paused') G.Game.togglePause(); });
   await page.waitForTimeout(150);
+  await later(11);
   await page.click('#btn-resume');
   await page.waitForTimeout(80);
   check(await page.evaluate(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-pause')), 'with it off, leaving the pause goes straight back to playing (no countdown)');
@@ -718,7 +729,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(!noMega.lab && noMega.offered, 'a normal run: a rift won at 6:40 on the luckiest roll offers the Mega Stone', noMega);
   check(noMega.mega && noMega.key !== 94 && noMega.atk === 1.25, 'holding it Mega Evolves (Mega Gengar, ×1.25 damage)', noMega);
 
-  // ---------------- Countdown after a bond or an item choice (solo) ----------------
+  // ---------------- Countdown after a bond or an item choice (solo), when it took over 10 s ----------------
   console.log('Countdown after choosing');
   const resumed = async what => {
     const st = await page.waitForFunction(() => G.Game.state !== 'choice', null, { timeout: 5000 }).then(() => page.evaluate(() => G.Game.state));
@@ -729,12 +740,14 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.evaluate(() => { const pl = G.Game.player; pl.bonds = 1; if (pl.slots.length < 2) pl.addMove('tackle'); G.Game.offerBond(); });
   check(await page.waitForFunction(() => G.UI.isOpen('scr-bond') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'a bond to pick: the run stops');
   await page.waitForTimeout(1200);
+  await later(11);
   for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
   await resumed('picking the bond');
   await playOn(() => G.Game.state === 'playing' && !G.UI.isOpen('scr-levelup'), 8000);
   await page.evaluate(() => { G.Game.player.equip('leftovers'); G.Game.offerItem('quickclaw'); });
   check(await page.waitForFunction(() => G.UI.isOpen('scr-item') && G.Game.state === 'choice', null, { timeout: 5000 }).then(() => true, () => false), 'another item while holding one: the run stops to choose');
   await page.waitForTimeout(1200);
+  await later(11);
   await page.keyboard.press('Digit2');
   await resumed('choosing an item');
 
@@ -758,6 +771,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const between = await page.evaluate(() => ({ st: G.Game.state, open: G.UI.isOpen('scr-bond'), bonds: G.Game.player.bonds }));
   check(between.st === 'choice' && between.open && between.bonds === 1, `with a second bond, it opens at once, no countdown in between (${JSON.stringify(between)})`);
   await page.waitForTimeout(1200);
+  await later(11);
   for (let i = 0; i < 2 && await page.evaluate(() => G.UI.isOpen('scr-bond')); i++) { await page.keyboard.press('Digit1'); await page.waitForTimeout(300); }
   await resumed('the second bond');
   check(await page.evaluate(() => G.Game.player.bonds === 0), 'both bonds used');

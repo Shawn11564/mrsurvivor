@@ -205,10 +205,13 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await host.waitForTimeout(800);
     const mid = await Promise.all([host, g1].map(p => p.evaluate(() => G.Game.state)));
     check(mid.every(s => s === 'held'), `host and g1 have picked and wait for g2 (${mid})`);
+    // All picked within 10 s of the hold starting: straight back to playing (js/game.js countInAfter, TODO 47).
+    await Promise.all(ALL.map(p => p.evaluate(() => { window.__counted = false; window.__stopC = false;
+      (function w() { if (G.Game.state === 'resuming') window.__counted = true; if (!window.__stopC) requestAnimationFrame(w); })(); })));
     await pick(g2);
-    check((await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'resuming', undefined, 3000)))).every(Boolean),
-      'the last pick starts the 3 s "Resuming…" countdown for everyone');
     await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
+    const quickBond = await Promise.all(ALL.map(p => p.evaluate(() => { window.__stopC = true; return window.__counted; })));
+    check(quickBond.every(c => !c), `the last pick, all within 10 s: everyone straight back to playing, no countdown (${quickBond})`);
     const after = await Promise.all(ALL.map(p => p.evaluate(() => ({ st: G.Game.state, fused: G.Game.player.slots.some(g => g.length > 1), bonds: G.Game.player.bonds }))));
     check(after.every(a => a.st === 'playing' && a.fused && a.bonds === 0), 'after all pick, everyone is fused and playing again: ' + JSON.stringify(after));
 
@@ -230,8 +233,11 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     check(g2open.open && g2open.bonds === 1 && between2.every(b => !b.counted && b.st !== 'playing'),
       `g2's second bond opens at once and nobody has counted down yet (${JSON.stringify(between2)}, g2 ${JSON.stringify(g2open)})`);
     await g2.waitForTimeout(800);
+    // The hold goes on over 10 s, so the countdown follows (a real wait: moving the clock on would
+    // also trip js/net/coop.js's "host not answering" timer on the guests).
+    await g2.waitForTimeout(10500);
     await pick(g2);
-    check((await Promise.all(ALL.map(p => settle(p, () => window.__counted, undefined, 4000)))).every(Boolean), 'after g2\'s last bond, the countdown runs for everyone');
+    check((await Promise.all(ALL.map(p => settle(p, () => window.__counted, undefined, 4000)))).every(Boolean), 'after g2\'s last bond, over 10 s into the hold, the countdown runs for everyone');
     await Promise.all(ALL.map(p => settle(p, () => G.Game.state === 'playing', undefined, 8000)));
     await Promise.all(ALL.map(p => p.evaluate(() => { window.__stopC = true; })));
 
