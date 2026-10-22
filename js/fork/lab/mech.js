@@ -23,6 +23,10 @@
  *    salts     B3.3  × salts against a stunned or sleeping enemy, and it snaps out of it (Smelling
  *                    Salts, Wake-Up Slap). (Hex's × on any status is upstream's.) On a co-op guest's
  *                    copy the state comes from the host: no stacks (counted as 2) and no waking.
+ *    drum      B3.4  Belly Drum (Swords Dance's evolution): kinds2.js's `drum` (Fillet Away) at half
+ *                    your HP. `frail` (Shell Smash): you take that much more while its boost lasts.
+ *                    `curse` (Curse): every 10 s it casts above 40% HP it costs that share of your HP
+ *                    and curses the nearest boss (or the toughest enemy near): it loses HP for 10 s.
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -65,7 +69,12 @@ G.LabMech = (() => {
     'acid-spray': {
       evo: { t: '×1.6 damage, +2 bounces and +1 shot. Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack).',
              m: { dmg: 1.6, size: 1.2, spread: 1.3 }, add: { bounce: 2, count: 1 }, set: { venoshock: 0.5 } },
-      evoNote: 'Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack), then poisons it again.' }
+      evoNote: 'Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack), then poisons it again.' },
+    // B3.4: trade-offs.
+    'swords-dance': {
+      evo: { t: 'Casts on its own from any slot and +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.',
+             add: { stacks: 1 }, set: { passive: true, drum: 0.5 } },
+      evoNote: 'Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.' }
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
@@ -216,6 +225,62 @@ G.LabMech = (() => {
     return k;
   }
 
+  // ---------------- B3.4 trade-off boosters (Belly Drum is kinds2.js's `drum`) ----------------
+  const CURSE_T = 10, CURSE_BOSS = 0.004, CURSE_MOB = 0.05;        // s; share of max HP per 0.5 s tick
+  const cursed = new Set();
+  /** Curse's start: pay `m.curse` of your HP, curse the nearest boss or the toughest enemy near. */
+  function curse(pl, m) {
+    if (pl._labCurseT > 0 || pl.hp <= pl.maxHp * 0.4) return null;
+    let t = null, bd = Infinity;
+    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, 600)) {
+      const d = G.U.dist(pl.x, pl.y, e.x, e.y);
+      if (boss(e) && d < bd) { bd = d; t = e; }
+    }
+    if (!t) for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, 300)) if (!t || e.maxHp > t.maxHp) t = e;
+    if (!t) return null;
+    const cost = pl.maxHp * m.curse;
+    pl.hp = Math.max(1, pl.hp - cost);
+    pl._labCurseT = CURSE_T;
+    t._labCurse = { t: CURSE_T, tick: 0.5, owner: pl, m };
+    cursed.add(t);
+    G.FX.dmgText(pl.x, pl.y - pl.bodyH - 4, '-' + Math.round(cost), '#ffae5c');
+    G.FX.dmgText(t.x, t.y - t.bodyH - 16, 'Cursed!', '#b48cff', true);
+    G.FX.ring(t.x, t.y, 4, t.r * 2.5, '#b48cff', 0.5, 4);
+    return t;
+  }
+  function tickCurses(dt) {
+    for (const e of cursed) {
+      const c = e._labCurse;
+      if (e.dead || !c || (c.t -= dt) <= 0) { if (c) e._labCurse = null; cursed.delete(e); continue; }
+      if ((c.tick -= dt) > 0) continue;
+      c.tick = 0.5;
+      if (!c.owner || c.owner.dead) continue;
+      const d = Math.max(4, e.maxHp * (boss(e) ? CURSE_BOSS : CURSE_MOB));
+      busy = true;
+      try { G.RunStats.tag(e, c.m); e.hurt(d, '#b48cff', 0, 0, 0); } finally { busy = false; }
+      credit(c.owner, c.m, d);
+    }
+  }
+  const P = G.Player.prototype;
+  const pcast = P.cast;
+  P.cast = function (m) {
+    const r = pcast.apply(this, arguments);
+    if (!m || !lab()) return r;
+    if (m.frail) this._labFrail = { t: m.dur || 6, k: m.frail };
+    if (m.curse && !this.remote) curse(this, m);
+    return r;
+  };
+  const phurt = P.hurt;
+  P.hurt = function (amount, type, pure, cat) {
+    const f = this._labFrail;
+    if (f && f.t > 0 && !this.remote && !pure) amount *= 1 + f.k;
+    return phurt.call(this, amount, type, pure, cat);
+  };
+  function tickPlayer(p, dt) {
+    if (p._labFrail && (p._labFrail.t -= dt) <= 0) p._labFrail = null;
+    if (p._labCurseT > 0) p._labCurseT -= dt;
+  }
+
   // ---------------- B3.1 mark + detonate ----------------
   const marked = new Set();
   function stamp(e, pl, m, amount) {
@@ -335,30 +400,49 @@ G.LabMech = (() => {
     if (lab()) takeOver(dt);
     update.apply(this, arguments);
     tickMarks(dt);
+    tickCurses(dt);
+    const pl = G.Game.player;
+    if (pl) tickPlayer(pl, dt);
+    if (G.Coop.active) for (const p of G.Coop.puppets()) tickPlayer(p, dt);
     for (const h of hz) { h.t += dt; if (!h.gone && h.t < h.life) tickHz(h, dt); }
     if (hz.length) hz = hz.filter(h => !h.gone && h.t < h.life && h.owner);
   };
   const ground = C.drawGroundFields;
   C.drawGroundFields = function (ctx) {
     ground.apply(this, arguments);
-    if (!hz.length) return;
     ctx.save();
     for (const h of hz) if (G.Camera.sees(h.x, h.y, 60)) drawHz(ctx, h);
+    // Shell Smash: a cracked red ring under whoever is frail.
+    for (const p of [G.Game.player].concat(G.Coop.active ? G.Coop.puppets() : [])) {
+      if (!p || p.dead || !p._labFrail) continue;
+      const a = (now() / 1000) * 2;
+      ctx.globalAlpha = 0.6; ctx.strokeStyle = '#ff5a5a'; ctx.lineWidth = 2;
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(p.x, p.y, p.r * 1.7, p.r * 0.7, 0, a + i * 1.57, a + i * 1.57 + 1.1); ctx.stroke(); }
+    }
     ctx.restore();
   };
   const clear = C.clearFields;
   C.clearFields = function (owner) {
     clear.apply(this, arguments);
     hz = owner ? hz.filter(h => h.owner !== owner) : [];
-    if (!owner) { for (const e of marked) e._labMark = null; marked.clear(); }
+    if (!owner) { for (const e of marked) e._labMark = null; marked.clear(); for (const e of cursed) e._labCurse = null; cursed.clear(); }
     else for (const e of marked) if (e._labMark && e._labMark.owner === owner) { e._labMark = null; marked.delete(e); }
   };
   const air = C.drawAirFields;
   C.drawAirFields = function (ctx) {
     air.apply(this, arguments);
-    if (!marked.size) return;
+    if (!marked.size && !cursed.size) return;
     const t = now() / 1000;
     ctx.save();
+    // Cursed: purple wisps rising off it.
+    for (const e of cursed) {
+      if (e.dead || !G.Camera.sees(e.x, e.y, 60)) continue;
+      for (let i = 0; i < 3; i++) {
+        const k = (t * 0.9 + i / 3) % 1;
+        ctx.globalAlpha = 0.8 * (1 - k); ctx.fillStyle = '#b48cff';
+        ctx.beginPath(); ctx.arc(e.x + Math.sin(t * 3 + i * 2) * e.r * 0.6, e.y - e.bodyH * (0.6 + k * 0.8), 2.5 * (1 - k) + 1, 0, 6.2832); ctx.fill();
+      }
+    }
     for (const e of marked) {
       if (e.dead || !G.Camera.sees(e.x, e.y, 60)) continue;
       // A pulsing eye over the marked enemy, a ring at its feet.
@@ -385,6 +469,8 @@ G.LabMech = (() => {
     hazards: () => hz,
     /** B3.3: the × a hit of m on e would get from its converters (and their side effects). */
     convert,
+    /** B3.4: Curse's start for pl (cost and target); → the cursed enemy or null. */
+    curse,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };

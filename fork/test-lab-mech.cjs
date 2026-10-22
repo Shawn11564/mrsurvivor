@@ -15,6 +15,9 @@
 //          Slide evolves into Stealth Rock, whose rocks stay and hurt; a normal run's Spikes burst.
 // convert  B3.3: Smelling Salts and Wake-Up Slap (in real pools) ×3 on stunned or sleeping enemies and
 //          snap them out of it; Acid Spray evolves into Venoshock: ×3 on 4 poison stacks, poison used up.
+// tradeoff B3.4: Swords Dance evolves into Belly Drum (half your HP for every stack, from any slot);
+//          Shell Smash boosts three stats and you take ×1.35; Curse costs a quarter of your HP once
+//          per curse and a boss loses HP over time; nothing near, no cost.
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -113,14 +116,17 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       // Psybeam again: its own mark doesn't go off.
       await __fire(fs, 350);
       out.stillMarked = !!a._labMark && b.hp === b.maxHp;
-      const stored = a._labMark ? a._labMark.dmg : 0;
-      // Another move (Ember, in the next slot) sets it off: b, out of the beam, is hurt by it.
+      // Another move (Ember, in the next slot) sets it off: b, out of the beam, is hurt by it,
+      // once, by what a's mark held at that moment (a takes the same).
+      fs.cd = 1e6; fs.t = 1e6;
       pl.active = 1; pl.aim = 0;
-      const ha = a.hp;
+      const log = e => { const l = []; const h = e.hurt; e.hurt = function (am, c) { l.push([Math.round(am), c]); return h.apply(this, arguments); }; return l; };
+      const la = log(a), lb = log(b), MC = '#ff6ad5';
+      const stored = a._labMark ? a._labMark.dmg : 0;
       await __fire(tk, 300);
       out.gone = !a._labMark;
+      out.bHits = lb; out.aHits = la.filter(h => h[1] === MC);
       out.bHurt = Math.round(b.maxHp - b.hp);
-      out.aDrop = Math.round(ha - a.hp);
       out.storedAt2 = Math.round(stored);
       // Psychic marks too.
       let [ps] = __only(['psychic']);
@@ -139,7 +145,8 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(/marks every enemy it hits/.test(r.evoText) && /marks every enemy/.test(r.tip), 'the evolution card and the move box say what it does', { evo: r.evoText, tip: r.tip });
     check(r.marked && r.stored > 0 && r.bBefore === 0, `the beam marks the enemy (stores ${r.stored}) and doesn't touch the one beside it`, r);
     check(r.stillMarked, 'Future Sight hitting its own mark again doesn\'t set it off');
-    check(r.gone && Math.abs(r.bHurt - r.storedAt2) <= Math.max(2, r.storedAt2 * 0.02) && r.bHurt > 0, `another move sets it off: the enemy beside it takes ${r.bHurt} (stored ${r.storedAt2})`, r);
+    check(r.gone && r.bHits.length === 1 && r.bHits[0][1] === '#ff6ad5' && r.aHits.length === 1 && r.aHits[0][0] === r.bHits[0][0] && Math.abs(r.bHurt - r.storedAt2) <= Math.max(2, r.storedAt2 * 0.02),
+      `another move sets it off: the enemy beside it takes ${r.bHurt} once, as the marked one (stored ${r.storedAt2})`, r);
     check(r.psyMark > 0 && r.psyMarked, 'Psychic marks the enemies it hits', r);
     check(r.ddMarked, 'Doom Desire marks where its bolts fall', r);
 
@@ -258,6 +265,51 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     }
     check(r.vName === 'Venoshock' && /uses the poison up/.test(r.vText), 'Acid Spray evolves into Venoshock and its box says what it does', r);
     check(Math.abs(r.vPois / r.vPlain - 3) < 0.15 && r.poisonAfter <= 1, `Venoshock: ×3 on 4 poison stacks (${r.vPois} against ${r.vPlain}), the poison used up (then 1 again from its own hit: ${r.poisonAfter})`, r);
+  }
+
+  // ---------------- B3.4 trade-off boosters ----------------
+  if (want('tradeoff')) {
+    console.log('B3.4 trade-off boosters');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, out = {};
+      // Belly Drum: Swords Dance evolved, in the second slot (it casts on its own from there).
+      const [em, bd] = __only(['ember', 'swords-dance'], { lvl: 5, evolve: true });
+      out.name = G.T(bd.name, 'move'); out.drum = bd.drum; out.passive = !!bd.passive;
+      out.tip = G.MoveText.tipNotes(bd, pl).map(n => n[0]).join(' | ');
+      pl.hp = pl.maxHp; bd.t = 0;
+      await __until(() => pl.buffs.patk.n > 0, 3000);
+      out.hpShare = +(pl.hp / pl.maxHp).toFixed(2); out.stacks = pl.buffs.patk.n; out.maxStacks = bd.stacks;
+      // Shell Smash: boosts three stats, and you take 35% more while it lasts.
+      const [ss] = __only(['shell-smash']);
+      pl.invuln = 0; let h0 = pl.hp; pl.hurt(20); const plain = h0 - pl.hp;
+      pl.invuln = 0; pl.hp = pl.maxHp;
+      await __fire(ss, 200);
+      out.ssBuffs = ['patk', 'satk', 'spd'].map(k => pl.buffs[k].n);
+      pl.invuln = 0; h0 = pl.hp; pl.hurt(20); out.frailK = +((h0 - pl.hp) / plain).toFixed(2);
+      out.frailShown = !!pl._labFrail;
+      // Curse: a quarter of your HP; the nearest boss loses HP over time.
+      const [cu] = __only(['curse']);
+      const b = __dummy(...__at(200), { boss: true, hp: 100000 });
+      pl.hp = pl.maxHp;
+      await __fire(cu, 200);
+      out.curseHp = +(pl.hp / pl.maxHp).toFixed(2); out.cursed = !!b._labCurse;
+      const bh = b.hp; await __wait(1600);
+      out.bossLost = +((bh - b.hp) / b.maxHp * 100).toFixed(2);
+      // Again at once: no second cost while the curse lasts.
+      const h1 = pl.hp; await __fire(cu, 900);
+      out.again = pl.hp >= h1;
+      // No enemy near: nothing to curse, no cost.
+      __only(['curse']); pl.hp = pl.maxHp;
+      await __fire(pl.moves[0], 200);
+      out.alone = pl.hp === pl.maxHp;
+      return out;
+    });
+    check(r.name === 'Belly Drum' && r.drum === 0.5 && r.passive && /costs half your HP/.test(r.tip), 'Swords Dance evolves into Belly Drum (passive, drum 0.5) and its box says so', r);
+    check(Math.abs(r.hpShare - 0.5) < 0.05 && r.stacks === r.maxStacks, `Belly Drum from another slot: half your HP (${r.hpShare} left) for every stack at once (${r.stacks}/${r.maxStacks})`, r);
+    check(r.ssBuffs.every(n => n > 0) && Math.abs(r.frailK - 1.35) < 0.05 && r.frailShown, `Shell Smash boosts Attack, Sp. Atk and Speed (${r.ssBuffs}) and you take ×${r.frailK} while it lasts`, r);
+    check(Math.abs(r.curseHp - 0.75) < 0.03 && r.cursed && r.bossLost >= 0.8 && r.bossLost < 2.5, `Curse costs a quarter of your HP (${r.curseHp} left) and the boss loses ${r.bossLost}% of its HP in 1.6 s`, r);
+    check(r.again && r.alone, 'no second cost while the curse lasts, and no cost with nothing to curse', r);
   }
 
   // ---------------- the built game ----------------

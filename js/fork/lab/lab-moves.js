@@ -536,6 +536,15 @@ G.LabMoves = [
   { id: 'wake-up-slap', name: 'Wake-Up Slap', type: 'fighting', kind: 'melee', cat: 'physical', salts: 3,
     desc: 'A sharp slap: three times the damage to a sleeping or stunned enemy, but it wakes it up.',
     cd: 0.55, dmg: 13, radius: 54, arc: 1.8, knock: 60, look: { melee: 'impact' }, evo: ['Arm Thrust', 'atk'] },
+  // ---- trade-off boosters ----
+  { id: 'shell-smash', name: 'Shell Smash', type: 'normal', kind: 'buff', cat: null, stat: 'patk', frail: 0.35,
+    also: [{ stat: 'satk', amount: 0.12 }, { stat: 'spd', amount: 0.08 }],
+    desc: 'Deals no damage: break your shell to build up ATTACK, SPECIAL ATTACK and SPEED in big steps while active, but for as long as it lasts you take 35% more damage.',
+    cd: 0.85, amount: 0.12, dur: 6, stacks: 4, evo: ['No Retreat', null] },
+  { id: 'curse', name: 'Curse', type: 'ghost', kind: 'buff', cat: null, stat: 'patk', curse: 0.25,
+    also: [{ stat: 'def', amount: 0.05 }],
+    desc: 'Deals no damage: builds up ATTACK and DEFENSE while active. Every 10 s while it casts (above 40% HP) it costs a quarter of your HP to curse the nearest boss (or the toughest enemy near): it loses HP every moment for 10 s.',
+    cd: 0.85, amount: 0.1, dur: 10, stacks: 3, evo: ['Spite', null] },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],
