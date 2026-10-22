@@ -3,4 +3,4 @@
  * ritual rolls from (js/fork/radiant.js). lab: its Lab sheets in r/lab/; mega: m{dex}/r/ too;
  * rarity: its weight in the ritual. Same list as js/fork/radiants.json.
  */
-G.RADIANTS = {"59":{"lab":["QuickStrike"],"rarity":4},"150":{"lab":["SpAttack"],"rarity":5},"492":{"lab":["SpAttack"],"rarity":5},"890":{"rarity":5},"1019":{"rarity":4}};
+G.RADIANTS = {"59":{"lab":["QuickStrike"],"rarity":4},"150":{"lab":["SpAttack"],"rarity":5},"492":{"lab":["SpAttack"],"rarity":5},"833":{"rarity":1},"834":{"rarity":3},"890":{"rarity":5},"1019":{"rarity":4}};
