@@ -650,28 +650,20 @@ G.HUD = (() => {
       ctx.fillText(msg, w / 2, h * 0.62);
       const f = (pl.reviveT || 0) / G.Player.REVIVE_TIME;
       if (f > 0) bar(ctx, w / 2 - 110, h * 0.62 + 12, 220, 10, f, '#5fe08a');
-      // Mirando a un compañero vivo (game.js watched): su nombre entre flechas que se pueden pulsar.
-      const wm = G.Game.watching;
-      if (wm) {
-        const y = h * 0.62 + 46;
-        ctx.font = F(800, 15);
-        const label = G.I18n.f('Viendo a {x}', wm.name);
-        const lw = G.I18n.rawCanvas(ctx, 'measureText', label).width;
-        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.fillStyle = wm.color || '#f4f8ff';
-        G.I18n.rawCanvas(ctx, 'strokeText', label, w / 2, y);
-        G.I18n.rawCanvas(ctx, 'fillText', label, w / 2, y);
-        for (const dir of [-1, 1]) {
-          const ax = w / 2 + dir * (lw / 2 + 24), S = 30;
-          roundRect(ctx, ax - S / 2, y - 21, S, S, 8);
-          ctx.fillStyle = 'rgba(10,16,28,.75)'; ctx.fill();
-          ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(244,248,255,.8)'; ctx.stroke();
-          ctx.fillStyle = '#f4f8ff';
-          ctx.beginPath(); ctx.moveTo(ax + dir * 6, y - 6); ctx.lineTo(ax - dir * 5, y - 13); ctx.lineTo(ax - dir * 5, y + 1); ctx.closePath(); ctx.fill();
-          G.Touch.addButton(ax - S / 2, y - 21, S, S, () => G.Game.watchNext(dir), 6);
-        }
-        ctx.font = F(600, 11);
-        ctx.fillStyle = 'rgba(200,215,240,.75)';
-        ctx.fillText(G.Touch.active ? 'Toca las flechas para cambiar de compañero' : 'Q/E o A/D: cambiar de compañero', w / 2, y + 22);
+      // Mirar a un compañero vivo mientras tanto (botón, Q / E o LB / RB).
+      const w0 = G.Game.watching;
+      if (w0 || G.Coop.puppets().some(p => !p.dead)) {
+        const m = w0 && G.Coop.mates.find(x => x.pl === w0);
+        const label = (m ? G.I18n.f('Viendo a {x}', m.name) + ' · ' + G.I18n.t('cambiar') : G.I18n.t('Ver a un compañero'))
+          + (G.Touch.active ? '' : '  (E)');
+        ctx.font = F(800, 13);
+        const bw = ctx.measureText(label).width + 28, bh = 28, bx = w / 2 - bw / 2, by = h * 0.62 + 32;
+        roundRect(ctx, bx, by, bw, bh, 8);
+        ctx.fillStyle = 'rgba(10,16,28,.75)'; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = m ? m.color : 'rgba(244,248,255,.8)'; ctx.stroke();
+        ctx.fillStyle = '#f4f8ff';
+        G.I18n.rawCanvas(ctx, 'fillText', label, w / 2, by + 19);
+        G.Touch.addButton(bx, by, bw, bh, () => G.Game.cycleWatch(1), 8);
       }
       ctx.restore();
     }

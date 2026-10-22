@@ -140,7 +140,9 @@ G.PlayerManager = (() => {
       const d = snap.data(), s = d.save || {};
       res = fn(s);
       saved = JSON.parse(JSON.stringify(s));
-      tx.set(ref, { save: saved, updatedAt: fv().serverTimestamp(), v: Number.isInteger(d.v) ? d.v : 3 }, { mergeFields: ['save', 'updatedAt', 'v'] });
+      // rev + 1: a device that saves on upstream's terms (rev, no merge) is turned away and merges first.
+      tx.set(ref, { save: saved, updatedAt: fv().serverTimestamp(), v: Number.isInteger(d.v) ? d.v : 3, rev: (Number.isInteger(d.rev) ? d.rev : 0) + 1 },
+        { mergeFields: ['save', 'updatedAt', 'v', 'rev'] });
     });
     const p = players.get(uid);
     if (p) { p.raw = saved; p.sum = PE().summary(saved); p.at = Date.now(); p.hasSave = true; }

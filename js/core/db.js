@@ -84,6 +84,13 @@ G.DB = (() => {
       dfav: {},               // dex -> fecha: favorito de la colección (negativa = quitado entonces)
       pused: {},              // dex -> partidas jugadas con él (orden "más usados")
       pstart: {},             // dex -> movimiento inicial elegido (Mejoras → Movimiento inicial)
+      pstart2: {},            // dex -> segundo movimiento inicial (Mejoras → Segundo movimiento inicial)
+      // Tienda Kecleon (20-10-2026, ver data/shop.js y systems/mons.js):
+      bag: {},                // Mochila: id -> cuántos (mint, cap, caph); en la libreta, como las monedas
+      tms: {},                // MT sin usar: movimiento -> cuántas; también en la libreta
+      ptm: {},                // dex -> [movimientos aprendidos con MT] (para siempre)
+      pnat: {},               // dex -> [naturaleza, fecha]: la cambiada con Menta (si no, la que le tocó)
+      pabil: {},              // dex -> [0|1|2, fecha]: la habilidad cambiada con Cápsula (2 = oculta)
       tickets: { t1: 0, t10: 0 },   // tickets del gacha (x1 y x10)
       pity: {},               // generación del banner -> tiradas sin ★5
       legends: {},            // dex -> fecha: legendarios vencidos en grietas
@@ -136,7 +143,7 @@ G.DB = (() => {
         const e = s.led[dev];
         if (!isObj(e)) { delete s.led[dev]; continue; }
         for (const k of Object.keys(e)) {
-          if (!CUR[k] || !Array.isArray(e[k])) { delete e[k]; continue; }
+          if (!isCurKey(k) || !Array.isArray(e[k])) { delete e[k]; continue; }
           e[k] = [n(e[k][0]), n(e[k][1])];
         }
       }
@@ -148,9 +155,35 @@ G.DB = (() => {
       if (!isObj(s[coll])) { s[coll] = {}; continue; }
       for (const d of Object.keys(s[coll])) if (!Number.isFinite(+s[coll][d])) delete s[coll][d];
     }
-    if (!isObj(s.pstart)) s.pstart = {};
-    for (const d of Object.keys(s.pstart)) {
-      if (typeof s.pstart[d] !== 'string' || (G.DEX_BY && !G.DEX_BY[d]) || (G.Moves && !G.Moves.BY_ID[s.pstart[d]])) delete s.pstart[d];
+    for (const k of ['pstart', 'pstart2']) {
+      if (!isObj(s[k])) s[k] = {};
+      for (const d of Object.keys(s[k])) {
+        if (typeof s[k][d] !== 'string' || (G.DEX_BY && !G.DEX_BY[d]) || (G.Moves && !G.Moves.BY_ID[s[k][d]])) delete s[k][d];
+      }
+    }
+    // Mochila y MT: cuántas de cada cosa que exista (tope 999).
+    for (const [k, ok] of [['bag', id => !G.Shop || G.Shop.ITEMS[id]], ['tms', id => !G.Moves || G.Moves.BY_ID[id]]]) {
+      if (!isObj(s[k])) s[k] = {};
+      for (const id of Object.keys(s[k])) {
+        s[k][id] = Math.min(999, n(s[k][id]));
+        if (!s[k][id] || !ok(id)) delete s[k][id];
+      }
+    }
+    // MT aprendidas: movimientos que existen, sin repetir.
+    if (!isObj(s.ptm)) s.ptm = {};
+    for (const d of Object.keys(s.ptm)) {
+      const l = Array.isArray(s.ptm[d]) ? s.ptm[d] : [];
+      s.ptm[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))];
+      if (!s.ptm[d].length || (G.DEX_BY && !G.DEX_BY[d])) delete s.ptm[d];
+    }
+    // Naturaleza y habilidad elegidas: [valor, fecha].
+    for (const [k, ok] of [['pnat', v => typeof v === 'string' && (!G.NATURE_BY || G.NATURE_BY[v])], ['pabil', v => v === 0 || v === 1 || v === 2]]) {
+      if (!isObj(s[k])) s[k] = {};
+      for (const d of Object.keys(s[k])) {
+        const e = s[k][d];
+        if (!Array.isArray(e) || !ok(e[0]) || (G.DEX_BY && !G.DEX_BY[d])) delete s[k][d];
+        else s[k][d] = [e[0], n(e[1])];
+      }
     }
     // Atajos: 4 huecos con un movimiento que exista (o null), sin repetir.
     if (s.pbind && typeof s.pbind === 'object') {
@@ -207,6 +240,31 @@ G.DB = (() => {
     t25: [s => s.tickets.t25 || 0, (s, v) => { s.tickets.t25 = v; }],   // fork: arcoíris ×25
     gm: [s => s.gems || 0, (s, v) => { s.gems = v; }]                  // fork: gemas
   };
+  /*
+   * Desde el 20-10-2026 también la Mochila y las MT (Tienda Kecleon), con la misma
+   * libreta: 'b:<objeto>' (save.bag) y 'm:<movimiento>' (save.tms). Así una Menta
+   * gastada en un aparato no vuelve a aparecer al fusionar con el otro.
+   */
+  const isCurKey = k => !!CUR[k] || /^b:[a-z0-9]{1,12}$/.test(k) || /^m:[a-z0-9-]{1,40}$/.test(k);
+  const SUB = { b: 'bag', m: 'tms' };
+  function curGet(s, k) {
+    if (CUR[k]) return CUR[k][0](s);
+    const o = s[SUB[k[0]]];
+    return o ? o[k.slice(2)] : 0;
+  }
+  function curSet(s, k, v) {
+    if (CUR[k]) { CUR[k][1](s, v); return; }
+    const o = s[SUB[k[0]]] = s[SUB[k[0]]] || {};
+    if (v > 0) o[k.slice(2)] = Math.min(999, v); else delete o[k.slice(2)];
+  }
+  /** Todas las cosas con saldo de una partida (y de su libreta). */
+  function curKeys(s, led) {
+    const ks = new Set(Object.keys(CUR));
+    for (const id of Object.keys(s.bag || {})) ks.add('b:' + id);
+    for (const id of Object.keys(s.tms || {})) ks.add('m:' + id);
+    for (const dev in led || {}) for (const k in led[dev]) if (isCurKey(k)) ks.add(k);
+    return [...ks];
+  }
   // Este aparato (navegador): un nombre al azar que se queda guardado.
   const DEV = (() => {
     let d = read('ps.dev');
@@ -214,7 +272,7 @@ G.DB = (() => {
     return d;
   })();
   const num = v => (Number.isFinite(+v) && +v > 0 ? Math.floor(+v) : 0);
-  const balOf = s => { const o = {}; for (const k in CUR) o[k] = num(CUR[k][0](s)); return o; };
+  const balOf = (s, led) => { const o = {}; for (const k of curKeys(s, led)) o[k] = num(curGet(s, k)); return o; };
   function ledSum(led, k) {
     let t = 0;
     for (const dev in led) { const e = led[dev] && led[dev][k]; if (e) t += num(e[0]) - num(e[1]); }
@@ -230,12 +288,12 @@ G.DB = (() => {
   function ledOf(s, dev) {
     if (!isObj(s.led)) {
       const b = balOf(s), base = {};
-      for (const k in CUR) base[k] = [b[k], 0];
+      for (const k in b) base[k] = [b[k], 0];
       return { base };
     }
-    const led = JSON.parse(JSON.stringify(s.led)), b = balOf(s);
+    const led = JSON.parse(JSON.stringify(s.led)), b = balOf(s, led);
     // Un saldo en negativo (lo mismo gastado en dos aparatos sin conexión) se ve como 0.
-    for (const k in CUR) addTo(led, dev, k, b[k] - Math.max(0, ledSum(led, k)));
+    for (const k in b) addTo(led, dev, k, b[k] - Math.max(0, ledSum(led, k)));
     return led;
   }
   /** Apunta en la libreta de ESTE aparato lo que ha cambiado desde la última vez. */
@@ -259,7 +317,15 @@ G.DB = (() => {
     }
     r.led = led;
     r.tickets = r.tickets || { t1: 0, t10: 0 };
-    for (const k in CUR) CUR[k][1](r, Math.max(0, ledSum(led, k)));
+    r.bag = {}; r.tms = {};
+    for (const k of curKeys({ bag: {}, tms: {} }, led)) curSet(r, k, Math.max(0, ledSum(led, k)));
+    // MT aprendidas: nunca se olvidan (unión). Naturaleza y habilidad: la elegida más tarde.
+    r.ptm = r.ptm || {};
+    for (const d in older.ptm || {}) r.ptm[d] = [...new Set((r.ptm[d] || []).concat(older.ptm[d] || []))];
+    for (const k of ['pnat', 'pabil']) {
+      r[k] = r[k] || {};
+      for (const d in older[k] || {}) if (!r[k][d] || (+older[k][d][1] || 0) > (+r[k][d][1] || 0)) r[k][d] = older[k][d];
+    }
     for (const coll of ['owned', 'shiny']) {
       r[coll] = r[coll] || {};
       for (const k in older[coll] || {}) {
@@ -280,8 +346,10 @@ G.DB = (() => {
     r.pused = r.pused || {};
     for (const d in older.pused || {}) r.pused[d] = Math.max(+r.pused[d] || 0, +older.pused[d] || 0);
     // Movimiento inicial: el de la versión más reciente; si no lo tenía elegido, el de la otra.
-    r.pstart = r.pstart || {};
-    for (const d in older.pstart || {}) if (!(d in r.pstart)) r.pstart[d] = older.pstart[d];
+    for (const k of ['pstart', 'pstart2']) {
+      r[k] = r[k] || {};
+      for (const d in older[k] || {}) if (!(d in r[k])) r[k][d] = older[k][d];
+    }
     // Lo conseguido nunca se pierde: unión de legendarios, arenas, objetos, logros...
     for (const coll of ['legends', 'arenas', 'itemsFound', 'evoMoves', 'ach']) {
       r[coll] = r[coll] || {};
@@ -409,6 +477,16 @@ G.DB = (() => {
 
   let auth = null, fs = null, rtdb = null, uid = null, unlisten = null;
   let pushT = 0, retryT = 0, pending = false, pushing = null, lastPush = 0;
+  /*
+   * Versión de la partida en la nube (saves/{uid}.rev, 21-10-2026). Cada subida
+   * manda rev + 1 y firestore.rules sólo la deja pasar si la nube sigue en rev:
+   * así un aparato con una copia vieja (la pestaña del móvil abierta desde ayer)
+   * ya no pisa lo guardado en otro. Si la rechaza, se lee la nube, se junta y se
+   * vuelve a subir (sólo entonces hay una lectura de más).
+   */
+  const K_REV = 'ps.rev.';
+  let rev = 0, lastCheck = 0;
+  const setRev = r => { rev = Number.isInteger(r) && r > 0 ? r : 0; write(K_REV + uid, rev); };
   // Como mucho una subida cada 30 min (con miles de jugadores, cada 5 min
   // eran decenas de miles de escrituras por hora); lo que cuesta algo
   // (gacha, mejoras), a los 30 s. La copia local se guarda siempre al momento (y se fusiona con la
@@ -510,6 +588,7 @@ G.DB = (() => {
     return docRef().get().then(snap => {
       if (!snap.exists || !save || uid !== u) return;
       applyInPlace(merge(plain(fold(save)), migrate(snap.data().save)));
+      setRev(snap.data().rev);
       write(K_CLOUD + uid, save);
       if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins();
     }).catch(e => console.warn('[DB] no se pudo bajar la partida:', e.code || e.message));
@@ -537,9 +616,11 @@ G.DB = (() => {
     try {
       const snap = await docRef().get();
       remote = snap.exists ? snap.data().save : null;
+      setRev(snap.exists ? snap.data().rev : 0);
     } catch (e) {
       if (!cached) throw e;                // sin conexión y sin copia: no hay nada que abrir
       online = false;
+      setRev(+read(K_REV + uid) || 0);     // la de la última vez que se leyó o subió
     }
     let s = merge(cached && fold(migrate(cached)), remote && migrate(remote));
     if (!s) s = newSave(opts.name || displayNameOf(u));
@@ -598,20 +679,26 @@ G.DB = (() => {
     pending = false;
     lastPush = Date.now();
     setSync('syncing');
+    // Fork: a transaction (merged with the cloud copy) that also sends the cloud's rev + 1,
+    // which upstream's rules ask for since 21-10-2026 (revOk in firestore.rules).
     let merged = null;
+    const u = uid;
     const wr = fs.runTransaction(async tx => {
       const ref = docRef();
       const snap = await tx.get(ref);
       const remote = snap.exists ? migrate(snap.data().save) : null;
       merged = remote ? merge(plain(fold(save)), remote) : plain(fold(save));
+      const r = (snap.exists && Number.isInteger(snap.data().rev) ? snap.data().rev : 0) + 1;
       // mergeFields: el resto del documento (ban) se queda como está.
-      tx.set(ref, { save: merged, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), v: VERSION },
-        { mergeFields: ['save', 'updatedAt', 'v'] });
+      tx.set(ref, { save: merged, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), v: VERSION, rev: r },
+        { mergeFields: ['save', 'updatedAt', 'v', 'rev'] });
+      return r;
     });
     // Si la red se cae a medias, Firestore puede quedarse esperando: tope de 12 s.
     const timeout = new Promise((_, rej) => setTimeout(() => rej({ code: 'unavailable' }), 12000));
-    pushing = Promise.race([wr, timeout]).then(() => {
+    pushing = Promise.race([wr, timeout]).then(r => {
       fails = 0;
+      if (uid === u) setRev(r);
       write(K_OK + uid, Date.now());
       // Lo de la nube (de otro aparato) se junta también aquí; lo cambiado mientras
       // se subía no se pierde y queda pendiente.

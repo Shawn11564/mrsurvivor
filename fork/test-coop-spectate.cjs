@@ -87,13 +87,13 @@ async function scenario(browser, downRole) {
   const watching = await settle(down, () => G.Game.player.dead && !!G.Game.watching);
   await down.waitForTimeout(150);
   const w = await down.evaluate(() => {
-    const t = G.Game.watching.pl, c = window.__cam.filter(Boolean);
+    const t = G.Game.watching, c = window.__cam.filter(Boolean);
     return { d: Math.round(Math.hypot(G.Camera.x - t.x, G.Camera.y - t.y)) };
   });
   check(watching && w.d < 60, 'down: the camera is on the teammate at once (no glide across)', w);
   const glide = await down.evaluate(() => {
     // From the moment it switched: no frame half-way between you and them.
-    const t = G.Game.watching.pl, me = G.Game.player, c = window.__cam;
+    const t = G.Game.watching, me = G.Game.player, c = window.__cam;
     return c.filter(p => Math.hypot(p[0] - t.x, p[1] - t.y) > 200 && Math.hypot(p[0] - me.x, p[1] - me.y) > 200).length;
   });
   check(glide === 0, 'no frame half-way across', glide);
@@ -113,7 +113,7 @@ async function scenario(browser, downRole) {
     const d = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
     const i0 = window.__cam.findIndex(p => d(p, a) < far);   // the first frame in the arena
     const after = i0 < 0 ? window.__cam : window.__cam.slice(i0);
-    const t = G.Game.watching && G.Game.watching.pl;
+    const t = G.Game.watching && G.Game.watching;
     return { frames: window.__cam.length, transit: window.__cam.filter(p => d(p, a) > far && d(p, o) > far).length,
       backOnMap: after.filter(p => d(p, o) < far).length, bakes: window.__bakes, still: !!t && G.Game.player.dead,
       onMate: t ? Math.round(d([G.Camera.x, G.Camera.y], [t.x, t.y])) : null, toArena: Math.round(d([G.Camera.x, G.Camera.y], a)) };

@@ -13,14 +13,22 @@
  *      arrives that has jumped too (to anywhere: coming back from the rift each player returns to their own
  *      spot, not yours), or 3 s. If their network position is no longer where it was (they jumped before
  *      you) or is already where they were put (the start of a run), they aren't held: the network rules.
- * Checked by fork/test-coop-spectate.cjs.
+ *   3. Going down cuts straight to a teammate still standing. Upstream's spectating (game.js watched,
+ *      2026-10-21) starts on your own body and you pick a teammate with Q/E; here it picks the first
+ *      one for you, as the fork's own spectating did before upstream had one.
+ * Checked by fork/test-coop-spectate.cjs and fork/test-coop.cjs.
  */
 (() => {
   // 1. The camera jumps to a far target instead of sliding.
   const follow = G.Camera.follow;
+  let wasDown = false;
   G.Camera.follow = function (tx, ty, dt) {
     const far = 1.5 * Math.max(this.VIEW_W, this.w || 0, this.h || 0);
     if (Math.abs(tx - this.x) > far || Math.abs(ty - this.y) > far) { this.x = tx; this.y = ty; }
+    // 3. Just gone down: watch the first teammate still standing (the camera follows them from the next frame).
+    const pl = G.Game.player, down = !!(pl && pl.dead && G.Coop.active && G.Game.state === 'playing');
+    if (down && !wasDown && !G.Game.watching) G.Game.cycleWatch(1);
+    wasDown = down;
     return follow.call(this, tx, ty, dt);
   };
 

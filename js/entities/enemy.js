@@ -708,7 +708,7 @@
 
     startFuse() {
       this.phase = 'fuse'; this.pt = 1.0;
-      this.hazard({ kind: 'zone', x: this.x, y: this.y, r: 62, delay: 1.0, dmg: this.dmg * 1.4, type: this.atkType, color: '#ff7b3d' });
+      this.hazard({ kind: 'zone', x: this.x, y: this.y, r: 62, delay: 1.0, dmg: this.dmg * 1.4, type: this.atkType, color: '#ff7b3d', boom: true });
     }
 
     startJump(pl) {
@@ -995,6 +995,7 @@
         if (e.dead) {
           pl.kills++;
           G.RunStats.kill(e);
+          if (pl.abil && pl.abil.kill) pl.abil.kill(pl, e);     // Autoestima y parecidas
           if (e.boss && !e.judge) pl.bosses++;
           G.Progress.kill(e);
           corpses.push(e);

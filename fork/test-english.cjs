@@ -217,7 +217,7 @@ function spanishSources(loaded) {
     for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
       const r = dir + '/' + e.name;
       if (e.isDirectory()) files(r, out);
-      else if (r.endsWith('.js') && !/app\.min|\/lang-|\/lang\/|pokedex|sprites-meta|lab-data|lab-anims|mega-sprites|radiant-list/.test(r)) out.push(r);
+      else if (r.endsWith('.js') && !/app\.min|\/lang-|\/lang\/|pokedex|sprites-meta|lab-data|lab-anims|mega-sprites|radiant-list|data\/abilities|data\/natures/.test(r)) out.push(r);
     }
     return out;
   };
@@ -327,7 +327,8 @@ const NEVER_SHOWN_EN = [
   /^js\/noframe\.js$/,              // "not the official site" in every language, one per language
   /^js\/boot\.js$/,                 // the loading line in every language
   /^js\/core\/locales\.js$/,        // language names, each in its own language
-  /^js\/core\/firebase-config\.js$/ // upstream's example config
+  /^js\/core\/firebase-config\.js$/, // upstream's example config
+  /^js\/data\/ability-fx\.js$/     // ability texts built from pieces: each whole one is checked as 'ability'
 ];
 
 // ---------------------------------------------------------------- 4. the game
@@ -427,6 +428,9 @@ async function game() {
         for (const [k, v] of Object.entries(G.TRAIT_TEXT)) { put([k[0].toUpperCase() + k.slice(1)], 'trait'); put([v], 'trait'); }
         for (const q of G.PERSONALITY_TEST) { put([q.q], 'personality test'); q.a.forEach(a => put([a.t], 'personality test')); }
         for (const s of G.STARTERS) put([s.traits.join(', ')], 'starter traits');
+        // Abilities and natures (upstream 2026-10-21): their names come from a table with an English
+        // column (G.Mons.name), so they're checked as shown; what each ability does goes through the dictionary.
+        for (const id of Object.keys(G.ABIL)) { const fx = G.AbilityFX.of(id, G.DEX_BY[1]); put([fx.d], 'ability'); if (fx.d2) put([fx.d2], 'ability'); }
         // Built from pieces where they're drawn: a level-up card's tag (js/systems/levelup.js), the
         // HUD's buff chips (js/ui/hud.js LBL).
         put(['Nv.' + 3 + ' > ' + 4], 'level-up tag');

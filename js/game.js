@@ -162,7 +162,8 @@ G.Game = (() => {
   function startRun(coop = null, pick = null) {
     holdBy = []; awayBy = null;
     const save = G.DB.save;
-    const mon = G.DEX_BY[pick ? pick.dex : save.partner];
+    // Con su naturaleza aplicada (una copia: ver systems/mons.js).
+    const mon = G.Mons.monFor(pick ? pick.dex : save.partner);
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
 
     G.UI.hideAll();
@@ -186,6 +187,7 @@ G.Game = (() => {
     runReal = performance.now(); tampered = false;
 
     pl = new G.Player(mon, perks, pick ? !!pick.shiny : !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
+    pl.setAbility(G.Mons.abilityOf(mon.dex).id);
     banked = { t1: 0, t10: 0 };
     caught = [];
     // Atajos: movimientos con hueco fijo (save.pbind[dex] = [id del 1, id del 2, ...]),
@@ -194,10 +196,13 @@ G.Game = (() => {
     pl.addMove(G.startMoveOf(mon.dex));
     // Mejora "Veto": movimientos que no quieres que te salgan.
     pl.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
-    // Mejora "Repertorio": un segundo movimiento de ataque al azar.
+    // Mejora "Repertorio": un segundo movimiento de ataque, el elegido con
+    // "Segundo movimiento inicial" o, si no, al azar.
     if (perks.startMoves >= 2) {
+      const pick2 = G.startMove2Of(mon.dex);
       const pool = G.Moves.poolFor(mon).filter(id => !pl.hasMove(id) && !pl.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
-      if (pool.length) pl.addMove(G.U.pick(pool));
+      if (pick2 && !pl.hasMove(pick2)) pl.addMove(pick2);
+      else if (pool.length) pl.addMove(G.U.pick(pool));
       pl.setActive(0);
     }
 
@@ -298,6 +303,8 @@ G.Game = (() => {
     },
     /** ¿Estás eligiendo algo que para la partida (objeto o vínculo), o te queda algo del vínculo en pantalla? */
     choosing() { return state === 'choice' || bondBusy(); },
+    /** A quién miras mientras estás caído (uid, o '' si a ti). */
+    watching() { const w = watched(); return w ? w.uid : ''; },
     inLevelUp() { return state === 'levelup'; },
     shiny(dex) { G.onShinyCaught({ dex, name: (G.DEX_BY[dex] || {}).name || '' }); },
     over(d) {
@@ -633,21 +640,17 @@ G.Game = (() => {
     }
     if (state === 'ui') {
       // Esc en una subpantalla del menú vuelve al menú.
-      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-shop', 'scr-bag', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
           && document.getElementById('pull-fx').classList.contains('hidden')) G.MenuUI.open();
       return;
     }
     if (G.Input.tap('escape') || G.Input.tap('keyp')) { togglePause(); return; }
     if (state !== 'playing' || !pl) return;
-    if (pl.dead && G.Coop.active) {
-      // Caído: estas teclas cambian de compañero al que mirar (ver watched()).
-      if (['keyq', 'keya', 'arrowleft'].some(k => G.Input.tap(k))) watchNext(-1);
-      if (['keye', 'keyd', 'arrowright', 'tab'].some(k => G.Input.tap(k))) watchNext(1);
-      return;
-    }
     for (let i = 0; i < 4; i++) {
       if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) pl.setActive(i);
     }
+    // Caído en grupo: Q / E cambian a quién miras.
+    if (pl.dead) { if (G.Input.tap('keyq')) cycleWatch(-1); if (G.Input.tap('keye') || G.Input.tap('tab')) cycleWatch(1); return; }
     if (G.Input.tap('keyq')) pl.cycle(-1);
     if (G.Input.tap('keye') || G.Input.tap('tab')) pl.cycle(1);
   }
@@ -655,6 +658,23 @@ G.Game = (() => {
   // ---------------- bucle ----------------
 
   let deathT = 0;
+
+  // Caído en grupo: puedes mirar a un compañero vivo. Sólo cambia a quién
+  // sigue la cámara (y el anfitrión te manda los enemigos de allí).
+  let watch = null;
+  /** El compañero al que miras, o null si miras tu cuerpo. */
+  function watched() {
+    if (!pl || !pl.dead || !G.Coop.active) return (watch = null);
+    if (watch && (watch.dead || !G.Coop.puppets().includes(watch))) watch = G.Coop.puppets().find(p => !p.dead) || null;
+    return watch;
+  }
+  /** Cambia a quién miras: tú → cada compañero vivo → tú. */
+  function cycleWatch(dir) {
+    const list = [null, ...G.Coop.puppets().filter(p => !p.dead)];
+    if (list.length < 2) return;
+    watch = list[(list.indexOf(watched()) + dir + list.length) % list.length];
+    G.Audio.sfx('click');
+  }
 
   let frameDt = 0, speedK = 1;
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
@@ -751,9 +771,8 @@ G.Game = (() => {
       if (pl.dead) reviveTick(dt);
       G.RunStats.update(dt);
     }
-    // Caído en grupo: la cámara sigue al compañero que estás mirando.
-    const cam = (watched() || { pl }).pl;
-    G.Camera.follow(cam.x, cam.y, dt);
+    const view = watched() || pl;
+    G.Camera.follow(view.x, view.y, dt);
     G.World.update(dt, G.Camera);
 
     const all = everyone();
@@ -778,29 +797,6 @@ G.Game = (() => {
     if (!coop || G.Coop.isHost) maybeLevelUp();
     if (pl.bonds > 0) offerBond(true);
     if (G.Coop.isHost) checkAllDown(dt);
-  }
-
-  /*
-   * Caído en grupo: miras a un compañero vivo (Q/E, A/D o las flechas; en el mando,
-   * LB/RB; en táctil, las flechas de la pantalla). Tu cuerpo sigue donde cayó y te
-   * levantan allí. Si cae al que miras, pasas al siguiente; al levantarte, vuelves a ti.
-   */
-  let watchUid = null;
-  const aliveMates = () => G.Coop.mates.filter(m => m.connected && m.pl && !m.pl.dead);
-  function watched() {
-    if (!G.Coop.active || !pl || !pl.dead) { watchUid = null; return null; }
-    const alive = aliveMates();
-    if (!alive.length) { watchUid = null; return null; }
-    let m = alive.find(x => x.uid === watchUid);
-    if (!m) { m = alive[0]; watchUid = m.uid; }
-    return m;
-  }
-  function watchNext(dir) {
-    const alive = aliveMates();
-    if (!pl || !pl.dead || !alive.length) return;
-    const i = alive.findIndex(x => x.uid === watchUid);
-    watchUid = alive[(i + dir + alive.length) % alive.length].uid;
-    G.Audio.sfx('select');
   }
 
   /** Caído en grupo: un compañero a tu lado te va levantando. */
@@ -1032,7 +1028,9 @@ G.Game = (() => {
     debugTime(t) { tampered = true; time = t; },
     /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
     debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
-    togglePause,
+    togglePause, cycleWatch,
+    /** El compañero al que miras estando caído (o null). */
+    get watching() { return watched(); },
     /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
     quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
     /** Para grabar vídeos: abre las cartas de subir de nivel. */
@@ -1042,9 +1040,7 @@ G.Game = (() => {
     toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; },
     /** Fork: what co-op needs from the game, to turn a solo run into a group one (js/fork/drop-in.js). */
-    get coopApi() { return coopApi; },
-    /** Caído en grupo: el compañero que miras ({ uid, name, color, pl }) o null. */
-    get watching() { return watched(); }, watchNext, st
+    get coopApi() { return coopApi; }, st
   };
 })();
 

@@ -139,12 +139,12 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await g1.waitForTimeout(1500);
     pos = await where(g1, other.uid);
     check(pos.watching === other.uid && near(pos.cam, pos.at), `E switches to ${other.name}, camera follows`);
-    await g1.keyboard.press('ArrowLeft');
+    await g1.keyboard.press('KeyQ');
     await g1.waitForTimeout(1500);
     pos = await where(g1, first.uid);
-    check(pos.watching === first.uid && near(pos.cam, pos.at), `left arrow switches back to ${first.name}`);
+    check(pos.watching === first.uid && near(pos.cam, pos.at), `Q switches back to ${first.name}`);
     // Watch the host; an enemy appears next to the host (far from g1's body): g1 must get it.
-    await g1.evaluate(u => { for (let i = 0; i < 4 && G.Game.watching.uid !== u; i++) G.Game.watchNext(1); }, host.uid);
+    await g1.evaluate(u => { for (let i = 0; i < 4 && G.Game.watching.uid !== u; i++) G.Game.cycleWatch(1); }, host.uid);
     const eid = await host.evaluate(() => {
       const pl = G.Game.player, def = G.Enemies.cast[0].list[0];
       const e = new G.Enemy(def, pl.x + 120, pl.y, G.Enemies.scale(0)); e.hp = e.maxHp = 1e7; G.EnemyMgr.add(e); return e.id;
