@@ -243,6 +243,9 @@ across the map, and when the rift opens (~200 000 px away) it never travels betw
 arena: `G.Camera.follow` jumps to a target more than ~1.5 screens away, and a teammate moved by a
 teleport stays put until their own position arrives (`netUpdate` used to send them back to their last
 reported spot, so a downed host's camera went to the map and back, painting ~160 chunks).
+`node fork/test-enemy-grid.cjs` (server) checks the enemy grid in `js/entities/enemy.js` (one fork line, `key`): its XOR
+hash gave a cell and its mirror through the world origin the same bucket, so near the origin, where every run starts,
+`EnemyMgr.queryCircle` listed enemies twice and aura moves hit them twice. Now each cell has its own key.  
 `node fork/test-thief-arrow.cjs` checks the arrow to a Meowth/Gholdengo
 thief says how far it is (`drawHud` in `js/systems/events.js`).
 

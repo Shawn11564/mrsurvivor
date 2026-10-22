@@ -890,7 +890,7 @@
       if (died) corpses.push(e);
     }
 
-    function key(cx, cy) { return cx * 73856093 ^ cy * 19349663; }
+    function key(cx, cy) { return (cx + 1048576) * 2097152 + (cy + 1048576); } // MrSurvivor: one key per cell (the XOR hash gave a cell and its mirror through the origin the same bucket: fork/test-enemy-grid.cjs)
 
     function rebuildGrid() {
       grid.clear();
