@@ -13,6 +13,11 @@
  *    mark      B3.1  a hit stamps the enemy with `mark` × its damage (Future Sight, Doom Desire,
  *                    Psychic); the next hit on it from ANOTHER move sets the stored damage off
  *                    around it (MARK_R px). Marks are per player (each player's copies).
+ *    persist   B3.2  mines that stay `persist` s and hurt each enemy that steps on them (the 14 px
+ *                    step of combat.js's mines), again each HZ_REHIT s it stays (Spikes, Toxic
+ *                    Spikes); `web`: they slow what's in them instead of bursting (String Shot,
+ *                    Sticky Web). `rocks`: each meteor that lands leaves a pointed stone for
+ *                    `rocks` s (Stealth Rock). Hazards are the owner's; a teammate's are drawn only.
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -37,7 +42,20 @@ G.LabMech = (() => {
     'psybeam': {
       evo: { t: '×1.6 damage and a wider beam. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
              m: { dmg: 1.6, width: 1.3 }, set: { mark: 1 } },
-      evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' }
+      evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
+    // B3.2: hazards that stay.
+    'spikes': { add: { persist: 60 },
+      note: 'Lab: the spikes stay for 60 s instead of bursting: every enemy that steps on them is hurt, again each second it stays on them.' },
+    'toxic-spikes': { add: { persist: 60 },
+      note: 'Lab: the spikes stay for 60 s instead of bursting: every enemy that steps on them is hurt and poisoned, again each second it stays on them.' },
+    'string-shot': { add: { persist: 60, web: 1 },
+      note: 'Lab: the webs stay for 60 s instead of bursting: every enemy in a web is slowed, and hurt when it first walks in.',
+      evo: { t: '×1.5 damage, +1 web, bigger webs that slow more. Sticky Web: they stay for 60 s.', m: { dmg: 1.5, radius: 1.3 }, add: { count: 1 }, set: { slow: 0.75 } },
+      evoNote: 'Sticky Web: the webs stay for 60 s: every enemy in one is slowed a lot, and hurt when it first walks in.' },
+    'rock-slide': {
+      evo: { t: '×1.5 damage and +1 rock. Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts the enemies that walk into it.',
+             m: { dmg: 1.5, radius: 1.15 }, add: { count: 1 }, set: { rocks: 75 } },
+      evoNote: 'Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts every enemy that walks into it.' }
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
@@ -198,15 +216,101 @@ G.LabMech = (() => {
     }
   }
 
+  // ---------------- B3.2 persistent hazard fields ----------------
+  // Combat's mines burst on the first step (combat.js updateFields: an enemy within 14 px) and
+  // last 7-8 s. A move with `persist` hands each new mine over to here before it can burst.
+  const HZ_STEP = 14, HZ_REHIT = 1000, HZ_MAX = { spike: 10, web: 6, rock: 14 };
+  let hz = [];
+  /** A hazard of `kind` ('spike' | 'web' | 'rock') at (x, y) for the owner's move m. */
+  function hazard(kind, owner, ghost, m, x, y, dmg, life) {
+    const h = { kind, owner, ghost, m, x, y, dmg, t: 0, life: life || m.persist || m.rocks || 60, col: col(m), last: new Map(), flash: 0,
+                area: kind === 'web' ? (m.radius || 56) * 0.6 : kind === 'rock' ? 24 : Math.max(20, (m.radius || 60) * 0.45), tick: 0 };
+    hz.push(h);
+    const mine = hz.filter(o => o.owner === owner && o.kind === kind && o.m.id === m.id && !o.gone);
+    for (const o of mine.slice(0, Math.max(0, mine.length - HZ_MAX[kind]))) o.gone = true;
+    return h;
+  }
+  /** Mines with `persist` and landing meteors with `rocks` (in Combat's fields) become hazards. */
+  function takeOver(dt) {
+    const fs = C.fields;
+    for (let i = fs.length - 1; i >= 0; i--) {
+      const f = fs[i], m = f.m;
+      if (!m) continue;
+      if (f.kind === 'mine' && m.persist) {
+        fs.splice(i, 1);
+        hazard(m.web ? 'web' : 'spike', f.owner, f.ghost, m, f.x, f.y, f.dmg);
+        G.FX.ring(f.x, f.y, 4, 22, f.col, 0.25, 2);
+      } else if (f.kind === 'meteor' && m.rocks && !f._rock && f.t + dt >= f.fall) {
+        f._rock = true;
+        hazard('rock', f.owner, f.ghost, m, f.x, f.y, f.dmg * 0.6, m.rocks);
+      }
+    }
+  }
+  function tickHz(h, dt) {
+    if (h.flash > 0) h.flash -= dt;
+    if (h.ghost || !h.owner || h.owner.dead) return;
+    const tnow = now();
+    if (h.kind === 'web') {
+      if ((h.tick -= dt) > 0) return;
+      h.tick = 0.25;
+      for (const e of G.EnemyMgr.queryCircle(h.x, h.y, h.area)) {
+        e.applySlow(Math.min(0.85, h.m.slow || 0.6), 0.6);
+        const last = h.last.get(e.id);
+        if (last == null || tnow - last > HZ_REHIT * 2.5) { h.last.set(e.id, tnow); C.hit(h.owner, e, h.dmg * 0.5, h.col, 0, 0, 0, h.m); h.flash = 0.2; }
+      }
+      return;
+    }
+    // Spikes and stones: a step on one (within 14 px of it) hurts what's around it.
+    if (!G.EnemyMgr.queryCircle(h.x, h.y, HZ_STEP).length) return;
+    for (const e of G.EnemyMgr.queryCircle(h.x, h.y, h.area)) {
+      const last = h.last.get(e.id);
+      if (last != null && tnow - last < HZ_REHIT) continue;
+      h.last.set(e.id, tnow);
+      C.hit(h.owner, e, h.dmg, h.col, e.x - h.x, e.y - h.y, h.kind === 'rock' ? 60 : 0, h.m);
+      h.flash = 0.15;
+    }
+    if (h.last.size > 200) for (const [k, t] of h.last) if (tnow - t > HZ_REHIT * 3) h.last.delete(k);
+  }
+  function drawHz(ctx, h) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, (h.life - h.t) / 3, h.t * 5));
+    if (h.kind === 'web') {
+      ctx.strokeStyle = h.flash > 0 ? '#ffffff' : 'rgba(235,235,250,.8)'; ctx.lineWidth = 1;
+      for (const k of [1, 0.62, 0.3]) { ctx.beginPath(); ctx.ellipse(h.x, h.y, h.area * k, h.area * k * 0.6, 0, 0, 6.2832); ctx.stroke(); }
+      for (let i = 0; i < 6; i++) { const q = i / 6 * 6.2832; ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(h.x + Math.cos(q) * h.area, h.y + Math.sin(q) * h.area * 0.6); ctx.stroke(); }
+      return;
+    }
+    // Spikes: three small points; Stealth Rock: two big pointed stones.
+    const big = h.kind === 'rock', n = big ? 2 : 3, sz = big ? 9 : 5;
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.ellipse(h.x, h.y + 1, sz * 1.6, sz * 0.6, 0, 0, 6.2832); ctx.fill();
+    for (let i = 0; i < n; i++) {
+      const ox = (i - (n - 1) / 2) * sz * 0.9, hgt = sz * (big ? 1.7 - i * 0.4 : i === 1 ? 1.3 : 1);
+      ctx.fillStyle = h.flash > 0 ? '#ffffff' : h.col; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(h.x + ox - sz * 0.5, h.y); ctx.lineTo(h.x + ox, h.y - hgt); ctx.lineTo(h.x + ox + sz * 0.5, h.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  }
+
   // ---------------- every frame ----------------
   const update = C.updateFields;
   C.updateFields = function (dt) {
+    if (lab()) takeOver(dt);
     update.apply(this, arguments);
     tickMarks(dt);
+    for (const h of hz) { h.t += dt; if (!h.gone && h.t < h.life) tickHz(h, dt); }
+    if (hz.length) hz = hz.filter(h => !h.gone && h.t < h.life && h.owner);
+  };
+  const ground = C.drawGroundFields;
+  C.drawGroundFields = function (ctx) {
+    ground.apply(this, arguments);
+    if (!hz.length) return;
+    ctx.save();
+    for (const h of hz) if (G.Camera.sees(h.x, h.y, 60)) drawHz(ctx, h);
+    ctx.restore();
   };
   const clear = C.clearFields;
   C.clearFields = function (owner) {
     clear.apply(this, arguments);
+    hz = owner ? hz.filter(h => h.owner !== owner) : [];
     if (!owner) { for (const e of marked) e._labMark = null; marked.clear(); }
     else for (const e of marked) if (e._labMark && e._labMark.owner === owner) { e._labMark = null; marked.delete(e); }
   };
@@ -237,7 +341,10 @@ G.LabMech = (() => {
     /** B3.1: stamps e with `m.mark` × amount for pl (as a hit of m would). */
     mark: (e, pl, m, amount) => stamp(e, pl, Object.assign({ mark: 1 }, m), amount),
     detonate,
-    MARK_R,
-    counts: () => ({ marked: marked.size })
+    /** B3.2: a hazard ('spike' | 'web' | 'rock') of pl's move m at (x, y): dmg per step, life s. */
+    hazard: (kind, pl, m, x, y, dmg, life) => hazard(kind, pl, false, m, x, y, dmg, life),
+    hazards: () => hz,
+    MARK_R, HZ_STEP,
+    counts: () => ({ marked: marked.size, hazards: hz.length })
   };
 })();

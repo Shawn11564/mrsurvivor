@@ -6,17 +6,21 @@
 //   node fork/serve.cjs                 (in the repo root, in another terminal)
 //   node fork/test-lab-mech.cjs [base-url] [--only name,name]
 //
-// mark   B3.1: Psychic marks what it hits; Psybeam evolves into Future Sight, whose beam marks
-//        everything it touches; another move's hit sets the mark off around the enemy (an enemy
-//        the beam missed is hurt too); the same move never sets its own mark off; Doom Desire
-//        marks; the texts say so; a normal run's Psybeam/Psychic don't mark.
+// mark     B3.1: Psychic marks what it hits; Psybeam evolves into Future Sight, whose beam marks
+//          everything it touches; another move's hit sets the mark off around the enemy (an enemy
+//          the beam missed is hurt too); the same move never sets its own mark off; Doom Desire
+//          marks; the texts say so; a normal run's Psybeam/Psychic don't mark.
+// hazards  B3.2: Spikes stay instead of bursting, hurt what steps on them and again a second later,
+//          still there after a mine's 8 s; Toxic Spikes poison; String Shot's webs slow; Rock
+//          Slide evolves into Stealth Rock, whose rocks stay and hurt; a normal run's Spikes burst.
+// built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
 const BASE = args.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 const ONLY = args.includes('--only') ? args[args.indexOf('--only') + 1].split(',') : null;
 const want = name => !ONLY || ONLY.includes(name);
 // Names each mechanic leaves in the built bundle (checked in 'built').
-const BUILT = [];
+const BUILT = ['HZ_STEP'];
 
 let failures = 0;
 const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (!ok && info !== undefined ? ' ' + JSON.stringify(info) : '')); if (!ok) failures++; };
@@ -147,6 +151,72 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       return { mark: fs.mark || ps.mark || 0, marked: !!a._labMark, tip: G.MoveText.tipNotes(fs, pl).length };
     });
     check(!n.mark && !n.marked, 'in a normal run Psybeam and Psychic don\'t mark', n);
+  }
+
+  // ---------------- B3.2 persistent hazard fields ----------------
+  if (want('hazards')) {
+    console.log('B3.2 persistent hazard fields');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, M = G.LabMech, out = {};
+      const mineFields = () => G.Combat.fields.filter(f => f.kind === 'mine').length;
+      // Spikes: they don't burst, they stay.
+      let [sp] = __only(['spikes']);
+      out.tip = G.MoveText.tipNotes(sp, pl).map(n => n[0]).join(' | ');
+      await __fire(sp, 250);
+      const spikes = M.hazards().filter(h => h.kind === 'spike');
+      out.spikes = spikes.length; out.mines = mineFields();
+      const h = spikes[0], a = __dummy(h.x, h.y);
+      await __wait(300);
+      out.hit1 = Math.round(a.maxHp - a.hp);
+      await __wait(1200);
+      out.hit2 = Math.round(a.maxHp - a.hp);
+      a.hp = 0; a.die();
+      // Still there after the 8 s a mine lasts (the game at 8× speed for 1.5 s).
+      G.Game.debugSpeed(8); await __wait(1500); G.Game.debugSpeed(1);
+      out.later = M.hazards().filter(x => x.kind === 'spike').length; out.age = Math.round(h.t);
+      // Toxic Spikes poison.
+      let [ts] = __only(['toxic-spikes']);
+      await __fire(ts, 250);
+      const t0 = M.hazards()[0], b = __dummy(t0.x, t0.y);
+      await __wait(300);
+      out.poison = b.poison;
+      // String Shot: a web that slows.
+      let [ss] = __only(['string-shot']);
+      await __fire(ss, 250);
+      const w = M.hazards().find(x => x.kind === 'web'), c = __dummy(w.x, w.y);
+      await __wait(400);
+      out.web = !!w; out.slow = c.slow; out.webHit = c.hp < c.maxHp;
+      // Stealth Rock: Rock Slide evolved; its rocks stay where they land.
+      let [rs] = __only(['rock-slide'], { lvl: 5, evolve: true });
+      out.rsName = G.T(rs.name, 'move');
+      const d = __dummy(...__at(120)); pl.target = d;
+      await __fire(rs, 1000);
+      const rocks = M.hazards().filter(x => x.kind === 'rock');
+      out.rocks = rocks.length;
+      d.hp = 0; d.die();
+      await __wait(200);
+      const e = rocks[0] && __dummy(rocks[0].x, rocks[0].y);
+      await __wait(300);
+      out.rockHit = e ? Math.round(e.maxHp - e.hp) : 0;
+      return out;
+    });
+    check(/stay for 60 s/.test(r.tip), 'the move box says the spikes stay', r.tip);
+    check(r.spikes === 2 && r.mines === 0, `Spikes leave 2 lasting spikes, no bursting mines (${r.spikes} spikes, ${r.mines} mines)`, r);
+    check(r.hit1 > 0 && r.hit2 >= r.hit1 * 1.8, `an enemy standing on one is hurt when it steps on it and again a second later (${r.hit1}, then ${r.hit2})`, r);
+    check(r.later === 2 && r.age >= 10, `the spikes are still there ${r.age} s later (a mine lasts 8 s)`, r);
+    check(r.poison > 0, `Toxic Spikes poison what steps on them (poison ${r.poison})`, r);
+    check(r.web && r.slow >= 0.55 && r.webHit, `String Shot's web slows (${r.slow}) and hurts what walks in`, r);
+    check(r.rsName === 'Stealth Rock' && r.rocks >= 3, `Rock Slide evolves into Stealth Rock and its rocks stay where they land (${r.rocks})`, r);
+    check(r.rockHit > 0, `a stone hurts an enemy that walks into it (${r.rockHit})`, r);
+
+    await start(false);
+    const n = await page.evaluate(async () => {
+      const [sp] = __only(['spikes']);
+      await __fire(sp, 250);
+      return { mines: G.Combat.fields.filter(f => f.kind === 'mine').length, hz: G.LabMech.hazards().length };
+    });
+    check(n.mines === 2 && n.hz === 0, 'in a normal run Spikes are the usual bursting mines', n);
   }
 
   // ---------------- the built game ----------------
