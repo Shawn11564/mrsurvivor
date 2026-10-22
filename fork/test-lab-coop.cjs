@@ -80,7 +80,8 @@ async function forceStart(host, all) {
 }
 /** Everyone down: the run ends; back to the lobby. */
 async function finish(all) {
-  for (const p of all) await p.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e9); });
+  // (_relocT: a Lab mover's grace, js/fork/lab/mobility.js, counts in game time and a level-up pause keeps it.)
+  for (const p of all) await p.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl._relocT = 0; pl.hurt(1e9); });
   // First the team summary (js/fork/run-stats.js), then each one's own end screen.
   for (const p of all) await p.waitForSelector('#scr-party', { timeout: 20000 });
   for (const p of all) await p.click('#scr-party [data-a=next]');
