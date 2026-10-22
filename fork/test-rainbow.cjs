@@ -9,7 +9,8 @@
 //   2. The gacha screen: the "Rainbow ×25" button (on with a ticket, off without), the count and
 //      the note; a real pull through the button: 25 Pokémon, a Legendary among them, the ticket spent.
 //   3. Where they come from: a rift legendary (1 in 10, forced here), 30:00 in a run (once), and the
-//      4 big achievements (paid once on saving, also to whoever already had them; shown in rewards).
+//      4 big achievements (paid once on saving, also to whoever already had them; shown in rewards), and
+//      Gholdengo (1 in 20 of its ×10 tickets is a rainbow one instead).
 //   4. It stays: after a reload, and in the currency ledger; save.r25 is joined when two copies merge.
 //   5. The ticket count at the top of the menu shows the rainbow tickets too.
 const { chromium, pastStart } = require('./pw.cjs');
@@ -99,6 +100,24 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       return { before, at, later: (s.tickets.t25 | 0) - t0 };
     });
     check(run.before === 0 && run.at === 1 && run.later === 1, '30:00 in a run gives one, once', run);
+    // Gholdengo, the gold thief, built like js/systems/events.js spawnThief does, and knocked out for real (hurt).
+    const gold = await page.evaluate(() => {
+      const s = G.DB.save, pl = G.Game.player, t = () => s.tickets.t25 | 0;
+      const def = { dex: 1000, name: 'Gholdengo', behavior: 'thief', hp: 90, spd: 0, dmg: 0, xp: 10, loot: 'ticket10' };
+      const kill = () => {
+        G.Pickups.clear();
+        const e = new G.Enemy(def, pl.x + 200, pl.y, { hp: 1, spd: 1, dmg: 1 });
+        G.EnemyMgr.add(e); e.hurt(e.maxHp * 10);
+        const p = G.Pickups.all();
+        return { dead: e.dead, t10: p.filter(x => x.kind === 'ticket10').length, coins: p.filter(x => x.kind === 'coin').length };
+      };
+      const t0 = t(); G.Rainbow.forceGold(); const forced = kill(); const got = t() - t0;
+      const t1 = t(); let t10 = 0; const N = 400;
+      for (let i = 0; i < N; i++) t10 += kill().t10;
+      return { forced, got, n: N, rainbows: t() - t1, t10 };
+    });
+    check(gold.forced.dead && gold.got === 1 && gold.forced.t10 === 0 && gold.forced.coins > 0, 'Gholdengo\'s rainbow roll: a rainbow ticket at the kill, no ×10 ticket, the coins as usual', gold);
+    check(gold.rainbows + gold.t10 === gold.n && gold.rainbows >= 6 && gold.rainbows <= 40, `about 1 in 20 of ${gold.n} Gholdengos give a rainbow ticket, the rest the ×10`, gold);
     await page.evaluate(() => { G.Game.quit(); });
 
     console.log('4. It stays');

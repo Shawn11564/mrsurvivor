@@ -5,6 +5,8 @@
  * How you get one:
  *   - by beating a rift legendary, 1 time in 10 (the ×10 comes 1 time in 2);
  *   - by lasting 30:00 in a run (once per run);
+ *   - from Gholdengo, the gold treasure thief: 1 time in 20 its ×10 ticket is a rainbow one (at the kill; to
+ *     the whole group in co-op, sent by the host);
  *   - from 4 big achievements, once: 500 Pokémon, all of them, 20 shinies and 20 minutes survived.
  *     They're paid on save (G.DB.commit) if the achievement is there and wasn't paid yet (save.r25),
  *     also to players who already had it; save.r25 is joined on merge (G.forkMerge).
@@ -55,6 +57,25 @@ G.Rainbow = (() => {
       give(1, 'Has aguantado 30 minutos.');
     }
   }, 1000);
+  // Gholdengo, the gold treasure thief (js/systems/events.js, loot 'ticket10'): 1 time in 20 its ×10 ticket is a
+  // rainbow one instead. Given at the kill like the rift legendary's (no pickup), and in a group to everyone
+  // (tickets are shared there): the host, which runs the enemies, tells the others ({ k:'r25' }).
+  const GOLD = 1 / 20, GOLD_WHY = 'Gholdengo dropped a rainbow ticket.';
+  let forceGold = false;
+  const E = G.Enemy.prototype, die = E.die;
+  E.die = function () {
+    const rainbow = !this.dead && !this.remote && this.behavior === 'thief' && this.def && this.def.loot === 'ticket10' && (forceGold || Math.random() < GOLD);
+    if (!rainbow) return die.apply(this, arguments);
+    forceGold = false;
+    const drop = G.Pickups.drop;
+    G.Pickups.drop = function (kind) { if (kind !== 'ticket10') return drop.apply(this, arguments); };   // not the ×10 too
+    try { die.apply(this, arguments); } finally { G.Pickups.drop = drop; }
+    G.FX.ring(this.x, this.y, 8, 90, '#ff9ed8', 0.6, 5);
+    give(1, GOLD_WHY);
+    if (G.Coop.active && G.Coop.isHost) for (const m of G.Coop.mates) if (m.connected) G.Net.send(m.uid, { k: 'r25' });
+  };
+  G.Net.on((from, msg) => { if (msg && msg.k === 'r25' && G.Coop.active && !G.Coop.isHost && from === G.Net.hostUid) give(1, GOLD_WHY); });
+  G.I18n.add({ [GOLD_WHY]: GOLD_WHY }, 'en');
   for (const a of G.AchDefs.LIST) if (ACH[a.id]) a.reward = Object.assign({}, a.reward, { t25: ACH[a.id] });
   const commit = G.DB.commit;
   G.DB.commit = function () {
@@ -137,5 +158,5 @@ G.Rainbow = (() => {
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 
-  return { give, have, ACH, RIFT, TIME };
+  return { give, have, ACH, RIFT, TIME, GOLD, forceGold() { forceGold = true; } };
 })();
