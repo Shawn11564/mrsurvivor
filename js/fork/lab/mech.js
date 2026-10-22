@@ -18,6 +18,11 @@
  *                    Spikes); `web`: they slow what's in them instead of bursting (String Shot,
  *                    Sticky Web). `rocks`: each meteor that lands leaves a pointed stone for
  *                    `rocks` s (Stealth Rock). Hazards are the owner's; a teammate's are drawn only.
+ *    venoshock B3.3  against a poisoned enemy: × (1 + venoshock × its poison stacks), and the
+ *                    poison is used up (Venoshock, Acid Spray's evolution)
+ *    salts     B3.3  × salts against a stunned or sleeping enemy, and it snaps out of it (Smelling
+ *                    Salts, Wake-Up Slap). (Hex's × on any status is upstream's.) On a co-op guest's
+ *                    copy the state comes from the host: no stacks (counted as 2) and no waking.
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -55,7 +60,12 @@ G.LabMech = (() => {
     'rock-slide': {
       evo: { t: '×1.5 damage and +1 rock. Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts the enemies that walk into it.',
              m: { dmg: 1.5, radius: 1.15 }, add: { count: 1 }, set: { rocks: 75 } },
-      evoNote: 'Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts every enemy that walks into it.' }
+      evoNote: 'Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts every enemy that walks into it.' },
+    // B3.3: converters.
+    'acid-spray': {
+      evo: { t: '×1.6 damage, +2 bounces and +1 shot. Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack).',
+             m: { dmg: 1.6, size: 1.2, spread: 1.3 }, add: { bounce: 2, count: 1 }, set: { venoshock: 0.5 } },
+      evoNote: 'Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack), then poisons it again.' }
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
@@ -170,12 +180,41 @@ G.LabMech = (() => {
     pend = null;
     if (!p || p.e !== this || !p.m || this.dead || !pl || !lab()) return ehurt.apply(this, arguments);
     const m = p.m, mk = this._labMark;
-    const r = ehurt.apply(this, arguments);
+    // B3.3: converters change the damage before it lands.
+    const k = convert(this, m);
+    if (k !== 1) { amount *= k; credit(pl, m, amount - amount / k); }
+    const r = ehurt.call(this, amount, color, dx, dy, knock, eff);
     // B3.1: another move's hit sets the mark off; a marking move stamps (again).
     if (mk && mk.by !== m.id) detonate(this);
     if (m.mark && !this.dead) stamp(this, pl, m, amount);
     return r;
   };
+
+  // ---------------- B3.3 status converters ----------------
+  const st = (e, bit) => !!(e.net && e.net.st & bit);
+  let convAt = 0;
+  /** × for a converter's hit on e (and its side effect: poison used up, woken up). */
+  function convert(e, m) {
+    let k = 1, say = null;
+    if (m.venoshock) {
+      const n = e.remote ? (st(e, 2) ? 2 : 0) : e.poison || 0;
+      if (n > 0) {
+        k *= 1 + m.venoshock * n; say = 'Venoshock ×' + k.toFixed(1);
+        if (!e.remote) { e.poison = 0; e.poisonT = 0; }
+        G.FX.burst(e.x, e.y - e.bodyH * 0.5, '#b55cff', 12, 150);
+      }
+    }
+    if (m.salts) {
+      const asleep = e.labSleep > 0 || e.labSleepNet > 0, stunned = e.stunT > 0 || st(e, 16);
+      if (asleep || stunned) {
+        k *= m.salts; say = (asleep ? 'Wake up! ×' : 'Snap out! ×') + m.salts;
+        if (!e.remote) { e.labSleep = 0; e.stunT = 0; }
+        G.FX.burst(e.x, e.y - e.bodyH * 0.6, '#ffe14d', 10, 140);
+      }
+    }
+    if (say && now() - convAt > 250) { convAt = now(); G.FX.dmgText(e.x, e.y - e.bodyH - 18, say, '#ffe14d', true); }
+    return k;
+  }
 
   // ---------------- B3.1 mark + detonate ----------------
   const marked = new Set();
@@ -344,6 +383,8 @@ G.LabMech = (() => {
     /** B3.2: a hazard ('spike' | 'web' | 'rock') of pl's move m at (x, y): dmg per step, life s. */
     hazard: (kind, pl, m, x, y, dmg, life) => hazard(kind, pl, false, m, x, y, dmg, life),
     hazards: () => hz,
+    /** B3.3: the × a hit of m on e would get from its converters (and their side effects). */
+    convert,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };

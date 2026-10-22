@@ -13,6 +13,8 @@
 // hazards  B3.2: Spikes stay instead of bursting, hurt what steps on them and again a second later,
 //          still there after a mine's 8 s; Toxic Spikes poison; String Shot's webs slow; Rock
 //          Slide evolves into Stealth Rock, whose rocks stay and hurt; a normal run's Spikes burst.
+// convert  B3.3: Smelling Salts and Wake-Up Slap (in real pools) ×3 on stunned or sleeping enemies and
+//          snap them out of it; Acid Spray evolves into Venoshock: ×3 on 4 poison stacks, poison used up.
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -217,6 +219,45 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       return { mines: G.Combat.fields.filter(f => f.kind === 'mine').length, hz: G.LabMech.hazards().length };
     });
     check(n.mines === 2 && n.hz === 0, 'in a normal run Spikes are the usual bursting mines', n);
+  }
+
+  // ---------------- B3.3 status converters ----------------
+  if (want('convert')) {
+    console.log('B3.3 status converters');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, out = {};
+      const pools = [296, 297, 62].map(d => G.Lab.poolFor(G.DEX_BY[d]));
+      out.inPools = pools.some(p => p.includes('smelling-salts')) && pools.some(p => p.includes('wake-up-slap'));
+      /** Damage of one cast of m on a fresh dummy prepared by f. */
+      const one = async (m, f = () => {}) => {
+        G.EnemyMgr.clear();
+        const e = __dummy(...__at(40)); f(e); pl.target = e; pl.aim = 0;
+        const d0 = m.dealt || 0;
+        await __fire(m, 260);
+        return { d: Math.round((m.dealt || 0) - d0), e };       // the move's own damage (no poison ticks)
+      };
+      for (const id of ['smelling-salts', 'wake-up-slap']) {
+        const [m] = __only([id]);
+        const plain = await one(m), stun = await one(m, e => e.applyStun(3)), zz = await one(m, e => G.LabKinds.sleep(e, 3));
+        out[id] = { plain: plain.d, stun: stun.d, sleep: zz.d, stunAfter: stun.e.stunT, sleepAfter: zz.e.labSleep };
+      }
+      // Venoshock: Acid Spray evolved.
+      const [v] = __only(['acid-spray'], { lvl: 5, evolve: true });
+      v.count = 1;                    // one shot, so one hit on the dummy
+      out.vName = G.T(v.name, 'move'); out.vText = G.MoveText.tipNotes(v, pl).map(n => n[0]).join(' | ');
+      const plain = await one(v), pois = await one(v, e => e.applyPoison(4));
+      out.vPlain = plain.d; out.vPois = pois.d; out.poisonAfter = pois.e.poison;
+      return out;
+    });
+    check(r.inPools, 'Smelling Salts and Wake-Up Slap reach real Lab pools through their learnsets (Makuhita, Hariyama, Poliwrath)');
+    for (const id of ['smelling-salts', 'wake-up-slap']) {
+      const x = r[id];
+      check(Math.abs(x.stun / x.plain - 3) < 0.15 && Math.abs(x.sleep / x.plain - 3) < 0.15, `${id}: ×3 on a stunned (${x.stun}) and a sleeping (${x.sleep}) enemy, against ${x.plain}`, x);
+      check(!(x.stunAfter > 0) && !(x.sleepAfter > 0), `${id}: the enemy snaps out of it`, x);
+    }
+    check(r.vName === 'Venoshock' && /uses the poison up/.test(r.vText), 'Acid Spray evolves into Venoshock and its box says what it does', r);
+    check(Math.abs(r.vPois / r.vPlain - 3) < 0.15 && r.poisonAfter <= 1, `Venoshock: ×3 on 4 poison stacks (${r.vPois} against ${r.vPlain}), the poison used up (then 1 again from its own hit: ${r.poisonAfter})`, r);
   }
 
   // ---------------- the built game ----------------

@@ -398,9 +398,10 @@ normal game's data never changes. What it does is said in English under the type
 |---|---|---|
 | mark (B3.1) | Psychic (×0.35), Future Sight (Psybeam's evolution, ×1), Doom Desire (×0.8) | a hit stamps the enemy with `mark` × its damage (up to 4 hits' worth, 6 s; a pink eye over it). The next hit on it from **another** move sets the stored damage off on every enemy within 70 px. Its own hits never set it off; marks are per player |
 | persistent hazards (B3.2) | Spikes, Toxic Spikes (`persist: 60`), String Shot and its evolution Sticky Web (`web`), Stealth Rock (Rock Slide's evolution, `rocks: 75`) | the mines don't burst: each stays `persist` s and hurts what steps on it (an enemy within 14 px, the step of `combat.js`'s mines) and what's around it, again each second it stays; Toxic Spikes poison; webs slow everything in them (Sticky Web 0.75) and hurt what walks in; each of Stealth Rock's rocks stays 75 s as a pointed stone. At most 10 spikes, 6 webs, 14 stones per move; a teammate's are drawn only |
+| status converters (B3.3) | Venoshock (Acid Spray's evolution, `venoshock: 0.5`), Smelling Salts and Wake-Up Slap (new, `salts: 3`; Makuhita, Hariyama, Poliwrath... learn them) | Venoshock: against a poisoned enemy × (1 + 0.5 per poison stack), the poison used up (its own hit poisons again). Salts: ×3 against a stunned or sleeping enemy, which snaps out of it. On a co-op guest the enemy's state comes from the host: poison counts as 2 stacks and nothing is used up or woken. (Hex's × on any status is upstream's.) |
 
 For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,
-`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `labify(s)`, `noteOf(m)`, `ID`.
+`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `labify(s)`, `noteOf(m)`, `ID`.
 
 `node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
 and that a normal run's moves don't change.

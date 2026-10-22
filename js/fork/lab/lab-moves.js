@@ -528,6 +528,14 @@ G.LabMoves = [
   { id: 'fake-out', name: 'Fake Out', type: 'normal', kind: 'melee', cat: 'physical', flinch: 1.2,
     desc: 'A sneaky slap: the first time it hits each enemy, that enemy flinches and can\'t act for a moment.',
     cd: 0.45, dmg: 12, radius: 54, arc: 2.0, knock: 40, look: { melee: 'impact' }, evo: ['Upper Hand', 'cd'] },
+  // ================= phase 10: move identity (js/fork/lab/mech.js) =================
+  // ---- converters (salts): ×3 against stunned or sleeping enemies, and it snaps them out of it ----
+  { id: 'smelling-salts', name: 'Smelling Salts', type: 'normal', kind: 'melee', cat: 'physical', salts: 3,
+    desc: 'A slap with smelling salts: three times the damage to a stunned or sleeping enemy, but it snaps it out of it.',
+    cd: 0.55, dmg: 13, radius: 54, arc: 1.8, knock: 50, look: { melee: 'impact' }, evo: ['Facade', 'atk'] },
+  { id: 'wake-up-slap', name: 'Wake-Up Slap', type: 'fighting', kind: 'melee', cat: 'physical', salts: 3,
+    desc: 'A sharp slap: three times the damage to a sleeping or stunned enemy, but it wakes it up.',
+    cd: 0.55, dmg: 13, radius: 54, arc: 1.8, knock: 60, look: { melee: 'impact' }, evo: ['Arm Thrust', 'atk'] },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],

@@ -60,7 +60,7 @@ How to use it:
 ### Move diversity (stream B)
 - [x] 27. [lab] B2: branching upgrades at level 3 (1ddbefb)
 - [x] 28. [lab] B3.1 mark + detonate (9944067)
-- [ ] 29. [lab] B3.2 persistent hazard fields (claimed: stream B-moves)
+- [x] 29. [lab] B3.2 persistent hazard fields (370e8a7)
 - [ ] 30. [lab] B3.3 status converters (claimed: stream B-moves)
 - [ ] 31. [lab] B3.4 trade-off buffs (claimed: stream B-moves)
 - [ ] 32. [lab] B3.5 decoy / aggro (claimed: stream B-moves)
