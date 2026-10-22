@@ -36,6 +36,7 @@ status table as work lands.
 | 7 | Shinies: move colours from the shiny sprite, +1 reroll (and +10% XP and coins until 2026-10-22) | **done** 2026-10-20 |
 | 8 | Balance script (`fork/balance-lab.cjs`) and the `promote` switch; nothing promoted yet | **done** 2026-10-20 (promotion: owner's call) |
 | 9 | Close range and sustain: 50 official moves, 7 new kinds (grab, bind, focus, heal, screen, shout, endure) and hit effects (drain, revenge, reversal, HP cut...), the survival bot | **done** 2026-10-21 (not play-tested yet) |
+| 10 | Move identity (plan B1, B3.1-B3.7): Lab fields and steps for the normal game's moves, honest evolutions, marks, hazard fields, converters, trade-off buffs, decoys, taunt/attract, combos | in progress 2026-10-22 |
 
 ## Files
 
@@ -45,6 +46,7 @@ status table as work lands.
 | `js/fork/lab/abilities.js` | `G.LabAbilities`: the ability table and its hooks |
 | `js/fork/lab/kinds.js` | `G.LabKinds`: the new move kinds (phase 4), their ladders and evolutions, sleep and confusion, co-op messages |
 | `js/fork/lab/kinds2.js` | `G.LabKinds2`: phase 9's kinds (grab, bind, focus, heal, screen, shout, endure), the hit effects (leech, seed, revenge, reversal, cut, power, flinch), multi-stat buffs, the close-range damage cut |
+| `js/fork/lab/mech.js` | `G.LabMech`: phase 10, move identity (each normal move's Lab fields, steps and evolution) and the new mechanics (mark...) |
 | `js/fork/lab/lab-moves.js` | `G.LabMoves`: moves that only exist in Lab (data only; phases 4 and 5) |
 | `js/fork/lab/anims.js` | `G.LabAnims`: signature moves' own PMD animations (phase 5) |
 | `js/fork/lab/growth.js` | `G.LabGrowth`: in-run evolution, Everstone, items, underdog XP, candies (phase 6) |
@@ -358,6 +360,29 @@ Co-op: hits, stuns and slows go through `hit`, `applyStun` and `applySlow`, whic
 Screens and shouts reach teammates as ghost casts: a teammate's Reflect protects you when you're
 near them, and a teammate's Growl marks your copies of the enemies too. Healing is your own. Not
 checked with two players yet.
+
+## Phase 10: move identity (2026-10-22)
+
+Plan `fork/PLAN-2026-10-22.md` B1 and B3: two moves of the same kind should feel different, and an
+evolved name should do what it says. `js/fork/lab/mech.js` (`G.LabMech`), Lab only.
+
+**Identity of the normal game's moves.** In a Lab run `G.Moves.instance` gives a move listed in
+`G.LabMech.ID` its Lab identity (`labify`): extra fields (`add`), its own upgrade steps where its
+kind's don't fit (`upsAt`, the kind's ladder stays the default) and its own evolution (`evo`:
+`{ t, m: ×, add: +, set: = }`, applied by the `G.Moves.evoInfo/evolve` wrappers before the kinds'
+own). A Lab move can bring `labEvo` the same way. The instance gets its own copy of its `def`, so the
+normal game's data never changes. What it does is said in English under the type in the move's box
+(`note` / `evoNote` through `G.MoveText.tipNotes`, teal), on its new-move card and on the evolution card.
+
+| Mechanic | Moves | What it does |
+|---|---|---|
+| mark (B3.1) | Psychic (×0.35), Future Sight (Psybeam's evolution, ×1), Doom Desire (×0.8) | a hit stamps the enemy with `mark` × its damage (up to 4 hits' worth, 6 s; a pink eye over it). The next hit on it from **another** move sets the stored damage off on every enemy within 70 px. Its own hits never set it off; marks are per player |
+
+For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,
+`detonate(e)`, `labify(s)`, `noteOf(m)`, `ID`.
+
+`node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
+and that a normal run's moves don't change.
 
 ## Texts and looks match the code (2026-10-21)
 
