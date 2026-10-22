@@ -141,8 +141,12 @@
     let membersKey = '';
     // Listos: con todos listos, cuenta atrás y la partida empieza sola (la lanza el
     // anfitrión); el anfitrión también puede forzar el inicio con el botón de siempre.
+    // The host runs the countdown and tells the guests ('lcd'), so a guest never counts to 0
+    // while the host can't start (still connecting, or away from the lobby). A guest at 0 asks
+    // the host to start ('lgo'): a message wakes a host whose background tab barely runs timers.
+    // Checked by fork/test-lobby-start.cjs.
     const COUNTDOWN = 3;
-    let cd = null;                       // { end, iv } mientras dura la cuenta atrás
+    let cd = null;                       // { end, iv, asked } mientras dura la cuenta atrás (a guest's: the host's)
 
     function init() {
       $('lobby-leave').onclick = async () => {
@@ -150,7 +154,8 @@
         G.Net.close();
         G.MenuUI.open();
       };
-      $('lobby-menu').onclick = () => G.MenuUI.open();
+      // Ready means waiting in the lobby: going to the menu takes it back.
+      $('lobby-menu').onclick = () => { G.Social.setReady(false); G.MenuUI.open(); };
       $('lobby-start').onclick = start;
       $('lobby-start').dataset.sfx = 'confirm';
       $('lobby-ready').onclick = () => {
@@ -177,6 +182,17 @@
         if (G.UI.isOpen('scr-lobby')) render();
       });
       G.Net.onPeer(() => { if (G.UI.isOpen('scr-lobby')) render(); });
+      G.Net.on((from, msg) => {
+        const room = G.Social.room;
+        if (!msg || !room || !G.UI.isOpen('scr-lobby')) return;
+        if (msg.k === 'lcd' && !room.isHost && from === room.host) {
+          if (!(msg.ms >= 0)) { stopCountdown(); render(); return; }
+          if (!cd) startCountdown(msg.ms); else cd.end = performance.now() + msg.ms;
+          tickCountdown();
+        } else if (msg.k === 'lgo' && room.isHost && cd && performance.now() >= cd.end - 1500) {
+          stopCountdown(); start();
+        }
+      });
     }
 
     function open() {
@@ -190,14 +206,23 @@
 
     function close() { G.UI.hide('scr-lobby'); stopCountdown(); }
 
-    function stopCountdown() { if (cd) { clearInterval(cd.iv); cd = null; } }
+    /** tell: the host lets the guests know it stopped. */
+    function stopCountdown(tell) {
+      if (!cd) return;
+      clearInterval(cd.iv); cd = null;
+      if (tell) G.Net.broadcast({ k: 'lcd', ms: -1 });
+    }
+    function startCountdown(ms) { stopCountdown(); cd = { end: performance.now() + ms, iv: setInterval(tickCountdown, 200), asked: 0 }; }
     function tickCountdown() {
       const room = G.Social.room;
-      if (!room || !G.UI.isOpen('scr-lobby')) { stopCountdown(); return; }
-      const left = Math.max(0, Math.ceil((cd.end - performance.now()) / 1000));
-      $('lobby-note').textContent = G.I18n.f('Todos listos: empieza en {x}…', left);
-      if (left <= 0 && room.isHost) { stopCountdown(); start(); }
+      if (!room || !G.UI.isOpen('scr-lobby')) { stopCountdown(room && room.isHost); return; }
+      const now = performance.now(), left = Math.max(0, Math.ceil((cd.end - now) / 1000));
+      $('lobby-note').textContent = left > 0 || now - cd.end < 2000 ? G.I18n.f('Todos listos: empieza en {x}…', left) : WAIT_HOST;
+      if (left > 0) return;
+      if (room.isHost) { stopCountdown(); start(); }
+      else if (now - cd.asked > 1000) { cd.asked = now; G.Net.toHost({ k: 'lgo' }); }
     }
+    const WAIT_HOST = "Everyone's ready: waiting for the host to start…";
 
     function connText(m, room) {
       if (m.away) return 'Reconectando…';
@@ -287,10 +312,14 @@
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
         : connecting ? 'Conectando con tus amigos…' : 'Cuando estéis todos listos, la partida empieza sola. Puedes forzar el inicio.';
       // Todos listos (y, el anfitrión, conectado con todos): cuenta atrás. Si alguien deja de estarlo, se para.
-      const go = allReady && (!room.isHost || (!connecting && !failed));
-      if (go && !cd) { cd = { end: performance.now() + COUNTDOWN * 1000, iv: setInterval(tickCountdown, 200) }; tickCountdown(); }
-      else if (!go) stopCountdown();
-      else tickCountdown();
+      if (room.isHost) {
+        const go = allReady && !connecting && !failed;
+        if (go && !cd) startCountdown(COUNTDOWN * 1000);
+        else if (!go) stopCountdown(true);
+        if (cd) { G.Net.broadcast({ k: 'lcd', ms: Math.max(0, cd.end - performance.now()) }); tickCountdown(); }
+      } else if (!allReady) stopCountdown();
+      else if (cd) tickCountdown();
+      else $('lobby-note').textContent = WAIT_HOST;
     }
 
     function start() {

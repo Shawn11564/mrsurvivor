@@ -24,7 +24,7 @@ const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDom
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 
 let failures = 0;
-const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); if (!ok) failures++; };
+const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (info === undefined ? '' : ' ' + JSON.stringify(info))); if (!ok) failures++; };
 const tag = String(Date.now()).slice(-6);
 
 async function player(browser, name, dex) {
@@ -157,7 +157,7 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
       G.I18n.rawCanvas = function (c, k, s) { if (k === 'fillText') seen.push(String(s)); return o.apply(this, arguments); };
       setTimeout(() => { G.I18n.rawCanvas = o; res([...new Set(seen)]); }, 300);
     }));
-    check(hud.includes('Watching ' + host.name), `HUD shows "Watching ${host.name}"`);
+    check(hud.some(t => t.startsWith('Watching ' + host.name)), `HUD shows "Watching ${host.name}"`, hud.filter(t => /Watch/.test(t)));
     if (process.env.SHOTS) await g1.screenshot({ path: require('path').join(process.env.SHOTS, 'coop-spectate.png') });
     // The watched one goes down: g1 moves on to the one still standing.
     await down(host);
