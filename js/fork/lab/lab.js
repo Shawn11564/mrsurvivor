@@ -13,9 +13,9 @@
  * In a Lab run:
  *   - G.Moves.poolFor(mon) gives its Lab list (poolFor, below): what it learns in the games.
  *   - its ability (js/fork/lab/abilities.js)
- *   - it doesn't go on the leaderboard (G.Game.taint) and doesn't count for missions, achievements or records: the
- *     G.Progress notices are muted and save.stats goes back to how it was at the end. Coins,
- *     tickets and shinies do count.
+ *   - it doesn't go on the leaderboard (G.Game.taint) and doesn't count for achievements or records: the
+ *     G.Progress notices are muted and save.stats goes back to how it was at the end. Missions,
+ *     coins, tickets and shinies do count (missions() below). Test: fork/test-lab-missions.cjs.
  *   - "LAB" on the HUD, its ability and its list in the pause menu, and a note on the final summary.
  * Co-op lobby: the host sends { k:'lab', on, v } to each player on connecting and when
  * the setting changes (only over the direct connection between players), and the lobby shows it.
@@ -220,14 +220,41 @@ G.Lab = (() => {
     Object.assign(s, stats0);
     stats0 = null;
   }
-  // Missions and achievements: muted in a Lab run. 'runEnd' arrives right after
-  // endRun (game.js) records the stats: that's where they're put back.
+  // Achievements, stats and collections: muted in a Lab run. 'runEnd' arrives right after
+  // endRun (game.js) records the stats: that's where they're put back. Missions do count:
+  // progress.js advances them inside event() with everything else, so here they're advanced
+  // on their own (same rules as its advance()).
   for (const k of ['event', 'kill', 'checkAch']) {
     const f = G.Progress[k];
-    G.Progress[k] = function (kind) {
+    G.Progress[k] = function (a, d) {                 // event(kind, data) · kill(enemy) · checkAch()
       if (!active()) return f.apply(this, arguments);
-      if (k === 'event' && kind === 'runEnd') restoreStats();
+      if (k === 'event') { if (a === 'runEnd') restoreStats(); missions(a, d || {}); }
+      // As progress.js kill(): Arceus's legendaries in the Judgment aren't bosses.
+      else if (k === 'kill' && a) missions('kill', { types: a.types || [], boss: !!a.boss && !(G.Judgment && G.Judgment.active) });
     };
+  }
+  function missions(kind, d) {
+    const s = G.DB.save;
+    if (!s) return;
+    G.Progress.ensure(s);
+    for (const m of [...s.missions.daily, ...s.missions.weekly]) {
+      if (m.claimed || G.Progress.done(m)) continue;
+      const def = G.MissionDefs.BY[m.id];
+      if (!def || def.ev !== kind || (def.match && !def.match(d, m.param))) continue;
+      const v = def.value ? def.value(d) : 1;
+      m.prog = def.mode === 'max' ? Math.max(m.prog, v) : m.prog + v;
+      if (G.Progress.done(m) && !m.told) { m.told = true; told(m); }
+    }
+  }
+  /** The same popup as progress.js notify() (not exported), for a mission finished in a Lab run. */
+  function told(m) {
+    let el = document.getElementById('ach-pop');
+    if (!el) { el = document.createElement('div'); el.id = 'ach-pop'; el.className = 'box ach-pop'; document.body.appendChild(el); }
+    el.innerHTML = `${G.Icons.html('medal2', 24)}<div><b>${esc('Misión completada: ' + G.Progress.text(m))}</b><small>${esc('Recoge el premio en Misiones')}</small></div>`;
+    el.classList.remove('hidden');
+    G.Audio.sfx('confirm');
+    clearTimeout(told.t);
+    told.t = setTimeout(() => el.classList.add('hidden'), 2800);
   }
 
   // ---------------- co-op ----------------
@@ -251,7 +278,7 @@ G.Lab = (() => {
   G.Social.on(what => { if (what === 'room') lobby(); });
 
   // ---------------- what you see ----------------
-  const NOTE = 'Lab run: experimental moves and abilities. It won\'t count for leaderboards, missions, achievements or records.';
+  const NOTE = 'Lab run: experimental moves and abilities. It won\'t count for leaderboards, achievements or records.';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /** The group lobby: will it be Lab? */
@@ -264,14 +291,14 @@ G.Lab = (() => {
     el.classList.toggle('hidden', !on);
     el.innerHTML = '<span class="lab-badge">LAB</span> ' + esc(other
       ? 'The host has a different version of Lab mode. Reload the page so you both see the same moves.'
-      : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It won\'t count for leaderboards, missions, achievements or records.');
+      : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It won\'t count for leaderboards, achievements or records.');
   }
 
   /** The Settings → Experimental tab (settings-ui.js draws it with its own pieces). */
   function settingsRow(toggle, section) {
     return section('Experimental')
       + toggle('lab', 'Lab mode', 'Try moves and abilities that are still being tested: each Pokémon gets the moves it learns in the games and one of its abilities. '
-        + 'Lab runs give coins, tickets and shinies as usual, but don\'t count for leaderboards, missions, achievements or records. In co-op, the host\'s setting decides.');
+        + 'Lab runs give coins, tickets and shinies and count for missions as usual, but not for leaderboards, achievements or records. In co-op, the host\'s setting decides.');
   }
 
   /** Pause: its ability and what it can learn here. */

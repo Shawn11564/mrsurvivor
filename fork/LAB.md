@@ -12,6 +12,7 @@ status table as work lands.
 | 2026-10-20 | Experimental is its own Settings tab (before Account); `lab.js` adds the tab button. |
 | 2026-10-20 | In co-op the **host's** setting decides for the whole run; guests don't need it on. |
 | 2026-10-20 | Lab runs give **coins, tickets and shinies** as usual, but don't count for **leaderboards, missions, achievements or personal records/stats**. |
+| 2026-10-22 | Lab runs **count for missions** too (the owner's call: missions didn't move for players who play Lab); still not for leaderboards, achievements or records/stats. |
 | 2026-10-20 | Phases go in the listed order. |
 | 2026-10-20 | Lab texts are **English only** (no other translations); in other languages they show in English. |
 | 2026-10-20 | All Lab code lives in `js/fork/lab/`; upstream files only get one-line hooks (merge conflicts, see `CLAUDE.local.md`). |

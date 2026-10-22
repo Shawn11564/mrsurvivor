@@ -14,8 +14,8 @@
 //      Caterpie topped up to the minimum); Swift can be learned and cast (star projectiles,
 //      no errors); its ability is attached (Charmander: Blaze); "LAB" on the HUD; the pause
 //      screen shows the ability and the pool.
-//   4. Protections: the Lab run is not sent to the leaderboard, save.stats, missions and
-//      achievements are as before, coins are kept, the summary says it's a Lab run and shows
+//   4. Protections: the Lab run is not sent to the leaderboard, save.stats and
+//      achievements are as before (missions do count: fork/test-lab-missions.cjs), coins are kept, the summary says it's a Lab run and shows
 //      no time record; back in the menu G.Lab.active is false and pools are normal again.
 //   5. Abilities, on a real Player: damage taken (Levitate, Thick Fat, Intimidate, Water
 //      Absorb, Wonder Guard, Sturdy), damage dealt (Blaze, Technician, Sheer Force), speed in
@@ -187,7 +187,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   });
   check(after.sent === 1, 'the Lab run is not sent to the leaderboard');
   check(after.stats === before.stats, 'save.stats (records, run counts) are as before');
-  check(after.ach === before.ach && after.missions === before.missions, 'missions and achievements are as before');
+  check(after.ach === before.ach, 'achievements are as before');
   check(after.coins > before.coins, `coins are kept (${before.coins} → ${after.coins})`);
   check(after.note && !after.record, 'the summary says it was a Lab run and shows no time record');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'lab-over.png') });
