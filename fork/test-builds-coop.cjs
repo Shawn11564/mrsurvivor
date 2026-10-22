@@ -9,6 +9,7 @@
 // 1. Branches (js/fork/lab/branches.js): the guest's branched Flamethrower is drawn on the host as it
 //    is: Heat Wave's wider fan with its flame count, Fire Spin as a Fire bind (also once evolved), and
 //    the guest's Fire Spin holds the host's enemies.
+// 2. Sets (js/fork/lab/sets.js): the guest's Fire set puts more burn stacks on the host's enemies.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -120,6 +121,22 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await settle(host, () => window.__ghosts.some(g => g.id === 'flamethrower' && g.evolved), undefined, 6000);
     const g3 = await lastGhost();
     check(g3 && g3.evolved && g3.kind === 'bind' && g3.branch === 'a' && g3.lvl === 5, 'evolved, it is still the branched bind on the host', { guest: ev, host: g3 });
+
+    console.log('2. Sets');
+    // The guest's Fire set: one more burn stack on the host's enemies (applyBurn goes to the host).
+    const burnOn = async moves => {
+      await guest.evaluate(ms => { const pl = G.Game.player; pl.slots.length = 0; pl.moves.length = 0; for (const id of ms) pl.addMove(id); pl.active = 0; }, moves);
+      await host.evaluate(ids => { for (const id of ids) { const e = G.EnemyMgr.get(id); if (e) { e.burn = 0; e.burnT = 0; } } }, ids);
+      await settle(host, ids => ids.some(id => { const e = G.EnemyMgr.get(id); return e && e.burn > 0; }), ids, 6000);
+      await host.waitForTimeout(150);
+      return host.evaluate(ids => Math.max(...ids.map(id => (G.EnemyMgr.get(id) || {}).burn || 0)), ids);
+    };
+    const b2 = await burnOn(['ember', 'flamethrower']);
+    await guest.evaluate(() => { G.Game.player.moves.length = 0; G.Game.player.slots.length = 0; });
+    await host.evaluate(ids => { for (const id of ids) { const e = G.EnemyMgr.get(id); if (e) { e.burn = 0; e.burnT = 0; } } }, ids);
+    await host.waitForTimeout(500);
+    const b3 = await burnOn(['ember', 'flamethrower', 'heat-wave']);
+    check(b3 > b2, `the guest's Fire set burns the host's enemies one stack more (${b2} → ${b3} after the first hits)`, { b2, b3 });
 
     for (const p of ALL) check(p.errs.length === 0, `no page errors (${p.name})`, p.errs.slice(0, 3));
   } finally {

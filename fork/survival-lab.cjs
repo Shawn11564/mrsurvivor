@@ -9,6 +9,7 @@
 //   --runs   runs per build (default 3; the median is reported)
 //   --max    stop a run that lasts this many game seconds (default 900)
 //   --only   just these builds (names from BUILDS below)
+//   --no-sets  with Lab's set bonuses off (js/fork/lab/sets.js), to measure what they add
 //
 // The setup is the same for every build, so the numbers compare builds, not Pokémon:
 //   - the player is Mew's stats with no type and no ability; no XP (no level-up cards, no HP
@@ -59,6 +60,10 @@ const BUILDS = [
   { name: 'close: Karate Chop, Endure',  bot: 'close', slots: [['karate-chop'], ['endure']] },
   { name: 'close: Drain Punch, Growl, Reflect, Endure', bot: 'close', slots: [['drain-punch'], ['growl'], ['reflect'], ['endure']] },
   { name: 'far: Aura Sphere, Recover',   bot: 'far',   slots: [['aura-sphere'], ['recover']] },
+  // phase 11 (js/fork/lab/sets.js): three moves of a set; compare with --no-sets
+  { name: 'far: Fire set (Ember + Flamethrower + Heat Wave)', bot: 'far', slots: [['ember'], ['flamethrower'], ['heat-wave']] },
+  { name: 'close: Fighting set (Karate Chop + Dynamic Punch + Rolling Kick)', bot: 'close', slots: [['karate-chop'], ['dynamic-punch'], ['rolling-kick']] },
+  { name: 'close: Physical set (Bite + Body Slam + Tackle)', bot: 'close', slots: [['bite'], ['body-slam'], ['tackle']] },
   { name: 'far: Aura Sphere, Light Screen, Recover, Endure', bot: 'far', slots: [['aura-sphere'], ['light-screen'], ['recover'], ['endure']] }
 ];
 
@@ -85,7 +90,8 @@ async function oneRun(browser, b) {
     });
     await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Lab.active, null, { timeout: 60000 });
     release();
-    return await page.evaluate(async ([b, speed, max]) => {
+    return await page.evaluate(async ([b, speed, max, noSets]) => {
+      if (noSets && G.LabSets) G.LabSets.off = true;
       for (const k of ['Events', 'Rift', 'Hazards']) G[k].update = () => {};
       G.Weather.reset(); G.Weather.update = () => {};
       G.LevelUp.offer = () => [];
@@ -149,7 +155,7 @@ async function oneRun(browser, b) {
         }, 250);
       });
       return { secs: G.Game.st.time - t0, dead: pl.dead, dealt: Math.round(pl.dmgDealt) };
-    }, [b, SPEED, MAX]);
+    }, [b, SPEED, MAX, args.includes('--no-sets')]);
   } finally {
     release();
     if (errors.length) console.log(`\n  page errors (${b.name}): ${errors.slice(0, 2).join(' | ')}`);
