@@ -43,7 +43,9 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
 
   // Charmander: fire, starts with a fire move.
-  await page.evaluate(() => { G.DB.save.partner = 4; G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.MenuUI.open(); });
+  // A neutral nature (Hardy): natures (upstream, 2026-10-21) are rolled per save and one like Adamant makes
+  // Charmander physical, whose pool has no physical boost to flag (the boost check below).
+  await page.evaluate(() => { G.DB.save.partner = 4; G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.DB.save.pnat = { 4: ['hardy', Date.now()] }; G.MenuUI.open(); });
 
   console.log('Collection: Power sort');
   await page.click('#scr-menu [data-go="dex"]');

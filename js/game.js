@@ -494,11 +494,14 @@ G.Game = (() => {
     if (G.Coop.active) G.Coop.holdStart();
     G.Audio.sfx('levelup');
     G.RunUI.showBond(opt, picked => {
-      const group = pl.fuse(picked, opt.group);
-      G.Audio.sfx('legend');
-      G.FX.ring(pl.x, pl.y, 8, 130, '#ff8ad8', 0.8, 6);
-      G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
-      G.Spawner.say('¡Vínculo! ' + group.length + ' movimientos a la vez', 2.6, true);
+      // Fork: picked null = "Keep them apart", already paid for by js/fork/bond-skip.js.
+      if (picked) {
+        const group = pl.fuse(picked, opt.group);
+        G.Audio.sfx('legend');
+        G.FX.ring(pl.x, pl.y, 8, 130, '#ff8ad8', 0.8, 6);
+        G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
+        G.Spawner.say('¡Vínculo! ' + group.length + ' movimientos a la vez', 2.6, true);
+      }
       if (state === 'choice') { if (holdBy.length) state = 'held'; else countIn(); }
       // (Con otro vínculo por abrir sigues "eligiendo": lo suelta G.Coop.holdSync en frame.)
       if (G.Coop.active && !bondBusy()) G.Coop.holdEnd();

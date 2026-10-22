@@ -85,3 +85,6 @@ p.fork-credit { font-size: 0.9em; }
 .rad-glow-row canvas { flex: none; width: 96px; height: 96px; border-radius: 10px; background: #0c111b; image-rendering: pixelated; }
 .rad-glow-row input[type=range] { flex: 1; }
 .rad-glow-row #set-radglow-v { min-width: 44px; text-align: right; color: #ffd08a; }
+
+/* Bond screen: the note under a move's description (js/ui/run-ui.js renderBond). */
+.card .ds.bond-note { color: #ffb3e6; margin-top: 2px; }

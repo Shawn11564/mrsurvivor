@@ -212,9 +212,10 @@ G.RunUI = (() => {
     box.innerHTML = '';
     bond.list.forEach((m, i) => {
       const col = G.U.TYPE_COLOR[m.type];
-      const desc = opt.mode === 'add' ? 'Se lanzará a la vez que ' + names(opt.group) + '.'
-        : step2 ? 'Se lanzará a la vez que ' + G.T(first.name, 'move') + '. Queda un hueco libre.'
-        : m.desc || '';
+      // Fork: the move's description stays, with the bond's note under it (fork/test-bond-skip.cjs).
+      const note = opt.mode === 'add' ? 'Se lanzará a la vez que ' + names(opt.group) + '.'
+        : step2 ? 'Se lanzará a la vez que ' + G.T(first.name, 'move') + '. Queda un hueco libre.' : '';
+      const desc = (m.desc || '') + (note ? `</div><div class="ds bond-note">${note}` : '');
       const el = document.createElement('div');
       el.className = 'card' + (opt.mode === 'add' || step2 ? ' bond' : '');
       el.innerHTML =
