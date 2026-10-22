@@ -131,7 +131,7 @@ G.RunStats = (() => {
     el.innerHTML = `<div class="box center" style="width:min(640px,100%)">
       <h2>Resumen del equipo</h2>
       <table class="sum-moves party-sum"><tr><th>Jugador</th><th class="num">Derrotados</th><th class="num">Caídas</th><th class="num">Rescates</th>
-        <th class="num">Daño</th><th class="num">Recibido</th></tr>
+        <th class="num">Daño</th><th class="num">Daño recibido</th></tr>
         ${rows.map(r => `<tr${r.uid === me() ? ' class="me"' : ''}>
           <td><i class="pdot" style="background:${r.color}"></i><b translate="no" style="color:${r.color}">${esc(r.name)}</b>
             ${r === best && r.d > 0 ? `<span title="Más daño del equipo">${G.Icons.html('crown', 12)}</span>` : ''}

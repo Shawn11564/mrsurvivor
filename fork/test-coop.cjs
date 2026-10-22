@@ -287,6 +287,8 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     const tables = await Promise.all(ALL.map(p => p.evaluate(() => [...document.querySelectorAll('#scr-party tr')].slice(1).map(tr =>
       [...tr.querySelectorAll('td')].map(td => td.textContent.trim().replace(/\s+/g, ' '))))));
     console.log('  party summary (host view): ' + JSON.stringify(tables[0]));
+    const heads = await host.evaluate(() => [...document.querySelectorAll('#scr-party th')].map(th => th.textContent.trim()));
+    check(heads[heads.length - 1] === 'Damage taken', 'the last column says "Damage taken" (it said "Taken", read as "Token")', heads);
     const meRow = await Promise.all(ALL.map(p => p.evaluate(() => [...document.querySelectorAll('#scr-party tr')].slice(1).findIndex(tr => tr.classList.contains('me')))));
     check(meRow.join() === '0,1,2', `each player's own row is highlighted (${meRow})`);
     check(tables.every(t => JSON.stringify(t) === JSON.stringify(tables[0])) && tables[0].length === 3, 'all three see the same team summary, one row each');
