@@ -12,7 +12,7 @@
 //   2. The host turns Hearts on mid-run: both guests see the host's hearts.
 //   3. Guest A turns Hearts off: nobody sees A's hearts any more.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 

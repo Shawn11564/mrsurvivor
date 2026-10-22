@@ -13,7 +13,7 @@
 //   4. Merging: the copy that reset keeps its upgrades over an older one with them maxed; two devices
 //      that each found gems add up (the ledger).
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };

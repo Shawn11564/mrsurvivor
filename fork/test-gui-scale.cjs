@@ -16,7 +16,7 @@
 //      window, don't sit under the top bar, and no box scrolls for only a little more than it holds (a box
 //      that only just didn't fit is squeezed instead; a long list still scrolls, inside its box).
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOTS = process.env.SHOTS;
 
 let failures = 0;

@@ -18,7 +18,7 @@
 const http = require('http');
 const up = url => new Promise(r => http.get(url, res => { res.resume(); r(true); }).on('error', () => r(false)));
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 const tag = String(Date.now()).slice(-6);

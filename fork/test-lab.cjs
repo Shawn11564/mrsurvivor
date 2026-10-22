@@ -39,7 +39,7 @@
 // Co-op (host on, guest off; host off, guest on) is in fork/test-lab-coop.cjs.
 const path = require('path');
 const { chromium, pastStart, pickStarter } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOTS = process.argv[3] || null;
 
 let failures = 0;

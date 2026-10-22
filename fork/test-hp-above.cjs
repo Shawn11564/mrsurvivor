@@ -11,7 +11,7 @@
 //      It follows you, and it's gone while you're down.
 //   3. Co-op: the top left still lists your teammate with their HP; your own bar is above you.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 

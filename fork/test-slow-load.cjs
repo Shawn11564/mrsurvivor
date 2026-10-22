@@ -10,7 +10,7 @@
 // page error that failed other tests now and then under load. Here js/game.js is held back 3 s.
 // (The built index.html has everything in one file, so G.Game is there before any timer runs.)
 const { chromium } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });

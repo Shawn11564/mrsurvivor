@@ -15,7 +15,7 @@
 //   3. Back to the host's tab: still one game loop (no doubled speed).
 const { chromium, pastStart } = require('./pw.cjs');
 const { spawn } = require('child_process'), os = require('os'), path = require('path'), fs = require('fs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EDGE = process.env.EDGE || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const PORT = 9300 + Math.floor(Math.random() * 500);
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',

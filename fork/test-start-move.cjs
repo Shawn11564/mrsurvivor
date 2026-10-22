@@ -11,7 +11,7 @@
 //   3. The two picks are separate: each run gets its own, and both survive a reload.
 //   4. A normal pick that the Lab list doesn't have: the Lab run starts with the default, not with it.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const DEX = 813;                                     // Scorbunny: Ember by default, Pyro Ball in the Lab
 
 let failures = 0;

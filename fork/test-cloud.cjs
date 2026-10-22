@@ -22,9 +22,9 @@
 const path = require('path'), fs = require('fs');
 const { pickStarter } = require('./pw.cjs');
 const { chromium } = require(require.resolve('playwright', {
-  paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')]
+  paths: require('./pw.cjs').NODE_DIRS
 }));
-const BASE = (process.argv[2] || 'http://127.0.0.1:8123').replace(/\/$/, '');
+const BASE = (process.argv[2] || require('./pw.cjs').BASE).replace(/\/$/, '');
 const LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(BASE + '/');
 const NAME = 'cctest' + String(Date.now()).slice(-6);
 const PASS = 'pw-' + Math.random().toString(36).slice(2, 12);

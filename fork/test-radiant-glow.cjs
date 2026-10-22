@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium, pastStart, pickStarter } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOTS = process.env.SHOTS;
 
 let failures = 0;

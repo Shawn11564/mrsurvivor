@@ -16,7 +16,7 @@
 //   4. In Lab runs: no XP or coin extra any more (since 2026-10-22), +1 reroll for the shiny and +2 for
 //      the radiant (against the same Pokémon's normal run), and the pause screen says so, with the run's roll.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const LIST = { 150: { rarity: 5 } };
 
 let failures = 0;

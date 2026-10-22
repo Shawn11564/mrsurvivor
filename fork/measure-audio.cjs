@@ -12,7 +12,7 @@
 // limiter). At the defaults it also passes/fails: no effect above -8 dBFS, music and runs at
 // most -24 dBFS RMS. AUDIO='{"music":1,"sfx":1}' measures other slider values instead.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });

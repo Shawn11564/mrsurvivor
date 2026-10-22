@@ -22,7 +22,7 @@
 // 11. Close range: with a grab/bind/focus/ramp move active you take 25% less, like melee.
 // 12. Metronome never calls the support kinds; a grab evolves at its top level; Iron Fist boosts Drain Punch.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (!ok && info !== undefined ? ' ' + JSON.stringify(info) : '')); if (!ok) failures++; };

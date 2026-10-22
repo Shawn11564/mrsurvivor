@@ -9,7 +9,7 @@
 //   2. It fills with the banner's pulls without a Legendary: 0, 95 (9 full and half of one), 199.
 //   3. Switching banners shows that banner's count; a real pull moves it on.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOT = process.argv[3];
 
 let failures = 0;

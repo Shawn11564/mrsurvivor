@@ -29,7 +29,7 @@ const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
 const flag = f => args.includes(f);
 const SECS = +(args[args.indexOf('--secs') + 1] || 0) || 6;
-const BASE = args.find(a => /^https?:/.test(a)) || 'http://127.0.0.1:8123';
+const BASE = args.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 const OUT = path.join(__dirname, 'BALANCE-LAB.md');
 const SPEED = 4, STRONG = 1.6, WEAK = 0.6;
 // The new kinds (js/fork/lab/kinds.js) next to the old kind they play most like.

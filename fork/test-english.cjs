@@ -29,7 +29,7 @@ const fs = require('fs'), os = require('os'), path = require('path'), vm = requi
 const { spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const args = process.argv.slice(2);
-const BASE = args.find(a => !a.startsWith('--')) || 'http://127.0.0.1:8123';
+const BASE = args.find(a => !a.startsWith('--')) || require('./pw.cjs').BASE;
 const PAGES_ONLY = args.includes('--pages-only'), LIST = args.includes('--list'), NO_WALK = args.includes('--no-walk');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
@@ -153,7 +153,7 @@ function finish() {
 
 /** The fork's own texts: its string literals that read as words (js/fork, not the generated data). */
 function forkTexts() {
-  const acorn = require(require.resolve('acorn', { paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')] }));
+  const acorn = require(require.resolve('acorn', { paths: require('./pw.cjs').NODE_DIRS }));
   const out = new Set();
   (function walk(dir) {
     for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
@@ -187,7 +187,7 @@ function forkTexts() {
  * loaded: the dictionaries the page loaded, [[keys, English values], ...].
  */
 function spanishSources(loaded) {
-  const acorn = require(require.resolve('acorn', { paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')] }));
+  const acorn = require(require.resolve('acorn', { paths: require('./pw.cjs').NODE_DIRS }));
   const words = s => (String(s).toLowerCase().match(/[\p{L}’']+/gu) || []).map(w => w.replace(/^['’]+|['’]+$/g, '')).filter(w => w.length > 1);
   const english = new Set(), spanish = new Set(), texts = new Map();
   const tidy = s => String(s).replace(/\s+/g, ' ').trim();

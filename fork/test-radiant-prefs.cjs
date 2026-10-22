@@ -15,7 +15,7 @@
 //   5. The Radiant filter: only the radiants you own (not Pikachu, a shiny), kept with the other
 //      filters (ms.dex), and off again shows the rest.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const LIST = { 6: { rarity: 4 }, 150: { rarity: 5 } };
 
 let failures = 0;

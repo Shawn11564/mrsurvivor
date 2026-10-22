@@ -24,7 +24,7 @@ const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
 const opt = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
 const RUNS = +opt('--runs', 3), MAX = +opt('--max', 900), ONLY = (opt('--only', '') || '').split(',').filter(Boolean);
-const BASE = args.find(a => /^https?:/.test(a)) || 'http://127.0.0.1:8123';
+const BASE = args.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 const SPEED = 4, PAR = 4;
 
 // name, bot, slots (each a list of move ids bonded together)

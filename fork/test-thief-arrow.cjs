@@ -8,7 +8,7 @@
 // A real thief (the same def spawnThief builds) is put 20 m away, off screen; the HUD's text is
 // read as it's drawn (the canvas's fillText) and must say "Gholdengo · 20 m".
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };

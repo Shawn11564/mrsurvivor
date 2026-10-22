@@ -8,7 +8,7 @@
 //   2. On: the lines under the HP bar say the real numbers (damage ×1.00 at the start, the HP), and
 //      after an Epic Potencia card (×1.2) "Dmg ×1.20" and "Cards: Power 2".
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOT = process.argv[3];
 
 let failures = 0;

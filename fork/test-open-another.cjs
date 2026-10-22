@@ -12,7 +12,7 @@
 //   4. Radiant Ritual: with 15 spare shinies after a sacrifice, "Open Another" fills the next 10 like "Fill with the
 //      commonest" (no legendaries, not your partner) and sacrifices them; with fewer than 10 left: no button.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const LIST = { 150: { rarity: 5 } };
 
 let failures = 0;

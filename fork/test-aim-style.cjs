@@ -11,7 +11,7 @@
 //   3. "Manual aim" off: pushing the right stick aims where it points; letting go aims on its own
 //      again; with "Aim with the right stick" off the stick does nothing.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };

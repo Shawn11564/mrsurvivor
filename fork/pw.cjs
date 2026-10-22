@@ -1,8 +1,26 @@
-// Shared bits for the fork's headless-browser checks (test-gameplay.cjs, test-import.cjs).
-const path = require('path');
-const { chromium } = require(require.resolve('playwright', {
-  paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')]
-}));
+// Shared bits for the fork's headless-browser checks (every fork/test-*.cjs).
+const path = require('path'), fs = require('fs'), os = require('os');
+
+// Where Playwright (and acorn) are found: this repo, PLAYWRIGHT_DIR, Command Center's checkout beside
+// the repo, and the same by absolute path, so a git worktree anywhere else finds it too.
+const NODE_DIRS = [__dirname, process.env.PLAYWRIGHT_DIR, path.join(__dirname, '..', '..', 'commandcenter'),
+  path.join(os.homedir(), 'Documents', 'IdeaProjects', 'commandcenter')].filter(Boolean);
+const { chromium } = require(require.resolve('playwright', { paths: NODE_DIRS }));
+
+// The local server the checks talk to by default. The main checkout serves on 8123; a git worktree
+// (its .git is a file) gets its own port from its path, 8130-8189, so two sessions' servers never
+// collide. `node fork/serve.cjs` serves this checkout on that port. TEST_PORT / TEST_BASE override,
+// and a URL given on the command line still wins.
+const ROOT = path.join(__dirname, '..');
+function portFor(root) {
+  let h = 0;
+  for (const c of path.resolve(root).toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return 8130 + h % 60;
+}
+let worktree = false;
+try { worktree = fs.statSync(path.join(ROOT, '.git')).isFile(); } catch (e) { /* not a git checkout */ }
+const PORT = String(process.env.TEST_PORT || (worktree ? portFor(ROOT) : 8123));
+const BASE = (process.env.TEST_BASE || `http://127.0.0.1:${PORT}`).replace(/\/$/, '');
 
 /**
  * Gets past the "Press to start" overlay until `sel` is on screen. The game only shows the
@@ -40,4 +58,4 @@ async function pickStarter(page, dex = null) {
   await page.waitForSelector('#scr-menu', { state: 'visible', timeout: 30000 });
 }
 
-module.exports = { chromium, pastStart, pickStarter };
+module.exports = { chromium, pastStart, pickStarter, BASE, PORT, NODE_DIRS, ROOT };

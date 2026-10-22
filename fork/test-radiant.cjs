@@ -21,7 +21,7 @@
 //      moves take its radiant palette and it gets the radiant's extras, not the shiny's, even if you own
 //      the shiny and had picked it.
 const { chromium, pastStart, pickStarter } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const FAKE = { 1: {}, 4: {}, 6: { lab: ['SpAttack'], mega: true } };
 
 let failures = 0;

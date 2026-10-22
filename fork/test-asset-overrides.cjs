@@ -15,7 +15,7 @@
 const fs = require('fs'), path = require('path');
 const { chromium, pastStart } = require('./pw.cjs');
 const { encode } = require('./radiant-fixtures.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const REPO = path.join(__dirname, '..');
 
 let failures = 0;

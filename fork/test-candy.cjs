@@ -15,7 +15,7 @@
 //      spend (Charmander and Charizard the same, after spending some), 0 with Lab on and none earned,
 //      nothing with Lab off and none earned, and still there with Lab off if it has some.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOT = process.argv[3];
 
 let failures = 0;

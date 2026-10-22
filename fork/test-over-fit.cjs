@@ -12,7 +12,7 @@
 //   2. A short run at 4K isn't zoomed down at all.
 //   3. The built index.html at 4K: the end screen's box is the wide one (G is sealed there).
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOTS = process.env.SHOTS;
 
 let failures = 0;

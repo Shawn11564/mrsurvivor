@@ -17,7 +17,7 @@ const { BRAND } = require('./brand.cjs');
 const { OG_IMAGE } = require('./english.cjs');
 
 const ROOT = path.join(__dirname, '..');
-const BASE = process.argv.slice(2).find(a => !a.startsWith('--')) || 'http://127.0.0.1:8123';
+const BASE = process.argv.slice(2).find(a => !a.startsWith('--')) || require('./pw.cjs').BASE;
 const arg = (k, d) => { const a = process.argv.find(x => x.startsWith(`--${k}=`)); return a ? Number(a.split('=')[1]) : d; };
 const DEX = arg('dex', 25), SECONDS = arg('seconds', 12), APPROACH = arg('approach', 3.5);
 const W = 1200, H = 630;

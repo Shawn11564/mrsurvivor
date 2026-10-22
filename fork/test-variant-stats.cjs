@@ -15,7 +15,7 @@
 //   5. The banner at the start says which (e.g. "Shiny: +10% HP, Attack, Defense, Speed").
 //   6. Lab run, shiny: no XP or coin extra any more, still +1 reroll.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };

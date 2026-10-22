@@ -75,7 +75,7 @@ function pristine(r) {
   catch (e) { return null; }                   // not an upstream file
 }
 
-const SKIP_DIRS = new Set(['.git', 'assets', 'node_modules', 'tools', 'fork', 'docs', 'infra', 'tests', 'videos']);
+const SKIP_DIRS = new Set(['.git', '.claude', 'assets', 'node_modules', 'tools', 'fork', 'docs', 'infra', 'tests', 'videos']);
 const SERVED = /\.html$|^manifest\.webmanifest$|^robots\.txt$|^sitemap\.xml$|^CNAME$/;
 function* walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

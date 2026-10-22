@@ -22,7 +22,7 @@
 //      a guest who did the test is back on the menu with the same partner after a reload, and
 //      after the real updater reloads for a newer version.json.
 const { chromium, pastStart, pickStarter } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 const STAMP = 'aaaa000001', NEWER = 'bbbb000002';

@@ -15,7 +15,7 @@
 // says PokéSurvivor / pokesurvivor.com in the dialog (fork/brand.cjs must not rewrite them).
 const path = require('path');
 const { chromium, pastStart } = require('./pw.cjs');
-const PORT = process.argv[2] || '8123';
+const PORT = process.argv[2] || require('./pw.cjs').PORT;
 const UP = `http://localhost:${PORT}`, OURS = `http://127.0.0.1:${PORT}`;
 
 let failures = 0;

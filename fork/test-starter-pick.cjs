@@ -10,7 +10,7 @@
 //   3. Picking Squirtle: the menu, with Squirtle as starter and partner (no personality saved).
 //   4. After a reload: the menu again, not the grid.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const PAGE = process.argv[3] || 'dev.html';
 
 let failures = 0;

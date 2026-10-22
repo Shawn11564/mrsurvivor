@@ -11,7 +11,7 @@
 //   3. Merging two copies: one that prestiged (upgrades 0) and an older one with everything maxed:
 //      the result keeps the prestige and its upgrades at 0 (merge alone would have put them back).
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOT = process.argv[3];
 
 let failures = 0;

@@ -10,7 +10,7 @@
 //   3. With Hearts on, your shots are hearts; off, they're back to normal. The setting is in
 //      Settings → Graphics and its switch works.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const SHOT = process.argv[3];
 
 let failures = 0;

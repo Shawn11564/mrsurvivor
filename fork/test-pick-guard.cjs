@@ -8,7 +8,7 @@
 //   At 0.75 s a click on a card and the 1 key do nothing, and the cards look dimmed; after 1 s they
 //   don't, and a real mouse click on a card picks it.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };

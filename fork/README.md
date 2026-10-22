@@ -59,7 +59,15 @@ the edits small, because those lines can conflict when upstream changes them too
 node fork/build.cjs          # build (replaces upstream's `node tools/build.js && …`)
 node fork/sync.cjs           # pull upstream's updates, rebuild, commit
 python -m http.server 8123   # play at http://127.0.0.1:8123/
+node fork/serve.cjs          # serve this checkout on its test port (8123, or 8130-8189 in a git worktree)
 ```
+
+Every `fork/test-*.cjs` talks to `require('./pw.cjs').BASE` unless given a URL: 8123 in the main
+checkout, a port of its own in a git worktree (from its path), so two sessions can test at once
+(`TEST_PORT` / `TEST_BASE` override). `fork/pw.cjs` finds Playwright in this repo, `PLAYWRIGHT_DIR` or
+Command Center's checkout (`~/Documents/IdeaProjects/commandcenter`), also from a worktree elsewhere.
+Sessions that share this folder each work in their own worktree (`CLAUDE.local.md`); the build skips
+`.claude/`, where those worktrees live.
 
 Never run `node tools/build.js` directly: it writes an unbranded `index.html` and
 `app.min.js`. If you do, `node fork/build.cjs` fixes it.

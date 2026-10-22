@@ -24,7 +24,7 @@
 //      slowed (status bits from the host, js/net/coop.js enemyList), and a foe the guest
 //      stunned shows as stunned on the guest's copy (no contact damage while stunned).
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
 const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); if (!ok) failures++; };

@@ -12,7 +12,7 @@
 //   3. Every species' list matches the sheets on disk (nothing missing, nothing extra).
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const { chromium } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const ROOT = path.join(__dirname, '..');
 
 let failures = 0;

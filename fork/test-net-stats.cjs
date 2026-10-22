@@ -10,7 +10,7 @@
 //   2. On: within a few seconds each player has the other's ping from getStats (a real number, tiny on
 //      one machine) and draws "Name: N ms · ±J ms" and its FPS bottom right.
 const { chromium, pastStart } = require('./pw.cjs');
-const BASE = process.argv[2] || 'http://127.0.0.1:8123';
+const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
 const tag = String(Date.now()).slice(-6);

@@ -3,6 +3,32 @@
 This checkout is **MrSurvivor**, Shawn's fork of JPTER78's PokéSurvivor. `CLAUDE.md` is
 upstream's file and describes *their* release process and servers. Read `fork/README.md`.
 
+## First thing in every session: one worktree per session
+
+Before touching any file, read Command Center's session index
+(`%APPDATA%\dev.thund.commandcenter\sessions\index.json`). If another session with `"live": true`
+has this folder as its `cwd`, call `EnterWorktree` (a new worktree from `origin/main` under
+`.claude/worktrees/`) and do all your editing, building, testing, committing and pushing there.
+`node fork/serve.cjs` serves a worktree on its own port (8130-8189, from its path) and every
+`fork/test-*.cjs` uses that port by default (`fork/pw.cjs`), with Playwright found without
+`PLAYWRIGHT_DIR`. Building in a shared folder bundles the other session's unfinished `dev.html`
+into `index.html`. Before you push, `git pull --rebase origin main`; if generated files conflict
+(`index.html`, `js/app.min.js`, `version.json`, the site pages), resolve them either way, run
+`node fork/build.cjs` again and add the result. Message the other session when you push.
+
+## Standing decisions (the owner's, 2026-10-22): don't ask about these
+
+- **Shipping:** each item is its own commit. Build, run the item's own check plus
+  `fork/test-gameplay.cjs`, commit, and **push without asking**. Ask only when
+  `firestore.rules` or `database.rules.json` changed: the owner deploys the rules.
+- **Never end a session with commits that aren't pushed.**
+- **Scope:** new gameplay systems go into Lab first; settings, UI and display go to everyone.
+- **Questions:** one batch at the start of a list, never about shipping or scope. A cut-off or
+  ambiguous line gets one question while the rest of the list goes ahead.
+- **Work list:** `fork/TODO.md` (claim an item there before starting it, tick it with the commit
+  hash). Memory holds decisions and gotchas only, not work lists.
+- **Subagents:** `model: "opus"`, `"sonnet"` or `"haiku"` only, never Fable.
+
 - **Build with `node fork/build.cjs`, never `node tools/build.js`.** The fork build runs
   upstream's tools with the branding applied. Upstream's own build writes an unbranded
   `index.html`/`app.min.js`.
