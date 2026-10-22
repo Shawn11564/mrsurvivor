@@ -71,7 +71,7 @@ How to use it:
 - [ ] 37. [lab] B4: bond recipes (claimed: stream B-builds)
 
 ### Run structure (stream C)
-- [ ] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (claimed: stream C)
+- [ ] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (1490485)
 - [ ] 39. [lab] C1.4: late-hand decisions (Speed 9+ / Reflexes 11+ for max HP; post-cap EV card with auto-pick) (claimed: stream C)
 - [ ] 40. [lab] C1.5: per-Pokémon contracts (claimed: stream C)
 

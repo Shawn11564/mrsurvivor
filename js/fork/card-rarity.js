@@ -5,6 +5,7 @@
  * The effect and its text scale by the multiplier (Epic Potencia: "+20% de daño"), the chip names the
  * rarity and the card wears its colour (the gacha's rarity colours). The caps don't change: a card
  * counts its multiplier in statsTaken (Potencia has 40), and if it doesn't fit whole it drops a rarity.
+ * A card can carry its own cap (c.capMax: Lab's past-the-cap cards, js/fork/lab/late-hand.js).
  * Cards that ask for an evolution (gold ones) and common ones stay as they were.
  * Each card's effect is repeated here (S) with the game card's number: if upstream changes
  * a card (its text is no longer the one in S), that card always comes common, so the text never lies.
@@ -47,7 +48,7 @@ G.CardRarity = (() => {
       if (c.type !== 'stat' || !c.key || c.color === '#ffd23f') continue;   // gold ones ask for an evolution
       const id = c.key.slice(5), s = S[id], d = DEF[id];
       if (!ok(id)) continue;
-      const taken = (pl.statsTaken && pl.statsTaken[id]) || 0, t = api.roll(d.max ? d.max - taken : Infinity);
+      const taken = (pl.statsTaken && pl.statsTaken[id]) || 0, max = c.capMax || d.max, t = api.roll(max ? max - taken : Infinity);
       if (t.r === 1) continue;
       c.rarity = t.r; c.rk = t.k;
       c.desc = s.t.replace('{x}', value(s, t.k));

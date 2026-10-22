@@ -61,6 +61,7 @@ status table as work lands.
 | `js/fork/lab/boss-slots.js` | `G.LabBossSlots`: bosses at 18, 21, 24, 27 minutes and every 3 minutes from 33:00 in endless (plan C1.1) |
 | `js/fork/lab/xp-pace.js` | `G.LabXpPace`: regular enemies' XP × (1 + max(0, t − 500)/600) (plan C1.2) |
 | `js/fork/lab/branches.js` | `G.LabBranches`: branching upgrades at move level 3 (phase 11) |
+| `js/fork/lab/late-hand.js` | `G.LabLateHand`: Carrera/Reflejos past their cap for max HP, EV cards and auto-pick in endless (plan C1.4) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
@@ -597,6 +598,26 @@ elites at the real cap and none below it, none in a normal run; each effect on a
 in co-op the guest sees the affixes, a Splitting one the guest knocks out splits once (the same two copies
 on both screens), an Explosive one blows up once on each screen, a Vampiric one touching the guest heals on
 the host. Not measured with survival-lab: its bots fall before the cap binds.
+
+## Late-hand decisions (2026-10-22, plan C1.4)
+
+Late in a run the hand collapses to the same few cards (`js/fork/lab/late-hand.js`, loaded before
+`card-rarity.js`):
+- **Past the cap, at a price.** Carrera (speed, cap 8) and Reflejos (cooldown, cap 10) keep coming after
+  their cap, up to 4 more each (a 1 in 4 chance per hand, over a common upgrade card), and each of those
+  cards costs **4 % of your max HP** (said on the card). It carries its own cap (`c.capMax`), so
+  `card-rarity.js` rolls and paints its rarity (an Epic one: ×2 speed, still −4 %); its `apply` and `desc`
+  are accessors, so the cost survives whatever rarity writes. Lab's speed cap (`toughness.js`) still
+  hides Carrera at ×2.5.
+- **EV cards in endless.** Once Eternatus is beaten every hand has one "+1 EV" card: +2 % max HP, +2 %
+  damage, +2 % damage reduction (toughness), −1.5 % cooldown or +0.3 HP/s (`pl._labEV` counts them).
+  Under the cards, **"Auto-pick EV cards in endless (no menu)"** (`G.Settings` `labEvAuto`, this device):
+  ticked, a solo endless run's level-ups take the EV card by themselves (its name pops over you) and the
+  menu never opens. Not in co-op, where everyone picks together.
+`node fork/test-late-hand.cjs` (server): Carrera past 8 and Reflejos past 10 (offered, the cost said and
+paid, the stat given), never past cap + 4, an Epic one, none in a normal run; EV cards in every endless
+hand and none before; the toggle on the real level-up screen, three real level-ups auto-picked with no
+menu, and the menu still there before Eternatus falls.
 
 ## Starting move in Lab runs (2026-10-22)
 

@@ -382,6 +382,7 @@ its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `nod
 (an Epic or Legendary Potencia: "+20% damage", ×1.2, counts 2 towards its cap of 40), never past a cap, and the
 painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
+A card may carry its own cap (`c.capMax`: Lab's past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
 
 `node fork/test-pool-bloat.cjs` (server) checks the pool-bloat fix after TMs (`js/fork/pool-bloat.js`, plan G7,
 everyone): Veto (Upgrades) has 5 levels instead of 3 (`G.Upgrades.BY.ban.max`; `js/core/db.js` keeps that many,
