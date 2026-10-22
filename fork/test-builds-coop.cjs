@@ -10,6 +10,8 @@
 //    is: Heat Wave's wider fan with its flame count, Fire Spin as a Fire bind (also once evolved), and
 //    the guest's Fire Spin holds the host's enemies.
 // 2. Sets (js/fork/lab/sets.js): the guest's Fire set puts more burn stacks on the host's enemies.
+// 3. Recipes (js/fork/lab/recipes.js): the guest's bonded Sunny Day + Solar Beam fires with no charge on
+//    the host's screen too (the recipe travels with the cast).
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -137,6 +139,20 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     await host.waitForTimeout(500);
     const b3 = await burnOn(['ember', 'flamethrower', 'heat-wave']);
     check(b3 > b2, `the guest's Fire set burns the host's enemies one stack more (${b2} → ${b3} after the first hits)`, { b2, b3 });
+
+    console.log('3. Recipes');
+    await guest.evaluate(() => {
+      const pl = G.Game.player;
+      pl.slots.length = 0; pl.moves.length = 0; pl.addMove('sunny-day'); pl.addMove('solar-beam');
+      pl.fuse([pl.moves[0], pl.moves[1]]); pl.active = 0;
+    });
+    await host.evaluate(() => { window.__ghosts.length = 0; });
+    await settle(host, () => window.__ghosts.some(g => g.id === 'solar-beam'), undefined, 8000);
+    const sol = await host.evaluate(uid => {
+      const pl = G.Coop.mate(uid).pl, cast = pl.cast;
+      return new Promise(r => { pl.cast = function (m) { if (m && m.id === 'solar-beam') { pl.cast = cast; r({ charge: m.charge, recipe: m._recipe || null }); } return cast.apply(this, arguments); }; setTimeout(() => r(null), 8000); });
+    }, guest.uid);
+    check(sol && sol.recipe === 'sun-solar' && sol.charge <= 0.05, 'the guest\'s bonded Sunny Day + Solar Beam fires at once on the host too (no charge)', sol);
 
     for (const p of ALL) check(p.errs.length === 0, `no page errors (${p.name})`, p.errs.slice(0, 3));
   } finally {

@@ -67,7 +67,7 @@ How to use it:
 - [ ] 33. [lab] B3.6 Taunt / Attract (claimed: stream B-moves)
 - [ ] 34. [lab] B3.7 combos (claimed: stream B-moves)
 - [x] 35. [lab] B4: set bonuses (c6ef6dc)
-- [ ] 36. [lab] B4: synergy cards (claimed: stream B-builds)
+- [x] 36. [lab] B4: synergy cards (22e17dc)
 - [ ] 37. [lab] B4: bond recipes (claimed: stream B-builds)
 
 ### Run structure (stream C)

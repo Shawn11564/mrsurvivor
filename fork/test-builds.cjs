@@ -3,7 +3,7 @@
 // Lab run on dummies that don't move:
 //
 //   node fork/serve.cjs                  (another terminal)
-//   node fork/test-builds.cjs [base-url] [--only branches|sets|synergy]
+//   node fork/test-builds.cjs [base-url] [--only branches|sets|synergy|recipes]
 //
 // sets (js/fork/lab/sets.js, js/fork/lab/hits.js): each set one move short and then complete, on real hits: Fire +1 burn
 //   stack, Water slows, Electric jumps to the enemy beside it (~35%), Grass and Physical heal, Fighting x1.2 physical
@@ -22,6 +22,10 @@
 //   at a time, red border and chip), picked on the real screen Ice Beam burns, and it never comes again; on real
 //   hits: Overload (half the hit onto the neighbour of a stunned enemy), Steam Burst x1.5, Wildfire spreading the
 //   burn, Shatter x1.35 on the slowed one only, Quicksand stopping a slowed enemy; the pause line.
+// recipes (js/fork/lab/recipes.js): the real bond screen marks the picks that make a recipe (first and second
+//   step); Sunny Day + Solar Beam fused there: no charge, the beam lands at once; Rain Dance + Thunder Shock (homing,
+//   jumps), Will-O-Wisp + Hex (burning chain), Snowscape + Ice Beam (stops), Leech Seed + Giga Drain (seeds);
+//   a resumed run gets its recipe back.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
 const only = (args.find(a => a.startsWith('--only=')) || '').slice(7) || (args.includes('--only') ? args[args.indexOf('--only') + 1] : '');
@@ -359,6 +363,63 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(!(qs0.aStun > 0) && qs1.aStun > 0, `Quicksand: Mud Shot stops a slowed enemy (stun ${qs0.aStun} → ${qs1.aStun.toFixed(2)})`, { qs0, qs1 });
     const pause = await page.evaluate(() => { G.Game.player._labSyn = ['frost-fire']; G.RunUI.showPause(); const t = document.getElementById('pause-sum').textContent; G.UI.hide('scr-pause'); return t; });
     check(/Synergies: Frost Fire/.test(pause), 'the pause menu lists the synergies taken');
+  }
+
+  if (want('recipes')) {
+    // ---------------- bond recipes ----------------
+    console.log('recipes');
+    await page.evaluate(() => { const pl = G.Game.player; pl.god = true; pl._labSyn = []; __only('sunny-day', 'solar-beam', 'water-gun'); pl.bonds = 1; G.Game.offerBond(); });
+    await page.waitForFunction(() => G.UI.isOpen('scr-bond') && !document.getElementById('bond-cards').classList.contains('guard'), null, { timeout: 6000 });
+    const cardsNow = () => page.evaluate(() => [...document.querySelectorAll('#bond-cards .card')].map(el => ({ nm: el.querySelector('.nm').textContent.trim(), recipe: (el.querySelector('.bond-recipe') || {}).textContent || null })));
+    const step1 = await cardsNow();
+    const at = (list, re) => list.findIndex(c => re.test(c.nm));
+    check(/Solar Flare/.test(step1[at(step1, /Solar Beam/)].recipe || '') && !step1[at(step1, /Water Gun/)].recipe, 'bond screen, first pick: Solar Beam (and Sunny Day) say they make a recipe, Water Gun doesn\'t', step1);
+    await page.click(`#bond-cards .card >> nth=${at(step1, /Sunny Day/)}`);
+    const step2 = await page.waitForFunction(() => document.querySelectorAll('#bond-cards .card').length === 2 && document.querySelector('#bond-cards .card[data-recipes]'), null, { timeout: 3000 }).then(() => cardsNow());
+    check(/Solar Flare/.test(step2[at(step2, /Solar Beam/)].recipe || '') && !step2[at(step2, /Water Gun/)].recipe, 'second pick (with Sunny Day): only Solar Beam makes one', step2);
+    const m0 = await page.evaluate(() => G.Game.player.moves.find(m => m.id === 'solar-beam').charge);
+    await page.click(`#bond-cards .card >> nth=${at(step2, /Solar Beam/)}`);
+    await page.waitForFunction(() => !G.UI.isOpen('scr-bond') && G.Game.state === 'playing', null, { timeout: 8000 });
+    const solar = await page.evaluate(async () => {
+      const pl = G.Game.player, m = pl.moves.find(m => m.id === 'solar-beam');
+      const fused = pl.slots.some(g => g.includes(m) && g.some(x => x.id === 'sunny-day'));
+      const a = __dummy(...__at(120));
+      pl.target = a; pl.aim = 0; pl.active = pl.slots.findIndex(g => g.includes(m));
+      m.t = 0;
+      const t0 = performance.now();
+      await __until(() => a.hp < a.maxHp, 3000);
+      return { fused, recipe: m._recipe, charge: m.charge, ms: Math.round(performance.now() - t0) };
+    });
+    check(solar.fused && solar.recipe === 'sun-solar' && solar.charge <= 0.05 && m0 >= 0.8, `fused on the real bond screen: Solar Beam's charge ${m0} → ${solar.charge}`, solar);
+    check(solar.ms < 400, `and it fires at once (${solar.ms} ms to the hit)`, solar);
+    /** Fuses `ids` (Player.fuse, as the bond screen does), casts the first on dummy a; b and c stand beside a. */
+    const fused = (ids, prep) => page.evaluate(async ([ids, prep]) => {
+      const pl = G.Game.player;
+      __only(...ids);
+      if (ids.length > 1) pl.fuse([pl.moves[0], pl.moves[1]]);
+      G.Combat.tick(0.016, pl, performance.now());      // the frame that gives the recipe
+      const m = pl.moves[0];
+      const a = __dummy(...__at(90)), [ax, ay] = __at(90), b = __dummy(ax + 20, ay + 60), c = __dummy(ax + 20, ay - 60);
+      pl.target = a; pl.aim = 0; pl.active = 0; m.t = 0; m.dealt = 0;
+      for (const x of pl.moves) if (x !== m) x.t = 99;
+      await __until(() => a.hp < a.maxHp, 3000);
+      await __wait(80);
+      return { recipe: m._recipe || null, homing: m.homing || 0, side: (b.maxHp - b.hp) + (c.maxHp - c.hp), burn: a.burn + b.burn + c.burn, stun: a.stunT, seed: !!a._seed };
+    }, [ids, prep]);
+    const rt0 = await fused(['thunder-shock']), rt1 = await fused(['thunder-shock', 'rain-dance']);
+    check(rt1.recipe === 'rain-thunder' && rt1.homing >= 8 && rt0.side === 0 && rt1.side > 0, `Rain Dance + Thunder Shock: homing bolts that jump to the enemies beside (${rt0.side} → ${Math.round(rt1.side)})`, { rt0, rt1 });
+    const wh0 = await fused(['hex']), wh1 = await fused(['hex', 'will-o-wisp']);
+    check(wh1.recipe === 'wisp-hex' && wh0.burn === 0 && wh1.burn > 0, `Will-O-Wisp + Hex: Hex's chain burns (${wh0.burn} → ${wh1.burn})`, { wh0, wh1 });
+    const sb0 = await fused(['ice-beam']), sb1 = await fused(['ice-beam', 'snowscape']);
+    check(sb1.recipe === 'snow-beam' && !(sb0.stun > 0) && sb1.stun > 0, `Snowscape + Ice Beam: its hit stops the enemy (${sb0.stun} → ${sb1.stun.toFixed(2)})`, { sb0, sb1 });
+    const sd0 = await fused(['giga-drain']), sd1 = await fused(['giga-drain', 'leech-seed']);
+    check(sd1.recipe === 'seed-drain' && !sd0.seed && sd1.seed, 'Leech Seed + Giga Drain: Giga Drain seeds what it touches', { sd0, sd1 });
+    // A resumed run gets its recipe back (resume.js rebuilds the slots).
+    await page.evaluate(() => { const pl = G.Game.player; __only('sunny-day', 'solar-beam'); pl.fuse([pl.moves[0], pl.moves[1]]); G.Combat.tick(0.016, pl, performance.now()); pl.god = true; G.Resume.save(); G.Resume.resume(); });
+    await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Lab.active, null, { timeout: 30000 });
+    await page.waitForTimeout(300);
+    const back = await page.evaluate(() => { const m = G.Game.player.moves.find(m => m.id === 'solar-beam'); return m && { recipe: m._recipe, charge: m.charge }; });
+    check(back && back.recipe === 'sun-solar' && back.charge <= 0.05, 'a resumed run has the recipe again', back);
   }
 
   check(!errors.length, 'no page errors', errors.slice(0, 5));
