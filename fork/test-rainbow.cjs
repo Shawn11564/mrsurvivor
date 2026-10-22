@@ -8,7 +8,7 @@
 //   1. 200 rainbow pulls of 25: every one has a Legendary; without a ticket it can't be paid.
 //   2. The gacha screen: the "Rainbow ×25" button (on with a ticket, off without), the count and
 //      the note; a real pull through the button: 25 Pokémon, a Legendary among them, the ticket spent.
-//   3. Where they come from: a rift legendary (1 in 10, forced here), 30:00 in a run (once), and the
+//   3. Where they come from: a rift legendary (1 in 50, forced here), 30:00 in a run (once), and the
 //      4 big achievements (paid once on saving, also to whoever already had them; shown in rewards), and
 //      Gholdengo (1 in 20 of its ×10 tickets is a rainbow one instead).
 //   4. It stays: after a reload, and in the currency ledger; save.r25 is joined when two copies merge.
@@ -72,8 +72,9 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const src = await page.evaluate(() => {
       const s = G.DB.save, r = Math.random, t = () => s.tickets.t25 | 0, out = {};
       s.tickets.t25 = 0;
-      Math.random = () => 0.05; G.Progress.event('rift', { type: 'fire' }); out.rift = t();
-      Math.random = () => 0.5; G.Progress.event('rift', { type: 'fire' }); out.riftMiss = t();
+      out.odds = G.Rainbow.RIFT;
+      Math.random = () => 0.019; G.Progress.event('rift', { type: 'fire' }); out.rift = t();
+      Math.random = () => 0.021; G.Progress.event('rift', { type: 'fire' }); out.riftMiss = t();   // a hit at the old 1 in 10
       Math.random = r;
       s.ach = s.ach || {}; delete (s.r25 || {}).own500;
       s.ach.own500 = Date.now(); G.DB.commit(); out.ach = t();
@@ -82,7 +83,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       out.reward = G.Progress.rewardText(G.AchDefs.LIST.find(a => a.id === 'ownAll').reward);
       return out;
     });
-    check(src.rift === 1 && src.riftMiss === 1, 'a rift legendary: one when the 1-in-10 roll hits, none when it misses', src);
+    check(src.odds === 1 / 50 && src.rift === 1 && src.riftMiss === 1, 'a rift legendary: one when the 1-in-50 roll hits, none when it misses (0.021, which the old 1 in 10 paid)', src);
     check(src.ach === 2 && src.achAgain === 2 && src.paid, '500 Pokémon (an achievement you already had): paid once on saving', src);
     check(/ 2 ×25/.test(src.reward), 'the all-Pokémon achievement lists its rainbow tickets', src.reward);
     await page.evaluate(() => G.Game.startRun(null, { dex: 1, shiny: false }));

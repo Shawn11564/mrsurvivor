@@ -3,7 +3,7 @@
  * come up: js/systems/gacha.js). It lives in save.tickets.t25, in the coin and ticket ledger like
  * the others (CUR in js/core/db.js), so it isn't lost or duplicated when two copies are merged.
  * How you get one:
- *   - by beating a rift legendary, 1 time in 10 (the ×10 comes 1 time in 2);
+ *   - by beating a rift legendary, 1 time in 50 (the ×10 comes 1 time in 2);
  *   - by lasting 30:00 in a run (once per run);
  *   - from Gholdengo, the gold treasure thief: 1 time in 20 its ×10 ticket is a rainbow one (at the kill; to
  *     the whole group in co-op, sent by the host);
@@ -16,7 +16,7 @@
  */
 G.Rainbow = (() => {
   const $ = id => document.getElementById(id);
-  const RIFT = 1 / 10, TIME = 1800;
+  const RIFT = 1 / 50, TIME = 1800;
   const ACH = { own500: 1, ownAll: 2, shiny20: 1, time20: 1 };
 
   // The icon: the ×10 ticket with coloured stripes.

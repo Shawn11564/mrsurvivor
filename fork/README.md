@@ -154,7 +154,7 @@ Under the pity line, a bar of 22 segments of 10 pulls fills with the banner's co
 (server) checks the segments, the 180 mark, filling, switching banners and a real pull.
 The **Rainbow ×25 ticket** (`js/fork/rainbow.js`; `t25` in `CUR` and `sanitize` of `js/core/db.js`, the
 ×25 cost and its guaranteed Legendary in `js/systems/gacha.js`, `G.GachaUI.pull` exported): 25 pulls
-with at least one Legendary. Earned from a rift legendary (1 in 10), at 30:00 in a run (once), and from
+with at least one Legendary. Earned from a rift legendary (1 in 50), at 30:00 in a run (once), and from
 4 big achievements (500 Pokémon, all, 20 shinies, 20 minutes; paid once on saving, `save.r25`, joined on
 merge). `node fork/test-rainbow.cjs` (server) checks the guarantee over 200 pulls, the button, a real pull,
 each source, a reload and the ledger merge.
