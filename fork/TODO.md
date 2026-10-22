@@ -68,7 +68,7 @@ How to use it:
 - [ ] 34. [lab] B3.7 combos (claimed: stream B-moves)
 - [x] 35. [lab] B4: set bonuses (c6ef6dc)
 - [x] 36. [lab] B4: synergy cards (22e17dc)
-- [ ] 37. [lab] B4: bond recipes (claimed: stream B-builds)
+- [x] 37. [lab] B4: bond recipes (6567ff1)
 
 ### Run structure (stream C)
 - [ ] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (1490485)

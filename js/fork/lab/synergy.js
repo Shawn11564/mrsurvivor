@@ -32,7 +32,8 @@ G.LabSynergy = (() => {
   const stunned = e => e.stunT > 0 || st(e, 16);
   const asleep = e => e.labSleep > 0 || e.labConf > 0 || e.labSleepNet > 0 || e.labConfNet > 0;
   const extra = (pl, e, m, k) => G.Combat.hit(pl, e, m.dmg * pl.atkFor(m) * k, G.U.TYPE_COLOR[m.type], 0, 0, 0, m);
-  const near = (e, r, n) => G.EnemyMgr.queryCircle(e.x, e.y, r).filter(o => o !== e && !o.dead).slice(0, n);
+  // (A Set: EnemyMgr.queryCircle can list an enemy twice when two grid cells' hash keys collide.)
+  const near = (e, r, n) => [...new Set(G.EnemyMgr.queryCircle(e.x, e.y, r))].filter(o => o !== e && !o.dead).slice(0, n);
   const once = (e, key, ms) => { const t = performance.now(); if ((e[key] || 0) > t) return false; e[key] = t + ms; return true; };
 
   const SYN = [

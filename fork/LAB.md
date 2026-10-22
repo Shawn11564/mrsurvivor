@@ -760,7 +760,9 @@ once per run. The border and chip are painted after `G.RunUI.showLevelUp` / `rer
 
 Built on fields that exist (burn, slow, stun, Lab sleep/confusion), through `G.LabHits`. "Frozen" in the
 plan's Frost Fire is the game's Ice slow, so the rule is "Ice hits burn". A guest's copies read the host's
-status bits (`e.net.st`). Check: `node fork/test-builds.cjs --only synergy`.
+status bits (`e.net.st`). Neighbours are deduplicated: upstream's `EnemyMgr.queryCircle` lists an enemy
+twice where two grid cells' hash keys collide (cells (1,-1) and (-1,1) near the world's origin, `enemy.js`
+`key`), which made Overload hit a neighbour twice; recipes' jumps do the same. Check: `node fork/test-builds.cjs --only synergy`.
 
 ### Bond recipes (`js/fork/lab/recipes.js`)
 

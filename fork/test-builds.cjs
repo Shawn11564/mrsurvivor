@@ -22,6 +22,7 @@
 //   at a time, red border and chip), picked on the real screen Ice Beam burns, and it never comes again; on real
 //   hits: Overload (half the hit onto the neighbour of a stunned enemy), Steam Burst x1.5, Wildfire spreading the
 //   burn, Shatter x1.35 on the slowed one only, Quicksand stopping a slowed enemy; the pause line.
+//   Also Overload where EnemyMgr.queryCircle lists the neighbour twice (grid hash collision near the origin).
 // recipes (js/fork/lab/recipes.js): the real bond screen marks the picks that make a recipe (first and second
 //   step); Sunny Day + Solar Beam fused there: no charge, the beam lands at once; Rain Dance + Thunder Shock (homing,
 //   jumps), Will-O-Wisp + Hex (burning chain), Snowscape + Ice Beam (stops), Leech Seed + Giga Drain (seeds);
@@ -353,6 +354,22 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     };
     const [ov0, ov1] = await pair('overload', ['thunder-shock', 'thunder-wave'], 'stun');
     check(ov0.b === 0 && ov1.b > 0 && Math.abs(ov1.b / (ov1.first - ov1.b) - 0.5) < 0.05, `Overload: Thunder Shock on a stunned enemy explodes onto the one beside it for half the hit (${ov0.b} → ${Math.round(ov1.b)}, hit ${Math.round(ov1.first - ov1.b)})`, { ov0, ov1 });
+    // Near the world's origin EnemyMgr.queryCircle lists some enemies twice (two grid cells' hash keys
+    // collide: (1,-1) and (-1,1)); the explosion must still hit each neighbour once.
+    const dup = await page.evaluate(async () => {
+      const pl = G.Game.player;
+      __only('thunder-shock', 'thunder-wave');
+      pl._labSyn = ['overload'];
+      for (const x of pl.moves) x.t = 99;                // nothing casts by itself meanwhile
+      const a = __dummy(0, 26), b = __dummy(-26, 60);
+      await __wait(100);                                   // a frame: the grid is rebuilt
+      const twice = G.EnemyMgr.queryCircle(a.x, a.y, 70).filter(o => o === b).length;
+      a.applyStun(5);
+      const m = pl.moves[0], d = m.dmg * pl.atkFor(m), a0 = a.hp, b0 = b.hp;
+      G.Combat.hit(pl, a, d, '#ff0', 0, 0, 0, m);
+      return { twice, a: a0 - a.hp, b: b0 - b.hp };
+    });
+    check(dup.twice === 2 && Math.abs(dup.b / dup.a - 0.5) < 0.06, `Overload hits a neighbour once even where the grid lists it twice (×${(dup.b / dup.a).toFixed(2)} of the hit)`, dup);
     const [st0, st1] = await pair('steam', ['water-gun', 'ember'], 'burn');
     check(Math.abs(st1.first / st0.first - 1.5) < 0.05, `Steam Burst: Water Gun on a burning enemy ×${(st1.first / st0.first).toFixed(2)}`, { st0, st1 });
     const [wf0, wf1] = await pair('wildfire', ['vine-whip', 'ember'], 'burn');

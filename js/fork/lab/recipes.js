@@ -27,7 +27,8 @@ G.LabRecipes = (() => {
       hit: (pl, e, m) => {
         if (m.id !== 'thunder-shock') return;
         const col = G.U.TYPE_COLOR.electric;
-        const near = G.EnemyMgr.queryCircle(e.x, e.y, 140).filter(o => o !== e && !o.dead)
+        // (A Set: EnemyMgr.queryCircle can list an enemy twice when two grid cells' hash keys collide.)
+        const near = [...new Set(G.EnemyMgr.queryCircle(e.x, e.y, 140))].filter(o => o !== e && !o.dead)
           .sort((p, q) => G.U.dist2(e.x, e.y, p.x, p.y) - G.U.dist2(e.x, e.y, q.x, q.y)).slice(0, 2);
         for (const o of near) {
           const fy = e.y - e.bodyH * 0.5, ty = o.y - o.bodyH * 0.5;
