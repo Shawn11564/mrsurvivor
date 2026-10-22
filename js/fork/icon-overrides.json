@@ -1,4 +1,39 @@
 {
+  "amuletcoin": {
+    "file": "assets/icons/code/amuletcoin.png",
+    "v": "3d4cbb37d2",
+    "w": 21,
+    "h": 19,
+    "own": true
+  },
+  "assaultvest": {
+    "file": "assets/icons/code/assaultvest.png",
+    "v": "e1f3473709",
+    "w": 21,
+    "h": 18,
+    "own": true
+  },
+  "choiceband": {
+    "file": "assets/icons/code/choiceband.png",
+    "v": "f7f38597a1",
+    "w": 22,
+    "h": 22,
+    "own": true
+  },
+  "choicescarf": {
+    "file": "assets/icons/code/choicescarf.png",
+    "v": "55fcc0a8cb",
+    "w": 22,
+    "h": 22,
+    "own": true
+  },
+  "focussash": {
+    "file": "assets/icons/code/focussash.png",
+    "v": "70e16f6f8c",
+    "w": 20,
+    "h": 21,
+    "own": true
+  },
   "lb-g": {
     "file": "assets/icons/code/lb-g.png",
     "v": "f29a2d4f3d",
@@ -24,6 +59,48 @@
     "file": "assets/icons/code/lb-y.png",
     "v": "8d8bc83739",
     "w": 18,
+    "h": 18,
+    "own": true
+  },
+  "leftovers": {
+    "file": "assets/icons/code/leftovers.png",
+    "v": "d0c369bee7",
+    "w": 13,
+    "h": 20,
+    "own": true
+  },
+  "lifeorb": {
+    "file": "assets/icons/code/lifeorb.png",
+    "v": "0ecc202be5",
+    "w": 16,
+    "h": 16,
+    "own": true
+  },
+  "luckyegg": {
+    "file": "assets/icons/code/luckyegg.png",
+    "v": "097a1ed9fe",
+    "w": 15,
+    "h": 18,
+    "own": true
+  },
+  "quickclaw": {
+    "file": "assets/icons/code/quickclaw.png",
+    "v": "71094725d8",
+    "w": 17,
+    "h": 19,
+    "own": true
+  },
+  "rockyhelmet": {
+    "file": "assets/icons/code/rockyhelmet.png",
+    "v": "975f6c54ca",
+    "w": 20,
+    "h": 18,
+    "own": true
+  },
+  "shellbell": {
+    "file": "assets/icons/code/shellbell.png",
+    "v": "b3a6722768",
+    "w": 21,
     "h": 18,
     "own": true
   }
