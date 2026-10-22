@@ -365,15 +365,17 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     const pl = G.Game.player, out = {};
     pl.xpMul = 0; G.Pickups.clear();
     const at = (r, a = 0) => [pl.x + Math.cos(a) * r, pl.y + Math.sin(a) * r];
-    // leap: off the ground (can't be hit) and lands on the target with a hit.
+    // leap: off the ground (can't be hit), the blast lands on the target, and Fly comes down where it
+    // took off (stream A, plan A3: `land: 'stay'`).
     let m = __only('fly'), e = __dummy(...at(200));
+    const fx0 = pl.x, fy0 = pl.y;
     await __until(() => pl._labLeap, 3000);
     const inv = pl.invuln > 0.4, h0 = pl.hp;
     pl.hurt(50, null, false, 'physical');
     const blocked = pl.hp === h0;
     await __until(() => !pl._labLeap, 2000);
     await new Promise(r => setTimeout(r, 60));
-    out.leap = { inv, blocked, near: Math.round(G.U.dist(pl.x, pl.y, e.x, e.y)), hit: e.hp < e.maxHp };
+    out.leap = { inv, blocked, stayed: Math.round(G.U.dist(pl.x, pl.y, fx0, fy0)), hit: e.hp < e.maxHp };
     // recoil: costs HP (never below 1); Rock Head doesn't pay it.
     m = __only('double-edge'); e = __dummy(...at(80));
     pl.hp = pl.maxHp;
@@ -411,7 +413,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     __dummy(...at(40));
     out.activeSlot = await __until(() => pl._labGuard, 4000);
     await __until(() => !pl._labGuard, 2000);
-    // Counter: half from physical hits while it lasts, then a blast with the stored damage.
+    // Counter (the Aegis, stream A A3): blocks physical hits while it lasts, then a blast with the stored damage.
     await __until(() => !pl._labGuard, 2000);
     m = __only('ember'); const ctr = (pl.addMove('counter'), pl.moves[1]); pl.active = 0;
     const ce = __dummy(...at(40));
@@ -500,12 +502,12 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     G.EnemyMgr.clear(); __quiet(false);
     return out;
   });
-  check(kinds.leap.inv && kinds.leap.blocked && kinds.leap.near < 40 && kinds.leap.hit, `Fly: can't be hit in the air, lands on the target and hits it (${JSON.stringify(kinds.leap)})`);
+  check(kinds.leap.inv && kinds.leap.blocked && kinds.leap.stayed < 4 && kinds.leap.hit, `Fly: can't be hit in the air, strikes the target and comes down where it took off (${JSON.stringify(kinds.leap)})`);
   check(kinds.recoil.lost > 0 && kinds.recoil.lost <= kinds.recoil.cap + 1 && kinds.rockHead, `Double-Edge costs HP (${kinds.recoil.lost}, at most ${kinds.recoil.cap}); with Rock Head it costs none`);
   check(kinds.ramp.top === kinds.ramp.stacks && kinds.ramp.after === kinds.ramp.stacks - 1, `Fury Cutter builds up to ×${kinds.ramp.stacks} hits in a row and loses one stack per 1.5 s of pause (${JSON.stringify(kinds.ramp)})`);
   check(kinds.protect, 'Protect raises itself from another slot when an enemy is close, and blocks the hit');
   check(kinds.idle && kinds.activeSlot, 'as the active move, Protect stays down with nothing around and goes up when an enemy comes close');
-  check(kinds.counter.stored === 40 && kinds.counter.took > 0 && kinds.counter.blast > 0, `Counter: takes half, stores the hit (${kinds.counter.stored}) and sends it back in a blast (${kinds.counter.blast})`);
+  check(kinds.counter.stored === 40 && kinds.counter.took === 0 && kinds.counter.blast > 0, `Counter: blocks the hit, stores it (${kinds.counter.stored}) and sends it back in a blast (${kinds.counter.blast})`);
   check(kinds.sleep.n >= 2 && kinds.sleep.stun && kinds.sleep.burnKeeps && kinds.sleep.hitWakes, `Hypnosis: they fall asleep (can't act), a burn tick doesn't wake them, a hit does (${JSON.stringify(kinds.sleep)})`);
   check(kinds.conf.touch && kinds.conf.hits > 0, `Confuse Ray: the confused one doesn't touch you and hits the one next to it (${kinds.conf.hits} damage)`);
   check(kinds.rain.zone && kinds.rain.boost === 1.3 && !kinds.rain.arena && kinds.rain.follows,

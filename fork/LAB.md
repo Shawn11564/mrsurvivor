@@ -46,6 +46,8 @@ status table as work lands.
 | `js/fork/lab/lab.js` | `G.Lab`: the setting, per-run flag, Lab pools, signature pools and cards, promotion, protections, co-op messages, badges, the pause block |
 | `js/fork/lab/abilities.js` | `G.LabAbilities`: the ability table and its hooks |
 | `js/fork/lab/kinds.js` | `G.LabKinds`: the new move kinds (phase 4), their ladders and evolutions, sleep and confusion, co-op messages |
+| `js/fork/lab/mobility.js` | `G.LabMobility`: policy (a) for dash, recoil and roll, Lab's dash, pivots and Flame Charge's speed, the mover grace (section "Close range and mobility") |
+| `js/fork/lab/move-traits.js` | `G.LabTraits`: the close-range and mobility moves' traits in `G.LabMech.ID`, parry, the swap of a run's first moves for their Lab copies |
 | `js/fork/lab/kinds2.js` | `G.LabKinds2`: phase 9's kinds (grab, bind, focus, heal, screen, shout, endure), the hit effects (leech, seed, revenge, reversal, cut, power, flinch), multi-stat buffs, the close-range damage cut |
 | `js/fork/lab/mech.js` | `G.LabMech`: phase 10, move identity (each normal move's Lab fields, steps and evolution) and the new mechanics (mark...) |
 | `js/fork/lab/lab-moves.js` | `G.LabMoves`: moves that only exist in Lab (data only; phases 4 and 5) |
@@ -195,10 +197,10 @@ wrapped for them). The moves are in `lab-moves.js`, with their PokeAPI ids, so l
 
 | Kind | Moves | What it does |
 |---|---|---|
-| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then land on the target with an area hit and stay untouchable 0.6 s more; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
+| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then the blast lands on the target and you stay untouchable 0.6 s more; where you come down is the move's `land`: Fly and Bounce where you took off, Dig and Dive 70 px in front of the target, Phantom Force 60 px behind where you were; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
 | recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard charge along the way you walk that leaves you where you were (policy (a), see "Close range and mobility"); it costs `recoil` × the damage done, at most 8% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
 | ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll swings the way you walk and doesn't move you (policy (a)) |
-| guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter: half damage, then a blast with `mult` × what you took |
+| guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter, Mirror Coat, Metal Burst (the Aegis): hits of its category (Metal Burst: all) are blocked and stored, others halved; then a blast with `mult` × what it blocked |
 | sleep | Hypnosis, Sing, Sleep Powder, Spore, Yawn | a marked zone; enemies there sleep `stun` s; a hit wakes them (a burn or poison tick doesn't) |
 | (confusion) | Confuse Ray, Supersonic, Teeter Dance, Sweet Kiss | old kinds with `conf`: the enemy staggers, doesn't attack you and hits its neighbours |
 | weather | Rain Dance, Sunny Day, Sandstorm, Snowscape | a zone of that weather around you (`wxzone`, it follows you) for `dur` (4) s every `cd` (14) s: rain / sun ×1.3 to Water / Fire moves used inside, sand chips the enemies inside (`dmg` every 0.5 s), snow slows them. Never the arena's weather (until 2026-10-21 it started `G.Weather` for everyone, 16 s of every 22: nearly always on, too strong) |
@@ -451,6 +453,18 @@ Lab runs:
   a teammate's copy is drawn from the aim its cast message carries, as before. The mover grace still
   applies. `fork/survival-lab.cjs` has a "dash" bot for these: it walks at the nearest enemy, then stands
   still so the move goes at it.
+
+- **Identity** (A3, `js/fork/lab/move-traits.js`, entries in `G.LabMech.ID`): the 11 upstream melee moves
+  get one trait each from fields that exist (reach: Vine Whip, Wing Attack; heavy knock and a 0.3 s flinch:
+  Tackle, Body Slam, Dragon Claw; leech: Bug Bite, Play Rough; flinch: Lick, Bite; parry: Karate Chop, Metal
+  Claw, the first hit in the 0.3 s after a swing is blocked and the nearest enemy stunned) and none swings
+  360° any more (4th step +50% damage and +20% reach, evolution ×1.9 damage, more reach, a wider arc).
+  Pivots (U-turn, and the new Lab moves Volt Switch, Flip Turn, Parting Shot, in their learnsets) hit and
+  switch you to your next slot; Parting Shot also makes the enemies it passes deal 30% less for 4 s.
+  Flame Charge stacks +8% speed (4 s, up to 3). Leaps come down per `land` (table above); Shadow Force
+  keeps its chain. Counter, Mirror Coat and Metal Burst block instead of halving (the Aegis). The run's
+  first moves are made before the run is Lab, so they're swapped for their Lab copies right after it
+  starts (any `G.LabMech.ID` move). Quick Attack, Extreme Speed and Aqua Step stay plain dashes.
 
 `node fork/test-close-range.cjs` checks all of it in real runs.
 

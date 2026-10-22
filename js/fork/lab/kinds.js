@@ -3,8 +3,11 @@
  * they need a target); the rest wraps functions the game calls as G.X.y. Their moves
  * are in js/fork/lab/lab-moves.js and only show up in a Lab run (G.Lab).
  *
- *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and land on the target; you stay
- *              untouchable LEAP_GRACE s after landing
+ *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and the blast lands on the target; you
+ *              stay untouchable LEAP_GRACE s after. Where you come down is the move's `land`: 'stay' (Fly,
+ *              Bounce: you rise and come down where you were), 'short' (Dig, Dive: LAND_SHORT px short of
+ *              the target, on your side), 'back' (Phantom Force: LAND_BACK px behind where you were, away
+ *              from the target), or on the target (the others, Shadow Force's chain)
  *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP and leaves you
  *              where you were (it goes the way you walk: js/fork/lab/mobility.js)
  *              (`recoil` × the damage dealt, at most RECOIL_PER_S of your max HP in any second, and it
@@ -13,7 +16,8 @@
  *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) swings the
  *              way you walk and doesn't move you (js/fork/lab/mobility.js)
  *   guard      Protect, Detect (protect: nothing hurts you for `dur` s), Counter, Mirror
- *              Coat, Metal Burst (counter: you take half, and at the end it returns it in a blast)
+ *              Coat, Metal Burst (counter, the "Aegis": hits of its category (`cat`; Metal Burst: all,
+ *              `storeAll`) are blocked and stored, others halved; at the end a blast returns `mult` × the stored)
  *   sleep      Hypnosis, Sing, Sleep Powder: a zone warns, then puts whoever it catches to sleep for `stun` s; a
  *              hit wakes them (not burns or poison)
  *   weather    Rain Dance, Sunny Day, Sandstorm, Snowscape: sets that weather for `dur` s
@@ -44,6 +48,7 @@ G.LabKinds = (() => {
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const RECOIL_PER_S = 0.08;             // recoil: at most this share of your max HP in any 1 s (it was 12 % a cast)
   const LEAP_GRACE = 0.6;                // a leap: untouchable this long after landing (it was 0.15 s)
+  const LAND_SHORT = 70, LAND_BACK = 60;  // a leap's `land`: 'short' stops this far before the target, 'back' this far behind you
   const RAMP_FADE = 1.5;                 // ramp: one stack fades per RAMP_FADE game s without a hit
   const gtime = () => G.Game.st.time;   // game time (a pause or the game's speed doesn't change it)
   const PASSIVE = new Set(['guard', 'weather', 'terrain']);
@@ -165,11 +170,16 @@ G.LabKinds = (() => {
     target: true, reach: m => 300,
     run(pl, m, ghost) {
       const [x, y] = spot(pl, m, 160);
-      const [tx, ty] = freeTo(pl, pl.x, pl.y, x, y);
+      // The blast's spot (bx, by) and where you come down (tx, ty): see `land` above.
+      const land = (m.chain || 1) > 1 ? 'on' : m.land || 'on', d = Math.hypot(x - pl.x, y - pl.y) || 1;
+      let [bx, by] = freeTo(pl, pl.x, pl.y, x, y), tx = bx, ty = by;
+      if (land === 'stay') { tx = pl.x; ty = pl.y; }
+      else if (land === 'short') { const k = Math.max(0, d - LAND_SHORT) / d; [tx, ty] = freeTo(pl, pl.x, pl.y, pl.x + (x - pl.x) * k, pl.y + (y - pl.y) * k); bx = tx; by = ty; }
+      else if (land === 'back') [tx, ty] = freeTo(pl, pl.x, pl.y, pl.x - (x - pl.x) / d * LAND_BACK, pl.y - (y - pl.y) / d * LAND_BACK, 8, true);
       const dur = m.dur || 0.65;
       pl._labLeap = { t: 0, dur, sx: pl.x, sy: pl.y, tx, ty, style: m.leap || 'fly' };
       if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur + LEAP_GRACE);
-      fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: tx, y: ty, sx: pl.x, sy: pl.y, left: (m.chain || 1) - 1 });
+      fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: bx, y: by, px: tx, py: ty, land, sx: pl.x, sy: pl.y, left: (m.chain || 1) - 1 });
       const v = G.VFX.forMove(m);
       G.FX.burst(pl.x, pl.y - 4, m.leap === 'dig' ? '#aa7c3c' : m.leap === 'dive' ? '#8ccaff' : col(m), 12, 140);
       for (let i = 0; i < 4; i++) G.FX.sp(v.proj, v.pal, pl.x + G.U.rand(-10, 10), pl.y - 6, { vy: m.leap === 'dig' ? 30 : -120, life: 0.35 });
@@ -177,13 +187,16 @@ G.LabKinds = (() => {
   };
   function tickLeap(f, dt) {
     const pl = f.owner, L = pl._labLeap;
+    const px = f.px != null ? f.px : f.x, py = f.py != null ? f.py : f.y;
     if (!f.ghost && L) {
       const k = Math.min(1, f.t / f.dur), e = k * k * (3 - 2 * k);
-      pl.x = f.sx + (f.x - f.sx) * e; pl.y = f.sy + (f.y - f.sy) * e;
+      pl.x = f.sx + (px - f.sx) * e; pl.y = f.sy + (py - f.sy) * e;
     }
     if (f.t < f.dur) return false;
     if (L) delete pl._labLeap;
-    const x = f.ghost ? pl.x : f.x, y = f.ghost ? pl.y : f.y, m = f.m;
+    // A teammate's copy: the blast where its puppet came down (it lands where the blast is), else the spot.
+    const onYou = !f.land || f.land === 'on' || f.land === 'short';
+    const x = f.ghost && onYou ? pl.x : f.x, y = f.ghost && onYou ? pl.y : f.y, m = f.m;
     G.FX.ring(x, y, 6, m.radius, col(m), 0.4, 5);
     G.FX.burst(x, y - 6, col(m), 16, 200);
     if (G.Camera.sees(x, y, 40)) G.Audio.sfx('break');
@@ -586,7 +599,12 @@ G.LabKinds = (() => {
         if (now() - (g.noteAt || 0) > 500) { g.noteAt = now(); G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Protected', col(g.m)); }
         return;
       }
-      if (g.m.storeAll || !g.m.cat || !cat || g.m.cat === cat) g.stored += amount;
+      // Counter (the Aegis, plan A3): a hit of its category is blocked and stored for the blast.
+      if (g.m.storeAll || !g.m.cat || !cat || g.m.cat === cat) {
+        g.stored += amount;
+        if (now() - (g.noteAt || 0) > 500) { g.noteAt = now(); G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Blocked', col(g.m)); }
+        return;
+      }
       amount *= 0.5;
     }
     // Misty Terrain: less damage while you're inside.

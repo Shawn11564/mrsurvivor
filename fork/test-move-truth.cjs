@@ -138,7 +138,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(!lab.hearts.length, 'no move at all (Lab included) is drawn with hearts unless it heals: Sweet Kiss is a ring now', lab.hearts);
     check(!lab.dup.length, 'no two moves (Lab included) evolve into the same English name', lab.dup);
     check(!lab.lie.length, 'no Lab evolution is named after a move that heals, faints or attacks asleep when it doesn\'t', lab.lie);
-    check(/every hit/.test(lab.texts.counter) && !/ may /.test(lab.texts.bounce + lab.texts.flare) && /2\.2 seconds/.test(lab.texts.rest) &&
+    check(/physical hits are blocked/.test(lab.texts.counter) && !/ may /.test(lab.texts.bounce + lab.texts.flare) && /2\.2 seconds/.test(lab.texts.rest) &&
       /first enemy/.test(lab.texts.techno) && !/never miss/.test(lab.texts.swift), 'Lab texts say what the code does', lab.texts);
     check(lab.cat.every(c => c === null), 'King\'s Shield and Baneful Bunker deal no damage: no Attack category', lab.cat);
     check(!lab.protect.ups.some(t => /damage/.test(t)) && lab.protect.dur4 > 0.9 * 1.4 && lab.protect.evo === 'Lasts longer and recharges faster',

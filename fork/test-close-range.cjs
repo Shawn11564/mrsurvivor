@@ -18,6 +18,10 @@
 //  A1.5 ramp stacks fade one per 1.5 s instead of resetting
 //  A2   policy (a): a dash, recoil or roll goes the way you walk (else at the target), only when an
 //       enemy is on that line, and leaves you where you were, with no camera kick
+//  A3   pivots switch to the next slot, Flame Charge stacks speed, Parting Shot weakens; Fly/Bounce
+//       come down where they took off, Dig/Dive 70 px in front of the enemy, Phantom Force behind
+//       you; Counter blocks and stores (the Aegis); the 11 upstream melee moves get a trait each
+//       (reach, heavy, leech, flinch, parry) and none swings 360°; normal runs keep upstream's moves
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 
@@ -295,18 +299,115 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   check(pa.sideways.casts === 0 && !pa.sideways.hit, 'A2: walking past an enemy that isn\'t on your way: the dash waits', pa.sideways);
   check(pa.along.hit && Math.abs(pa.along.a + 1.57) < 0.05 && pa.along.moved === 0, 'A2: walking at it: the dash goes the way you walk and hits it, and you stay', pa.along);
 
+  // ================= Phase 2: identity (A3) =================
+  console.log('Lab run: pivots, Flame Charge, leaps, Aegis (A3)');
+  const a3 = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    // Pivots: hit, then the next slot is the active one.
+    for (const id of ['u-turn', 'volt-switch', 'flip-turn', 'parting-shot']) {
+      const [m] = __only(id, 'ember');
+      pl.active = 0;
+      const e = __dummy(...__at(80));
+      await __until(() => e.hp < e.maxHp, 3000);
+      await __wait(30);
+      out[id] = { hit: e.hp < e.maxHp, active: pl.active, meek: !!e._meek };
+    }
+    // Flame Charge: a speed stack per cast.
+    __only('flame-charge');
+    __dummy(...__at(80));
+    await __until(() => pl.buffs.spd.n > 0, 3000);
+    out.rush = pl.buffs.spd.n;
+    // Leaps: where you come down.
+    for (const id of ['fly', 'bounce', 'dig', 'dive', 'phantom-force']) {
+      __only(id);
+      const x0 = pl.x, y0 = pl.y, e = __dummy(...__at(180));
+      await __until(() => pl._labLeap, 3000);
+      await __until(() => !pl._labLeap, 3000);
+      await __wait(30);
+      out[id] = { hit: e.hp < e.maxHp, fromStart: Math.round(G.U.dist(x0, y0, pl.x, pl.y)), toEnemy: Math.round(G.U.dist(pl.x, pl.y, e.x, e.y)) };
+    }
+    // Counter (the Aegis): physical hits blocked, special ones halved, the blast returns what it blocked.
+    const [cm] = __only('ember', 'counter');
+    pl.active = 0;
+    const d = __dummy(...__at(60));
+    await __until(() => pl._labGuard, 6000);
+    pl.invuln = 0; pl.hp = pl.maxHp; pl.hurt(40, null, false, 'physical');
+    out.blocked = Math.round(pl.maxHp - pl.hp);
+    pl.invuln = 0; pl.hp = pl.maxHp; pl.hurt(40, null, false, 'special');
+    out.special = Math.round(pl.maxHp - pl.hp);
+    const stored = pl._labGuard ? pl._labGuard.stored : 0;
+    await __until(() => !pl._labGuard, 3000);
+    out.stored = stored;
+    return out;
+  });
+  for (const id of ['u-turn', 'volt-switch', 'flip-turn', 'parting-shot']) check(a3[id].hit && a3[id].active === 1, `A3: ${id} hits, then switches you to the next slot`, a3[id]);
+  check(a3['parting-shot'].meek, 'A3: Parting Shot leaves the enemies it hit dealing less');
+  check(a3.rush >= 1, `A3: Flame Charge stacks a speed boost (${a3.rush})`);
+  for (const id of ['fly', 'bounce']) check(a3[id].hit && a3[id].fromStart < 4, `A3: ${id} strikes the enemy and you come down where you were`, a3[id]);
+  for (const id of ['dig', 'dive']) check(a3[id].hit && a3[id].toEnemy >= 55 && a3[id].toEnemy <= 85, `A3: ${id} comes up about 70 px in front of the enemy and hits it`, a3[id]);
+  check(a3['phantom-force'].hit && a3['phantom-force'].fromStart >= 45 && a3['phantom-force'].toEnemy > 200, 'A3: Phantom Force strikes the enemy and you come back behind where you were', a3['phantom-force']);
+  check(a3.blocked === 0 && a3.special > 0 && a3.stored >= 40, `A3: Counter blocks a physical hit (${a3.blocked}), halves a special one (${a3.special}) and stores what it blocked (${a3.stored})`);
+
+  console.log('Lab run: melee traits (A3)');
+  const mt = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    const top = id => { const m = G.Moves.instance(id, 1); while (G.Moves.levelUp(m)) {} G.Moves.evolve(m); return m; };
+    const ids = ['tackle', 'vine-whip', 'wing-attack', 'body-slam', 'bug-bite', 'karate-chop', 'lick', 'metal-claw', 'bite', 'dragon-claw', 'play-rough'];
+    out.traits = Object.fromEntries(ids.map(id => [id, G.Moves.instance(id, 1).labTrait || null]));
+    out.arcs = Object.fromEntries(ids.map(id => [id, +top(id).arc.toFixed(2)]));
+    const vw = G.Moves.instance('vine-whip', 1), vd = G.Moves.BY_ID['vine-whip'];
+    out.reach = { r: Math.round(vw.radius), r0: vd.radius, arc: +vw.arc.toFixed(2), arc0: vd.arc };
+    // Body Slam: the first hit stuns.
+    __only('body-slam');
+    const b = __dummy(...__at(40));
+    await __until(() => b.hp < b.maxHp, 3000);
+    out.flinch = b.stunT > 0;
+    // Bug Bite: heals.
+    __only('bug-bite');
+    pl.hp = pl.maxHp * 0.5;
+    __dummy(...__at(40));
+    await __wait(1500);
+    out.leech = Math.round(pl.hp - pl.maxHp * 0.5);
+    // Karate Chop: right after a swing the first hit is parried, the next one isn't.
+    const [kc] = __only('karate-chop');
+    const k = __dummy(...__at(40));
+    kc.castAt = 0;
+    await __until(() => kc.castAt, 3000);
+    pl.invuln = 0; pl.hp = pl.maxHp; pl.hurt(40, null, false, 'physical');
+    out.parry = Math.round(pl.maxHp - pl.hp);
+    pl.invuln = 0; pl.hurt(40, null, false, 'physical');
+    out.second = Math.round(pl.maxHp - pl.hp);
+    return out;
+  });
+  check(Object.values(mt.traits).every(Boolean), 'A3: the 11 upstream melee moves each get a trait in Lab', mt.traits);
+  check(Object.values(mt.arcs).every(a => a < 6.28), 'A3: none of them swings all around at its top level (no name says so)', mt.arcs);
+  check(mt.reach.r >= 100 && mt.reach.arc < mt.reach.arc0, `A3: Vine Whip reaches far (${mt.reach.r} px, was ${mt.reach.r0}) in a narrow arc (${mt.reach.arc}, was ${mt.reach.arc0})`);
+  check(mt.flinch, 'A3: Body Slam\'s first hit makes the enemy flinch (stunned)');
+  check(mt.leech > 0, `A3: Bug Bite heals you (+${mt.leech})`);
+  check(mt.parry === 0 && mt.second > 0, `A3: Karate Chop parries the first hit after a swing (${mt.parry}), not the second (${mt.second})`);
+
   // ================= normal runs don't change =================
   await startRun(false);
-  console.log('Normal run: nothing of the above (A2 is Lab only)');
+  console.log('Normal run: nothing of the above (A2, A3 are Lab only)');
   const nr = await page.evaluate(async () => {
     const pl = G.Game.player, out = {};
     __only('quick-attack');
     const x0 = pl.x, e = __dummy(...__at(90));
     await __until(() => e.hp < e.maxHp, 3000);
     out.dashMoved = Math.round(G.U.dist(x0, pl.y, pl.x, pl.y));
+    const kc = G.Moves.instance('karate-chop', 1);
+    while (G.Moves.levelUp(kc)) {}
+    G.Moves.evolve(kc);
+    out.kcArc = kc.arc; out.kcTrait = kc.labTrait || null;
     return out;
   });
   check(nr.dashMoved > 40, `normal run: Quick Attack still carries you (${nr.dashMoved} px)`);
+  check(nr.kcArc >= 6.28 && !nr.kcTrait, `normal run: Karate Chop is upstream's (360° at the top, no trait)`, nr);
+
+  // The move a Lab run starts with is made before the run is Lab: it still gets its identity.
+  await startRun(true, 66);
+  const first = await page.evaluate(() => G.Game.player.moves.map(m => ({ id: m.id, trait: m.labTrait || null, lab: !!G.LabMech.ID[m.id] })));
+  check(first.some(m => m.lab) && first.every(m => !m.lab || m.trait), "a Lab run's starting move gets its Lab trait too (Machop)", first);
 
   check(!errors.length, 'no page errors', errors.slice(0, 3));
   await browser.close();

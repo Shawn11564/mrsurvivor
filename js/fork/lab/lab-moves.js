@@ -28,21 +28,21 @@ G.LabMoves = [
     look: { proj: 'star', pal: 'electric' }, evo: ['Population Bomb', 'cd'] },
 
   // ================= phase 4: new families =================
-  // ---- leap: you leave and land on the target (nothing can hit you meanwhile) ----
-  { id: 'fly', name: 'Fly', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly',
-    desc: 'Fly up out of reach, then dive onto the enemy and hit everything where you land.',
+  // ---- leap: you leave (nothing can hit you meanwhile) and the blast lands on the target; `land`: where you come down (kinds.js) ----
+  { id: 'fly', name: 'Fly', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly', land: 'stay',
+    desc: 'Fly up out of reach, then strike the enemy from above and hit everything around it. You come down where you took off.',
     cd: 2.2, dmg: 34, radius: 70, dur: 0.7, knock: 120, look: { proj: 'wind' }, evo: ['Dual Wingbeat', 'spd'] },   // not Sky Attack: Moltres's signature
-  { id: 'dig', name: 'Dig', type: 'ground', kind: 'leap', cat: 'physical', leap: 'dig',
-    desc: 'Burrow underground where nothing can hit you, then burst out under the enemy.',
+  { id: 'dig', name: 'Dig', type: 'ground', kind: 'leap', cat: 'physical', leap: 'dig', land: 'short',
+    desc: 'Burrow underground where nothing can hit you, then burst out right in front of the enemy, hitting everything there.',
     cd: 2.3, dmg: 36, radius: 66, dur: 0.75, knock: 120, look: { proj: 'rock' }, evo: ['Stomping Tantrum', 'atk'] },
-  { id: 'bounce', name: 'Bounce', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly',
-    desc: 'Spring high into the air and land on the enemy, briefly paralyzing the ones you land on.',
+  { id: 'bounce', name: 'Bounce', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly', land: 'stay',
+    desc: 'Spring high into the air and stomp the enemy from above, briefly paralyzing the ones around it. You come down where you jumped.',
     cd: 1.8, dmg: 28, radius: 64, dur: 0.6, stun: 0.6, look: { proj: 'wind' }, evo: ['Sky Drop', 'hp'] },
-  { id: 'dive', name: 'Dive', type: 'water', kind: 'leap', cat: 'physical', leap: 'dive',
-    desc: 'Dive out of sight, then surge up under the enemy in a splash.',
+  { id: 'dive', name: 'Dive', type: 'water', kind: 'leap', cat: 'physical', leap: 'dive', land: 'short',
+    desc: 'Dive out of sight, then surge up right in front of the enemy in a splash.',
     cd: 2.2, dmg: 33, radius: 70, dur: 0.7, knock: 120, look: { proj: 'drop' }, evo: ['Liquidation', 'atk'] },
-  { id: 'phantom-force', name: 'Phantom Force', type: 'ghost', kind: 'leap', cat: 'physical', leap: 'phantom',
-    desc: 'Vanish into the shadows, then strike the enemy from nowhere.',
+  { id: 'phantom-force', name: 'Phantom Force', type: 'ghost', kind: 'leap', cat: 'physical', leap: 'phantom', land: 'back',
+    desc: 'Vanish into the shadows, strike the enemy from nowhere, and come back a step behind where you were.',
     cd: 2.0, dmg: 32, radius: 66, dur: 0.65, look: { proj: 'shadow' }, evo: ['Astral Barrage', 'cd'] },
 
   // ---- recoil: very strong charges that cost you some HP ----
@@ -71,6 +71,17 @@ G.LabMoves = [
     desc: 'Grab and slam the enemies in your way. Hurts you a little too.',
     cd: 1.0, dmg: 38, radius: 100, width: 36, recoil: 0.25, look: { proj: 'impact' }, evo: ['Collision Course', 'atk'] },
 
+  // ---- pivots (stream A, plan A3): a dash that hits along the way you walk, then switches you to your next move (mobility.js) ----
+  { id: 'volt-switch', name: 'Volt Switch', type: 'electric', kind: 'dash', cat: 'special', pivot: true,
+    desc: 'Flash through the enemies the way you walk and back, then switch to your next move.',
+    cd: 0.8, dmg: 19, radius: 115, width: 34, look: { proj: 'bolt', trail: 'spark' }, evo: ['Bolt Beak', 'cd'] },
+  { id: 'flip-turn', name: 'Flip Turn', type: 'water', kind: 'dash', cat: 'physical', pivot: true,
+    desc: 'Splash through the enemies the way you walk and back, then switch to your next move.',
+    cd: 0.8, dmg: 19, radius: 115, width: 36, knock: 50, look: { proj: 'drop' }, evo: ['Wave Crash', 'atk'] },
+  { id: 'parting-shot', name: 'Parting Shot', type: 'dark', kind: 'dash', cat: 'special', pivot: true, meek: 0.3, markDur: 4,
+    desc: 'Taunt your way through the enemies and back: the ones you pass deal 30% less for 4 s. Then switch to your next move.',
+    cd: 0.9, dmg: 10, radius: 115, width: 40, look: { proj: 'shadow', pal: 'dark' }, evo: ['Quash', 'cd'] },
+
   // ---- ramp: each hit in a row hits harder ----
   { id: 'rollout', name: 'Rollout', type: 'rock', kind: 'ramp', cat: 'physical', roll: true,
     desc: 'Roll into the enemy. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
@@ -93,13 +104,13 @@ G.LabMoves = [
     desc: 'See every attack coming and dodge them all for a moment. Works from any slot.',
     cd: 3.0, dur: 0.9, dmg: 0, evo: ['Silk Trap', 'def'], ups: [{ t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% duration', m: { dur: 1.25 } }, { t: '-20% recharge and +20% duration', m: { cd: 0.8, dur: 1.2 } }], evoMod: { t: 'Lasts longer and recharges faster', m: { dur: 1.3, cd: 0.8 } } },
   { id: 'counter', name: 'Counter', type: 'fighting', kind: 'guard', cat: 'physical', mode: 'counter',
-    desc: 'For a moment you take half damage from every hit; then you hit back around you with twice what physical hits did. Works from any slot.',
+    desc: 'For a moment physical hits are blocked (others do half); then you hit back around you with twice what you blocked. Works from any slot.',
     cd: 3.0, dur: 1.2, dmg: 20, radius: 90, mult: 2, evo: ['Comeuppance', 'def'] },
   { id: 'mirror-coat', name: 'Mirror Coat', type: 'psychic', kind: 'guard', cat: 'special', mode: 'counter',
-    desc: 'For a moment you take half damage from every hit; then you send back twice what special hits did. Works from any slot.',
+    desc: 'For a moment special hits are blocked (others do half); then you send back twice what you blocked. Works from any slot.',
     cd: 3.0, dur: 1.2, dmg: 20, radius: 90, mult: 2, look: { proj: 'ring' }, evo: ['Lumina Crash', 'def'] },
   { id: 'metal-burst', name: 'Metal Burst', type: 'steel', kind: 'guard', cat: 'physical', mode: 'counter',
-    desc: 'For a moment you take half from every hit; then it bursts out around you with half again what they did. Works from any slot.',
+    desc: 'For a moment every hit is blocked; then it bursts out around you with half again what you blocked. Works from any slot.',
     cd: 3.2, dur: 1.2, dmg: 22, radius: 90, mult: 1.5, look: { proj: 'shard' }, evo: ['Spin Out', 'def'], storeAll: true },
 
   // ---- sleep: an area that puts enemies to sleep (a hit wakes them) ----
