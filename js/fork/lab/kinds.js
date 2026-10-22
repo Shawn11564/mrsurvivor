@@ -3,11 +3,14 @@
  * they need a target); the rest wraps functions the game calls as G.X.y. Their moves
  * are in js/fork/lab/lab-moves.js and only show up in a Lab run (G.Lab).
  *
- *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and land on the target
+ *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and land on the target; you stay
+ *              untouchable LEAP_GRACE s after landing
  *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP
- *              (`recoil` × the damage dealt, at most RECOIL_CAP of your HP, and it never KOs you)
+ *              (`recoil` × the damage dealt, at most RECOIL_PER_S of your max HP in any second, and it
+ *              never KOs you); a cast that knocks an enemy out gives half its recoil back
  *   ramp       Rollout, Fury Cutter, Ice Ball: each hit that lands hits harder (`step` per hit, up to
- *              `stacks`); if it misses or you're slow, it starts over
+ *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) moves you
+ *              up to ROLL_STEP px towards the target, and not while you walk away from it
  *   guard      Protect, Detect (protect: nothing hurts you for `dur` s), Counter, Mirror
  *              Coat, Metal Burst (counter: you take half, and at the end it returns it in a blast)
  *   sleep      Hypnosis, Sing, Sleep Powder: a zone warns, then puts whoever it catches to sleep for `stun` s; a
@@ -38,7 +41,10 @@ G.LabKinds = (() => {
   const now = () => performance.now();
   const boss = e => e.boss || e.judge;
   const authority = () => !G.Coop.active || G.Coop.isHost;
-  const RECOIL_CAP = 0.12;               // of your max HP, per hit
+  const RECOIL_PER_S = 0.08;             // recoil: at most this share of your max HP in any 1 s (it was 12 % a cast)
+  const LEAP_GRACE = 0.6;                // a leap: untouchable this long after landing (it was 0.15 s)
+  const RAMP_FADE = 1.5, ROLL_STEP = 30;  // ramp: one stack fades per RAMP_FADE game s; a roll moves you ROLL_STEP px at most
+  const gtime = () => G.Game.st.time;   // game time (a pause or the game's speed doesn't change it)
   const PASSIVE = new Set(['guard', 'weather', 'terrain']);
   // Colours that don't wake a sleeping enemy: burn, poison (enemy.js update) and lava.
   const DOT = new Set(['#ff9a4d', '#d47cf0']);
@@ -161,7 +167,7 @@ G.LabKinds = (() => {
       const [tx, ty] = freeTo(pl, pl.x, pl.y, x, y);
       const dur = m.dur || 0.65;
       pl._labLeap = { t: 0, dur, sx: pl.x, sy: pl.y, tx, ty, style: m.leap || 'fly' };
-      if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur + 0.15);
+      if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur + LEAP_GRACE);
       fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: tx, y: ty, sx: pl.x, sy: pl.y, left: (m.chain || 1) - 1 });
       const v = G.VFX.forMove(m);
       G.FX.burst(pl.x, pl.y - 4, m.leap === 'dig' ? '#aa7c3c' : m.leap === 'dive' ? '#8ccaff' : col(m), 12, 140);
@@ -202,7 +208,7 @@ G.LabKinds = (() => {
     if (!next) return;
     const [tx, ty] = freeTo(pl, x, y, next.x, next.y), dur = m.chainDur || 0.32;
     pl._labLeap = { t: 0, dur, sx: x, sy: y, tx, ty, style: m.leap || 'fly' };
-    pl.invuln = Math.max(pl.invuln || 0, dur + 0.15);
+    pl.invuln = Math.max(pl.invuln || 0, dur + LEAP_GRACE);
     fields.push({ kind: 'leap', owner: pl, ghost: false, m, t: 0, dur, x: tx, y: ty, sx: x, sy: y, left: f.left - 1, done });
     G.FX.burst(x, y - 4, col(m), 10, 120);
   }
@@ -221,39 +227,58 @@ G.LabKinds = (() => {
       G.World.collide(pl);
       pl.invuln = Math.max(pl.invuln || 0, 0.3);
       const w = m.width || 36, mx = (sx + ex) / 2, my = (sy + ey) / 2, d0 = m.dealt || 0, dmg = m.dmg * pl.atkFor(m);
+      const struck = [];
       for (const e of G.EnemyMgr.queryCircle(mx, my, len / 2 + w)) {
-        if (C.segDist2(sx, sy, ex, ey, e.x, e.y) <= (w / 2 + e.r) ** 2) C.hit(pl, e, dmg, col(m), ca, sa, m.knock || 100, m);
+        if (C.segDist2(sx, sy, ex, ey, e.x, e.y) <= (w / 2 + e.r) ** 2) { C.hit(pl, e, dmg, col(m), ca, sa, m.knock || 100, m); struck.push(e); }
       }
       for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) if (C.segDist2(sx, sy, ex, ey, p.x, p.y) <= (w / 2 + p.r) ** 2) G.World.damageProp(p, dmg, col(m));
       G.Camera.kick(0.18);
-      const done = (m.dealt || 0) - d0;
-      if (done > 0 && pl.labAbility !== 'rock-head' && pl.labAbility !== 'magic-guard') {
-        const r = Math.min(done * (m.recoil || 0.25), pl.maxHp * RECOIL_CAP);
-        if (r >= 1 && pl.hp > 1) {
-          pl.hp = Math.max(1, pl.hp - r);
-          G.FX.dmgText(pl.x, pl.y - pl.bodyH - 4, '-' + Math.round(r), '#ffae5c');
-        }
-      }
+      recoil(pl, m, (m.dealt || 0) - d0, struck.some(e => e.dead));
     }
   };
+  /**
+   * The recoil of a cast that dealt `done`: `recoil` × it, within what's left of RECOIL_PER_S of your
+   * max HP in the last second (against a crowd every cast hit the old 12 % cap: ~10 % HP a second on
+   * top of the contact damage); a KO gives half of it back. Never knocks you out.
+   */
+  function recoil(pl, m, done, ko) {
+    if (!(done > 0) || pl.labAbility === 'rock-head' || pl.labAbility === 'magic-guard') return;
+    const t = gtime(), log = (pl._labRecoil || []).filter(x => t - x.t < 1);
+    const used = log.reduce((a, x) => a + x.r, 0);
+    let r = Math.min(done * (m.recoil || 0.25), Math.max(0, pl.maxHp * RECOIL_PER_S - used));
+    if (r > 0) log.push({ t, r });
+    pl._labRecoil = log;
+    if (ko) r *= 0.5;
+    if (r > 0 && pl.hp > 1) {
+      pl.hp = Math.max(1, pl.hp - r);
+      if (r >= 1) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 4, '-' + Math.round(r), '#ffae5c');
+    }
+  }
 
   // ---------------- ramp ----------------
   X.ramp = {
-    target: true, reach: m => m.radius + (m.roll ? 90 : 30),
+    target: true, reach: m => m.radius + (m.roll ? 50 : 30),
     run(pl, m, ghost) {
-      const v = G.VFX.forMove(m), c = col(m);
-      if (m.roll && !ghost && pl.target) {
-        const d = Math.max(0, Math.min(80, G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) - m.radius * 0.5));
-        const [ex, ey] = freeTo(pl, pl.x, pl.y, pl.x + Math.cos(pl.aim) * d, pl.y + Math.sin(pl.aim) * d, 8, true);
-        pl.x = ex; pl.y = ey; G.World.collide(pl);
+      const v = G.VFX.forMove(m), c = col(m), t = pl.target;
+      // A roll closes in a little (ROLL_STEP px at most), and not while you walk away from the target:
+      // up to 80 px a cast, it dragged you into the crowd you were kiting.
+      if (m.roll && !ghost && t) {
+        const a = Math.atan2(t.y - pl.y, t.x - pl.x), away = pl.walking && Math.cos(pl.moveAngle - a) < 0;
+        const d = away ? 0 : Math.max(0, Math.min(ROLL_STEP, G.U.dist(pl.x, pl.y, t.x, t.y) - m.radius * 0.5));
+        if (d > 0) {
+          const [ex, ey] = freeTo(pl, pl.x, pl.y, pl.x + Math.cos(pl.aim) * d, pl.y + Math.sin(pl.aim) * d, 8, true);
+          pl.x = ex; pl.y = ey; G.World.collide(pl);
+        }
       }
-      // If it takes too long to cast again (you switch slot, no one is there), it starts from zero.
-      if (!ghost && now() - (m._rampAt || 0) > Math.max(1500, m.cd * pl.cdMul * 2500)) m._ramp = 0;
+      // A pause in the hits (kiting, a slot switch, a miss) takes one stack per RAMP_FADE s, not all of them.
+      if (!ghost && m._ramp > 0) {
+        const steps = Math.floor((gtime() - (m._rampAt || 0)) / RAMP_FADE);
+        if (steps > 0) { m._ramp = Math.max(0, m._ramp - steps); m._rampAt += steps * RAMP_FADE; }
+      }
       const n = ghost ? 0 : m._ramp || 0, k = 1 + n * (m.step || 0.35);
       G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius * (1 + n * 0.08), m.arc || 2, c, v);
       if (m.roll) for (let i = 0; i < 3; i++) G.FX.sp(v.proj || 'rock', v.pal, pl.x + G.U.rand(-8, 8), pl.y - 4, { vx: -Math.cos(pl.aim) * 60, vy: -30, life: 0.3 });
       if (ghost) return;
-      m._rampAt = now();
       const half = Math.min(m.arc || 2, 6.2832) / 2;
       let hits = 0;
       for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
@@ -263,7 +288,7 @@ G.LabKinds = (() => {
       }
       for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) if (C.inArc(pl.x, pl.y, p.x, p.y, pl.aim, half)) G.World.damageProp(p, m.dmg * pl.atkFor(m) * k, c);
       const was = m._ramp || 0;
-      m._ramp = hits ? Math.min(m.stacks || 4, was + 1) : 0;
+      if (hits) { m._ramp = Math.min(m.stacks || 4, was + 1); m._rampAt = gtime(); }
       if (m._ramp > was) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 14, '×' + (1 + m._ramp * (m.step || 0.35)).toFixed(1), c);
     }
   };

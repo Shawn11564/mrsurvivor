@@ -33,7 +33,8 @@
  *   flinch    the first hit on each enemy stuns it for that many s (Fake Out)
  * And in boosters (buff): `also` [{ stat, amount }] raises more stats at once (Bulk Up,
  * Calm Mind...); `drum` (Fillet Away) costs that share of your HP and fills the stacks.
- * With grab, bind, focus or ramp active you take 25 % less, as with melee (player.js).
+ * With grab, bind, focus, ramp or recoil active you take 25 % less, as with melee (player.js); in Lab
+ * runs with spin or dash too (CLOSE).
  *
  * Co-op: what happens to enemies goes through hit, applyStun and applySlow (the guest already
  * sends it to the host). A teammate's screens and cries arrive as a ghost
@@ -46,7 +47,12 @@ G.LabKinds2 = (() => {
   const now = () => performance.now();
   const boss = e => e.boss || e.judge;
   const PASSIVE = new Set(['heal', 'screen', 'shout', 'endure']);
-  const CLOSE = new Set(['ramp', 'grab', 'bind', 'focus']);
+  // Close-range kinds: with one active you take 25 % less (like melee, player.js). Spin and dash are
+  // upstream kinds that normal runs have too: they get it in Lab runs only (fork/PLAN-2026-10-22.md
+  // A1.1) until G.LabKinds2.promoteCut is set (G12). CLOSE.has(kind) is what everything reads.
+  const CLOSE_ALL = new Set(['ramp', 'grab', 'bind', 'focus', 'recoil']), CLOSE_LAB = new Set(['spin', 'dash']);
+  let promoteCut = false;
+  const CLOSE = { has: k => CLOSE_ALL.has(k) || (CLOSE_LAB.has(k) && (promoteCut || !!(G.Lab && G.Lab.active))) };
   const LEECH_CAP = 0.05, CUT_BOSS = 0.08, REVENGE_MS = 1500;
   const FOCUS_HIT = 0.35, FOCUS_MIN = 0.3, FOCUS_BRACE = 0.7;      // Focus Punch: per hit, minimum, damage taken while charging
   const MARK = { meek: '#6fa8ff', weak: '#d36bff' };
@@ -585,5 +591,6 @@ G.LabKinds2 = (() => {
   };
 
   return { PASSIVE, CLOSE, EVO, mark, screenK, boost, LEECH_CAP, CUT_BOSS,
+           get promoteCut() { return promoteCut; }, set promoteCut(v) { promoteCut = !!v; },
            counts: () => ({ thrown: thrown.length, binds: binds.length, screens: screens.length, marked: marked.size, seeded: seeded.size }) };
 })();

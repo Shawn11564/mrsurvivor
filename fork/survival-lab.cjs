@@ -35,6 +35,17 @@ const BUILDS = [
   { name: 'close: Play Rough',           bot: 'close', slots: [['play-rough']] },
   { name: 'close: Fury Cutter (ramp)',   bot: 'close', slots: [['fury-cutter']] },
   { name: 'close: Rapid Spin (spin)',    bot: 'close', slots: [['rapid-spin']] },
+  // stream A of fork/PLAN-2026-10-22.md (A4): movers and the upstream melee moves
+  { name: 'close: Quick Attack (dash)',  bot: 'close', slots: [['quick-attack']] },
+  { name: 'close: U-turn (dash)',        bot: 'close', slots: [['u-turn']] },
+  { name: 'close: Flame Charge (dash)',  bot: 'close', slots: [['flame-charge']] },
+  { name: 'close: Double-Edge (recoil)', bot: 'close', slots: [['double-edge']] },
+  { name: 'close: Fly (leap)',           bot: 'close', slots: [['fly']] },
+  { name: 'close: Dig (leap)',           bot: 'close', slots: [['dig']] },
+  { name: 'close: Rollout (ramp)',       bot: 'close', slots: [['rollout']] },
+  { name: 'close: Body Slam',            bot: 'close', slots: [['body-slam']] },
+  { name: 'close: Vine Whip',            bot: 'close', slots: [['vine-whip']] },
+  { name: 'close: Bite, Counter',        bot: 'close', slots: [['bite'], ['counter']] },
   // phase 9 (js/fork/lab/kinds2.js): close-range kinds, drain, and support in other slots
   { name: 'close: Drain Punch',          bot: 'close', slots: [['drain-punch']] },
   { name: 'close: Circle Throw (grab)',  bot: 'close', slots: [['circle-throw']] },

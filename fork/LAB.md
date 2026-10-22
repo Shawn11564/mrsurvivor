@@ -183,9 +183,9 @@ wrapped for them). The moves are in `lab-moves.js`, with their PokeAPI ids, so l
 
 | Kind | Moves | What it does |
 |---|---|---|
-| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then land on the target with an area hit; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
-| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard dash that costs `recoil` × the damage done, at most 12% of your HP, never KO |
-| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); a miss or a pause starts over |
+| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then land on the target with an area hit and stay untouchable 0.6 s more; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
+| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard dash that costs `recoil` × the damage done, at most 8% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
+| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll moves you 30 px at most towards the target, not while you walk away |
 | guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter: half damage, then a blast with `mult` × what you took |
 | sleep | Hypnosis, Sing, Sleep Powder, Spore, Yawn | a marked zone; enemies there sleep `stun` s; a hit wakes them (a burn or poison tick doesn't) |
 | (confusion) | Confuse Ray, Supersonic, Teeter Dance, Sweet Kiss | old kinds with `conf`: the enemy staggers, doesn't attack you and hits its neighbours |
@@ -341,7 +341,7 @@ Buffs with `also` raise several stats at once (Bulk Up, Calm Mind, Coil, Shift G
 `drum` (Fillet Away) costs that share of HP to fill every stack at once. Bulk Up was Dragon Dance's
 evolved name: Dragon Dance now evolves into Clangorous Soul (`js/fork/evo-names.js`), in every game.
 
-With a grab, bind, focus or ramp move active you take 25% less, like melee (`kinds2.js` `CLOSE`).
+With a grab, bind, focus, ramp or recoil move active you take 25% less, like melee (`kinds2.js` `CLOSE`); in Lab runs with a spin or dash too (since 2026-10-22, see "Close range and mobility").
 Iron Fist now also matches "Punch", Strong Jaw "Fang", and Tough Claws counts grab and bind as contact.
 Metronome and Transform never call the support kinds or focus.
 
@@ -392,6 +392,28 @@ For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, 
 
 `node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
 and that a normal run's moves don't change.
+
+## Close range and mobility (2026-10-22)
+
+Stream A of `fork/PLAN-2026-10-22.md` (section A): a close-range kit should last as long as the best
+ranged one, and a mobility move should never take you somewhere you didn't choose.
+
+Every run (`js/fork/close-target.js`, see `fork/README.md`): melee and spin aim at the nearest enemy in
+reach, a boss only when it's in reach (#186, #208); a dash never fires at a rock or chest.
+
+Lab runs:
+- **Close-range cut** (A1.1): spin, dash and recoil join the 25% less damage taken (`kinds2.js` `CLOSE`;
+  spin and dash only in Lab until `G.LabKinds2.promoteCut`).
+- **Relocation grace** (A1.2, `js/fork/lab/mobility.js`): 0.5 s after a dash, recoil or roll (a leap: 0.5 s
+  after it lands) nothing hurts you, hazards and lava included (they set `invuln` to 0 before they hit). A
+  new grace starts at most once per 1.2 s, or a fast dash would make you untouchable.
+- **Leap** (A1.3): untouchable 0.6 s after landing (was 0.15 s).
+- **Recoil** (A1.4): at most 8% of max HP in any second (was 12% a cast: ~10% HP/s against a crowd); a KO
+  gives half that cast's recoil back.
+- **Ramp** (A1.5): stacks fade one per 1.5 s of game time instead of resetting on a miss or a pause;
+  Rollout/Ice Ball close in 30 px at most (was 80) and not while you walk away.
+
+`node fork/test-close-range.cjs` checks all of it in real runs.
 
 ## Texts and looks match the code (2026-10-21)
 
@@ -632,6 +654,9 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   bar once hurt), and the built
   `index.html` (no setting; its CSS for the arrows).
 
+- `node fork/test-close-range.cjs` (server): close range and mobility (see that section): melee aims in reach
+  and dashes ignore props in a normal run; the Lab cut, relocation grace, leap landing, recoil cap and KO
+  refund, ramp fade and roll step.
 - `node fork/test-lab-close.cjs` (server): phase 9. Every move registered, real pools get them, no
   evolution sharing a name; a throw that bowls over the one behind, Seismic Toss by level; Bind
   holding and hurting, two at level 2; Focus Punch landing or lost, Shell Trap going off; Recover

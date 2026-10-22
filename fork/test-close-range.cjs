@@ -10,6 +10,13 @@
 //  A1.6 melee and spin aim at the nearest enemy in reach: a boss 250 px away no longer freezes them
 //       (upstream #186, #208); a boss in reach is still hit first.
 //  A1.7 a dash never fires at a rock or a chest (it dragged you across the map).
+// Lab runs (js/fork/lab/mobility.js, js/fork/lab/kinds.js, js/fork/lab/kinds2.js):
+//  A1.1 with a spin, dash or recoil move active you take 25% less (not in a normal run yet)
+//  A1.2 for 0.5 s after a dash, leap, recoil or roll nothing hurts you, not even a hazard
+//  A1.3 a leap keeps you untouchable 0.6 s after landing, and the landing blast hits
+//  A1.4 recoil costs at most 8% of max HP a second; a KO gives half that cast's recoil back
+//  A1.5 ramp stacks fade one per 1.5 s instead of resetting; a roll moves you 30 px at most
+//       towards the target, and not at all while you walk away from it
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 
@@ -119,6 +126,10 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     const e2 = __dummy(...__at(100));
     await __until(() => e2.hp < e2.maxHp, 2000);
     out.dashEnemy = e2.hp < e2.maxHp;
+    // A normal run has no close-range cut for dash and spin yet.
+    __only('ember'); const far = __take();
+    __only('quick-attack'); out.cutDash = +(__take() / far).toFixed(2);
+    __only('rapid-spin'); out.cutSpin = +(__take() / far).toFixed(2);
     return out;
   });
   check(tgt['karate-chop'], 'A1.6: Karate Chop hits an enemy in reach while a boss waits 250 px away (#186, #208)');
@@ -127,6 +138,126 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   check(tgt.rock, 'found a rock or chest to test against');
   check(tgt.dashCast === false && tgt.dashMoved < 5, `A1.7: Quick Attack doesn't fire at a rock or chest (cast ${tgt.dashCast}, moved ${tgt.dashMoved} px)`);
   check(tgt.dashEnemy, 'A1.7: and still fires at an enemy');
+  check(tgt.cutDash === 1 && tgt.cutSpin === 1, `normal run: dash and spin take full damage (×${tgt.cutDash}, ×${tgt.cutSpin})`);
+
+  // ================= Lab runs =================
+  await startRun(true);
+  console.log('Lab run: close-range cut (A1.1)');
+  const cut = await page.evaluate(() => {
+    __only('ember'); const far = __take(), k = {};
+    for (const id of ['quick-attack', 'rapid-spin', 'double-edge', 'karate-chop', 'fury-cutter']) { __only(id); k[id] = +(__take() / far).toFixed(2); }
+    return k;
+  });
+  check(Object.values(cut).every(v => v === 0.75), 'A1.1: with a dash, spin, recoil (and melee, ramp) move active you take 25% less', cut);
+
+  console.log('Lab run: relocation grace (A1.2)');
+  const grace = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    for (const id of ['quick-attack', 'double-edge', 'fly', 'rollout']) {
+      const [m] = __only(id);
+      pl.hp = pl.maxHp;
+      const e = __dummy(...__at(id === 'rollout' ? 70 : 110));
+      m.castAt = 0;
+      await __until(() => m.castAt, 3000);
+      if (pl._labLeap) await __until(() => !pl._labLeap, 2000);
+      // A hazard (it sets invuln to 0 before it hits) and lava, right after you moved.
+      pl.invuln = 0;
+      G.Hazards.add({ kind: 'zone', x: pl.x, y: pl.y, r: 50, delay: 0.05, dmg: 30, color: '#ff0000' });
+      const h0 = pl.hp;
+      await __wait(150);
+      out[id] = Math.round(h0 - pl.hp);
+    }
+    // After the grace (and no mover in the slot), the hazard hurts.
+    const [m] = __only('quick-attack');
+    const e = __dummy(...__at(110));
+    m.castAt = 0;
+    await __until(() => m.castAt, 3000);
+    pl.slots.length = 0; pl.moves.length = 0; pl.addMove('ember'); pl.active = 0;
+    await __wait(700);
+    pl.invuln = 0; pl.hp = pl.maxHp;
+    G.Hazards.add({ kind: 'zone', x: pl.x, y: pl.y, r: 50, delay: 0.05, dmg: 30, color: '#ff0000' });
+    await __wait(150);
+    out.after = Math.round(pl.maxHp - pl.hp);
+    return out;
+  });
+  check(['quick-attack', 'double-edge', 'fly', 'rollout'].every(id => grace[id] === 0), 'A1.2: a hazard right after a dash, recoil, leap or roll does nothing', grace);
+  check(grace.after > 0, `A1.2: 0.7 s later it hurts again (${grace.after})`);
+
+  console.log('Lab run: leap (A1.3)');
+  const leap = await page.evaluate(async () => {
+    const pl = G.Game.player;
+    const [m] = __only('fly');
+    const e = __dummy(...__at(150));
+    await __until(() => pl._labLeap, 3000);
+    await __until(() => !pl._labLeap, 3000);
+    return { inv: +pl.invuln.toFixed(2), hit: e.hp < e.maxHp };
+  });
+  check(leap.inv >= 0.45, `A1.3: after landing you stay untouchable ~0.6 s (${leap.inv} s left)`);
+  check(leap.hit, 'A1.3: the landing blast hits the enemy');
+
+  console.log('Lab run: recoil (A1.4)');
+  const rec = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    // Into a crowd of sturdy dummies, 3 s: at most 8% of max HP a second.
+    const [m] = __only('double-edge');
+    m.cd = 0.3;
+    for (let i = 0; i < 8; i++) __dummy(...__at(30 + i * 12, (i % 2 ? 0.1 : -0.1)));
+    pl.hp = pl.maxHp;
+    const g = G.Game.st.time;
+    await __wait(3000);
+    const secs = G.Game.st.time - g;
+    out.lostPerSec = +((pl.maxHp - pl.hp) / pl.maxHp / secs).toFixed(3);
+    // A KO: half of that cast's recoil comes back.
+    const [m2] = __only('double-edge');
+    m2.recoil = 1;
+    const weak = __dummy(...__at(60), { hp: 40 });
+    weak.hp = 40;
+    pl.hp = pl.maxHp; m2.dealt = 0;
+    await __until(() => weak.dead, 3000);
+    await __wait(50);
+    out.ko = weak.dead;
+    out.dealt = Math.round(m2.dealt);
+    out.lost = Math.round(pl.maxHp - pl.hp);
+    out.cap = Math.round(pl.maxHp * 0.08);
+    return out;
+  });
+  check(rec.lostPerSec > 0 && rec.lostPerSec <= 0.085, `A1.4: recoil costs at most 8% of max HP a second (${(rec.lostPerSec * 100).toFixed(1)}%/s)`);
+  check(rec.ko && rec.lost > 0 && rec.lost <= Math.ceil(rec.cap / 2) + 1, `A1.4: a KO gives half the recoil back (lost ${rec.lost}, at most half of ${rec.cap})`, rec);
+
+  console.log('Lab run: ramp and roll (A1.5)');
+  const ramp = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    const [m] = __only('fury-cutter');
+    const e = __dummy(...__at(40));
+    await __until(() => (m._ramp || 0) >= 4, 4000);
+    out.built = m._ramp;
+    G.EnemyMgr.clear();
+    await __wait(1700);                                   // one step of decay (1.5 s), not a reset
+    const e2 = __dummy(...__at(40));
+    const d0 = m.dealt || 0;
+    await __until(() => (m.dealt || 0) > d0, 2000);
+    out.after = m._ramp;
+    // Rollout: how far each cast moves you towards the target.
+    const X = G.Combat.EXTRA.ramp, run = X.run, moves = [];
+    X.run = function (p, mm, ghost) { const x0 = p.x, y0 = p.y; const r = run.apply(this, arguments); if (!ghost) moves.push(Math.round(G.U.dist(x0, y0, p.x, p.y))); return r; };
+    try {
+      __only('rollout');
+      __dummy(...__at(95));
+      await __until(() => moves.length >= 1, 3000);
+      out.step = moves[0];
+      moves.length = 0;
+      // Walking away from the target: no approach (the run only moves you by walking).
+      __only('rollout');
+      G.Input.axis = () => [-1, 0];
+      __dummy(...__at(90));
+      await __until(() => moves.length >= 1, 3000);
+      out.away = moves[0];
+    } finally { X.run = run; G.Input.axis = () => [0, 0]; }
+    return out;
+  });
+  check(ramp.built >= 4 && ramp.after >= ramp.built - 1, `A1.5: after a 1.7 s gap Fury Cutter keeps its stacks but one (${ramp.built} → ${ramp.after} after the next hit)`);
+  check(ramp.step > 0 && ramp.step <= 30, `A1.5: Rollout moves you at most 30 px towards the target (${ramp.step})`);
+  check(ramp.away === 0, `A1.5: and not at all while you walk away from it (${ramp.away})`);
 
   check(!errors.length, 'no page errors', errors.slice(0, 3));
   await browser.close();

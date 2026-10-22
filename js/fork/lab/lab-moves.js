@@ -73,16 +73,16 @@ G.LabMoves = [
 
   // ---- ramp: each hit in a row hits harder ----
   { id: 'rollout', name: 'Rollout', type: 'rock', kind: 'ramp', cat: 'physical', roll: true,
-    desc: 'Roll into the enemy. Each hit in a row is stronger; miss and it starts over.',
+    desc: 'Roll into the enemy. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
     cd: 0.55, dmg: 12, radius: 52, arc: 2.2, stacks: 4, step: 0.4, look: { proj: 'rock', melee: 'impact' }, evo: ['Steel Roller', 'spd'] },
   { id: 'ice-ball', name: 'Ice Ball', type: 'ice', kind: 'ramp', cat: 'physical', roll: true,
-    desc: 'Roll in a ball of ice. Each hit in a row is stronger; miss and it starts over.',
+    desc: 'Roll in a ball of ice. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
     cd: 0.55, dmg: 12, radius: 52, arc: 2.2, stacks: 4, step: 0.4, look: { proj: 'shard', melee: 'impact' }, evo: ['Ice Spinner', 'spd'] },
   { id: 'fury-cutter', name: 'Fury Cutter', type: 'bug', kind: 'ramp', cat: 'physical',
-    desc: 'Slash with your scythes. Each hit in a row is stronger; miss and it starts over.',
+    desc: 'Slash with your scythes. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
     cd: 0.42, dmg: 10, radius: 56, arc: 1.8, stacks: 5, step: 0.3, look: { melee: 'claw' }, evo: ['First Impression', 'atk'] },
   { id: 'fury-swipes', name: 'Fury Swipes', type: 'normal', kind: 'ramp', cat: 'physical',
-    desc: 'Rake with your claws. Each hit in a row is stronger; miss and it starts over.',
+    desc: 'Rake with your claws. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
     cd: 0.38, dmg: 9, radius: 52, arc: 1.6, stacks: 5, step: 0.25, look: { melee: 'claw' }, evo: ['Thrash', 'atk'] },
 
   // ---- guard: fire on their own from any slot when something is about to hit you ----
@@ -260,7 +260,7 @@ G.LabMoves = [
     desc: 'Signature: a lightning-fast punch of water that homes in.',
     cd: 0.32, dmg: 14, speed: 520, life: 1.0, size: 7, homing: 8, look: { proj: 'drop' }, anim: ['Punch', 'Attack'] },
   { id: 'rage-fist', name: 'Rage Fist', type: 'ghost', kind: 'ramp', cat: 'physical', sig: { line: 56 },
-    desc: 'Signature: punch with your rage. Each hit in a row is stronger; miss and it starts over.',
+    desc: 'Signature: punch with your rage. Each hit in a row is stronger; stop hitting and it fades a step at a time.',
     cd: 0.5, dmg: 14, radius: 54, arc: 1.6, stacks: 6, step: 0.3, look: { melee: 'impact' }, anim: ['Punch', 'Attack'] },
   // ---- legendaries and mythicals ----
   { id: 'sky-attack', name: 'Sky Attack', type: 'flying', kind: 'charge', cat: 'physical', sig: { dex: [146] },

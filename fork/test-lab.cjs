@@ -379,21 +379,22 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     pl.hp = pl.maxHp;
     await __until(() => m.dealt > 0, 3000);
     await new Promise(r => setTimeout(r, 60));
-    out.recoil = { lost: Math.round(pl.maxHp - pl.hp), cap: Math.round(pl.maxHp * 0.12) };
+    out.recoil = { lost: Math.round(pl.maxHp - pl.hp), cap: Math.round(pl.maxHp * 0.08) };
     pl.hp = pl.maxHp; pl.labAbility = 'rock-head'; m.dealt = 0;
     await __until(() => m.dealt > 0, 3000);
     await new Promise(r => setTimeout(r, 60));
     out.rockHead = pl.hp === pl.maxHp;
     pl.labAbility = 'blaze';
-    // ramp: grows with each hit up to its max, starts over when nothing is there.
+    // ramp: grows with each hit up to its max; a pause takes one stack per 1.5 s (stream A, A1.5).
     m = __only('fury-cutter');
     for (let i = 0; i < 4; i++) __dummy(...at(36, i * 1.57));
     await __until(() => (m._ramp || 0) >= m.stacks, 5000);
     out.ramp = { top: m._ramp, stacks: m.stacks };
     G.EnemyMgr.clear();
-    await new Promise(r => setTimeout(r, 2200));
+    await new Promise(r => setTimeout(r, 3200));
     __dummy(...at(36)); m.t = 0;
-    await __until(() => m._rampAt && performance.now() - m._rampAt < 100, 2000);
+    const dealt0 = m.dealt || 0;
+    await __until(() => (m.dealt || 0) > dealt0, 2000);
     out.ramp.after = m._ramp;
     // guard: Protect in another slot raises itself when something is close, and blocks.
     m = __only('ember'); pl.addMove('protect'); pl.active = 0;
@@ -501,7 +502,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   });
   check(kinds.leap.inv && kinds.leap.blocked && kinds.leap.near < 40 && kinds.leap.hit, `Fly: can't be hit in the air, lands on the target and hits it (${JSON.stringify(kinds.leap)})`);
   check(kinds.recoil.lost > 0 && kinds.recoil.lost <= kinds.recoil.cap + 1 && kinds.rockHead, `Double-Edge costs HP (${kinds.recoil.lost}, at most ${kinds.recoil.cap}); with Rock Head it costs none`);
-  check(kinds.ramp.top === kinds.ramp.stacks && kinds.ramp.after <= 1, `Fury Cutter builds up to ×${kinds.ramp.stacks} hits in a row and starts over after a pause (${JSON.stringify(kinds.ramp)})`);
+  check(kinds.ramp.top === kinds.ramp.stacks && kinds.ramp.after === kinds.ramp.stacks - 1, `Fury Cutter builds up to ×${kinds.ramp.stacks} hits in a row and loses one stack per 1.5 s of pause (${JSON.stringify(kinds.ramp)})`);
   check(kinds.protect, 'Protect raises itself from another slot when an enemy is close, and blocks the hit');
   check(kinds.idle && kinds.activeSlot, 'as the active move, Protect stays down with nothing around and goes up when an enemy comes close');
   check(kinds.counter.stored === 40 && kinds.counter.took > 0 && kinds.counter.blast > 0, `Counter: takes half, stores the hit (${kinds.counter.stored}) and sends it back in a blast (${kinds.counter.blast})`);
