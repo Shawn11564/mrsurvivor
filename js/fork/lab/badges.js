@@ -11,8 +11,8 @@
  *     good side and yellow if not. Speed, defence and healing: nothing (they help everyone the same).
  * Where: level-up cards (new-move ones, signatures included), the move bar's tooltip box
  * (one-line hook in hud.js drawTip) and the type-chart arrows over enemies
- * (one-line hook in enemy.js: enemyMark). All at half their size (the 18×18 PNG,
- * at 9): left of the enemy's health bar, or centred above it if it has none yet.
+ * (one-line hook in enemy.js: enemyMark). At half their size (the 18×18 PNG, at 9; the level-up
+ * cards' at 2/3, 12, since 22-10-2026): left of the enemy's health bar, or centred above it if it has none yet.
  * The enemy ones in every run since 21-10-2026 (the game's, bigger and always
  * left of where the bar would go, covered the enemy); the move ones only in the Lab.
  * Texts in English only, like the rest of the Lab. Test: fork/test-badges.cjs.
@@ -46,8 +46,9 @@ G.LabBadges = (() => {
 
   // All at half size (21-10-2026: at 18 they covered the enemy and the text). From G.Icons.canvas's canvas,
   // which is the artist's PNG (or the code drawing if it hasn't arrived): smoothing only when it shrinks.
-  const HALF = 0.5;
-  const size = n => { const c = G.Icons.canvas(n); return { c, w: c.width * HALF, h: c.height * HALF }; };
+  // The level-up cards' a bit bigger (22-10-2026, the user): 2/3 of the PNG, 12 px.
+  const HALF = 0.5, CARD = 2 / 3;
+  const size = (n, k = HALF) => { const c = G.Icons.canvas(n); return { c, w: c.width * k, h: c.height * k }; };
   function paint(ctx, n, x, y) {
     const s = size(n), prev = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = s.c.width > s.w * (Math.abs(ctx.getTransform().a) || 1) + 0.5;
@@ -62,7 +63,7 @@ G.LabBadges = (() => {
   // The <img> by hand: G.Icons.html doesn't go below ×1 (asset-overrides.js swaps it if the PNG arrives later).
   const img = n => {
     if (!n) return '';
-    const s = size(n), smooth = s.c.width > s.w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
+    const s = size(n, CARD), smooth = s.c.width > s.w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
     return `<img class="pix lb-a" src="${G.Icons.url(n)}" width="${s.w}" height="${s.h}" alt="" draggable="false"${smooth}>`;
   };
   // A signature's card is gold ('evo', key still 'new:', js/fork/lab/lab.js): its chip is "Signature · " + the same.

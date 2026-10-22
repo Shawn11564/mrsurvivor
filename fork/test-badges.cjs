@@ -8,7 +8,7 @@
 //   2. Which arrows real Pokémon get: Charmander's Ember (type + special, both green), Charizard's
 //      (no type arrow: two types, no bonus), a weak-side move (yellow, red under 65%), buffs.
 //   3. Level-up cards in a Lab run: each arrow in the chip after its word ("New · Fire ▲ · Special ▲"),
-//      at half size (9×9); no switch or button left; nothing with Lab off.
+//      at 12×12 (since 2026-10-22; the others stay at 9), signature cards too; no switch or button left; nothing with Lab off.
 //   4. The move tooltip, with a real mouse over the slot: each arrow after its word, at 9.
 //   5. The enemy arrows over a super-effective enemy, in a Lab run and in a normal one (they're in
 //      every run since 2026-10-21): our green arrow at 9, centred over it at full health (above the
@@ -119,7 +119,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     // Each after its word: the type arrow right after the type, the other after " · Special".
     check(want && card.chip.replace(/\s+/g, ' ') === want.chip && (want.type ? /^[^<]*<img[^>]*>\s*<span[^>]*> · [^<]*<\/span><img/ : /<span[^>]*> · [^<]*<\/span><img/).test(card.html),
       `chip text stays "${want && want.chip}", each arrow after its word`, card && card.html.slice(0, 160));
-    check(card && card.size.length && card.size.every(x => x === '9x9'), 'at half size: 9×9', card && card.size);
+    check(card && card.size.length && card.size.every(x => x === '12x12'), 'a bit bigger than the rest: 12×12 (2/3 of the PNG; the enemy and tooltip ones stay at 9)', card && card.size);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards.png') });
     // A signature card (gold, "Signature · Fire · Physical"): Scorbunny's Pyro Ball is its type and its side, so both green.
     // (lab.js makes signature cards 'evo' before badges.js sees the hand: they used to get no arrows.)
