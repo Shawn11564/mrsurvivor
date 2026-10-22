@@ -559,6 +559,22 @@ G.LabMoves = [
   { id: 'attract', name: 'Attract', type: 'normal', kind: 'shout', cat: null, attract: true, slow: 0.5,
     desc: 'When enemies close in, charm the ones around you for 3 s: they slow down and can\'t bring themselves to hit you (bosses for half as long). Works from any slot.',
     cd: 7, dur: 3, radius: 110, look: { proj: 'heart', pal: 'fairy' }, evo: ['Sweet Scent', null] },
+  // ---- combos: stronger when the partner move was just used (by you or a teammate) ----
+  { id: 'fusion-flare', name: 'Fusion Flare', type: 'fire', kind: 'meteor', cat: 'special', sig: { dex: [643, 646] }, combo: 'fusion-bolt',
+    desc: 'Signature: a ball of white fire falls on the enemies. Twice the damage and a 40% bigger blast if Fusion Bolt was used (by you or a teammate) in the last 2 s.',
+    cd: 1.3, dmg: 40, count: 1, radius: 64, burn: 1, look: { proj: 'fire', pal: 'fire' }, anim: ['SpAttack', 'Shoot'] },
+  { id: 'fusion-bolt', name: 'Fusion Bolt', type: 'electric', kind: 'chain', cat: 'physical', sig: { dex: [644, 646] }, combo: 'fusion-flare',
+    desc: 'Signature: a bolt of lightning that jumps from enemy to enemy. Twice the damage and 40% longer jumps if Fusion Flare was used (by you or a teammate) in the last 2 s.',
+    cd: 1.1, dmg: 30, count: 3, radius: 150, look: { beam: 'bolt' }, anim: ['SpAttack', 'Attack'] },
+  { id: 'grass-pledge', name: 'Grass Pledge', type: 'grass', kind: 'quake', cat: 'special', pledge: 'grass',
+    desc: 'Pillars of grass burst up in a line. With another Pledge used in the last 2 s (by you or a teammate), they make a field where they land: with Fire Pledge a sea of fire that burns, with Water Pledge a swamp that slows.',
+    cd: 1.4, dmg: 18, count: 5, radius: 30, look: { proj: 'leaf' }, evo: ['Leafage', 'atk'] },
+  { id: 'fire-pledge', name: 'Fire Pledge', type: 'fire', kind: 'quake', cat: 'special', pledge: 'fire',
+    desc: 'Pillars of fire burst up in a line. With another Pledge used in the last 2 s (by you or a teammate), they make a field where they land: with Grass Pledge a sea of fire that burns, with Water Pledge a rainbow that heals you.',
+    cd: 1.4, dmg: 18, count: 5, radius: 30, burn: 1, look: { proj: 'fire' }, evo: ['Incinerate', 'atk'] },
+  { id: 'water-pledge', name: 'Water Pledge', type: 'water', kind: 'quake', cat: 'special', pledge: 'water',
+    desc: 'Pillars of water burst up in a line. With another Pledge used in the last 2 s (by you or a teammate), they make a field where they land: with Grass Pledge a swamp that slows, with Fire Pledge a rainbow that heals you.',
+    cd: 1.4, dmg: 18, count: 5, radius: 30, look: { proj: 'drop' }, evo: ['Water Sport', 'atk'] },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],

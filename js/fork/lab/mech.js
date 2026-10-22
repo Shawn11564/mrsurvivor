@@ -37,6 +37,12 @@
  *                    they're slowed (the shout's `slow`) and can't hit you by contact (bosses half).
  *                    Every screen marks its own copies (a teammate's shout comes as a ghost); the
  *                    AI part runs where the AI does (the host).
+ *    combo     B3.7  ×2 damage and ×1.4 radius when the partner move (`combo`: its id) was cast in
+ *                    the last COMBO_MS by anyone (you, or a teammate's ghost cast): Fusion Flare and
+ *                    Fusion Bolt. `pledge`: a Pledge cast within COMBO_MS of a different one makes a
+ *                    field where its line lands (Grass + Fire a sea of fire, Grass + Water a swamp,
+ *                    Fire + Water a rainbow that heals). Per-cast boosts go through `_castK` (×
+ *                    in Player.atkFor), cleared after the cast's frame.
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -281,8 +287,22 @@ G.LabMech = (() => {
     if (!m || !lab()) return r;
     if (m.frail) this._labFrail = { t: m.dur || 6, k: m.frail };
     if (m.curse && !this.remote) curse(this, m);
+    onCast(this, m);
     return r;
   };
+  // A per-cast × on the move's damage (combos, Magnitude...): Combat reads atkFor while it casts.
+  const atkFor = P.atkFor;
+  P.atkFor = function (m) {
+    const k = atkFor.apply(this, arguments);
+    return m && m._castK ? k * m._castK : k;
+  };
+  /** For this cast only (until the frame's work is done): × damage k, × radius kr. */
+  function boostCast(m, k, kr = 1) {
+    const r0 = m.radius;
+    m._castK = (m._castK || 1) * k;
+    if (kr !== 1 && r0) m.radius = r0 * kr;
+    queueMicrotask(() => { m._castK = 0; if (kr !== 1 && r0) m.radius = r0; });
+  }
   const phurt = P.hurt;
   P.hurt = function (amount, type, pure, cat) {
     const f = this._labFrail;
@@ -409,6 +429,81 @@ G.LabMech = (() => {
     }
   }
 
+  // ---------------- B3.7 combos ----------------
+  const COMBO_MS = 2000, PLEDGE_R = 90, PLEDGE_T = 6;
+  const recent = {};                      // move id -> { at, pl } (anyone's casts, ghosts too)
+  let pledges = [];
+  const PLEDGE = {
+    'fire+grass':  { kind: 'fire', name: 'Sea of fire', color: '#ff7a2a' },
+    'grass+water': { kind: 'swamp', name: 'Swamp', color: '#4f7a3a' },
+    'fire+water':  { kind: 'rainbow', name: 'Rainbow', color: '#ffd23f' }
+  };
+  function onCast(pl, m) {
+    const t = now();
+    if (m.combo) {
+      const p = recent[m.combo];
+      if (p && t - p.at < COMBO_MS) {
+        boostCast(m, 2, 1.4);
+        G.FX.ring(pl.x, pl.y, 8, 70, col(m), 0.4, 4);
+        if (!pl.remote) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 18, 'Fusion ×2!', col(m), true);
+      }
+    }
+    if (m.pledge) {
+      for (const k in recent) {
+        const p = recent[k], d = G.Moves.BY_ID[k];
+        if (!d || !d.pledge || d.pledge === m.pledge || t - p.at >= COMBO_MS) continue;
+        const kind = [d.pledge, m.pledge].sort().join('+'), reach = (m.count | 0 || 5) * 34 * 0.6;
+        pledge(PLEDGE[kind], pl, pl.remote, m, pl.x + Math.cos(pl.aim) * reach, pl.y + Math.sin(pl.aim) * reach);
+        delete recent[k];                                   // one field per pair
+        break;
+      }
+    }
+    recent[m.id] = { at: t, pl };
+  }
+  function pledge(def, owner, ghost, m, x, y) {
+    if (!def) return null;
+    const f = { def, owner, ghost, m, x, y, r: PLEDGE_R, t: 0, life: PLEDGE_T, tick: 0, dmg: ghost ? 0 : m.dmg * 0.3 * owner.atkFor(m) };
+    pledges.push(f);
+    G.FX.ring(x, y, 6, f.r, def.color, 0.5, 5);
+    G.FX.dmgText(x, y - 30, def.name + '!', def.color, true);
+    return f;
+  }
+  function tickPledges(dt) {
+    const me = G.Game.player;
+    for (const f of pledges) {
+      f.t += dt;
+      const inside = (x, y) => ((x - f.x) / f.r) ** 2 + ((y - f.y) / (f.r * 0.62)) ** 2 <= 1;
+      if (f.def.kind === 'rainbow') { if (me && !me.dead && inside(me.x, me.y)) me.hp = Math.min(me.maxHp, me.hp + me.maxHp * 0.015 * dt); continue; }
+      if (f.ghost || !f.owner || f.owner.dead || (f.tick -= dt) > 0) continue;
+      f.tick = 0.5;
+      for (const e of G.EnemyMgr.queryCircle(f.x, f.y, f.r)) {
+        if (!inside(e.x, e.y)) continue;
+        if (f.def.kind === 'fire') { C.hit(f.owner, e, f.dmg, f.def.color, 0, 0, 0, f.m); if (!e.dead) e.applyBurn(1); }
+        else e.applySlow(0.5, 0.7);
+      }
+    }
+    if (pledges.length) pledges = pledges.filter(f => f.t < f.life);
+  }
+  function drawPledges(ctx) {
+    for (const f of pledges) {
+      if (!G.Camera.sees(f.x, f.y, f.r)) continue;
+      const a = Math.min(1, (f.life - f.t) * 1.5, f.t * 5);
+      if (f.def.kind === 'rainbow') {
+        ['#ff5a5a', '#ffb43d', '#ffe14d', '#5fe08a', '#4fa8ff', '#b48cff'].forEach((c, i) => {
+          ctx.globalAlpha = 0.22 * a; ctx.strokeStyle = c; ctx.lineWidth = 4;
+          const rr = f.r * (1 - i * 0.12);
+          ctx.beginPath(); ctx.ellipse(f.x, f.y, rr, rr * 0.62, 0, 0, 6.2832); ctx.stroke();
+        });
+        continue;
+      }
+      ctx.globalAlpha = 0.25 * a; ctx.fillStyle = f.def.color;
+      ctx.beginPath(); ctx.ellipse(f.x, f.y, f.r, f.r * 0.62, 0, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 0.6 * a; ctx.strokeStyle = f.def.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(f.x, f.y, f.r, f.r * 0.62, 0, 0, 6.2832); ctx.stroke();
+      if (Math.random() < 0.3) G.FX.px(f.x + G.U.rand(-f.r, f.r) * 0.7, f.y + G.U.rand(-f.r, f.r) * 0.4, f.def.color, { vy: f.def.kind === 'fire' ? -40 : -10, life: 0.5 });
+    }
+  }
+
   // ---------------- B3.1 mark + detonate ----------------
   const marked = new Set();
   function stamp(e, pl, m, amount) {
@@ -531,6 +626,7 @@ G.LabMech = (() => {
     tickCurses(dt);
     tickDecoys(dt);
     tickCharmed(dt);
+    tickPledges(dt);
     const pl = G.Game.player;
     if (pl) tickPlayer(pl, dt);
     if (G.Coop.active) for (const p of G.Coop.puppets()) tickPlayer(p, dt);
@@ -543,6 +639,7 @@ G.LabMech = (() => {
     ctx.save();
     for (const h of hz) if (G.Camera.sees(h.x, h.y, 60)) drawHz(ctx, h);
     if (decoys.length) drawDecoys(ctx, now() / 1000);
+    if (pledges.length) drawPledges(ctx);
     // Shell Smash: a cracked red ring under whoever is frail.
     for (const p of [G.Game.player].concat(G.Coop.active ? G.Coop.puppets() : [])) {
       if (!p || p.dead || !p._labFrail) continue;
@@ -557,6 +654,8 @@ G.LabMech = (() => {
     clear.apply(this, arguments);
     hz = owner ? hz.filter(h => h.owner !== owner) : [];
     decoys = owner ? decoys.filter(d => d.owner !== owner) : [];
+    pledges = owner ? pledges.filter(f => f.owner !== owner) : [];
+    if (!owner) for (const k in recent) delete recent[k];
     if (!owner) {
       for (const e of marked) e._labMark = null; marked.clear();
       for (const e of cursed) e._labCurse = null; cursed.clear();
@@ -614,6 +713,8 @@ G.LabMech = (() => {
     decoys: () => decoys, decoyFor,
     /** B3.6: taunt (shooters charge you, s) and attract (no contact hits, s) on enemy e. */
     taunt, attract,
+    /** B3.7: × damage k and × radius kr on m for its current cast only; the Pledge fields. */
+    boostCast, pledges: () => pledges, COMBO_MS,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };

@@ -24,6 +24,9 @@
 //          Follow Me on the host.)
 // taunt    B3.6: shooters keep away and shoot; with Taunt in another slot they charge you and stop
 //          shooting; Attract: walkers touching you deal nothing while charmed, and are slowed.
+// combo    B3.7: Fusion Flare right after Fusion Bolt ×2 damage and ×1.4 blast; Kyurem learns both;
+//          each pair of Pledges makes its field (sea of fire burns, swamp slows, rainbow heals);
+//          one Pledge alone makes none.
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -403,6 +406,52 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(r.plain.d.every(d => d > 120) && r.plain.shots > 0, `without Taunt the shooters keep their distance (${r.plain.d} px) and shoot (${r.plain.shots})`, r.plain);
     check(r.taunt.taunted && r.taunt.d.every(d => d < 60) && r.taunt.shots < r.plain.shots, `Taunt from another slot: they charge you (${r.taunt.d} px) and hardly shoot (${r.taunt.shots})`, r.taunt);
     check(r.noAtt.lost > 0 && r.att.charmed && r.att.lost === 0 && r.att.slow.every(s => s >= 0.45), `Attract: walkers touching you hit for nothing while charmed (${r.att.lost} HP lost, ${r.noAtt.lost} without) and are slowed (${r.att.slow})`, r);
+  }
+
+  // ---------------- B3.7 combos ----------------
+  if (want('combo')) {
+    console.log('B3.7 combos');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, M = G.LabMech, out = {};
+      out.kyurem = ['fusion-flare', 'fusion-bolt'].every(id => G.Lab.poolFor(G.DEX_BY[646]).includes(id));
+      const pp = [1, 4, 7].map(d => G.Lab.poolFor(G.DEX_BY[d]));
+      out.pledges = pp[0].includes('grass-pledge') && pp[1].includes('fire-pledge') && pp[2].includes('water-pledge');
+      // Fusion Flare alone, then right after Fusion Bolt: its damage and blast.
+      const [ff, fb] = __only(['fusion-flare', 'fusion-bolt']);
+      const a = __dummy(...__at(120)); pl.target = a;
+      const flare = async () => { const d0 = ff.dealt || 0; pl.active = 0; await __fire(ff, 50); const f = G.Combat.fields.find(f => f.kind === 'meteor' && f.m === ff); await __wait(800); return { d: (ff.dealt || 0) - d0, r: f ? f.r : 0 }; };
+      out.alone = await flare();
+      await __wait(2200);
+      pl.active = 1; await __fire(fb, 300);
+      out.combo = await flare();
+      // Pledges: each pair makes its field where the second one's line lands.
+      const pair = async (x, y) => {
+        const [p1, p2] = __only([x, y]);
+        const e = __dummy(...__at(100)); pl.target = e; pl.aim = 0;
+        await __fire(p1, 100); pl.active = 1; pl.aim = 0; await __fire(p2, 100);
+        const f = M.pledges()[0];
+        if (!f) return { none: true };
+        const e2 = __dummy(f.x, f.y);
+        pl.hp = pl.maxHp * 0.5; const h0 = pl.hp; pl.x = f.x; pl.y = f.y; pl.frozen = true;
+        await __wait(1100); pl.frozen = false;
+        return { kind: f.def.kind, burn: e2.burn, slow: e2.slow, healed: Math.round(pl.hp - h0) };
+      };
+      out.fire = await pair('grass-pledge', 'fire-pledge');
+      out.swamp = await pair('water-pledge', 'grass-pledge');
+      out.rainbow = await pair('fire-pledge', 'water-pledge');
+      // One Pledge alone: no field.
+      const [g1] = __only(['grass-pledge']); __dummy(...__at(100)); await __fire(g1, 100);
+      await __wait(2100); await __fire(g1, 100);
+      out.alone1 = M.pledges().length;
+      return out;
+    });
+    check(r.kyurem && r.pledges, 'Kyurem learns both Fusions (Reshiram and Zekrom one each); the Grass, Fire and Water starters their Pledge');
+    check(r.combo.d / r.alone.d > 1.8 && r.combo.r / r.alone.r > 1.3, `Fusion Flare right after Fusion Bolt: ×${(r.combo.d / r.alone.d).toFixed(2)} damage, ×${(r.combo.r / r.alone.r).toFixed(2)} blast`, r);
+    check(r.fire.kind === 'fire' && r.fire.burn > 0, `Grass + Fire Pledge: a sea of fire that burns (burn ${r.fire.burn})`, r.fire);
+    check(r.swamp.kind === 'swamp' && r.swamp.slow >= 0.45, `Water + Grass Pledge: a swamp that slows (${r.swamp.slow})`, r.swamp);
+    check(r.rainbow.kind === 'rainbow' && r.rainbow.healed > 0, `Fire + Water Pledge: a rainbow that heals you (+${r.rainbow.healed})`, r.rainbow);
+    check(r.alone1 === 0, 'one Pledge on its own makes no field');
   }
 
   // ---------------- the built game ----------------
