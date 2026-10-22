@@ -8,7 +8,8 @@
 //   1. Solo Lab run: the card can come up (forced here) and taking it puts a revive in its slot.
 //      It's a Legendary card: 1 in 100 hands, and on screen the gold "Legendary" chip and border.
 //   2. Knocked out: back up at once with 50% HP, 3 s untouchable, the enemy next to you thrown back;
-//      the revive is spent. Knocked out again: game over.
+//      the revive is spent. Knocked out again: game over. Knocked out by an enemy's explosions landing
+//      every 150 ms: revived, and still up 3 s later (js/fork/revive-grace.js).
 //   3. Not in a normal run: the card never comes up.
 //   4. Co-op: a guest down with a revive gets the button; R uses it, the host sees the guest up.
 const http = require('http');
@@ -119,6 +120,30 @@ const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('underdogL
     await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 0; pl.hurt(1e7, null, true); });
     check(await page.waitForFunction(() => G.Game.state === 'over' || !document.getElementById('scr-over').classList.contains('hidden'), null, { timeout: 8000 }).then(() => true, () => false),
       'knocked out again (no revive left): game over');
+
+    console.log('2b. Knocked out standing in explosions');
+    // An enemy's explosion zones (Player.hurt after invuln = 0, as js/systems/hazards.js does) landing on you
+    // every 150 ms: the revive gets you up and its grace (js/fork/revive-grace.js) keeps you up for 3 s.
+    // Before the grace, the next explosion knocked you straight back down, as if there had been no revive.
+    await startRun(page, true);
+    const z = await page.evaluate(async () => {
+      const pl = G.Game.player, def = G.Enemies.cast[0].list[0];
+      const e = new G.Enemy(def, pl.x + 300, pl.y, G.Enemies.scale(0)); e.hp = e.maxHp = 1e7; e.spd = 0; G.EnemyMgr.add(e);
+      pl.god = false; pl.selfRevive = 1; pl.hp = 1; pl.invuln = 0;
+      let up = null, downs = 0, wasDead = false;
+      const t0 = performance.now();
+      while (performance.now() - t0 < (up === null ? 2000 : up + 2800)) {     // up to 2.8 s after the revive
+        e.hazard({ kind: 'zone', x: pl.x, y: pl.y, r: 62, delay: 0.05, dmg: pl.maxHp * 2, type: 'fire', color: '#ff7b3d', boom: true });
+        await new Promise(r => setTimeout(r, 150));
+        if (pl.dead && !wasDead) downs++;
+        wasDead = pl.dead;
+        if (up === null && pl.selfRevive === 0 && !pl.dead) up = performance.now() - t0;
+        if (G.Game.state !== 'playing') break;
+      }
+      return { up: up && Math.round(up), downs, dead: pl.dead, held: pl.selfRevive, state: G.Game.state };
+    });
+    check(z.up !== null && z.held === 0, 'the explosion knocks you out and the revive gets you up', z);
+    check(z.downs === 0 && !z.dead && z.state === 'playing', 'explosions every 150 ms for the next 3 s: you stay up (the old 3 s invuln, cleared by each explosion, did not)', z);
 
     console.log('3. Normal run');
     await startRun(page, false);
