@@ -206,7 +206,7 @@ G.Lab = (() => {
         G.Game.taint();                                 // doesn't go on the leaderboard
         const sv = G.DB.save;
         stats0 = sv && sv.stats ? JSON.parse(JSON.stringify(sv.stats)) : null;
-        info = G.LabAbilities.attach(pl);
+        info = G.LabAbilities.describe(pl.abilId, pl.mon);   // set by pl.setAbility (abilities.js), not attached twice
         G.LabAnims.preload(pl);                         // its signatures' animations (phase 5)
         G.LabGrowth.start(pl);                          // XP for the weak ones, and candies (phase 6)
         G.LabShiny.start(pl);                           // the shiny's colours and extras (phase 7)

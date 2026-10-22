@@ -1,7 +1,9 @@
 /* ============ abilities.js — Lab mode abilities (MrSurvivor fork) ============
- * Phase 3 of fork/LAB.md. In a Lab run your Pokémon has ONE of its abilities from the
- * games (G.LabData.abil, in slot order): the first one that is implemented here. If none
- * is, it gets the first one, with no effect ("No effect in this game yet").
+ * Phase 3 of fork/LAB.md. In a Lab run your Pokémon has the ability upstream picked for it
+ * (G.Mons.abilityOf: rolled per account, Ability Capsules, 1 in 20 hidden). If it's one implemented
+ * here, Lab's version runs instead of upstream's (setAbility, at the end); if not, upstream's runs.
+ * Never both (plan D2, 2026-10-22; until then Lab gave the first of its abilities implemented here,
+ * on top of upstream's).
  *
  * Each ability is a DEF entry with whatever it needs:
  *   out(pl, m)               × to your attacks' damage (Player.atkFor)
@@ -15,7 +17,7 @@
  *   sw(pl)                   when you switch the active move (Player.setActive)
  *   buff(pl)                 × to the strength of your stat boosts (Player.addBuff)
  * The hooks are set once, on load, and only do something with pl.labAbility (set by
- * attach() on your Pokémon when a Lab run starts; never on your teammates').
+ * setAbility on your Pokémon in a Lab run; never on your teammates').
  *
  * Co-op: it all belongs to your Pokémon. What it does to enemies that touch you (Static,
  * Rough Skin...) uses applyStun/applyPoison/hurt, which on a guest are already sent to the host.
@@ -179,24 +181,14 @@ G.LabAbilities = (() => {
 
   // ---------------- which ability each one gets ----------------
 
-  /** → { id, name, desc, on } for this species (on = it has an effect here). */
+  /** → { id, name, desc, on } for this species (on = it has an effect here): the first of its abilities
+   *  implemented here. Only for coverage numbers now; runs use upstream's pick (setAbility below). */
   function of(dex) {
     const list = (D.abil[dex] || '').split(' ').filter(Boolean).map(s => s.replace('*', ''));
     const id = list.find(a => DEF[a]) || list[0];
     if (!id) return null;
     return DEF[id] ? { id, name: DEF[id].name, desc: DEF[id].desc, on: true }
                    : { id, name: D.abilName[id] || id, desc: 'No effect in this game yet.', on: false };
-  }
-
-  /** Gives it to your Pokémon when a Lab run starts (G.Lab, after the Player is created). */
-  function attach(pl) {
-    const a = of(pl.dex);
-    pl.labAbility = a && a.on ? a.id : null;
-    const d = pl.labAbility && DEF[pl.labAbility];
-    if (!d) return a;
-    if (d.start) d.start(pl);
-    if (d.learn) for (const m of pl.moves) d.learn(pl, m);
-    return a;
   }
 
   // ---------------- hooks ----------------
@@ -281,5 +273,45 @@ G.LabAbilities = (() => {
     if (d && d.contact) d.contact(pl, this);
   };
 
-  return { DEF, of, attach };
+  // ---------------- one ability per run (plan D2, resolver A) ----------------
+  // Upstream picks the run's ability (game.js: pl.setAbility(G.Mons.abilityOf(dex).id), which honours
+  // Ability Capsules and the 1-in-20 hidden roll). In a Lab run, if Lab implements that same ability,
+  // Lab's version runs and upstream's doesn't (pl.abil = null: every upstream reader allows null);
+  // otherwise upstream's runs and Lab adds nothing. Before, both ran: Blaze x1.5 and x1.35 (x2.0),
+  // Thick Fat x0.5 and x0.6 (x0.3), two Sturdies. Test: fork/test-lab-abilities.cjs.
+  const setAbility = P.setAbility;
+  P.setAbility = function (id) {
+    const d = id && DEF[id];
+    this.labAbility = null;
+    if (!d || !(G.Lab && G.Lab.active) || this !== G.Game.player) return setAbility.apply(this, arguments);
+    this.abilId = id;
+    this.abil = null;
+    this.labAbility = id;
+    if (d.start) d.start(this);
+    if (d.learn) for (const m of this.moves) d.learn(this, m);
+  };
+
+  /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = Lab's version runs). */
+  function describe(id, mon) {
+    if (!id) return null;
+    if (DEF[id]) return { id, name: DEF[id].name, desc: DEF[id].desc, on: true, lab: true };
+    const fx = G.AbilityFX.of(id, mon);
+    return { id, name: G.Mons.abilityName(id) || D.abilName[id] || id, desc: [fx.d, fx.d2].filter(Boolean).map(t => G.T(t)).join(' '), on: true, lab: false };
+  }
+
+  // The collection card: with the Lab setting on, an "In Lab: ..." line under the ability when Lab has its
+  // own version (its numbers differ from upstream's). Hook: G.VariantBonus.detail (showDetail in menu.js).
+  document.addEventListener('DOMContentLoaded', () => {
+    const detail = G.VariantBonus && G.VariantBonus.detail;
+    if (!detail) return;
+    G.VariantBonus.detail = function (dex) {
+      const r = detail.apply(this, arguments);
+      const box = document.querySelector('#dex-detail .mx-desc'), id = G.Mons.abilityOf(dex).id;
+      if (box && G.Settings.get('lab') && DEF[id] && !box.parentNode.querySelector('.lab-abil-note'))
+        box.insertAdjacentHTML('afterend', `<p class="sub mx-desc lab-abil-note"><span class="lab-badge">LAB</span> In Lab: ${G.Lab.esc(DEF[id].desc)}</p>`);
+      return r;
+    };
+  });
+
+  return { DEF, of, describe };
 })();

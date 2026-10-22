@@ -21,7 +21,7 @@ How to use it:
 - [x] 3. [infra] E2: this file, `/intake`, `/notes` (the idle `/loop` stops by itself and dies with its session) (477978d)
 
 ### Kecleon, natures, abilities (stream D)
-- [ ] 4. [lab][bug] D1: Lab's `poolFor` wrapper forwards `natural`; D10: Lab pools scored on `G.DEX_BY[dex]`, not the nature-modified copy (claimed: stream D)
+- [x] 4. [lab][bug] D1: Lab's `poolFor` wrapper forwards `natural`; D10: Lab pools scored on `G.DEX_BY[dex]`, not the nature-modified copy (d31e433)
 - [ ] 5. [lab][bug] D2: one ability resolver (resolver A): Lab's version of upstream's rolled/capsuled ability, never both (claimed: stream D)
 - [ ] 6. [lab][bug] D3: evolution keeps nature and ability slot, re-resolves the ability (claimed: stream D)
 - [ ] 7. [lab][bug] D4: taught TMs join the Lab pool, pause list and Lab start picks (claimed: stream D)

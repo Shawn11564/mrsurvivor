@@ -42,6 +42,7 @@ async function player(browser, name, dex) {
     if (!reg.ok) return reg;
     const s = G.DB.save;
     s.partner = dex; s.owned[dex] = { at: Date.now(), from: 'starter' };
+    s.pabil = { [dex]: [0, Date.now()] };              // its first ability: 1 save in 20 rolls the hidden one
     G.DB.commit();
     const st = await G.Social.start();
     const nick = st === 'ok' ? { ok: true } : await G.Social.claimNick(name);

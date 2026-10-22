@@ -125,7 +125,7 @@ passes upstream's `natural` flag on, so `G.Mons.natural` (Kecleon's "already kno
 
 ## Phase 3: abilities
 
-Each species gets the first of its abilities (slot order, hidden last) that is implemented. If
+Until 2026-10-22 (see "One ability per run" below), each species got the first of its abilities (slot order, hidden last) that is implemented. If
 none is, it shows its first ability as "No effect in this game yet". 70 abilities are implemented
 (`abilities.js`), and 702 of 966 species (73%) get one that does something. Groups:
 - pinch boosts (Blaze, Torrent, Overgrow, Swarm), weather speed/healing/dodging (Swift Swim,
@@ -146,6 +146,16 @@ Toned down from the games: Huge/Pure Power ×1.6 instead of ×2; Wonder Guard ha
 `applyPoison` and `hurt`, which a co-op guest already forwards to the host.
 
 Added with phase 4: Rock Head (recoil moves cost no HP) and Reckless (recoil moves ×1.2), so 70.
+
+**One ability per run (2026-10-22, plan D2, resolver A).** A Lab run uses the ability upstream picked
+(`G.Mons.abilityOf`: rolled per save, Ability Capsules, 1 in 20 hidden). `abilities.js` wraps
+`G.Player.prototype.setAbility`: if Lab implements that id, Lab's version runs and upstream's doesn't
+(`pl.abil = null`); otherwise upstream's runs and Lab adds nothing. Before, `lab.js` attached Lab's on top
+of upstream's: Blaze ×1.5 × ×1.35 = ×2.0, Thick Fat ×0.5 × ×0.6 = ×0.3, two Sturdies. The cost (accepted, G4):
+Lab no longer skips to a species' first implemented slot, so 197 species run upstream's ability instead.
+The LAB tag and pause block name upstream's ability when Lab has none; with the Lab setting on, the
+collection card adds "In Lab: ..." under an ability Lab has its own version of.
+`node fork/test-lab-abilities.cjs` (server).
 
 ## Mega Evolution (Lab first, in every run since 2026-10-21)
 
@@ -518,6 +528,9 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   every Lab move at its top level; signatures (pools, card, animation, evolution); in-run
   evolution, Everstone, items, underdog XP, candies; shiny colours and bonuses; Mega Evolution;
   promotion; the **built** `index.html` through the UI.
+- `node fork/test-lab-abilities.cjs` (server): one ability per run. Blaze ×1.5 on a real Ember hit (not ×2.0),
+  a capsuled Thick Fat ×0.5 (not ×0.3), one Sturdy save, the hidden roll (Solar Power), Cursed Body runs
+  upstream's and is named on the tag and pause screen, Lab off, the card's "In Lab" line.
 - `node fork/test-lab-pools.cjs` (server): `natural` reaches upstream's poolFor through Lab's wrapper; every
   species' Lab list is the same with an Adamant or a Modest nature.
 - `node fork/test-underdog.cjs` (server): the ladder (ranges, the highlighted rarity, Back/Escape,

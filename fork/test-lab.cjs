@@ -60,6 +60,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.evaluate(() => {
     for (const d of [4, 10]) G.DB.save.owned[d] = G.DB.save.owned[d] || { at: Date.now() };
     G.DB.save.partner = 4;
+    // Its first ability (Blaze): upstream rolls it per save, and 1 in 20 saves would give the hidden one (fork/test-lab-abilities.cjs).
+    G.DB.save.pabil = { 4: [0, Date.now()] };
     G.Settings.set('lab', false);
     // Leaderboard spy: what endRun sends (guest saves never reach the server anyway).
     window.__sent = [];
@@ -293,12 +295,12 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
         `all ${all.length} abilities run in a real run without errors`);
   await endRun(); await toMenu();
 
-  // Coverage: species whose ability does something.
+  // Coverage: species whose first ability (upstream's usual pick) has a Lab version (the rest run upstream's).
   const cov = await page.evaluate(() => {
-    const n = G.DEX.length, on = G.DEX.filter(p => (G.LabAbilities.of(p.dex) || {}).on).length;
+    const n = G.DEX.length, on = G.DEX.filter(p => G.LabAbilities.DEF[(G.DEX_ABIL[p.dex] || [])[0]]).length;
     return { n, on };
   });
-  console.log(`  info: ${cov.on} of ${cov.n} species (${Math.round(cov.on / cov.n * 100)}%) get an ability that does something`);
+  console.log(`  info: ${cov.on} of ${cov.n} species (${Math.round(cov.on / cov.n * 100)}%) have a first ability with a Lab version`);
 
   // Helpers in the page for the phase 4-7 checks: dummies that don't move or hurt, and waiting.
   await page.evaluate(() => {
