@@ -231,6 +231,12 @@ them. A shiny without that sheet (most) uses the next choice.
   most, Eevee picks among two), with an **Everstone** card: stay as you are for the run with 15%
   less damage taken and 15% more HP. Evolving brings the new species' stats, sprite, Lab pool and
   ability. In co-op, `{ k:'labevo', u, dex }` through the host: everyone sees it.
+  Since 2026-10-22 (plan D3) the new form keeps the run's **nature** (built like `G.Mons.monFor`, with
+  the pre-evolution's nature) and its **ability slot** (`pl._labSlot`: 0, 1 or hidden 2), re-resolved
+  like at the start (`G.LabAbilities.evolve`): the old ability is taken off first (Lab's `unlearn` on the
+  moves, and whatever either engine's start changed: crits, regen, coins, magnet, cooldowns, max HP).
+  Before, the nature vanished and Lab attached its first implemented ability on top of upstream's.
+  `node fork/test-lab-abilities.cjs` part 8.
 - **Items** (`ITEMS`, not in chests outside Lab): Eviolite (while it can evolve: -25% damage taken,
   +20% HP), Light Ball (Pikachu ×1.6), Thick Club (Cubone/Marowak, physical ×1.6), Leek and Lucky
   Punch (+25% crit), Metal Powder / Quick Powder (Ditto), Deep Sea Tooth / Scale (Clamperl), Soul
@@ -645,6 +651,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
 - `node fork/test-lab-abilities.cjs` (server): one ability per run. Blaze ×1.5 on a real Ember hit (not ×2.0),
   a capsuled Thick Fat ×0.5 (not ×0.3), one Sturdy save, the hidden roll (Solar Power), Cursed Body runs
   upstream's and is named on the tag and pause screen, Lab off, the card's "In Lab" line.
+  Evolving: the nature, one Blaze, the shiny's rolls, the hidden slot kept, Pickup and Compound Eyes taken off.
 - `node fork/test-lab-pools.cjs` (server): `natural` reaches upstream's poolFor through Lab's wrapper; every
   species' Lab list is the same with an Adamant or a Modest nature.
 - `node fork/test-underdog.cjs` (server): the ladder (ranges, the highlighted rarity, Back/Escape,

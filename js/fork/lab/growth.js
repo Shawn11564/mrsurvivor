@@ -76,13 +76,25 @@ G.LabGrowth = (() => {
     G.Spawner.say(p.mon.name + ' stays as it is', 2.4, true);
   }
 
+  /** The evolved species with the run's nature applied, as G.Mons.monFor does at the start (plan D3: it used to be lost). */
+  function natured(to, natureId) {
+    const base = G.DEX_BY[to], n = G.NATURE_BY && G.NATURE_BY[natureId];
+    if (!base || !n) return base;
+    const m = Object.assign({}, base);
+    if (n.up) m[n.up] = base[n.up] * 1.1;
+    if (n.down) m[n.down] = base[n.down] * 0.9;
+    m.atk = Math.max(m.pa, m.sa);
+    m.nature = n.id;
+    return m;
+  }
+
   function evolveTo(p, to) {
-    const old = p.mon, mon = G.DEX_BY[to];
-    if (!mon) return;
+    if (!G.DEX_BY[to]) return;
     if (p._labTf) { p.mon = p._labTf.mon0; delete p._labTf; }
     // Whatever depends on which Pokémon it is gets removed and put back.
     const item = p.item;
     if (item === 'megastone' || item === 'eviolite') p.equip(null);
+    const old = p.mon, mon = natured(to, old.nature);
     const under0 = p._labUnder || 0;
     p.mon = mon; p.dex = to;
     p._evoBase = p.level; p._evoDex = to;          // where the evolution HUD's bar starts (evo-hud.js)
@@ -95,14 +107,8 @@ G.LabGrowth = (() => {
     G.Sprites.preload([to], 8000, p.shiny);
     G.Admin.repaint(p);                                 // its sprite (and scale), like Mega Evolution
     underdog(p, under0);
-    // Its ability, if it's a different one (Charmander and Charizard: both Blaze).
-    const a = G.LabAbilities.of(to);
-    if (a && a.on && a.id !== p.labAbility) {
-      p.labAbility = a.id;
-      const d = G.LabAbilities.DEF[a.id];
-      if (d.start) d.start(p);
-      if (d.learn) for (const m of p.moves) d.learn(p, m);
-    }
+    // Its ability in the run's slot (Charmander and Charizard: both Blaze), the old one taken off first.
+    const a = G.LabAbilities.evolve(p);
     if (a) G.Lab.setAbility(a);
     if (item === 'megastone' || item === 'eviolite') p.equip(item);
     G.LabAnims.preload(p);

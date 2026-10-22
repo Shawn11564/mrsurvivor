@@ -147,11 +147,17 @@ G.LabAbilities = (() => {
     'huge-power':    { out: (pl, m) => m.cat === 'physical' ? 1.6 : 1, desc: 'Physical moves deal 60% more damage (it doubles Attack in the games).' },
     'pure-power':    { out: (pl, m) => m.cat === 'physical' ? 1.6 : 1, desc: 'Physical moves deal 60% more damage (it doubles Attack in the games).' },
     adaptability:    { out: (pl, m) => m.kind !== 'buff' && own(pl, m) ? 1.25 : 1, desc: 'Moves of your own type deal 25% more damage.' },
+    // learn changes the move itself; unlearn puts it back when the ability goes (an evolution, off()).
     'sheer-force':   { out: (pl, m) => m.labSheer ? 1.3 : 1,
-                       learn: (pl, m) => { if (m.kind !== 'stun' && SHEER.some(k => m[k])) { for (const k of SHEER) m[k] = 0; m.labSheer = true; } },
+                       learn: (pl, m) => { if (m.kind !== 'stun' && !m.labSheer && SHEER.some(k => m[k])) { m.labSheer = {}; for (const k of SHEER) { m.labSheer[k] = m[k]; m[k] = 0; } } },
+                       unlearn: (pl, m) => { if (m.labSheer) { for (const k of SHEER) m[k] = m.labSheer[k]; delete m.labSheer; } },
                        desc: 'Moves that burn, poison or slow lose that effect but deal 30% more damage.' },
-    'skill-link':    { learn: (pl, m) => { if ((m.count | 0) >= 2) m.count += 1; }, desc: 'Moves that hit several times hit once more.' },
-    prankster:       { learn: (pl, m) => { if (m.kind === 'buff') m.cd *= 0.7; }, desc: 'Stat-boosting moves recharge 30% faster.' },
+    'skill-link':    { learn: (pl, m) => { if ((m.count | 0) >= 2 && !m.labSkill) { m.count += 1; m.labSkill = true; } },
+                       unlearn: (pl, m) => { if (m.labSkill) { m.count -= 1; delete m.labSkill; } },
+                       desc: 'Moves that hit several times hit once more.' },
+    prankster:       { learn: (pl, m) => { if (m.kind === 'buff' && !m.labPrank) { m.cd *= 0.7; m.labPrank = true; } },
+                       unlearn: (pl, m) => { if (m.labPrank) { m.cd /= 0.7; delete m.labPrank; } },
+                       desc: 'Stat-boosting moves recharge 30% faster.' },
     simple:          { buff: () => 2, desc: 'Your stat boosts are twice as strong.' },
     // recoil: Double-Edge, Flare Blitz... (js/fork/lab/kinds.js, phase 4)
     'rock-head':     { desc: 'Recoil moves (Double-Edge, Head Smash...) don\'t hurt you.' },      // in kinds.js
@@ -279,17 +285,58 @@ G.LabAbilities = (() => {
   // Lab's version runs and upstream's doesn't (pl.abil = null: every upstream reader allows null);
   // otherwise upstream's runs and Lab adds nothing. Before, both ran: Blaze x1.5 and x1.35 (x2.0),
   // Thick Fat x0.5 and x0.6 (x0.3), two Sturdies. Test: fork/test-lab-abilities.cjs.
+  // What an ability's start can change on the player (upstream's ability-fx.js and DEF above): the change is
+  // kept (pl._abilFx) so off() can take it back when a Lab evolution brings another ability (plan D3).
+  const ADD = ['critChance', 'regenFlat'], MUL = ['coinMul', 'magnet', 'cdMul', 'maxHp'];
   const setAbility = P.setAbility;
   P.setAbility = function (id) {
-    const d = id && DEF[id];
+    const d = id && DEF[id], lab = !!(G.Lab && G.Lab.active) && this === G.Game.player;
+    const before = {};
+    for (const k of ADD.concat(MUL)) before[k] = this[k];
     this.labAbility = null;
-    if (!d || !(G.Lab && G.Lab.active) || this !== G.Game.player) return setAbility.apply(this, arguments);
-    this.abilId = id;
-    this.abil = null;
-    this.labAbility = id;
-    if (d.start) d.start(this);
-    if (d.learn) for (const m of this.moves) d.learn(this, m);
+    if (lab && this._labSlot == null) {          // the run's slot (0, 1 or 2 hidden): an evolution keeps it
+      const a = G.Mons.abilityOf(this.dex);
+      this._labSlot = a.id === id ? a.slot : Math.max(0, G.Mons.slots(this.dex).indexOf(id));
+    }
+    let r;
+    if (!d || !lab) r = setAbility.apply(this, arguments);
+    else {
+      this.abilId = id;
+      this.abil = null;
+      this.labAbility = id;
+      if (d.start) d.start(this);
+      if (d.learn) for (const m of this.moves) d.learn(this, m);
+    }
+    const fx = this._abilFx = {};
+    for (const k of ADD) if (this[k] !== before[k]) fx[k] = this[k] - before[k];
+    for (const k of MUL) if (this[k] !== before[k] && before[k]) fx[k] = this[k] / before[k];
+    return r;
   };
+
+  /** Takes the current ability off: Lab's changes to the moves, and what its start did (both engines). */
+  function off(pl) {
+    const d = def(pl);
+    if (d && d.unlearn) for (const m of pl.moves) d.unlearn(pl, m);
+    const fx = pl._abilFx || {};
+    for (const k of ADD) if (fx[k]) pl[k] -= fx[k];
+    for (const k of MUL) if (fx[k] && k !== 'maxHp') pl[k] /= fx[k];
+    if (fx.maxHp) { pl.maxHp = Math.max(1, Math.round(pl.maxHp / fx.maxHp)); pl.hp = Math.min(pl.hp, pl.maxHp); }
+    pl._abilFx = null; pl.labAbility = null; pl.abil = null;
+  }
+
+  /**
+   * A Lab evolution (js/fork/lab/growth.js): the new species' ability in the same slot as the run's
+   * (Charmander's hidden Solar Power stays Solar Power; Venonat's Compound Eyes becomes Venomoth's
+   * Shield Dust), resolved again like at the start. → its describe() for the HUD.
+   */
+  function evolve(pl) {
+    const l = G.Mons.slots(pl.dex), slot = pl._labSlot | 0;
+    const id = l[slot] || l[0] || '';
+    if (id && id === pl.abilId) return describe(id, pl.mon);
+    off(pl);
+    pl.setAbility(id);
+    return describe(pl.abilId, pl.mon);
+  }
 
   /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = Lab's version runs). */
   function describe(id, mon) {
@@ -313,5 +360,5 @@ G.LabAbilities = (() => {
     };
   });
 
-  return { DEF, of, describe };
+  return { DEF, of, describe, evolve, off };
 })();

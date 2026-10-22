@@ -16,6 +16,10 @@
 //   6. Lab off: upstream's ability, nothing from Lab.
 //   7. The collection card: with the Lab setting on, "In Lab: ..." under an ability Lab has its own version
 //      of; nothing for Cursed Body, nothing with Lab off.
+//   8. Evolving in a Lab run (plan D3, js/fork/lab/growth.js): the nature carries over (a Modest Charmeleon), one
+//      Blaze still, the shiny's stat rolls survive; the ability slot is kept (hidden Solar Power stays) and
+//      re-resolved: Munchlax's Pickup (Lab's +20 % coins) becomes Snorlax's Immunity and the coins go back,
+//      Venonat's Compound Eyes (upstream's +6 % crits) becomes Venomoth's Shield Dust and the crits go back.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -40,17 +44,17 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       window.__wait = ms => new Promise(r => setTimeout(r, ms));
       window.__until = (f, ms = 4000) => new Promise(r => { const t0 = performance.now(); (function k() { if (f()) return r(true); if (performance.now() - t0 > ms) return r(false); setTimeout(k, 30); })(); });
       // A real run with this Pokémon (and this capsule slot, or none), in a quiet arena.
-      window.__run = async (dex, slot, lab = true) => {
+      window.__run = async (dex, slot, lab = true, shiny = false) => {
         const s = G.DB.save;
         s.pabil = s.pabil || {};
         if (slot == null) delete s.pabil[dex]; else s.pabil[dex] = [slot, Date.now()];
         G.Settings.set('lab', lab);
-        G.UI.hideAll(); G.Flow.goMenu(); G.Game.startRun(null, { dex, shiny: false });
+        G.UI.hideAll(); G.Flow.goMenu(); G.Game.startRun(null, { dex, shiny });
         await __until(() => G.Game.state === 'playing' && G.Game.player);
         for (const k of ['Spawner', 'Events', 'Rift', 'Hazards']) G[k].update = G[k].update && (() => {});
         G.Weather.clear(); G.EnemyMgr.clear();
         const pl = G.Game.player;
-        pl.xpMul = 0; pl.critChance = 0;
+        pl.xpMul = 0;
         return pl;
       };
       window.__end = () => { G.Game.quit(); G.UI.hideAll(); G.Flow.goMenu(); };
@@ -60,26 +64,33 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         G.EnemyMgr.add(e);
         return e;
       };
+      // Ember on a dummy at full HP and at 1/5 HP: what each hit deals (only Ember, no crits).
+      window.__blazeK = async pl => {
+        pl.invuln = 1e9; pl.slots.length = 0; pl.moves.length = 0; pl.addMove('ember'); pl.active = 0;
+        const m = pl.moves[0], crit = pl.critChance;
+        pl.critChance = 0;
+        const one = async () => {
+          G.EnemyMgr.clear();
+          const e = __dummy(pl.x + 90, pl.y);
+          pl.target = e; m.t = 0; m.dealt = 0;
+          await __until(() => m.dealt > 0);
+          await __wait(60);
+          return m.dealt;
+        };
+        pl.hp = pl.maxHp;
+        const full = await one();
+        pl.hp = pl.maxHp * 0.2;
+        const low = await one();
+        pl.hp = pl.maxHp; pl.critChance = crit; G.EnemyMgr.clear();
+        return { full, low, k: +(low / full).toFixed(3) };
+      };
     });
     // Spawner etc. are restored by a reload between parts that need them (none do here).
 
     console.log('1. Blaze');
     const blaze = await page.evaluate(async () => {
       const pl = await __run(4, 0);
-      pl.invuln = 1e9; pl.slots.length = 0; pl.moves.length = 0; pl.addMove('ember'); pl.active = 0;
-      const m = pl.moves[0];
-      const one = async () => {
-        G.EnemyMgr.clear();
-        const e = __dummy(pl.x + 90, pl.y);
-        pl.target = e; m.t = 0; m.dealt = 0;
-        await __until(() => m.dealt > 0);
-        await __wait(60);
-        return m.dealt;
-      };
-      pl.hp = pl.maxHp;
-      const full = await one();
-      pl.hp = pl.maxHp * 0.2;
-      const low = await one();
+      const { full, low } = await __blazeK(pl);
       const r = { labAbility: pl.labAbility, abil: pl.abil, abilId: pl.abilId, full, low, k: +(low / full).toFixed(3),
                   hud: document.getElementById('lab-hud').textContent };
       __end();
@@ -173,6 +184,55 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(!!c1 && /In Lab: Fire moves deal 50% more damage/.test(c1), 'Charmander\'s card says what Blaze does in Lab', c1);
     check(c2 === null, 'Gengar\'s card has no Lab line (Lab has no Cursed Body)', c2);
     check(c3 === null, 'no Lab line with the Lab setting off', c3);
+
+    console.log('8. Evolving (plan D3)');
+    const evo = await page.evaluate(async () => {
+      const s = G.DB.save, out = {};
+      const evolve = (pl, to) => { pl.level = 99; const c = G.LevelUp.offer(pl).find(c => c.key === 'grow:' + to); if (c) c.apply(pl); return !!c; };
+      // A shiny Modest Charmander, first ability: the nature, Blaze (once) and the shiny's stat rolls carry over.
+      s.pnat = { 4: ['modest', Date.now()] };
+      let pl = await __run(4, 0, true, true);
+      const vs0 = JSON.stringify(pl._vstats), spd0 = pl.spdMul;
+      out.ok5 = evolve(pl, 5);
+      const k = await __blazeK(pl);
+      out.char = { dex: pl.dex, nature: pl.mon.nature, sa: +(pl.mon.sa / G.DEX_BY[5].sa).toFixed(3), pa: +(pl.mon.pa / G.DEX_BY[5].pa).toFixed(3),
+                   baseAtk: pl.baseAtk === pl.mon.atk, labAbility: pl.labAbility, abil: pl.abil, k: k.k, vstats: JSON.stringify(pl._vstats) === vs0 && !!pl._vstats,
+                   spd: pl.spdMul === spd0, hud: document.getElementById('lab-hud').textContent };
+      __end();
+      // Its hidden ability (capsule): Charmeleon keeps the hidden slot (Solar Power, not Blaze).
+      pl = await __run(4, 2);
+      evolve(pl, 5);
+      out.hidden = { dex: pl.dex, labAbility: pl.labAbility, abilId: pl.abilId, info: G.Lab.ability && G.Lab.ability.name };
+      __end();
+      // Munchlax's Pickup (Lab's: +20 % coins) becomes Snorlax's Immunity (upstream's): the coins go back.
+      out.munchTargets = G.LabGrowth.targets(446).map(t => t[0]);
+      s.owned[446] = { at: Date.now() };
+      pl = await __run(446, 0);
+      const c0 = pl.coinMul, lab0 = pl.labAbility;
+      evolve(pl, 143);
+      out.munch = { lab0, k0: +(c0 / pl.coinMul).toFixed(3), dex: pl.dex, abilId: pl.abilId, labAbility: pl.labAbility, upstream: !!pl.abil,
+                    hud: document.getElementById('lab-hud').textContent };
+      __end();
+      // Venonat's Compound Eyes (upstream's, +6 % crits at the start) becomes Venomoth's Shield Dust: the crits go back.
+      s.owned[48] = { at: Date.now() };
+      pl = await __run(48, 0);
+      const cr0 = pl.critChance, id0 = pl.abilId;
+      evolve(pl, 49);
+      out.veno = { id0, drop: +(cr0 - pl.critChance).toFixed(3), dex: pl.dex, abilId: pl.abilId, labAbility: pl.labAbility };
+      __end();
+      return out;
+    });
+    check(evo.ok5 && evo.char.dex === 5 && evo.char.nature === 'modest' && evo.char.sa === 1.1 && evo.char.pa === 0.9 && evo.char.baseAtk,
+      'a Modest Charmander evolves into a Modest Charmeleon (Sp. Atk x1.1, Attack x0.9)', evo.char);
+    check(evo.char.labAbility === 'blaze' && evo.char.abil === null && Math.abs(evo.char.k - 1.5) < 0.02 && /LAB · Blaze/.test(evo.char.hud),
+      `Charmeleon still has one Blaze (Ember at 1/5 HP x${evo.char.k})`, evo.char);
+    check(evo.char.vstats && evo.char.spd, "the shiny's stat rolls survive the evolution", evo.char);
+    check(evo.hidden.dex === 5 && evo.hidden.labAbility === 'solar-power' && evo.hidden.info === 'Solar Power', 'the hidden slot is kept: Charmeleon has Solar Power, not Blaze', evo.hidden);
+    check(evo.munchTargets.includes(143) && evo.munch.lab0 === 'pickup' && evo.munch.dex === 143 && evo.munch.abilId === 'immunity' && evo.munch.labAbility === null && evo.munch.upstream,
+      "Munchlax's Pickup becomes Snorlax's Immunity (upstream's, nothing from Lab)", evo.munch);
+    check(evo.munch.k0 === 1.2 && /LAB · Immunity/.test(evo.munch.hud), "Pickup's +20 % coins are taken back, and the tag says Immunity", evo.munch);
+    check(evo.veno.id0 === 'compound-eyes' && evo.veno.dex === 49 && evo.veno.abilId === 'shield-dust' && evo.veno.drop === 0.06,
+      "Venonat's Compound Eyes (+6 % crits) goes when it becomes Venomoth (Shield Dust)", evo.veno);
 
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
