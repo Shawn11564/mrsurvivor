@@ -79,7 +79,9 @@ async function player(browser, name, dex) {
     await page.$eval('#btn-guest', e => e.click());
     await page.waitForFunction(() => G.DB.save, null, { timeout: 30000 });
     await page.evaluate(() => {
-      const s = G.DB.save; s.owned[978] = { at: Date.now(), from: 'starter' }; s.partner = 978; s.starter = 978; G.DB.commit();
+      const s = G.DB.save; s.owned[978] = { at: Date.now(), from: 'starter' }; s.partner = 978; s.starter = 978;
+      s.pnat = { 978: ['hardy', Date.now()] };   // a neutral nature: rolled ones (upstream, 2026-10-21) move the -29%
+      G.DB.commit();
       G.Flow.goMenu(); G.Game.startRun(null, { dex: 978, shiny: false });
     });
     await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 15000 });
