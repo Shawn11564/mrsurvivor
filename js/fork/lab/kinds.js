@@ -5,12 +5,13 @@
  *
  *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and land on the target; you stay
  *              untouchable LEAP_GRACE s after landing
- *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP
+ *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP and leaves you
+ *              where you were (it goes the way you walk: js/fork/lab/mobility.js)
  *              (`recoil` × the damage dealt, at most RECOIL_PER_S of your max HP in any second, and it
  *              never KOs you); a cast that knocks an enemy out gives half its recoil back
  *   ramp       Rollout, Fury Cutter, Ice Ball: each hit that lands hits harder (`step` per hit, up to
- *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) moves you
- *              up to ROLL_STEP px towards the target, and not while you walk away from it
+ *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) swings the
+ *              way you walk and doesn't move you (js/fork/lab/mobility.js)
  *   guard      Protect, Detect (protect: nothing hurts you for `dur` s), Counter, Mirror
  *              Coat, Metal Burst (counter: you take half, and at the end it returns it in a blast)
  *   sleep      Hypnosis, Sing, Sleep Powder: a zone warns, then puts whoever it catches to sleep for `stun` s; a
@@ -43,7 +44,7 @@ G.LabKinds = (() => {
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const RECOIL_PER_S = 0.08;             // recoil: at most this share of your max HP in any 1 s (it was 12 % a cast)
   const LEAP_GRACE = 0.6;                // a leap: untouchable this long after landing (it was 0.15 s)
-  const RAMP_FADE = 1.5, ROLL_STEP = 30;  // ramp: one stack fades per RAMP_FADE game s; a roll moves you ROLL_STEP px at most
+  const RAMP_FADE = 1.5;                 // ramp: one stack fades per RAMP_FADE game s without a hit
   const gtime = () => G.Game.st.time;   // game time (a pause or the game's speed doesn't change it)
   const PASSIVE = new Set(['guard', 'weather', 'terrain']);
   // Colours that don't wake a sleeping enemy: burn, poison (enemy.js update) and lava.
@@ -223,8 +224,7 @@ G.LabKinds = (() => {
       G.FX.slash(ex, ey - G.LIFT * 0.5, pl.aim, 44, 2.6, col(m), v);
       G.FX.ring(ex, ey, 6, 46, col(m), 0.3, 4);
       if (ghost) return;
-      pl.x = ex; pl.y = ey;
-      G.World.collide(pl);
+      // You stay where you were (policy (a), js/fork/lab/mobility.js, which also aims it).
       pl.invuln = Math.max(pl.invuln || 0, 0.3);
       const w = m.width || 36, mx = (sx + ex) / 2, my = (sy + ey) / 2, d0 = m.dealt || 0, dmg = m.dmg * pl.atkFor(m);
       const struck = [];
@@ -232,8 +232,8 @@ G.LabKinds = (() => {
         if (C.segDist2(sx, sy, ex, ey, e.x, e.y) <= (w / 2 + e.r) ** 2) { C.hit(pl, e, dmg, col(m), ca, sa, m.knock || 100, m); struck.push(e); }
       }
       for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) if (C.segDist2(sx, sy, ex, ey, p.x, p.y) <= (w / 2 + p.r) ** 2) G.World.damageProp(p, dmg, col(m));
-      G.Camera.kick(0.18);
       recoil(pl, m, (m.dealt || 0) - d0, struck.some(e => e.dead));
+      if (G.LabMobility) G.LabMobility.after(pl, m);
     }
   };
   /**
@@ -257,19 +257,11 @@ G.LabKinds = (() => {
 
   // ---------------- ramp ----------------
   X.ramp = {
-    target: true, reach: m => m.radius + (m.roll ? 50 : 30),
+    target: true, reach: m => m.radius + 30,
     run(pl, m, ghost) {
-      const v = G.VFX.forMove(m), c = col(m), t = pl.target;
-      // A roll closes in a little (ROLL_STEP px at most), and not while you walk away from the target:
-      // up to 80 px a cast, it dragged you into the crowd you were kiting.
-      if (m.roll && !ghost && t) {
-        const a = Math.atan2(t.y - pl.y, t.x - pl.x), away = pl.walking && Math.cos(pl.moveAngle - a) < 0;
-        const d = away ? 0 : Math.max(0, Math.min(ROLL_STEP, G.U.dist(pl.x, pl.y, t.x, t.y) - m.radius * 0.5));
-        if (d > 0) {
-          const [ex, ey] = freeTo(pl, pl.x, pl.y, pl.x + Math.cos(pl.aim) * d, pl.y + Math.sin(pl.aim) * d, 8, true);
-          pl.x = ex; pl.y = ey; G.World.collide(pl);
-        }
-      }
+      const v = G.VFX.forMove(m), c = col(m);
+      // A roll (Rollout, Ice Ball) no longer moves you: it swings the way you walk (policy (a),
+      // js/fork/lab/mobility.js). It closed in up to 80 px a cast, into the crowd you were kiting.
       // A pause in the hits (kiting, a slot switch, a miss) takes one stack per RAMP_FADE s, not all of them.
       if (!ghost && m._ramp > 0) {
         const steps = Math.floor((gtime() - (m._rampAt || 0)) / RAMP_FADE);

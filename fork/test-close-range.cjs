@@ -15,8 +15,9 @@
 //  A1.2 for 0.5 s after a dash, leap, recoil or roll nothing hurts you, not even a hazard
 //  A1.3 a leap keeps you untouchable 0.6 s after landing, and the landing blast hits
 //  A1.4 recoil costs at most 8% of max HP a second; a KO gives half that cast's recoil back
-//  A1.5 ramp stacks fade one per 1.5 s instead of resetting; a roll moves you 30 px at most
-//       towards the target, and not at all while you walk away from it
+//  A1.5 ramp stacks fade one per 1.5 s instead of resetting
+//  A2   policy (a): a dash, recoil or roll goes the way you walk (else at the target), only when an
+//       enemy is on that line, and leaves you where you were, with no camera kick
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 
@@ -39,14 +40,14 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   });
 
   // A run with a quiet arena and the helpers (dummies, one move, waiting).
-  async function startRun(lab) {
+  async function startRun(lab, dex = 448) {
     if (await page.evaluate(() => G.Game.state !== 'ui')) {
       await page.evaluate(() => G.Game.quit());
       await page.waitForSelector('#btn-again', { state: 'visible', timeout: 15000 });
       await page.click('#btn-again');
       await page.waitForFunction(() => G.Game.state === 'ui' && !G.Game.player, null, { timeout: 15000 });
     }
-    await page.evaluate(lab => { G.Settings.set('lab', lab); G.MenuUI.open(); G.Game.startRun(); }, lab);
+    await page.evaluate(([lab, dex]) => { G.DB.save.owned[dex] = G.DB.save.owned[dex] || { at: Date.now() }; G.DB.save.partner = dex; G.Settings.set('lab', lab); G.MenuUI.open(); G.Game.startRun(); }, [lab, dex]);
     await page.waitForFunction(lab => G.Game.state === 'playing' && G.Game.player && G.Lab.active === lab, lab, { timeout: 30000 });
     await page.evaluate(() => {
       for (const k of ['Spawner', 'Events', 'Rift']) G[k].update = () => {};
@@ -56,8 +57,11 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       const pl = G.Game.player;
       pl.xpMul = 0; pl.critChance = 0; pl.labAbility = null; pl.abil = null;
       pl.mon = Object.assign({}, pl.mon, { types: ['none'] });
-      window.__wait = ms => new Promise(r => setTimeout(r, ms));
-      window.__until = (f, ms = 3000) => new Promise(r => { const t0 = performance.now(); (function s() { if (f()) return r(true); if (performance.now() - t0 > ms) return r(false); setTimeout(s, 16); })(); });
+      // Waits count GAME time (G.Game.st.time): on a loaded machine the game runs slower than the
+      // clock, and a real-time wait saw fewer casts than it expected (at most 10x the time, really).
+      const gt = () => G.Game.st.time;
+      window.__until = (f, ms = 3000) => new Promise(r => { const g0 = gt(), t0 = performance.now(); (function s() { if (f()) return r(true); if ((gt() - g0) * 1000 > ms || performance.now() - t0 > ms * 10) return r(false); setTimeout(s, 16); })(); });
+      window.__wait = ms => __until(() => false, ms);
       window.__dummy = (x, y, o = {}) => {
         const def = { dex: 19, name: 'Dummy', hp: o.hp || 1e6, spd: 0, dmg: 10, xp: 0, behavior: 'chase' };
         const e = new G.Enemy(def, x, y, { hp: 1, spd: 1, dmg: 1 }, false);
@@ -122,10 +126,11 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       out.prop = spot[2].hp != null ? spot[2].hp : null;
     }
     // ...but it still fires at an enemy.
-    __only('quick-attack');
-    const e2 = __dummy(...__at(100));
+    const [qa] = __only('quick-attack');
+    const e2 = __dummy(...__at(100)), p0 = [Math.round(pl.x), Math.round(pl.y)];
     await __until(() => e2.hp < e2.maxHp, 2000);
     out.dashEnemy = e2.hp < e2.maxHp;
+    out.dashInfo = { p0, p: [Math.round(pl.x), Math.round(pl.y)], e: [Math.round(e2.x), Math.round(e2.y)], cast: qa.castAt, t: qa.t, tgt: pl.target === e2 ? 'dummy' : pl.target ? (pl.target.hurt ? 'enemy' : 'prop') : null, props: G.World.propsInCircle(pl.x, pl.y, 260).length, dead: pl.dead, hp: Math.round(e2.hp) };
     // A normal run has no close-range cut for dash and spin yet.
     __only('ember'); const far = __take();
     __only('quick-attack'); out.cutDash = +(__take() / far).toFixed(2);
@@ -137,7 +142,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   check(tgt.bossFirst, 'A1.6: a boss in reach is still hit first');
   check(tgt.rock, 'found a rock or chest to test against');
   check(tgt.dashCast === false && tgt.dashMoved < 5, `A1.7: Quick Attack doesn't fire at a rock or chest (cast ${tgt.dashCast}, moved ${tgt.dashMoved} px)`);
-  check(tgt.dashEnemy, 'A1.7: and still fires at an enemy');
+  check(tgt.dashEnemy, 'A1.7: and still fires at an enemy', tgt.dashInfo);
   check(tgt.cutDash === 1 && tgt.cutSpin === 1, `normal run: dash and spin take full damage (×${tgt.cutDash}, ×${tgt.cutSpin})`);
 
   // ================= Lab runs =================
@@ -156,7 +161,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     for (const id of ['quick-attack', 'double-edge', 'fly', 'rollout']) {
       const [m] = __only(id);
       pl.hp = pl.maxHp;
-      const e = __dummy(...__at(id === 'rollout' ? 70 : 110));
+      const e = __dummy(...__at(id === 'rollout' ? 45 : 110));
       m.castAt = 0;
       await __until(() => m.castAt, 3000);
       if (pl._labLeap) await __until(() => !pl._labLeap, 2000);
@@ -237,27 +242,71 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     const d0 = m.dealt || 0;
     await __until(() => (m.dealt || 0) > d0, 2000);
     out.after = m._ramp;
-    // Rollout: how far each cast moves you towards the target.
-    const X = G.Combat.EXTRA.ramp, run = X.run, moves = [];
-    X.run = function (p, mm, ghost) { const x0 = p.x, y0 = p.y; const r = run.apply(this, arguments); if (!ghost) moves.push(Math.round(G.U.dist(x0, y0, p.x, p.y))); return r; };
-    try {
-      __only('rollout');
-      __dummy(...__at(95));
-      await __until(() => moves.length >= 1, 3000);
-      out.step = moves[0];
-      moves.length = 0;
-      // Walking away from the target: no approach (the run only moves you by walking).
-      __only('rollout');
-      G.Input.axis = () => [-1, 0];
-      __dummy(...__at(90));
-      await __until(() => moves.length >= 1, 3000);
-      out.away = moves[0];
-    } finally { X.run = run; G.Input.axis = () => [0, 0]; }
     return out;
   });
   check(ramp.built >= 4 && ramp.after >= ramp.built - 1, `A1.5: after a 1.7 s gap Fury Cutter keeps its stacks but one (${ramp.built} → ${ramp.after} after the next hit)`);
-  check(ramp.step > 0 && ramp.step <= 30, `A1.5: Rollout moves you at most 30 px towards the target (${ramp.step})`);
-  check(ramp.away === 0, `A1.5: and not at all while you walk away from it (${ramp.away})`);
+
+  // ================= Phase 2: the way you walk, and back (A2, policy (a)) =================
+  console.log('Lab run: movers go the way you walk and leave you where you were (A2)');
+  const pa = await page.evaluate(async () => {
+    const pl = G.Game.player, C = G.Combat, out = {};
+    // Every mover's run, recorded: where you were before and after, which way it went, camera kicks.
+    const rec = [], kick = G.Camera.kick;
+    let kicks = 0;
+    const spy = (o, k) => {
+      const f = o[k];
+      o[k] = function (p, m, ghost) {
+        const x0 = p.x, y0 = p.y, a = p.aim, k0 = kicks, r = f.apply(this, arguments);
+        if (!ghost && r !== false) rec.push({ id: m.id, moved: Math.round(G.U.dist(x0, y0, p.x, p.y)), a: +a.toFixed(2), kicks: kicks - k0 });
+        return r;
+      };
+      return () => { o[k] = f; };
+    };
+    const undo = [spy(C.EXTRA.dash, 'over'), spy(C.EXTRA.recoil, 'run'), spy(C.EXTRA.ramp, 'run')];
+    G.Camera.kick = function () { kicks++; return kick.apply(this, arguments); };
+    try {
+      // Standing still: towards the aim (the target); the enemy is hit and you don't move.
+      for (const id of ['quick-attack', 'double-edge', 'rollout']) {
+        __only(id);
+        const e = __dummy(...__at(id === 'rollout' ? 45 : 90));
+        rec.length = 0;
+        await __until(() => rec.length && e.hp < e.maxHp, 3000);
+        out[id] = { hit: e.hp < e.maxHp, moved: rec[0] && rec[0].moved, kicks: rec[0] && rec[0].kicks };
+      }
+      // Walking north with the enemy east: nothing on that line, so it waits; walking at it, it fires.
+      __only('quick-attack');
+      const e = __dummy(...__at(90));
+      G.Input.axis = () => [0, -1];
+      rec.length = 0;
+      await __wait(900);
+      out.sideways = { casts: rec.length, hit: e.hp < e.maxHp };
+      __only('quick-attack');
+      const n = __dummy(...__at(90, -Math.PI / 2));
+      rec.length = 0;
+      await __until(() => rec.length, 2000);
+      out.along = { hit: n.hp < n.maxHp, a: rec[0] && rec[0].a, moved: rec[0] && rec[0].moved };
+    } finally { undo.forEach(f => f()); G.Camera.kick = kick; G.Input.axis = () => [0, 0]; }
+    return out;
+  });
+  for (const id of ['quick-attack', 'double-edge', 'rollout']) {
+    const r = pa[id];
+    check(r.hit && r.moved === 0 && r.kicks === 0, `A2: ${id} standing still hits the target and leaves you where you were, no camera kick`, r);
+  }
+  check(pa.sideways.casts === 0 && !pa.sideways.hit, 'A2: walking past an enemy that isn\'t on your way: the dash waits', pa.sideways);
+  check(pa.along.hit && Math.abs(pa.along.a + 1.57) < 0.05 && pa.along.moved === 0, 'A2: walking at it: the dash goes the way you walk and hits it, and you stay', pa.along);
+
+  // ================= normal runs don't change =================
+  await startRun(false);
+  console.log('Normal run: nothing of the above (A2 is Lab only)');
+  const nr = await page.evaluate(async () => {
+    const pl = G.Game.player, out = {};
+    __only('quick-attack');
+    const x0 = pl.x, e = __dummy(...__at(90));
+    await __until(() => e.hp < e.maxHp, 3000);
+    out.dashMoved = Math.round(G.U.dist(x0, pl.y, pl.x, pl.y));
+    return out;
+  });
+  check(nr.dashMoved > 40, `normal run: Quick Attack still carries you (${nr.dashMoved} px)`);
 
   check(!errors.length, 'no page errors', errors.slice(0, 3));
   await browser.close();

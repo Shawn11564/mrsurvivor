@@ -78,7 +78,7 @@ status table as work lands.
 
 Upstream touches: the `tab === 'lab'` branch (`G.Lab.settingsRow`) in `js/ui/settings-ui.js`, the script tags in
 `dev.html`, the family registry in `js/systems/combat.js` (`EXTRA`: one line each in `run`,
-`needsTarget` and `reach`, plus `run`/`hit`/`reach`/`spotFor`/`segDist2`/`inArc` exported) and
+`needsTarget` and `reach`, an `over` line at the top of `run` for Lab's dash (`js/fork/lab/mobility.js`), plus `run`/`hit`/`reach`/`spotFor`/`segDist2`/`inArc` exported) and
 `KIND_GLYPH` exported from `js/ui/icons.js`, and one line in `js/ui/hud.js` `drawTip` (`G.LabBadges.tipLine`). Everything else wraps functions the game already calls
 as `G.X.y`.
 
@@ -196,8 +196,8 @@ wrapped for them). The moves are in `lab-moves.js`, with their PokeAPI ids, so l
 | Kind | Moves | What it does |
 |---|---|---|
 | leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then land on the target with an area hit and stay untouchable 0.6 s more; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
-| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard dash that costs `recoil` × the damage done, at most 8% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
-| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll moves you 30 px at most towards the target, not while you walk away |
+| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard charge along the way you walk that leaves you where you were (policy (a), see "Close range and mobility"); it costs `recoil` × the damage done, at most 8% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
+| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll swings the way you walk and doesn't move you (policy (a)) |
 | guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter: half damage, then a blast with `mult` × what you took |
 | sleep | Hypnosis, Sing, Sleep Powder, Spore, Yawn | a marked zone; enemies there sleep `stun` s; a hit wakes them (a burn or poison tick doesn't) |
 | (confusion) | Confuse Ray, Supersonic, Teeter Dance, Sweet Kiss | old kinds with `conf`: the enemy staggers, doesn't attack you and hits its neighbours |
@@ -441,7 +441,16 @@ Lab runs:
 - **Recoil** (A1.4): at most 8% of max HP in any second (was 12% a cast: ~10% HP/s against a crowd); a KO
   gives half that cast's recoil back.
 - **Ramp** (A1.5): stacks fade one per 1.5 s of game time instead of resetting on a miss or a pause;
-  Rollout/Ice Ball close in 30 px at most (was 80) and not while you walk away.
+  Rollout/Ice Ball close in 30 px at most (was 80) and not while you walk away (since A2 they don't move
+  you at all).
+- **The way you walk, and back** (A2, policy (a), the owner's G1; `js/fork/lab/mobility.js`): a dash, recoil
+  charge or roll goes the way you're walking, or at your target when you stand still (with Manual aim: the
+  aim). It hits everything on that line and you stay where you were (Vampire Survivors' whip): no move
+  takes you somewhere you didn't choose. It only fires when an enemy is on that line (its clock waits), with
+  no camera kick. The dash is Lab's own (`G.Combat.EXTRA.dash.over`, the one-line hook in `combat.js` `run`);
+  a teammate's copy is drawn from the aim its cast message carries, as before. The mover grace still
+  applies. `fork/survival-lab.cjs` has a "dash" bot for these: it walks at the nearest enemy, then stands
+  still so the move goes at it.
 
 `node fork/test-close-range.cjs` checks all of it in real runs.
 

@@ -8,7 +8,7 @@
 //
 //   --runs   runs per build (default 3; the median is reported)
 //   --max    stop a run that lasts this many game seconds (default 900)
-//   --only   just these builds (names from BUILDS below)
+//   --only   just these builds: names from BUILDS below, or a part of one; '=name' for that one only
 //   --no-sets  with Lab's set bonuses off (js/fork/lab/sets.js), to measure what they add
 //
 // The setup is the same for every build, so the numbers compare builds, not Pokémon:
@@ -19,7 +19,10 @@
 //   - no events, rifts, hazards or weather
 //   - the bot: "close" walks up to the nearest enemy until it's in reach, then strafes, and
 //     steps out when 4 or more are on top of it; "far" keeps away from everything within 260 px
-//     and only walks closer when nothing is in range. It never picks up anything on purpose.
+//     and only walks closer when nothing is in range; "dash" (for moves that go the way you walk and
+//     bring you back, Lab policy (a)) walks at the nearest enemy until it's well in reach, then stands
+//     still so the move goes at it, and steps out when 3 or more are on top of it. It never picks up
+//     anything on purpose.
 // The game runs at 4× speed, 4 runs at a time. Prints a table (median, min, max seconds).
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -47,6 +50,11 @@ const BUILDS = [
   { name: 'close: Body Slam',            bot: 'close', slots: [['body-slam']] },
   { name: 'close: Vine Whip',            bot: 'close', slots: [['vine-whip']] },
   { name: 'close: Bite, Counter',        bot: 'close', slots: [['bite'], ['counter']] },
+  { name: 'dash bot: Quick Attack',      bot: 'dash',  slots: [['quick-attack']] },
+  { name: 'dash bot: Double-Edge',       bot: 'dash',  slots: [['double-edge']] },
+  { name: 'dash bot: U-turn, Karate Chop', bot: 'dash', slots: [['u-turn'], ['karate-chop']] },
+  { name: 'close: Karate Chop, Counter', bot: 'close', slots: [['karate-chop'], ['counter']] },
+  { name: 'close: Phantom Force (leap)', bot: 'close', slots: [['phantom-force']] },
   // phase 9 (js/fork/lab/kinds2.js): close-range kinds, drain, and support in other slots
   { name: 'close: Drain Punch',          bot: 'close', slots: [['drain-punch']] },
   { name: 'close: Circle Throw (grab)',  bot: 'close', slots: [['circle-throw']] },
@@ -132,6 +140,9 @@ async function oneRun(browser, b) {
         if (b.bot === 'far') {
           if (nd < 260) v = norm(rx, ry);
           else if (near && nd > 300) v = norm(near.x - pl.x, near.y - pl.y).map(k => k * 0.6);
+        } else if (b.bot === 'dash' && near) {
+          if (crowd >= 3) v = norm(pl.x - cx / crowd, pl.y - cy / crowd);
+          else if (nd > reach * 0.6) v = norm(near.x - pl.x, near.y - pl.y);
         } else if (near) {
           if (crowd >= 4) v = norm(pl.x - cx / crowd, pl.y - cy / crowd);
           else if (nd > reach * 0.7) v = norm(near.x - pl.x, near.y - pl.y);
@@ -165,7 +176,7 @@ async function oneRun(browser, b) {
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });
-  const builds = BUILDS.filter(b => !ONLY.length || ONLY.some(o => b.name.toLowerCase().includes(o.toLowerCase())));
+  const builds = BUILDS.filter(b => !ONLY.length || ONLY.some(o => o[0] === '=' ? b.name.toLowerCase() === o.slice(1).toLowerCase() : b.name.toLowerCase().includes(o.toLowerCase())));
   const jobs = builds.flatMap(b => Array.from({ length: RUNS }, () => b));
   const res = new Map(builds.map(b => [b, []]));
   const t0 = Date.now();

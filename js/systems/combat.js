@@ -51,6 +51,7 @@ G.Combat = (() => {
   }
 
   function run(pl, m) {
+    if (EXTRA[m.kind] && EXTRA[m.kind].over && EXTRA[m.kind].over(pl, m, ghost)) return;   // fork: Lab's dash (js/fork/lab/mobility.js)
     switch (m.kind) {
       case 'projectile': fireProjectiles(pl, m); break;
       case 'melee':      melee(pl, m); break;
