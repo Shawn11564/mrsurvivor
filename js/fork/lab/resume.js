@@ -31,7 +31,8 @@ G.Resume = (() => {
     const p = {};
     for (const k of PRIM) if (pl[k] !== undefined) p[k] = pl[k];
     for (const k of Object.keys(pl)) if (k.startsWith('_lab')) { try { p[k] = JSON.parse(JSON.stringify(pl[k])); } catch (e) { /* nothing */ } }
-    const moves = pl.moves.map(m => ({ id: m.id, lvl: m.lvl, evolved: !!m.evolved }));
+    // br: its branch (js/fork/lab/branches.js), rebuilt by G.Moves.instance's third argument.
+    const moves = pl.moves.map(m => ({ id: m.id, lvl: m.lvl, evolved: !!m.evolved, br: m.branch || undefined }));
     return { v: 1, who: who(), at: Date.now(), dex: pl.mon.dex, shiny: !!pl.shiny, seed, time: st.time, p,
       statsTaken: Object.assign({}, pl.statsTaken), item: pl.item || null, banned: [...(pl.banned || [])],
       moves, slots: pl.slots.map(g => g.map(m => pl.moves.indexOf(m))), active: pl.active };
@@ -76,7 +77,7 @@ G.Resume = (() => {
     pl.banned = new Set(s.banned || []);
     pl.item = s.item && G.Items.BY[s.item] ? s.item : null;        // its effects are already in the multipliers
     pl.moves.length = 0; pl.slots.length = 0;
-    const ms = s.moves.map(m => { const i = G.Moves.instance(m.id, m.lvl); if (m.evolved) G.Moves.evolve(i); return i; });
+    const ms = s.moves.map(m => { const i = G.Moves.instance(m.id, m.lvl, m.br); if (m.evolved) G.Moves.evolve(i); return i; });
     ms.forEach(m => pl.moves.push(m));
     for (const g of s.slots) pl.slots.push(g.map(i => ms[i]).filter(Boolean));
     pl.active = Math.min(s.active | 0, Math.max(0, pl.slots.length - 1));

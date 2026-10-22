@@ -8,6 +8,8 @@
 //   --lab    only Lab moves (the normal ones are still measured once, for the medians)
 //   --lvl1   also at level 1 (by default only at the top level, evolved when it can)
 //   --secs   game seconds per measurement (default 6; the page runs at 4× speed)
+//   --branches  only the branching upgrades (js/fork/lab/branches.js): each branch at the top level next
+//            to the plain move at the top level (×plain); prints the table, doesn't write the report
 //
 // The setup is the same for every move, so the numbers compare moves, not Pokémon:
 //   - the player is Mew's stats with no type (no same-type bonus), can't be hurt, no XP
@@ -63,7 +65,7 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
   }, [SPEED]);
 
   /** DPS of one move at a level, in one arena. */
-  const measure = (id, top, crowd) => page.evaluate(async ([id, top, crowd, secs]) => {
+  const measure = (id, top, crowd, br) => page.evaluate(async ([id, top, crowd, secs, br]) => {
     const pl = G.Game.player;
     G.EnemyMgr.clear(); G.Projectiles.clear(); G.Combat.clearFields();
     pl.slots.length = 0; pl.moves.length = 0; pl.maxMoves = 4; pl.hp = pl.maxHp; pl.dead = false;
@@ -73,6 +75,7 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
     for (const b of Object.values(pl.buffs)) b.n = 0;
     pl.addMove(id);
     const m = pl.moves[0];
+    if (br) { while (m.lvl < G.LabBranches.BR_LVL) G.Moves.levelUp(m); G.LabBranches.applyBranch(m, br); }
     if (top) { while (G.Moves.levelUp(m)) {} G.Moves.evolve(m); }
     const spots = crowd ? [70, 150, 240].flatMap((r, i) => [0, 1, 2, 3].map(k => [r, k * 1.571 + i * 0.52])) : [[55, 0.3]];
     const def = { dex: 19, name: 'Dummy', hp: 1e9, spd: 0, dmg: 0, xp: 0, behavior: 'chase' };
@@ -93,7 +96,27 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
     });
     const t = G.Game.st.time - t0;
     return { dps: (m.dealt || 0) / t, cut: !!m.cut, kind: m.kind, type: m.type, name: G.T(m.name, 'move'), evolved: !!m.evolved, lvl: m.lvl, lab: !!m.lab, sig: !!m.sig };
-  }, [id, top, crowd, SECS]);
+  }, [id, top, crowd, SECS, br]);
+
+  if (flag('--branches')) {
+    const T = await page.evaluate(() => Object.fromEntries(Object.entries(G.LabBranches.TABLE).map(([id, b]) => [id, Object.fromEntries(Object.entries(b).map(([k, v]) => [k, v.n]))])));
+    const f2 = v => v.toFixed(2);
+    console.log('| Move | Branch | Kind | ×plain crowd | ×plain single | score |\n|---|---|---|---|---|---|');
+    const scores = [];
+    for (const id in T) {
+      const c0 = await measure(id, true, true), s0 = await measure(id, true, false);
+      for (const k in T[id]) {
+        const c = await measure(id, true, true, k), s = await measure(id, true, false, k);
+        const rc = c.dps / (c0.dps || 1), rs = s.dps / (s0.dps || 1), sc = Math.sqrt(rc * rs);
+        scores.push(sc);
+        console.log(`| ${c0.name} (${id}) | ${T[id][k]} | ${c.kind} | ${f2(rc)} | ${f2(rs)} | ${f2(sc)} |`);
+      }
+    }
+    const sorted = scores.slice().sort((a, b) => a - b);
+    console.log(`median score ${f2(sorted[Math.floor(sorted.length / 2)])}, range ${f2(sorted[0])}-${f2(sorted[sorted.length - 1])}`);
+    await browser.close();
+    process.exit(errors.length ? 1 : 0);
+  }
 
   const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'heal', 'screen', 'shout', 'endure']);
   const levels = flag('--lvl1') ? [true, false] : [true];
