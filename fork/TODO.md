@@ -11,10 +11,10 @@ How to use it:
 
 ## Inbox
 
-- [ ] 44. [feat][coop] A player who's down in a rift boss fight is revived the moment the boss dies (they were already revived on leaving the rift; this makes it clear) · rift · co-op
-- [ ] 45. [feat][coop] Fairer rift boss rewards: not decided by who's closest to the drops when it dies; e.g. everyone gets their own roll for a held item instead of one item dropping · rift · co-op
-- [ ] 46. [lab][coop] Co-op-only moves that help teammates (heal or shield an ally, draw enemies off them, team buffs), so a build can turn into a support or a tank; only offered in co-op level-up cards · Lab
-- [ ] 47. [feat][ui] The 3 s count-in interrupts less: after picking a reward (level-up card, held item), solo too, only when the pick took over 10 s; closing the pause menu within 10 s of opening it skips it · everyone
+- [ ] 44. [feat][coop] A player who's down in a rift boss fight is revived the moment the boss dies (they were already revived on leaving the rift; this makes it clear) · rift · co-op (claimed: pokesurvivor-5d)
+- [ ] 45. [feat][coop] Fairer rift boss rewards: not decided by who's closest to the drops when it dies; e.g. everyone gets their own roll for a held item instead of one item dropping · rift · co-op (claimed: pokesurvivor-5d)
+- [ ] 46. [lab][coop] Co-op-only moves that help teammates (heal or shield an ally, draw enemies off them, team buffs), so a build can turn into a support or a tank; only offered in co-op level-up cards · Lab (claimed: pokesurvivor-5d, subagent)
+- [ ] 47. [feat][ui] The 3 s count-in interrupts less: after picking a reward (level-up card, held item), solo too, only when the pick took over 10 s; closing the pause menu within 10 s of opening it skips it · everyone (claimed: pokesurvivor-5d)
 
 ## Phase 1: fixes and cheap tuning
 
