@@ -449,6 +449,15 @@ In a Lab run, Arceus's Judgment never comes: at 30:00 everyone goes to a dark ar
 instead of Arceus; healing and broken obelisks; the beam in the open and behind a crystal; winning
 (ticket, back, no Arceus, rifts again); losing (the run ends); a normal run still gets Arceus; co-op.
 
+## Starting move in Lab runs (2026-10-22)
+
+Upgrades → Starting move keeps a separate pick for Lab runs (`save.pstartLab`, next to upstream's `pstart`;
+`js/fork/lab/start-move.js`). With the Lab setting on, the picker lists the Lab list (Scorbunny's Pyro Ball,
+marked LAB when the normal list doesn't have it) and writes the Lab pick. A Lab run starts with its Lab pick,
+else the normal pick if the Lab list has it, else the default. Before, a Lab run checked the normal pick
+against the Lab list and silently gave the default (6 of Scorbunny's 14 picks), and the picker never showed
+Lab moves. Merged like `pstart` (the newer copy wins per Pokémon). `node fork/test-start-move.cjs` (server).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
