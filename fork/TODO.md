@@ -63,7 +63,7 @@ How to use it:
 - [x] 29. [lab] B3.2 persistent hazard fields (370e8a7)
 - [x] 30. [lab] B3.3 status converters (3f8cb11)
 - [x] 31. [lab] B3.4 trade-off buffs (c6aa396)
-- [ ] 32. [lab] B3.5 decoy / aggro (claimed: stream B-moves)
+- [x] 32. [lab] B3.5 decoy / aggro (15a3c31)
 - [ ] 33. [lab] B3.6 Taunt / Attract (claimed: stream B-moves)
 - [ ] 34. [lab] B3.7 combos (claimed: stream B-moves)
 - [x] 35. [lab] B4: set bonuses (c6ef6dc)

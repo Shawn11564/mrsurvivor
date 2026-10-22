@@ -32,6 +32,11 @@
  *                    Powder's `powder` slows what's in it; Substitute's doll is one while it stands).
  *                    Host-authoritative: the enemies' AI runs on the host, which also sees a guest's
  *                    shout or doll as a ghost cast; every screen draws it. Bosses ignore decoys.
+ *    taunt     B3.6  (Taunt, a shout) for `dur` s the enemies that shoot from afar charge you
+ *                    instead and don't shoot (bosses ignore it). `attract` (Attract): for `dur` s
+ *                    they're slowed (the shout's `slow`) and can't hit you by contact (bosses half).
+ *                    Every screen marks its own copies (a teammate's shout comes as a ghost); the
+ *                    AI part runs where the AI does (the host).
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -336,19 +341,55 @@ G.LabMech = (() => {
     if (decoys.length) decoys = decoys.filter(d => !d.gone && d.t < d.life && d.owner);
   }
   // Follow Me, Rage Powder: shouts (kinds2.js) that also leave a decoy where their user stands.
+  // Taunt, Attract: shouts whose cry also taunts or charms the enemies it reaches (B3.6).
   const shout = C.EXTRA.shout.run;
   C.EXTRA.shout.run = function (pl, m, ghost) {
     const r = shout.apply(this, arguments);
-    if (m.decoy && lab()) decoy(pl, ghost, m, pl.x, pl.y, m.dur || 4, m.decoyR);
+    if (!lab()) return r;
+    if (m.decoy) decoy(pl, ghost, m, pl.x, pl.y, m.dur || 4, m.decoyR);
+    if (m.taunt || m.attract) for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius || 120)) {
+      if (m.taunt && !boss(e)) taunt(e, m.dur || 5);
+      if (m.attract) attract(e, (m.dur || 3) * (boss(e) ? 0.5 : 1));
+    }
     return r;
   };
-  // The enemies' AI (on the host, or solo): a decoy in reach is the target instead of the player.
+  // The enemies' AI (on the host, or solo): a decoy in reach is the target instead of the player;
+  // a taunted shooter chases instead of keeping its distance and shooting.
   const eupdate = E.update;
   E.update = function (dt, pl) {
     const d = pl && !this.dead && !(this.labConf > 0) && authority() && decoyFor(this);
-    if (!d) return eupdate.apply(this, arguments);
-    return eupdate.call(this, dt, { x: d.x, y: d.y, r: 10, level: pl.level, dead: false });
+    const tnt = this._labTaunt > 0 && !boss(this) && this.keepsDistance();
+    const b = this.behavior;
+    if (tnt) this.behavior = 'chase';
+    try {
+      if (!d) return eupdate.apply(this, arguments);
+      return eupdate.call(this, dt, { x: d.x, y: d.y, r: 10, level: pl.level, dead: false });
+    } finally { if (tnt) this.behavior = b; }
   };
+
+  // ---------------- B3.6 taunt and attract ----------------
+  const charmed = new Set();
+  function taunt(e, dur) { e._labTaunt = Math.max(e._labTaunt || 0, dur); charmed.add(e); }
+  function attract(e, dur) { e._labAttract = Math.max(e._labAttract || 0, dur); e.touchCd = Math.max(e.touchCd, 0.2); charmed.add(e); }
+  function tickCharmed(dt) {
+    for (const e of charmed) {
+      if (e._labTaunt > 0) e._labTaunt -= dt;
+      if (e._labAttract > 0) { e._labAttract -= dt; e.touchCd = Math.max(e.touchCd, 0.2); }     // no contact hits (on every screen)
+      if (e.dead || !(e._labTaunt > 0) && !(e._labAttract > 0)) { e._labTaunt = e._labAttract = 0; charmed.delete(e); }
+    }
+  }
+  function drawCharmed(ctx, t) {
+    for (const e of charmed) {
+      if (e.dead || !G.Camera.sees(e.x, e.y, 60)) continue;
+      const y = e.y - e.bodyH - 14 + Math.sin(t * 5 + e.id) * 1.5;
+      if (e._labAttract > 0) G.VFX.draw(ctx, 'heart', 'fairy', e.x, y, { scale: 0.7 });
+      else if (e._labTaunt > 0) {
+        ctx.globalAlpha = 0.95; ctx.font = '800 12px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
+        ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.lineWidth = 3; ctx.fillStyle = '#ff5050';
+        ctx.strokeText('!!', e.x, y); ctx.fillText('!!', e.x, y);
+      }
+    }
+  }
   function drawDecoys(ctx, t) {
     for (const d of decoys) {
       if (!G.Camera.sees(d.x, d.y, d.r)) continue;
@@ -489,6 +530,7 @@ G.LabMech = (() => {
     tickMarks(dt);
     tickCurses(dt);
     tickDecoys(dt);
+    tickCharmed(dt);
     const pl = G.Game.player;
     if (pl) tickPlayer(pl, dt);
     if (G.Coop.active) for (const p of G.Coop.puppets()) tickPlayer(p, dt);
@@ -515,15 +557,21 @@ G.LabMech = (() => {
     clear.apply(this, arguments);
     hz = owner ? hz.filter(h => h.owner !== owner) : [];
     decoys = owner ? decoys.filter(d => d.owner !== owner) : [];
-    if (!owner) { for (const e of marked) e._labMark = null; marked.clear(); for (const e of cursed) e._labCurse = null; cursed.clear(); }
+    if (!owner) {
+      for (const e of marked) e._labMark = null; marked.clear();
+      for (const e of cursed) e._labCurse = null; cursed.clear();
+      for (const e of charmed) e._labTaunt = e._labAttract = 0; charmed.clear();
+    }
     else for (const e of marked) if (e._labMark && e._labMark.owner === owner) { e._labMark = null; marked.delete(e); }
   };
   const air = C.drawAirFields;
   C.drawAirFields = function (ctx) {
     air.apply(this, arguments);
-    if (!marked.size && !cursed.size) return;
+    if (!marked.size && !cursed.size && !charmed.size) return;
     const t = now() / 1000;
     ctx.save();
+    drawCharmed(ctx, t);
+    ctx.globalAlpha = 1;
     // Cursed: purple wisps rising off it.
     for (const e of cursed) {
       if (e.dead || !G.Camera.sees(e.x, e.y, 60)) continue;
@@ -564,6 +612,8 @@ G.LabMech = (() => {
     /** B3.5: a decoy of pl's move m at (x, y) for life s (enemies within r chase it). */
     decoy: (pl, m, x, y, life, r) => decoy(pl, false, m, x, y, life, r),
     decoys: () => decoys, decoyFor,
+    /** B3.6: taunt (shooters charge you, s) and attract (no contact hits, s) on enemy e. */
+    taunt, attract,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };

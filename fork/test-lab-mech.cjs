@@ -22,6 +22,8 @@
 //          walkers go for it when you walk off, Rage Powder slows them, bosses don't fall for it;
 //          Substitute's doll draws the enemy near it. (Co-op: fork/test-lab-coop.cjs, the guest's
 //          Follow Me on the host.)
+// taunt    B3.6: shooters keep away and shoot; with Taunt in another slot they charge you and stop
+//          shooting; Attract: walkers touching you deal nothing while charmed, and are slowed.
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -360,6 +362,47 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(r.rp.decoy && r.rp.toDecoy.every(d => d < 60) && r.rp.slow.some(s => s >= 0.35), `Rage Powder's powder draws them and slows them (${r.rp.slow})`, r.rp);
     check(r.boss.toYou.every((d, i) => d < 450 - 50), `bosses don't fall for it: they keep coming for you (${r.boss.toYou} px)`, r.boss);
     check(/go for it instead of you/.test(r.subTip) && r.doll && r.dollPull && r.dollPull[1] < r.dollPull[0] && r.dollPull[1] < r.dollPull[0] - 60, `Substitute's doll draws the enemy near it (${r.dollPull} px)`, r);
+  }
+
+  // ---------------- B3.6 taunt and attract ----------------
+  if (want('taunt')) {
+    console.log('B3.6 taunt and attract');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, out = {};
+      pl.invuln = 0;
+      /** Two shooters 170 px away for 2.5 s, with the move in slot 2 (or nothing): their distance and shots. */
+      const shooters = async id => {
+        __only(id ? ['ember', id] : ['ember']);
+        pl.moves[0].t = 1e9; pl.invuln = 99;
+        const es = [0, 3.1].map(a => { const e = __dummy(...__at(170, a), { spd: 70, behavior: 'ranged' }); e.def.range = 220; e.def.shotCd = 0.8; e.shotCd = 0.5; return e; });
+        let shots = 0; const seen = new Set();
+        const t0 = performance.now();
+        while (performance.now() - t0 < 2500) {
+          await __wait(50);
+          for (const p of G.Projectiles.all()) if (!p.friendly && !seen.has(p)) { seen.add(p); shots++; }
+        }
+        return { d: es.map(e => Math.round(G.U.dist(e.x, e.y, pl.x, pl.y))), shots, taunted: es.every(e => e._labTaunt > 0) };
+      };
+      out.plain = await shooters(null);
+      out.taunt = await shooters('taunt');
+      // Attract: a walker touching you; contact hits with and without it.
+      const touch = async id => {
+        __only(id ? ['ember', id] : ['ember']);
+        pl.moves[0].t = 1e9; pl.invuln = 0; pl.god = false; pl.hp = pl.maxHp;
+        const es = [0, 3.1].map(a => __dummy(...__at(20, a), { spd: 40, touch: true, dmg: 10 }));
+        await __wait(1500);
+        return { lost: Math.round(pl.maxHp - pl.hp), slow: es.map(e => e.slow), charmed: es.every(e => e._labAttract > 0) };
+      };
+      out.noAtt = await touch(null);
+      out.att = await touch('attract');
+      const [tm] = __only(['taunt']);
+      out.text = tm.desc;
+      return out;
+    });
+    check(r.plain.d.every(d => d > 120) && r.plain.shots > 0, `without Taunt the shooters keep their distance (${r.plain.d} px) and shoot (${r.plain.shots})`, r.plain);
+    check(r.taunt.taunted && r.taunt.d.every(d => d < 60) && r.taunt.shots < r.plain.shots, `Taunt from another slot: they charge you (${r.taunt.d} px) and hardly shoot (${r.taunt.shots})`, r.taunt);
+    check(r.noAtt.lost > 0 && r.att.charmed && r.att.lost === 0 && r.att.slow.every(s => s >= 0.45), `Attract: walkers touching you hit for nothing while charmed (${r.att.lost} HP lost, ${r.noAtt.lost} without) and are slowed (${r.att.slow})`, r);
   }
 
   // ---------------- the built game ----------------

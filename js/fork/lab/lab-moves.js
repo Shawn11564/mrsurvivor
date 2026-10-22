@@ -552,6 +552,13 @@ G.LabMoves = [
   { id: 'rage-powder', name: 'Rage Powder', type: 'bug', kind: 'shout', cat: null, decoy: true, decoyR: 200, powder: 0.4,
     desc: 'When enemies close in, scatter irritating powder where you stand: for 4 s the enemies near it go for the powder instead of you, and the ones in it are slowed (bosses don\'t fall for it). Works from any slot.',
     cd: 12, dur: 4, radius: 130, look: { proj: 'bubble', pal: 'bug' }, evo: ['Ally Switch', null] },
+  // ---- taunt and attract (shout family) ----
+  { id: 'taunt', name: 'Taunt', type: 'dark', kind: 'shout', cat: null, taunt: true,
+    desc: 'When enemies close in, taunt the ones around you for 5 s: the ones that shoot from afar stop shooting and charge at you instead (bosses ignore it). Works from any slot.',
+    cd: 8, dur: 5, radius: 220, look: { proj: 'crescent', pal: 'dark' }, evo: ['Quash', null] },
+  { id: 'attract', name: 'Attract', type: 'normal', kind: 'shout', cat: null, attract: true, slow: 0.5,
+    desc: 'When enemies close in, charm the ones around you for 3 s: they slow down and can\'t bring themselves to hit you (bosses for half as long). Works from any slot.',
+    cd: 7, dur: 3, radius: 110, look: { proj: 'heart', pal: 'fairy' }, evo: ['Sweet Scent', null] },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],
