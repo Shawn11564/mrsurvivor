@@ -190,6 +190,8 @@ list against the sheets on disk, and that the importer reads each name back to t
 
 `node fork/test-asset-overrides.cjs` (server) checks the game side on `dev.html`: a swapped sheet asked for with `?v=` (also one asked for before the list came in), code icons from their PNG (html, url, CSS, draw at the same place and size, a Lab card's badge), bad entries ignored, and with the service worker the new version fetched and kept as its own entry.
 
+`node fork/test-item-icons.cjs` (server) checks the held items' PNGs with the real lists: at every size the game draws them (the pickup 24, the HUD box 36, the tip 18, the item card 36, the pause line 18) each one fills the old 12×12 drawing's box and no more, centred and in its own shape, and the HUD's box in a real run; `--shot <file.png>` saves the old drawings next to the PNGs.
+
 `node fork/test-radiant-admin.cjs` checks the Radiant Admin page (the Asset Admin's Radiants tab) with its real server, in a throwaway copy of the repo
 that is its own git repo with a bare `origin` and an unrelated change: only the key and this PC's name get in; dropped
 zips (Kit layout, older layout, a broken one) give the right cards; the preview draws normal and radiant frames;

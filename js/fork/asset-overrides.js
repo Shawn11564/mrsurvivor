@@ -10,9 +10,13 @@
  *     and is drawn from the PNG, which can be finer (×4): it's smoothed when scaled down; or, with own,
  *     at the PNG's size (a bigger drawing than the code one, without losing pixels). Wraps
  *     G.Icons.canvas/draw/html/url, and the <img> already on the page are swapped when it loads.
+ *     Held items (data/items.js) are the exception to own: their PNGs (13 to 22 px) fit inside the
+ *     box the 12×12 code drawing took (24 on the ground, 36 in the HUD), longer side across, centred,
+ *     instead of coming out up to twice as big. They stay crisp: a whole multiple of the PNG when that
+ *     nearly fills the box, else a whole-multiple enlargement smoothed down to it.
  * Both lists are checked before use: assets/ paths ending in .png and hex hashes
  * (icons only from assets/icons/code/). With no network or no lists, everything works as before.
- * Test: fork/test-asset-overrides.cjs.
+ * Test: fork/test-asset-overrides.cjs; held items: fork/test-item-icons.cjs.
  */
 G.AssetOverrides = (() => {
   // The game's root: what comes before js/ in the URL of this script (or of app.min.js).
@@ -64,11 +68,52 @@ G.AssetOverrides = (() => {
   };
   const shown = (n, size) => { const o = icons[n]; return (o && o.own ? o.w : oCanvas.call(I, n).width) * mult(n, size); };
   const ready = n => icons[n] && icons[n].ready ? icons[n] : null;
+
+  // Held items: inside the code icon's box (its sharp multiple, or with fit the size asked when that's 20% off,
+  // as ui/icons.js draw() does). px: screen pixels per CSS pixel. { w, h, k }: the size shown, and k, the
+  // whole multiple of the PNG to draw from (smoothed when k × the PNG isn't the size shown).
+  const boxed = n => icons[n] && icons[n].own && G.Items && G.Items.BY[n];
+  function fitBox(n, size, fit, px) {
+    const o = icons[n], cw = oCanvas.call(I, n).width;
+    let box = cw * Math.max(1, Math.round(size / cw));
+    if (fit && Math.abs(box - size) > size * 0.2) box = size;
+    const long = Math.max(o.w, o.h), sc = box * px / long, m = Math.floor(sc);
+    if (m >= 1 && m * long >= box * px * 0.85) return { w: o.w * m / px, h: o.h * m / px, k: m, sharp: true };
+    return { w: o.w * sc / px, h: o.h * sc / px, k: Math.max(1, Math.ceil(sc)), sharp: false };
+  }
+  const bigs = new Map();                           // 'name k' -> the PNG ×k, nearest neighbour
+  function big(n, k) {
+    const o = icons[n];
+    if (k <= 1) return o.img;
+    let c = bigs.get(n + ' ' + k);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = o.w * k; c.height = o.h * k;
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(o.img, 0, 0, c.width, c.height);
+      bigs.set(n + ' ' + k, c);
+    }
+    return c;
+  }
+  const bigUrl = (n, k) => { const c = big(n, k); return c === icons[n].img ? icons[n].url : (c._url || (c._url = c.toDataURL())); };
+  /** The <img> for a held item at size (the code box), before or after its PNG has loaded. */
+  function boxedHtml(n, size, cls) {
+    const o = icons[n], f = fitBox(n, size, false, devicePixelRatio || 1);
+    const src = o.ready && !f.sharp ? bigUrl(n, f.k) : o.url, smooth = f.sharp ? '' : ' style="image-rendering:auto"';
+    return `<img class="pix ${cls}" src="${src}" width="${+f.w.toFixed(2)}" height="${+f.h.toFixed(2)}" data-ico="${n}" data-size="${size}" alt="" draggable="false"${smooth}>`;
+  }
   const CSS = { coin: '--ico-coin', cursor: '--ico-cursor' };   // the ones from ui/icons.js installCss
 
   /** <img> already drawn with the code drawing switch to the PNG (and so do the CSS variables). */
   function swapDom(n, o) {
     const old = oUrl.call(I, n);
+    if (boxed(n)) {
+      // The code drawing's (its width is the code box) and the ones html() gave before the PNG was in.
+      for (const img of document.querySelectorAll('img.pix')) {
+        const was = img.getAttribute('src'), size = was === old ? img.width : img.dataset.ico === n ? +img.dataset.size : 0;
+        if (size) img.outerHTML = boxedHtml(n, size, [...img.classList].filter(c => c !== 'pix').join(' '));
+      }
+      if (CSS[n]) document.documentElement.style.setProperty(CSS[n], `url("${o.url}")`);
+      return;
+    }
     for (const img of document.querySelectorAll('img.pix')) {
       if (img.getAttribute('src') !== old) continue;
       if (o.own) { const m = mult(n, img.width); img.width = o.w * m; img.height = o.h * m; }
@@ -106,6 +151,13 @@ G.AssetOverrides = (() => {
   I.draw = function (ctx, n, x, y, size, fit = false) {
     const o = ready(n);
     if (!o) return oDraw.apply(this, arguments);
+    if (boxed(n)) {
+      const t = Math.abs(ctx.getTransform().a) || 1, f = fitBox(n, size, fit, t), prev = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = !f.sharp;
+      ctx.drawImage(f.sharp ? o.img : big(n, f.k), Math.round((x + (size - f.w) / 2) * t) / t, Math.round((y + (size - f.h) / 2) * t) / t, f.w, f.h);
+      ctx.imageSmoothingEnabled = prev;
+      return;
+    }
     const nv = native(n);
     let s2 = shown(n, size);
     if (fit && !o.own && Math.abs(s2 - size) > size * 0.2) s2 = size;
@@ -118,6 +170,7 @@ G.AssetOverrides = (() => {
   I.html = function (n, size = 20, cls = '') {
     const o = icons[n];
     if (!o) return oHtml.apply(this, arguments);
+    if (boxed(n)) return boxedHtml(n, size, cls);
     const nv = native(n), w = shown(n, size), h = w * nv.height / nv.width;
     const smooth = o.w > w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
     return `<img class="pix ${cls}" src="${o.url}" width="${w}" height="${h}" alt="" draggable="false"${smooth}>`;
@@ -152,5 +205,5 @@ G.AssetOverrides = (() => {
     loadIcons(i);
   });
 
-  return { loaded, rev: () => rev, icons: () => Object.keys(icons), ROOT };
+  return { loaded, rev: () => rev, icons: () => Object.keys(icons), codeDraw: (...a) => oDraw.apply(I, a), ROOT };
 })();

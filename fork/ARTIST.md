@@ -59,6 +59,8 @@ Do that, then press **Check again**.
 3. **Edit it.** Keep the **exact size** for sprite sheets: their frame grid is fixed, and the tool
    refuses a sheet of a different size. A code icon can be its size or a whole multiple: ×2, ×4 and
    so on. The game shows it at the same size, and a bigger one stays sharp on big screens.
+   A held item's icon (Leftovers, Choice Band...) can also be a size of its own, up to twice the
+   code icon's: the game fits it into the space the old icon took, so it doesn't come out bigger.
 4. **Upload it.** There are three ways:
    - Drop the image onto its file, or use **Upload new version…** on that file. Any name works:
      it's renamed to the right one. A JPG, WebP, GIF or BMP is turned into a PNG. A JPG has no
