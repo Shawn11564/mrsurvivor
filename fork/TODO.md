@@ -24,7 +24,7 @@ How to use it:
 - [x] 4. [lab][bug] D1: Lab's `poolFor` wrapper forwards `natural`; D10: Lab pools scored on `G.DEX_BY[dex]`, not the nature-modified copy (d31e433)
 - [x] 5. [lab][bug] D2: one ability resolver (resolver A): Lab's version of upstream's rolled/capsuled ability, never both (687ca1f)
 - [x] 6. [lab][bug] D3: evolution keeps nature and ability slot, re-resolves the ability (00d69c5)
-- [ ] 7. [lab][bug] D4: taught TMs join the Lab pool, pause list and Lab start picks (claimed: stream D)
+- [x] 7. [lab][bug] D4: taught TMs join the Lab pool, pause list and Lab start picks (b1637f3)
 - [ ] 8. [lab] Pool bloat: bans 3 → 5, TM cards weighted lower until two slots are filled (claimed: stream D)
 - [ ] 9. [lab][bug] D5: second starting move gets a Lab twin (`save.pstartLab2`) (claimed: stream D)
 

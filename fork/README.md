@@ -383,6 +383,11 @@ its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `nod
 painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
 
+`node fork/test-pool-bloat.cjs` (server) checks the pool-bloat fix after TMs (`js/fork/pool-bloat.js`, plan G7,
+everyone): Veto (Upgrades) has 5 levels instead of 3 (`G.Upgrades.BY.ban.max`; `js/core/db.js` keeps that many,
+a one-line hook), and while a Pokémon has fewer than 2 moves each TM-taught move enters a level-up hand's draw
+40 % of the time, so TM cards come about 0.45× as often until its own moves are in (normal and Lab runs).
+Note: prestige needs every upgrade maxed, so it now needs Veto 5 too.
 `node fork/test-death-cause.cjs` (server; co-op part with the Firebase emulator) checks what knocked
 you out (`js/fork/death-cause.js`): `Player.hurt` doesn't know who hits, so hooks just before each hit
 say it (`Enemy.strike` for a touch, `Enemy.shoot` marks its shots, `Enemy.hazard` its area attacks,

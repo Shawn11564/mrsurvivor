@@ -201,7 +201,7 @@ G.DB = (() => {
     if (s.pban && typeof s.pban === 'object') {
       for (const d of Object.keys(s.pban)) {
         const l = Array.isArray(s.pban[d]) ? s.pban[d] : [];
-        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, 3);
+        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, G.Upgrades ? G.Upgrades.BY.ban.max : 3);   // fork: 5 (js/fork/pool-bloat.js)
       }
     } else s.pban = {};
     if (G.Upgrades) for (const d of Object.keys(s.pupg || {})) {
