@@ -27,6 +27,11 @@
  *                    your HP. `frail` (Shell Smash): you take that much more while its boost lasts.
  *                    `curse` (Curse): every 10 s it casts above 40% HP it costs that share of your HP
  *                    and curses the nearest boss (or the toughest enemy near): it loses HP for 10 s.
+ *    decoy     B3.5  a fake target: enemies within `decoyR` of it chase it instead of the players
+ *                    (Follow Me and Rage Powder, shouts, leave one where you stand for `dur` s; Rage
+ *                    Powder's `powder` slows what's in it; Substitute's doll is one while it stands).
+ *                    Host-authoritative: the enemies' AI runs on the host, which also sees a guest's
+ *                    shout or doll as a ghost cast; every screen draws it. Bosses ignore decoys.
  *
  * Hooks (all chained, never replaced): G.Moves.instance/evoInfo/evolve, G.MoveText.tipNotes,
  * G.LevelUp.offer, G.RunStats.tag + Enemy.hurt (like kinds2.js: Combat tags every hit of yours
@@ -74,7 +79,10 @@ G.LabMech = (() => {
     'swords-dance': {
       evo: { t: 'Casts on its own from any slot and +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.',
              add: { stacks: 1 }, set: { passive: true, drum: 0.5 } },
-      evoNote: 'Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.' }
+      evoNote: 'Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.' },
+    // B3.5: Substitute's doll draws the enemies near it.
+    'substitute': { add: { decoy: true, decoyR: 180 },
+      note: 'Lab: enemies near the doll go for it instead of you while it stands (bosses do not fall for it).' }
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
@@ -281,6 +289,85 @@ G.LabMech = (() => {
     if (p._labCurseT > 0) p._labCurseT -= dt;
   }
 
+  // ---------------- B3.5 decoys ----------------
+  const authority = () => !G.Coop.active || G.Coop.isHost;
+  let decoys = [];
+  /** A decoy at (x, y) for `life` s: enemies within r chase it. */
+  function decoy(owner, ghost, m, x, y, life, r) {
+    const d = { owner, ghost, m, x, y, t: 0, life, r: r || m.decoyR || 200, powder: m.powder || 0, tick: 0 };
+    for (const o of decoys) if (o.owner === owner && o.m.id === m.id && !o.field) o.gone = true;
+    decoys.push(d);
+    G.FX.ring(x, y, 6, d.r * 0.5, col(m), 0.5, 3);
+    if (!ghost) G.FX.dmgText(x, y - 40, G.T(m.name, 'move') + '!', col(m), true);
+    return d;
+  }
+  /** The decoy enemy e goes for (the nearest within its reach), or null. */
+  function decoyFor(e) {
+    if (!decoys.length || boss(e) || e.legend || e.behavior === 'thief') return null;
+    let best = null, bd = Infinity;
+    for (const d of decoys) {
+      if (d.gone) continue;
+      const dd = G.U.dist2(e.x, e.y, d.x, d.y);
+      if (dd <= d.r * d.r && dd < bd) { bd = dd; best = d; }
+    }
+    return best;
+  }
+  /** Substitute's dolls (Combat's turret fields with `decoy`) are decoys while they stand. */
+  function dollDecoys() {
+    const live = new Set();
+    for (const f of C.fields) {
+      if (f.kind !== 'turret' || !f.m || !f.m.decoy || f.gone) continue;
+      live.add(f);
+      let d = decoys.find(o => o.field === f);
+      if (!d) { d = decoy(f.owner, f.ghost, f.m, f.x, f.y, 1e9, f.m.decoyR); d.field = f; }
+      d.x = f.x; d.y = f.y;
+    }
+    for (const d of decoys) if (d.field && !live.has(d.field)) d.gone = true;
+  }
+  function tickDecoys(dt) {
+    dollDecoys();
+    for (const d of decoys) {
+      d.t += dt;
+      if (d.powder && authority() && (d.tick -= dt) <= 0) {
+        d.tick = 0.4;
+        for (const e of G.EnemyMgr.queryCircle(d.x, d.y, d.r * 0.4)) if (!e.remote) e.applySlow(d.powder, 0.6);
+      }
+    }
+    if (decoys.length) decoys = decoys.filter(d => !d.gone && d.t < d.life && d.owner);
+  }
+  // Follow Me, Rage Powder: shouts (kinds2.js) that also leave a decoy where their user stands.
+  const shout = C.EXTRA.shout.run;
+  C.EXTRA.shout.run = function (pl, m, ghost) {
+    const r = shout.apply(this, arguments);
+    if (m.decoy && lab()) decoy(pl, ghost, m, pl.x, pl.y, m.dur || 4, m.decoyR);
+    return r;
+  };
+  // The enemies' AI (on the host, or solo): a decoy in reach is the target instead of the player.
+  const eupdate = E.update;
+  E.update = function (dt, pl) {
+    const d = pl && !this.dead && !(this.labConf > 0) && authority() && decoyFor(this);
+    if (!d) return eupdate.apply(this, arguments);
+    return eupdate.call(this, dt, { x: d.x, y: d.y, r: 10, level: pl.level, dead: false });
+  };
+  function drawDecoys(ctx, t) {
+    for (const d of decoys) {
+      if (!G.Camera.sees(d.x, d.y, d.r)) continue;
+      const c = col(d.m), k = (t * 1.5) % 1, a = d.field ? 1 : Math.min(1, (d.life - d.t) * 2, d.t * 6);
+      ctx.globalAlpha = 0.5 * (1 - k) * a; ctx.strokeStyle = c; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(d.x, d.y, d.r * 0.5 * k + 8, (d.r * 0.5 * k + 8) * 0.6, 0, 0, 6.2832); ctx.stroke();
+      if (d.field) continue;
+      // A beacon: a light column and a "!" over it.
+      ctx.globalAlpha = 0.35 * a; ctx.fillStyle = c;
+      ctx.fillRect(d.x - 3, d.y - 46, 6, 46);
+      ctx.globalAlpha = 0.9 * a; ctx.font = '800 14px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
+      ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 3; ctx.strokeText('!', d.x, d.y - 50); ctx.fillText('!', d.x, d.y - 50);
+      if (d.powder) {
+        ctx.globalAlpha = 0.18 * a;
+        ctx.beginPath(); ctx.ellipse(d.x, d.y, d.r * 0.4, d.r * 0.24, 0, 0, 6.2832); ctx.fill();
+      }
+    }
+  }
+
   // ---------------- B3.1 mark + detonate ----------------
   const marked = new Set();
   function stamp(e, pl, m, amount) {
@@ -401,6 +488,7 @@ G.LabMech = (() => {
     update.apply(this, arguments);
     tickMarks(dt);
     tickCurses(dt);
+    tickDecoys(dt);
     const pl = G.Game.player;
     if (pl) tickPlayer(pl, dt);
     if (G.Coop.active) for (const p of G.Coop.puppets()) tickPlayer(p, dt);
@@ -412,6 +500,7 @@ G.LabMech = (() => {
     ground.apply(this, arguments);
     ctx.save();
     for (const h of hz) if (G.Camera.sees(h.x, h.y, 60)) drawHz(ctx, h);
+    if (decoys.length) drawDecoys(ctx, now() / 1000);
     // Shell Smash: a cracked red ring under whoever is frail.
     for (const p of [G.Game.player].concat(G.Coop.active ? G.Coop.puppets() : [])) {
       if (!p || p.dead || !p._labFrail) continue;
@@ -425,6 +514,7 @@ G.LabMech = (() => {
   C.clearFields = function (owner) {
     clear.apply(this, arguments);
     hz = owner ? hz.filter(h => h.owner !== owner) : [];
+    decoys = owner ? decoys.filter(d => d.owner !== owner) : [];
     if (!owner) { for (const e of marked) e._labMark = null; marked.clear(); for (const e of cursed) e._labCurse = null; cursed.clear(); }
     else for (const e of marked) if (e._labMark && e._labMark.owner === owner) { e._labMark = null; marked.delete(e); }
   };
@@ -471,6 +561,9 @@ G.LabMech = (() => {
     convert,
     /** B3.4: Curse's start for pl (cost and target); → the cursed enemy or null. */
     curse,
+    /** B3.5: a decoy of pl's move m at (x, y) for life s (enemies within r chase it). */
+    decoy: (pl, m, x, y, life, r) => decoy(pl, false, m, x, y, life, r),
+    decoys: () => decoys, decoyFor,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };

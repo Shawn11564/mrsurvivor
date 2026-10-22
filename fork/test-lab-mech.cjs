@@ -18,6 +18,10 @@
 // tradeoff B3.4: Swords Dance evolves into Belly Drum (half your HP for every stack, from any slot);
 //          Shell Smash boosts three stats and you take ×1.35; Curse costs a quarter of your HP once
 //          per curse and a boss loses HP over time; nothing near, no cost.
+// decoy    B3.5: Follow Me and Rage Powder (in real pools) go off from another slot and leave a beacon:
+//          walkers go for it when you walk off, Rage Powder slows them, bosses don't fall for it;
+//          Substitute's doll draws the enemy near it. (Co-op: fork/test-lab-coop.cjs, the guest's
+//          Follow Me on the host.)
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -310,6 +314,52 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(r.ssBuffs.every(n => n > 0) && Math.abs(r.frailK - 1.35) < 0.05 && r.frailShown, `Shell Smash boosts Attack, Sp. Atk and Speed (${r.ssBuffs}) and you take ×${r.frailK} while it lasts`, r);
     check(Math.abs(r.curseHp - 0.75) < 0.03 && r.cursed && r.bossLost >= 0.8 && r.bossLost < 2.5, `Curse costs a quarter of your HP (${r.curseHp} left) and the boss loses ${r.bossLost}% of its HP in 1.6 s`, r);
     check(r.again && r.alone, 'no second cost while the curse lasts, and no cost with nothing to curse', r);
+  }
+
+  // ---------------- B3.5 decoys ----------------
+  if (want('decoy')) {
+    console.log('B3.5 decoys');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, M = G.LabMech, out = {};
+      const pools = [35, 36, 12, 637].map(d => G.Lab.poolFor(G.DEX_BY[d]));
+      out.inPools = pools.some(p => p.includes('follow-me')) && pools.some(p => p.includes('rage-powder'));
+      /** Walkers around you; the decoy move in slot 2 goes off on its own; then you walk 450 px away. */
+      const run = async (id, boss) => {
+        __only(['ember', id]);
+        pl.moves[0].t = 1e9;
+        const es = [0, 2.1, 4.2].map(a => __dummy(...__at(90, a), { spd: 70, boss }));
+        await __until(() => M.decoys().length > 0, 3000);
+        const d = M.decoys()[0];
+        const x0 = pl.x, y0 = pl.y;
+        pl.x += 450; G.World.collide(pl); pl.frozen = true;
+        await __wait(1500);
+        const res = { decoy: !!d, at: d ? Math.round(G.U.dist(d.x, d.y, x0, y0)) : -1,
+          toDecoy: es.map(e => Math.round(G.U.dist(e.x, e.y, x0, y0))), toYou: es.map(e => Math.round(G.U.dist(e.x, e.y, pl.x, pl.y))),
+          slow: es.map(e => e.slow) };
+        pl.frozen = false;
+        return res;
+      };
+      out.fm = await run('follow-me');
+      out.rp = await run('rage-powder');
+      out.boss = await run('follow-me', true);
+      // Substitute's doll pulls the enemies near it.
+      __only(['substitute']);
+      const sub = pl.moves[0];
+      out.subTip = G.MoveText.tipNotes(sub, pl).map(n => n[0]).join(' | ');
+      const w = __dummy(...__at(140), { spd: 70 }); pl.target = w;
+      await __fire(sub, 200);
+      const doll = M.decoys().find(d => d.field);
+      out.doll = !!doll;
+      if (doll) { const dx0 = G.U.dist(w.x, w.y, doll.x, doll.y); pl.x -= 400; G.World.collide(pl); pl.frozen = true; await __wait(2400); out.dollPull = [Math.round(dx0), Math.round(G.U.dist(w.x, w.y, doll.x, doll.y))]; pl.frozen = false; }
+      return out;
+    });
+    check(r.inPools, 'Follow Me and Rage Powder reach real Lab pools (Clefairy, Clefable, Butterfree, Volcarona)');
+    check(r.fm.decoy && r.fm.at < 20, `Follow Me goes off on its own from another slot and leaves a beacon where you stood (${r.fm.at} px)`, r.fm);
+    check(r.fm.toDecoy.every(d => d < 60) && r.fm.toYou.every(d => d > 300), `walkers go for the beacon (${r.fm.toDecoy} px from it), not for you (${r.fm.toYou} px)`, r.fm);
+    check(r.rp.decoy && r.rp.toDecoy.every(d => d < 60) && r.rp.slow.some(s => s >= 0.35), `Rage Powder's powder draws them and slows them (${r.rp.slow})`, r.rp);
+    check(r.boss.toYou.every((d, i) => d < 450 - 50), `bosses don't fall for it: they keep coming for you (${r.boss.toYou} px)`, r.boss);
+    check(/go for it instead of you/.test(r.subTip) && r.doll && r.dollPull && r.dollPull[1] < r.dollPull[0] && r.dollPull[1] < r.dollPull[0] - 60, `Substitute's doll draws the enemy near it (${r.dollPull} px)`, r);
   }
 
   // ---------------- the built game ----------------

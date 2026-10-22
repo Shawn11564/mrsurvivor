@@ -401,9 +401,10 @@ normal game's data never changes. What it does is said in English under the type
 | persistent hazards (B3.2) | Spikes, Toxic Spikes (`persist: 60`), String Shot and its evolution Sticky Web (`web`), Stealth Rock (Rock Slide's evolution, `rocks: 75`) | the mines don't burst: each stays `persist` s and hurts what steps on it (an enemy within 14 px, the step of `combat.js`'s mines) and what's around it, again each second it stays; Toxic Spikes poison; webs slow everything in them (Sticky Web 0.75) and hurt what walks in; each of Stealth Rock's rocks stays 75 s as a pointed stone. At most 10 spikes, 6 webs, 14 stones per move; a teammate's are drawn only |
 | status converters (B3.3) | Venoshock (Acid Spray's evolution, `venoshock: 0.5`), Smelling Salts and Wake-Up Slap (new, `salts: 3`; Makuhita, Hariyama, Poliwrath... learn them) | Venoshock: against a poisoned enemy × (1 + 0.5 per poison stack), the poison used up (its own hit poisons again). Salts: ×3 against a stunned or sleeping enemy, which snaps out of it. On a co-op guest the enemy's state comes from the host: poison counts as 2 stacks and nothing is used up or woken. (Hex's × on any status is upstream's.) |
 | trade-off boosters (B3.4) | Belly Drum (Swords Dance's evolution, kinds2.js's `drum: 0.5`), Shell Smash (new, `frail: 0.35`), Curse (new, Ghost, `curse: 0.25`) | Belly Drum casts from any slot; when your Attack boost has run out and you're above half HP it costs half your HP and fills every stack. Shell Smash builds Attack, Sp. Atk and Speed in big steps (+12/+12/+8% a step) and you take 35% more while it lasts (a cracked red ring). Curse builds Attack and Defense; every 10 s it casts above 40% HP it costs a quarter of your HP and curses the nearest boss within 600 px (else the toughest enemy within 300): 0.4% of a boss's max HP (5% of another's) every 0.5 s for 10 s, purple wisps over it. Nothing to curse, no cost |
+| decoys (B3.5) | Follow Me (new, Normal), Rage Powder (new, Bug; `powder: 0.4`), Substitute (`decoy`) | Follow Me and Rage Powder are shouts: from any slot, when 2+ enemies close in, they leave a beacon (a light column with "!") where you stand for `dur` (4) s; enemies within `decoyR` (220 / 200) of it chase it instead of you; Rage Powder also slows those in its powder. Substitute's doll is a decoy (180) while it stands. Bosses, legendaries and treasure thieves ignore decoys; a confused enemy stays confused. Co-op: the AI runs on the host, which sees a guest's shout or doll as a ghost cast and makes it a decoy there; every screen draws it |
 
 For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,
-`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `labify(s)`, `noteOf(m)`, `ID`.
+`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `decoy(pl, m, x, y, life, r)`, `decoys()`, `decoyFor(e)`, `labify(s)`, `noteOf(m)`, `ID`.
 
 `node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
 and that a normal run's moves don't change.
@@ -863,7 +864,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   (shiny ×1.1 and +1 reroll, radiant ×1.2 and +2) and on the pause screen.
 - `node fork/test-lab-coop.cjs` (server + Firebase emulator): host on / guest off gives a Lab run
   for both with the lobby line, each with their own ability; the guest's Swift is drawn and deals
-  damage on the host; the guest's sleep and confusion reach the host's enemies, its Rain Dance is
+  damage on the host; the guest's sleep and confusion reach the host's enemies, its Follow Me lures them (phase 10), its Rain Dance is
   rain around the guest on the host's screen (not the arena's weather); its Fly, evolution and Mega Evolution are seen on the host; no group leaderboard. Host
   off / guest on gives a normal run.
 - `node fork/test-builds.cjs [--only branches]` (server) and `node fork/test-builds-coop.cjs` (server +

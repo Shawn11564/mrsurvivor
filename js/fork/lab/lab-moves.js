@@ -545,6 +545,13 @@ G.LabMoves = [
     also: [{ stat: 'def', amount: 0.05 }],
     desc: 'Deals no damage: builds up ATTACK and DEFENSE while active. Every 10 s while it casts (above 40% HP) it costs a quarter of your HP to curse the nearest boss (or the toughest enemy near): it loses HP every moment for 10 s.',
     cd: 0.85, amount: 0.1, dur: 10, stacks: 3, evo: ['Spite', null] },
+  // ---- decoys (shout family: on their own from any slot when enemies close in) ----
+  { id: 'follow-me', name: 'Follow Me', type: 'normal', kind: 'shout', cat: null, decoy: true, decoyR: 220,
+    desc: 'When enemies close in, leave a beacon where you stand: for 4 s the enemies near it go for the beacon instead of you (bosses don\'t fall for it). Works from any slot.',
+    cd: 12, dur: 4, radius: 140, evo: ['Spotlight', null] },
+  { id: 'rage-powder', name: 'Rage Powder', type: 'bug', kind: 'shout', cat: null, decoy: true, decoyR: 200, powder: 0.4,
+    desc: 'When enemies close in, scatter irritating powder where you stand: for 4 s the enemies near it go for the powder instead of you, and the ones in it are slowed (bosses don\'t fall for it). Works from any slot.',
+    cd: 12, dur: 4, radius: 130, look: { proj: 'bubble', pal: 'bug' }, evo: ['Ally Switch', null] },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],

@@ -172,6 +172,26 @@ async function finish(all) {
     check((await Promise.all(ALL.map(p => p.evaluate(() => !G.Weather.current)))).every(Boolean), 'and it doesn\'t start the arena\'s weather for anyone');
     await learn(guest, 'fly');
     check(await settle(host, u => !!G.Coop.mate(u).pl._labLeap, guest.uid, 6000), 'the host sees the guest fly up (its ghost leaves the ground)');
+    // Phase 10 (js/fork/lab/mech.js): a guest's Follow Me is a decoy on the host, which runs the enemies' AI.
+    await learn(guest, 'follow-me');
+    await host.evaluate(([u, ids]) => {
+      const g = G.Coop.mate(u).pl;
+      ids.forEach((id, i) => { const e = G.EnemyMgr.get(id); if (e) { e.x = g.x + Math.cos(i * 2.1) * 70; e.y = g.y + Math.sin(i * 2.1) * 60; } });
+    }, [guest.uid, ids]);
+    check(await settle(host, u => G.LabMech.decoys().some(d => d.owner === G.Coop.mate(u).pl), guest.uid, 8000),
+      'the guest\'s Follow Me leaves a decoy on the host');
+    await guest.evaluate(() => { const pl = G.Game.player; pl.x += 420; G.World.collide(pl); pl.frozen = true; });
+    const lure = await host.evaluate(async ([u, ids]) => {
+      const d = G.LabMech.decoys().find(o => o.owner === G.Coop.mate(u).pl), es = ids.map(id => G.EnemyMgr.get(id)).filter(Boolean);
+      for (const e of es) { e.spd = 70; e.behavior = 'chase'; e.labConf = 0; }     // walkers (Confuse Ray's confusion is over)
+      await new Promise(r => setTimeout(r, 1500));
+      const g = G.Coop.mate(u).pl;
+      return { lured: es.filter(e => G.LabMech.decoyFor(e) === d).length, near: es.map(e => Math.round(G.U.dist(e.x, e.y, d.x, d.y))), toGuest: es.map(e => Math.round(G.U.dist(e.x, e.y, g.x, g.y))) };
+    }, [guest.uid, ids]);
+    await guest.evaluate(() => { G.Game.player.frozen = false; });
+    await host.evaluate(ids => ids.forEach(id => { const e = G.EnemyMgr.get(id); if (e) e.spd = 0; }), ids);
+    check(lure.lured === 3 && lure.near.every(d => d < 40) && lure.toGuest.every((d, i) => d > lure.near[i] + 60),
+      `the host's enemies go for the guest's decoy (${lure.near} px from it), not for the guest, who walked off (${lure.toGuest} px)`);
     await learn(guest, 'water-gun');
     // The guest evolves (growth.js): the host sees Wartortle, then Blastoise.
     await guest.evaluate(() => { const pl = G.Game.player; pl.level = 30; G.LabGrowth.evolveTo(pl, 8); });
