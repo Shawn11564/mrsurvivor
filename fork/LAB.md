@@ -628,6 +628,12 @@ else the normal pick if the Lab list has it, else the default. Before, a Lab run
 against the Lab list and silently gave the default (6 of Scorbunny's 14 picks), and the picker never showed
 Lab moves. Merged like `pstart` (the newer copy wins per Pokémon). `node fork/test-start-move.cjs` (server).
 
+The **second** starting move (Upgrades → Second starting move, with Repertorio) works the same way since
+2026-10-22 (plan D5): `save.pstartLab2` next to upstream's `pstart2` (`''` = random, so the normal pick doesn't
+come back), `G.startMove2Of` wrapped, a one-line hook in `start2Picker` (`js/ui/menu.js`), merged per Pokémon in
+`G.forkMerge`. Before, the picker with Lab on wrote upstream's `pstart2`, so a Lab-only pick (Pyro Ball) was
+silently dropped in normal runs. `node fork/test-start-move.cjs` part 5.
+
 ## Phase 11: builds (2026-10-22)
 
 Plan B2 and B4 (`fork/PLAN-2026-10-22.md`): choices that make a *build*, not just bigger numbers.

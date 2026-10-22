@@ -115,7 +115,7 @@ G.PlayerEdits = (() => {
   // ---------------- resets ----------------
 
   // Maps by Pokémon (dex -> something): what goes with the Pokémon in a Pokémon reset.
-  const BY_DEX = ['pupg', 'dfav', 'pused', 'pstart', 'pstartLab', 'pbind', 'pban', 'prest', 'ureset', 'radOff', 'shinyOff'];
+  const BY_DEX = ['pupg', 'dfav', 'pused', 'pstart', 'pstartLab', 'pstartLab2', 'pbind', 'pban', 'prest', 'ureset', 'radOff', 'shinyOff'];
   const atOf = e => (isObj(e) ? +e.at || 0 : +e || 0);
 
   function resetMons(s, at) {

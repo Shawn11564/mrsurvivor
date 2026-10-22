@@ -621,6 +621,7 @@ G.MenuUI = (() => {
   // save.pstart2[dex]; sin elegir (o "Al azar"), el segundo sale al azar como siempre.
   let start2Open = false;
   function start2Picker() {
+    if (G.LabStart && G.LabStart.on()) return G.LabStart.picker2(upgDex, renderUpgrades, banList);   // fork: con el Lab, el suyo (js/fork/lab/start-move.js)
     const s = G.DB.save, cur = G.startMove2Of(upgDex), first = G.startMoveOf(upgDex);
     const ids = G.startChoices(upgDex).filter(id => id !== first)
       .sort((a, b) => G.Moves.BY_ID[a].name.localeCompare(G.Moves.BY_ID[b].name, 'es'));
