@@ -1041,6 +1041,8 @@ G.Game = (() => {
     taint() { tampered = true; },
     toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; },
+    /** Fork: what co-op needs from the game, to turn a solo run into a group one (js/fork/drop-in.js). */
+    get coopApi() { return coopApi; },
     /** Caído en grupo: el compañero que miras ({ uid, name, color, pl }) o null. */
     get watching() { return watched(); }, watchNext, st
   };

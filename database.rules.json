@@ -14,7 +14,7 @@
         },
         "m": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || data.exists() || (root.child('rooms').child($room).child('open').val() === true))"
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || data.exists() || (root.child('rooms').child($room).child('open').val() === true) || auth.uid === 'TMD8t0i6jic7a1sg824ZP55TqOG3')"
           }
         },
         "q": {

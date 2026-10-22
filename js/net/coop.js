@@ -530,6 +530,8 @@ G.Coop = (() => {
     broadcast(ev) { emit(ev); },
     toHost(ev) { if (active && !host) { outEv.push(ev); flushClient(true); } },
     mate(u) { return mates.get(u); },
+    /** Fork: the teammates map, to join a run already going (js/fork/drop-in.js). */
+    get mateMap() { return mates; },
     get mates() { return [...mates.values()]; },
     get members() { return members; },
     get active() { return active; },

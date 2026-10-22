@@ -252,6 +252,38 @@ service cloud.firestore {
       allow read: if signedIn();
     }
 
+    // ---------- Fork (MrSurvivor): Player Manager (js/fork/player-manager.js) ----------
+    // The admin edits a player's cloud save. Every edit is one the game's merge keeps
+    // (js/fork/player-edits.js): coins on their own ledger line, deletions as tombstones,
+    // resets as epochs. The ban stays as it is (the moderation rule above changes it).
+    match /saves/{uid} {
+      allow update: if admin() && validSaveDoc() && saneSave(request.resource.data.save)
+        && request.resource.data.get('ban', false) == resource.data.get('ban', false);
+    }
+    // Clearing a reset player's public profile (favourites, title, records, medals).
+    match /profiles/{uid} {
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favs', 'title', 'best', 'medals', 'at'])
+        && request.resource.data.at == request.time;
+    }
+    // adm/live: { watch: until when (ms) players report their status, pokes: { uid: ms } (re-read
+    // your save), cmd: { uid: { k, at } } }. Everyone listens to it; only the admin writes.
+    match /adm/{doc} {
+      allow read: if signedIn();
+      allow write: if admin();
+    }
+    // Live status, written only while the admin watches (js/fork/presence.js).
+    match /apres/{uid} {
+      allow read: if admin();
+      allow create, update: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['at', 'n', 'st'])
+        && request.resource.data.at == request.time
+        && request.resource.data.n is string && request.resource.data.n.size() <= 24
+        && request.resource.data.st is map && request.resource.data.st.size() <= 24
+        && (resource == null || every(resource.data.at, 3));
+      allow delete: if signedIn() && (me() == uid || admin());
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

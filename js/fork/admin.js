@@ -13,6 +13,8 @@
  *   You           god mode, level up, heal, drop items on the ground,
  *                 the very rare card on the next level-up (js/fork/rare-cards.js).
  *   Save          coins, tickets and Pokémon (normal or shiny) on your account.
+ *   Players       the Player Manager (js/fork/player-manager.js): every player's save and live
+ *                 status, gifts, resets, and joining their lobby or run.
  *
  * Lasting effects (shape, size, controls, screen and whole run) last the chosen
  * time or, with "Until I turn it off" (secs 0), until you remove them: the button
@@ -429,6 +431,7 @@ G.Admin = (() => {
 #adm input[type=number]{width:62px}
 #adm .sub{color:#9db0c9;font-size:12px}
 #adm .off{opacity:.4;pointer-events:none}
+#adm #adm-players{display:block;width:100%;margin:2px 0 6px;padding:7px;font-size:14px;background:#3a1530;border-color:#ff8ad8;color:#ffc4ec}
 #adm-fx{position:fixed;inset:0;z-index:8999;display:none;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;font-family:Pixelify,"Segoe UI",sans-serif;text-align:center;text-shadow:3px 3px 0 #000}
 #adm-fx b{font-size:56px}#adm-fx i{font-style:normal;font-size:40px;color:#ffd23f}#adm-fx span{font-size:22px;margin-top:6px;color:#fff}
@@ -439,6 +442,7 @@ G.Admin = (() => {
 
   const HTML = `
 <h2>Admin <button data-do="close">✕</button></h2>
+<button data-do="players" id="adm-players">Player Manager</button>
 <datalist id="adm-dex"></datalist>
 <div class="row"><span class="sub">Pokémon</span><input id="adm-mon" list="adm-dex" placeholder="name or # (blank = random)" style="flex:1"></div>
 <div id="adm-run">
@@ -575,6 +579,7 @@ G.Admin = (() => {
     if (lasting(what)) lit[litKey(what, to)] = off ? null : { b: what, end: secs ? performance.now() + secs * 1000 : Infinity };
     switch (what) {
       case 'close': toggle(); return;
+      case 'players': G.PlayerManager.open(); return;
       case 'morph': case 'karp': send('morph', { to, secs, off, dex: what === 'karp' ? 129 : dex || G.U.pick(G.DEX.filter(p => G.SPRITE_META[p.dex])).dex }); break;
       case 'tiny': send('size', { to, secs, off, k: 0.4 }); break;
       case 'giant': send('size', { to, secs, off, k: 2.6 }); break;
@@ -652,6 +657,7 @@ G.Admin = (() => {
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', init); else init();
 
   return { steer, beforeDraw, drawScreen, isAdmin, ADMINS, repaint: paint,
+    close() { if (panel && panel.style.display !== 'none') toggle(); },
     /** For tests: until when each effect lasts here (Infinity = until removed). */
     ends: () => Object.assign({}, ctl, world) };
 })();

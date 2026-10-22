@@ -319,7 +319,8 @@ G.Social = (() => {
     return room;
   }
 
-  async function joinRoom(id) {
+  // Fork: started = join even though the run has begun (the admin only, database.rules.json; js/fork/drop-in.js).
+  async function joinRoom(id, started) {
     if (room && room.id === id) return { ok: true };
     if (room) await leaveRoom();
     rtOn();
@@ -329,7 +330,7 @@ G.Social = (() => {
       host = (await fb.rtdb.ref('rooms/' + id + '/host').get()).val();
     } catch (e) { /* sala borrada */ }
     if (!host) { rtOff(); return { ok: false, error: 'Esa sala ya no existe.' }; }
-    if (open !== true) { rtOff(); return { ok: false, error: 'La partida de esa sala ya ha empezado.' }; }
+    if (open !== true && !started) { rtOff(); return { ok: false, error: 'La partida de esa sala ya ha empezado.' }; }
     try { await fb.rtdb.ref('rooms/' + id + '/m/' + uid).set(memberInfo()); }
     catch (e) { rtOff(); return { ok: false, error: 'No se pudo entrar en la sala.' }; }
     const n = (await fb.rtdb.ref('rooms/' + id + '/m').get()).numChildren();

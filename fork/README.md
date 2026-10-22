@@ -36,6 +36,10 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `js/fork/over-fit.js` | the run's end screen fits the screen: wider with four tiles to a row on a wide window, zoomed down (to 0.7) if a long run still doesn't fit; phones keep upstream's scrolling layout (`fork/test-over-fit.cjs`) |
 | `js/fork/manual-fire.js` | **Auto-shoot** (Settings > Accessibility, under Manual aim, on by default): off, the active slot's attacks only go off while you hold the left mouse button on the map, Space or the right stick; stat boosts, orbiting moves and Lab's support moves still go off on their own from any slot (`fork/test-manual-fire.cjs`) |
 | `js/fork/trait-names.js`, `js/fork/en-fixes.js` | English for upstream texts its English dictionary never got (the personality traits, the end screen's shinies, save-dot tooltips, move levels...); `fork/test-english.cjs` checks that no Spanish is left in the game's texts and data |
+| `js/fork/player-manager.js` | the admin's **Player Manager** (admin menu > Player Manager; the admin's uid only, and `firestore.rules` checks it too): every player with a cloud save or a profile (read once when it opens, ↻ Refresh reads them again), search, filters (online, in a run, in a lobby), each player's profile, live status and save: give or take coins, tickets and gems; give any Pokémon, shiny or radiant (or all of them); manage each Pokémon they own (remove its shiny or radiant, delete it); three resets (Pokémon only; Pokémon, coins and tickets; full, which clears their public profile too); tick players for bulk gifts and resets. Anything that removes something asks first; resets ask you to type the name (bulk: `RESET n`) |
+| `js/fork/player-edits.js` | the edits the manager makes to a cloud save, made so the game's merge keeps them (the player's browser copy would otherwise bring things back): currencies on their own ledger line (`save.led.adm`), deletions as tombstones (`save.admDel`), resets as epochs (`save.admW`) a copy that missed them gets before merging. Hook: `G.forkMerge`, chained after `radiant.js`'s |
+| `js/fork/presence.js` | every signed-in player listens to one document, `adm/live` (1 read per page load). While the manager is open (`watch`), players write their status to `apres/{uid}` (screen, lobby, run: mode, time, level, Pokémon) on a change and every 45 s; nobody writes anything otherwise (upstream's always-on presence was a quarter of its Firestore writes). `pokes` tells an online player their save was edited: outside a run their game brings it in (`G.DB.pull`, one line in `js/core/db.js`) and says what came; a reset reloads the page once it's safe |
+| `js/fork/drop-in.js` | **Join** from the manager: into a player's lobby (as an invite would), or into their run, which co-op never allowed once started: the admin takes a seat in the closed room (`database.rules.json` lets only the admin's uid in; `joinRoom(id, true)` in `js/net/social.js`); a solo player's game first opens a closed room for them. The host's game turns a solo run into a group one if needed (`G.Game.coopApi`), adds the admin as a teammate next to them (`G.Coop.mateMap`), sends them every enemy and pickup already there and the run's time; other guests are told (`dropin`). Such a run isn't ranked |
 
 To change gameplay, editing upstream's source (`dev.html`, `js/**`) is fine. Just keep
 the edits small, because those lines can conflict when upstream changes them too.
@@ -455,6 +459,16 @@ emulator, or PUT the rules to it, after changing them).
 the speakers with the default volume, and fails if any sound effect peaks above -8 dBFS or
 the music or a run averages louder than -24 dBFS. It guards the defaults, the output gain
 and the final limiter in `js/core/audio.js`. Run it after changing any sound.
+
+`node fork/test-player-edits.cjs` (no server) checks the Player Manager's edits against the real `merge()`:
+gifts and takes aren't undone or counted twice, deleted Pokémon don't come back from the player's older copy
+(but one given back or caught again does), and each reset reaches the older copy while what came after it stays.
+`node fork/test-player-manager.cjs` (server + Firebase emulator; it loads the real rules into the emulator and signs
+the admin in with the owner's uid) checks the window end to end with up to five players: admins only (the rules
+refuse the rest), the list and live status, gifts reaching an online player at once, deleting with a
+confirmation, a reset that reloads the player into the personality test, and Join into a solo run, a lobby and a
+co-op run already going. The rules must be deployed for any of it to work live:
+`npx firebase-tools deploy --only firestore,database`.
 
 `node fork/test-cloud.cjs` (with the server running) is the live check of the Firebase
 project `mrsurvivor`. It signs up a throwaway account on the branded page, saves, reads

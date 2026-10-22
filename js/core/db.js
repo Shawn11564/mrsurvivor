@@ -507,7 +507,7 @@ G.DB = (() => {
     if (pushing || (G.Game && G.Game.state && G.Game.state !== 'ui')) { pullT = setTimeout(pullSoon, 20000); return; }
     lastPull = Date.now();
     const u = uid;
-    docRef().get().then(snap => {
+    return docRef().get().then(snap => {
       if (!snap.exists || !save || uid !== u) return;
       applyInPlace(merge(plain(fold(save)), migrate(snap.data().save)));
       write(K_CLOUD + uid, save);
@@ -926,6 +926,8 @@ G.DB = (() => {
   return {
     ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow, saveNow,
     owns, grant, ownsShiny, grantShiny, merge, adopt, setName, upgradesOf, isFav, setFav,
+    /** Fork: bring in the cloud copy now (an admin edit, js/fork/presence.js). A promise, or nothing if it has to wait. */
+    pull() { lastPull = 0; return pullSoon(); },
     onSync(fn) { listeners.add(fn); },
     onLeave(fn) { leaveHooks.push(fn); },
     /** Acceso de bajo nivel para los módulos de red (sólo en modo nube). */
