@@ -576,7 +576,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     __quiet(false);
     return { card: card && { type: card.type, tag: card.tag }, hands: seen, anim, ready: !!(sheet && sheet.ready), evo: ev && ev.name, evoReady: ev && ev.ready };
   });
-  check(!!vt.card && vt.card.type === 'evo' && vt.card.tag === "Signature · Electric · Physical", `Pikachu's level-up cards offer Volt Tackle as a gold "Signature" card (${JSON.stringify(vt.card)}, within ${vt.hands} hands)`);
+  check(!!vt.card && vt.card.type === 'evo' && vt.card.tag.replace(/<[^>]*>/g, '') === "Signature · Electric · Physical" && /class="pix lb-a"/.test(vt.card.tag), `Pikachu's level-up cards offer Volt Tackle as a gold "Signature" card, with its arrows (js/fork/lab/badges.js) (${JSON.stringify(vt.card)}, within ${vt.hands} hands)`);
   check(vt.anim === 'lab/QuickStrike' && vt.ready, `Volt Tackle plays Pikachu's own QuickStrike animation (${vt.anim}, sheet loaded: ${vt.ready})`);
   check(vt.evo === 'Volt Tackle ★' && vt.evoReady, `at its top level a signature evolves with no condition ("${vt.evo}")`);
   await endRun(); await toMenu();
