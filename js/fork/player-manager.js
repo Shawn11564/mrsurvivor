@@ -14,7 +14,7 @@
  * Every edit is a transaction on saves/{uid} made of edits the game's merge keeps
  * (js/fork/player-edits.js), then a poke so an online player sees it at once (presence.js).
  * Anything that removes something asks first; resets and bulk resets ask you to type to confirm.
- * Test: fork/test-player-manager.cjs.
+ * Test: fork/test-player-manager.cjs; names in English (Type: Null): fork/test-admin-names.cjs.
  */
 G.PlayerManager = (() => {
   const PE = () => G.PlayerEdits;
@@ -190,7 +190,8 @@ G.PlayerManager = (() => {
   }
   const PS = { playing: '', paused: 'paused', levelup: 'picking a level-up card', choice: 'picking an item', held: 'waiting for a teammate',
                over: 'on the run summary', dead: 'down', resuming: 'resuming' };
-  const monName = dex => (G.DEX_BY[dex] || {}).name || ('#' + dex);
+  // This window is translate="no": the dex's Spanish names (Código Cero) through the dictionary (Type: Null).
+  const monName = dex => G.DEX_BY[dex] ? G.T(G.DEX_BY[dex].name) : '#' + dex;
   function where(st) {
     if (!st) return '';
     if (st.s === 'login') return 'On the login screen';
@@ -392,7 +393,7 @@ G.PlayerManager = (() => {
       renderList();
       if (view === 'bulk') renderBulk();
     });
-    el.querySelector('#pm-dex').innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(p.name)} #${p.dex}">`).join('');
+    el.querySelector('#pm-dex').innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(G.T(p.name))} #${p.dex}">`).join('');
   }
 
   function open() {
@@ -672,12 +673,13 @@ G.PlayerManager = (() => {
     } catch (e) { toast('Could not read the save: ' + (e.code || e.message)); }
   }
 
-  /** "Pikachu #25", "25", "pikachu" -> 25; unknown -> 0. */
+  /** "Pikachu #25", "25", "pikachu", "Type: Null" or "Código Cero" -> its number; unknown -> 0. */
   function dexOf(v) {
     v = String(v || '').trim();
     const n = +(v.match(/#?(\d+)$/) || [])[1];
     if (n && G.DEX_BY[n]) return n;
-    const m = G.DEX.find(q => q.name.toLowerCase() === v.toLowerCase());
+    v = v.toLowerCase();
+    const m = G.DEX.find(q => G.T(q.name).toLowerCase() === v || q.name.toLowerCase() === v);
     return m ? m.dex : 0;
   }
   const canVariant = (dex, v) => v === 'normal' || (v === 'shiny' ? G.Sprites.hasShiny(dex) : !!(G.Radiant && G.Radiant.has(dex)));

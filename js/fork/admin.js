@@ -29,7 +29,7 @@
  * go on the leaderboard (G.Game.taint, on the host). Trolls that only annoy still do.
  * Hooks: Player.update (steer) and Player.hurt (god) in js/entities/player.js;
  * beforeDraw and drawScreen in js/game.js's render.
- * Test: fork/test-admin.cjs.
+ * Test: fork/test-admin.cjs; names in English (items, Type: Null): fork/test-admin-names.cjs.
  */
 G.Admin = (() => {
   // Admin accounts (Firebase Authentication > Users > User UID).
@@ -107,6 +107,9 @@ G.Admin = (() => {
     fxEl.style.display = 'flex';
     fxT = setTimeout(() => { fxEl.style.display = 'none'; if (then) then(); }, ms);
   }
+  // The panel is translate="no", so names from the game's data (written in Spanish: items, a few
+  // Pokémon such as Código Cero = Type: Null) go through the dictionary here.
+  const monName = p => G.T(p.name);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const jk = () => overlay('<b>jk 😜</b>', 'jk', 1600);
 
@@ -120,7 +123,7 @@ G.Admin = (() => {
     } else if (x.kind === 'legend') {
       const m = mon || G.U.pick(G.DEX.filter(p => p.leg));
       G.Audio.sfx('legend');
-      overlay('<i>★★★★★</i><b>LEGENDARY!</b><span>' + esc(m.name) + ' joined your team!</span>', 'legend', 3200, jk);
+      overlay('<i>★★★★★</i><b>LEGENDARY!</b><span>' + esc(monName(m)) + ' joined your team!</span>', 'legend', 3200, jk);
     } else if (x.kind === 'over') {
       G.Audio.sfx('gameover');
       overlay('<b>GAME OVER</b><span>Your run has ended.</span>', 'over', 2600, jk);
@@ -515,10 +518,10 @@ G.Admin = (() => {
     panel.addEventListener('click', e => { const b = e.target.closest('[data-do]'); if (b) act(b.dataset.do); });
     panel.addEventListener('change', render);    // another target: its lit buttons
     const dl = panel.querySelector('#adm-dex');
-    dl.innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(p.name)} #${p.dex}">`).join('');
+    dl.innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(monName(p))} #${p.dex}">`).join('');
     const kinds = [['heal', 'Heal'], ['magnet', 'Magnet'], ['bomb', 'Bomb'], ['xpBig', 'Big XP', 60], ['coin', 'Coins ×25', 25],
                    ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10'], ['item', 'Item: Mega Stone', 'megastone']]
-      .concat(G.Items.LIST.map(i => ['item', 'Item: ' + i.name, i.id]));
+      .concat(G.Items.LIST.map(i => ['item', 'Item: ' + G.T(i.name), i.id]));
     panel.querySelector('#adm-drop').innerHTML = kinds.map((k, i) => `<option value="${i}">${esc(k[1])}</option>`).join('');
     panel.dropKinds = kinds;
   }
@@ -557,13 +560,14 @@ G.Admin = (() => {
     }
   }
 
-  /** "Pikachu #25", "25", "pikachu" -> 25; empty -> 0; unknown -> null. */
+  /** "Pikachu #25", "25", "pikachu", "Type: Null" or "Código Cero" -> its number; empty -> 0; unknown -> null. */
   function dexOf(s) {
     s = String(s || '').trim();
     if (!s) return 0;
     const n = +(s.match(/#?(\d+)$/) || [])[1];
     if (n && G.DEX_BY[n]) return n;
-    const p = G.DEX.find(q => q.name.toLowerCase() === s.toLowerCase());
+    s = s.toLowerCase();
+    const p = G.DEX.find(q => monName(q).toLowerCase() === s || q.name.toLowerCase() === s);
     return p ? p.dex : null;
   }
 
@@ -616,7 +620,7 @@ G.Admin = (() => {
       case 'own': case 'ownshiny': {
         if (!dex) { G.UI.toast('Pick a Pokémon first'); return; }
         if (what === 'own') G.DB.grant(dex, 'gacha'); else G.DB.grantShiny(dex, 'gacha');
-        saved('Unlocked ' + G.DEX_BY[dex].name + (what === 'ownshiny' ? ' (shiny)' : ''));
+        saved('Unlocked ' + monName(G.DEX_BY[dex]) + (what === 'ownshiny' ? ' (shiny)' : ''));
         break;
       }
       case 'ownall': case 'shinyall': {

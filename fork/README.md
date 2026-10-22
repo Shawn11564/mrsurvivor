@@ -465,6 +465,11 @@ real project is touched, and the real security rules. It checks:
 
 `SHOTS=<folder>` saves screenshots.
 
+`node fork/test-admin-names.cjs` (server; the emulator for its last part) checks that the admin menu and the Player Manager
+name things in the player's language: both are `translate="no"`, so names from the game's data (Spanish) go
+through `G.T` there. No Spanish item or Pokémon name in the admin menu, "Item: Choice Scarf" drops the Choice Scarf,
+the Pokémon box takes "Type: Null" (and "Código Cero"), and the Player Manager shows a player's Type: Null as that.
+
 `node fork/test-admin.cjs` (same emulator and server) checks the admin menu (`js/fork/admin.js`)
 in a three-player party where the admin is a guest, so every action goes admin → host → everyone:
 - only the admin gets the ADMIN button (bottom left) and the `` ` `` hotkey; typing in the panel
