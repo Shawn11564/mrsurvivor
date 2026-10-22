@@ -13,6 +13,8 @@
 //      Gholdengo (1 in 20 of its ×10 tickets is a rainbow one instead).
 //   4. It stays: after a reload, and in the currency ledger; save.r25 is joined when two copies merge.
 //   5. The ticket count at the top of the menu shows the rainbow tickets too.
+//   6. The end of a run lists the rainbow tickets it gave with the ×1 and ×10 ones (gacha tickets),
+//      also when it gave no other ticket; a run with none of them has no tickets line.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOT = process.argv[3];
@@ -151,6 +153,32 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     });
     check(pill.with.text === '4 2 3' && pill.with.icon, 'the pill at the top shows ×1, ×10 and rainbow ×25 tickets (with its icon)', pill.with);
     check(pill.without === '4 2 0', 'and the rainbow count shows at 0 too', pill.without);
+
+    console.log('6. The end of a run lists its rainbow tickets');
+    // A run: n rainbow tickets (30:00 gives one, the rift legendary another), t1 ×1 tickets; then its end screen.
+    const endOf = (n, t1) => page.evaluate(async ([n, t1]) => {
+      const wait = (f, ms = 8000) => new Promise((res, rej) => { const t0 = Date.now(); const i = setInterval(() => { if (f()) { clearInterval(i); res(); } else if (Date.now() - t0 > ms) { clearInterval(i); rej(new Error('timeout')); } }, 50); });
+      G.UI.show('scr-menu', true);
+      G.Game.startRun();
+      await wait(() => G.Game.state === 'playing');
+      const pl = G.Game.player; pl.god = true; pl.t1 += t1;
+      if (n > 0) { G.Game.debugTime(1800); await wait(() => pl._rainbow30); }
+      if (n > 1) { const r = Math.random; Math.random = () => 0; try { G.Progress.event('rift', {}); } finally { Math.random = r; } }
+      G.Game.quit();
+      await wait(() => G.UI.isOpen('scr-over'));
+      await new Promise(r => setTimeout(r, 300));
+      const tile = [...document.querySelectorAll('#over-stats > div')].find(d => /tickets/i.test(d.querySelector('span') ? d.querySelector('span').textContent : ''));
+      const out = tile ? { text: tile.querySelector('b').textContent.replace(/\s+/g, ' ').trim(), r25: [...tile.querySelectorAll('img')].some(i => i.getAttribute('src') === G.Icons.url('ticket25')) } : null;
+      document.getElementById('btn-again').click();
+      await wait(() => G.Game.state === 'ui');
+      return out;
+    }, [n, t1]);
+    const e2 = await endOf(2, 0);
+    check(e2 && e2.r25 && /\+2 ×25/.test(e2.text), 'a run that gave 2 rainbow tickets and no other: its tickets line shows "+2 ×25" with the rainbow icon', e2);
+    const e1 = await endOf(1, 3);
+    check(e1 && e1.r25 && /\+3/.test(e1.text) && /\+1 ×25/.test(e1.text), 'with ×1 tickets too: both, "+3" and "+1 ×25"', e1);
+    const e0 = await endOf(0, 0);
+    check(e0 === null, 'a run with no tickets has no tickets line', e0);
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

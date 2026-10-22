@@ -12,7 +12,8 @@
  *     also to players who already had it; save.r25 is joined on merge (G.forkMerge).
  * In the gacha: the "Arcoíris ×25" (Rainbow ×25) button under the others, how many you have and a
  * line in the notes (hook: G.PityBar.draw, which the gacha calls on every paint). In the menu: the count in the
- * ticket pill at the top, after the ×1 and ×10. Test: fork/test-rainbow.cjs.
+ * ticket pill at the top, after the ×1 and ×10. At the end of a run: the ones it gave, in the gacha tickets
+ * line with the ×1 and ×10 (r.t25 in js/ui/run-ui.js showOver). Test: fork/test-rainbow.cjs.
  */
 G.Rainbow = (() => {
   const $ = id => document.getElementById(id);
@@ -35,6 +36,7 @@ G.Rainbow = (() => {
     G.DB.commit();
     const pl = G.Game.player;
     if (pl && G.Game.state !== 'ui') {
+      pl.t25 = (pl.t25 | 0) + n;                 // for the end of the run's tickets line
       G.FX.dmgText(pl.x, pl.y - pl.bodyH - 12, G.T('¡Ticket arcoíris ×25!'), '#ffd23f', true);
       G.FX.ring(pl.x, pl.y, 8, 70, '#ff9ed8', 0.6, 5);
     }
@@ -86,10 +88,19 @@ G.Rainbow = (() => {
         s.r25[id] = Date.now();
         s.tickets = s.tickets || { t1: 0, t10: 0 };
         s.tickets.t25 = (s.tickets.t25 | 0) + ACH[id];
+        const pl = G.Game && G.Game.player;
+        if (pl && G.Game.state !== 'ui') pl.t25 = (pl.t25 | 0) + ACH[id];
         setTimeout(() => G.UI.toast(G.T('¡Ticket arcoíris ×25!') + ' ' + G.T('Premio de un logro.'), 3800), 0);
       }
     }
     return commit.apply(this, arguments);
+  };
+  // The end of the run lists them with its other tickets.
+  const showOver = G.RunUI.showOver;
+  G.RunUI.showOver = function (r) {
+    const pl = G.Game.player;
+    if (r && pl && pl.t25) r.t25 = pl.t25;
+    return showOver.apply(this, arguments);
   };
   const merge = G.forkMerge;
   G.forkMerge = function (r, a, b) {

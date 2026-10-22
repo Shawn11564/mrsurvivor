@@ -26,7 +26,7 @@
     const far = 1.5 * Math.max(this.VIEW_W, this.w || 0, this.h || 0);
     if (Math.abs(tx - this.x) > far || Math.abs(ty - this.y) > far) { this.x = tx; this.y = ty; }
     // 3. Just gone down: watch the first teammate still standing (the camera follows them from the next frame).
-    const pl = G.Game.player, down = !!(pl && pl.dead && G.Coop.active && G.Game.state === 'playing');
+    const pl = G.Game && G.Game.player, down = !!(pl && pl.dead && G.Coop.active && G.Game.state === 'playing');
     if (down && !wasDown && !G.Game.watching) G.Game.cycleWatch(1);
     wasDown = down;
     return follow.call(this, tx, ty, dt);
