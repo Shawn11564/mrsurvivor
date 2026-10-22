@@ -65,7 +65,7 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   check(await page.isVisible('#menu-radiant'), 'the menu has a Radiant Ritual button');
   await page.click('#menu-radiant');
   await page.waitForSelector('#scr-radiant', { state: 'visible' });
-  check(await page.$$eval('#rad-pool .rad-prize', e => e.length) === 3, 'the pool shows the 3 radiants');
+  check(await page.$$eval('#rad-feat canvas', e => e.length) === 3 && await page.$$eval('#rad-rates [data-tier]', e => e.length) > 0, 'the banner shows the 3 radiants and the odds table its rarities');
   check(await page.$$eval('#rad-grid .cell', e => e.length) === 16, 'all 16 shinies to choose from');
   check(await page.isDisabled('#rad-go'), 'Sacrifice is off with none chosen');
   const ten = [7, 10, 13, 16, 19, 21, 23, 27, 29, 150];
@@ -239,7 +239,7 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   await empty.page.click('#menu-radiant');
   await empty.page.waitForSelector('#scr-radiant', { state: 'visible' });
   await pickCells(empty.page, [7, 10, 13, 16, 19, 21, 23, 27, 29, 32]);
-  check((await empty.page.textContent('#rad-pool')).includes('No radiant forms'), 'says there are none to summon');
+  check((await empty.page.textContent('#rad-owned')).includes('No radiant forms'), 'says there are none to summon');
   check(await empty.page.isDisabled('#rad-go'), 'and Sacrifice stays off');
   check(!empty.errs.length, 'no page errors', empty.errs);
 
@@ -256,7 +256,7 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   await built.waitForSelector('#scr-radiant', { state: 'visible' });
   const n = require('fs').readFileSync(require('path').join(__dirname, '..', 'js', 'fork', 'radiant-list.js'), 'utf8').match(/G\.RADIANTS = (\{.*\});/);
   const real = Object.keys(JSON.parse(n[1])).length;
-  check(real ? (await built.$$eval('#rad-pool .rad-prize', e => e.length)) === real : (await built.textContent('#rad-pool')).includes('No radiant forms'),
+  check(real ? (await built.$$eval('#rad-feat canvas', e => e.length)) === Math.min(3, real) : (await built.textContent('#rad-owned')).includes('No radiant forms'),
     `the ritual opens with the real pool (${real} radiants)`);
   await built.click('#rad-back');
   check(await built.isVisible('#scr-menu'), 'Back returns to the menu');

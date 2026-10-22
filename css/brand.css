@@ -61,9 +61,16 @@ p.fork-credit { font-size: 0.9em; }
 .seg button.rad.on { background: rgba(255,179,71,.24); color: #ffe2b8; }
 .cell .rad-badge { position: absolute; left: 5px; top: 60px; line-height: 0; filter: drop-shadow(0 1px 0 #0c111b); }
 #menu-radiant .mi-ico img { filter: drop-shadow(0 0 4px rgba(255,179,71,.6)); }
-.rad-pool { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
-.rad-prize { line-height: 0; border-radius: 8px; background: rgba(255,179,71,.08); border: 1px solid rgba(255,179,71,.3); }
-.rad-prize.got { opacity: .55; }
+/* The Radiant Ritual's banner (js/fork/radiant.js): the gacha's, in the radiants' orange, so the dark
+ * silhouettes of the radiants you don't have yet stand out. */
+.rad-split { margin-bottom: 10px; }
+.rad-banner { background:
+    radial-gradient(circle at 80% 25%, rgba(255,243,196,.5), transparent 45%),
+    radial-gradient(circle at 12% 85%, rgba(255,110,60,.35), transparent 50%),
+    linear-gradient(135deg, #7a3510, #c96a1d 55%, #ffb347); border-color: rgba(255,226,184,.55); }
+.rad-banner h3 { color: #fff3c4; text-shadow: 3px 3px 0 #5a2200; }
+.rad-banner p { color: #fff6e6; }
+.rad-banner .sub { color: #ffe2b8; }
 .rad-bar { gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 .rad-bar input[type=search] { font: inherit; font-size: 14px; padding: 4px 8px; color: inherit; background: rgba(0,0,0,.3);
   border: 1px solid rgba(244,248,255,.2); border-radius: 6px; min-width: 0; flex: 1 1 140px; }

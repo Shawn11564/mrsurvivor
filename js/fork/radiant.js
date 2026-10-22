@@ -4,7 +4,7 @@
  * Mega's in m{dex}/r/), made with the kit (radiant-kit/index.html). Which ones exist is set by
  * G.RADIANTS (js/fork/radiant-list.js, written by fork/radiants.cjs during the build), plus the ones
  * in js/fork/radiants.json (refresh: what's published with fork/radiant-admin.cjs without redoing the
- * build). Each has its rarity (1-5): its weight in the ritual (WEIGHT).
+ * build). Each has its rarity (1-5): its tier in the ritual's odds (SHARE).
  *
  *   Sprites   each radiant is registered in G.SPRITE_META under the key '{dex}/r' (and 'm{dex}/r'),
  *             with the normal form's geometry: G.Sprites loads it from {dex}/r/{Anim}.png without
@@ -12,7 +12,10 @@
  *   Save      save.radiant: dex -> { at, from } (the ones you have); save.radOff: dex -> 1 if
  *             you'd rather not use it (like save.shinyOff: if you have it, it's used by default).
  *   Ritual    you sacrifice 10 shinies (you pick them) and ONE comes out at random from ALL the
- *             radiants that exist, more or less likely by its rarity. The sacrificed ones lose their shiny (the normal Pokémon
+ *             radiants that exist, by tier like the gacha: each rarity with radiants gets its share
+ *             (SHARE; an empty one's goes to the rest) split evenly among them. The screen doesn't list them:
+ *             a banner shows 3 at random (picked when it opens) as silhouettes, or the real one if you have
+ *             it, and a table the odds of each rarity. The sacrificed ones lose their shiny (the normal Pokémon
  *             stays); save.sac: dex -> date of the sacrifice. If you get one you already had, DUP_COINS.
  *             Warns before sacrificing a shiny legendary (can be turned off: G.Settings
  *             'radWarn', per device) and asks you to confirm.
@@ -72,16 +75,28 @@ G.Radiant = (() => {
     } catch (e) { return false; }                      // no network or no file: the build's ones
   }
 
-  // Each radiant's rarity (1-5; set by fork/radiant-admin.cjs, else the Pokémon's): its weight in the ritual.
-  const WEIGHT = { 1: 40, 2: 25, 3: 15, 4: 7, 5: 3 };
-  const tier = dex => (LIST[dex] && LIST[dex].rarity) || (G.DEX_BY[dex] && G.DEX_BY[dex].rarity) || 1;
-  const weight = dex => WEIGHT[tier(dex)] || WEIGHT[1];
+  // Each radiant's rarity (1-5; set by fork/radiant-admin.cjs, else the Pokémon's): its tier in the ritual.
+  // The odds go by tier (22-10-2026; before, each radiant weighed its rarity's number, so 2 legendaries
+  // among 3 radiants came out 46 % of the time): each tier with radiants gets its SHARE (an empty tier's
+  // goes to the others, in proportion) and its radiants split it evenly. fork/radiant-admin.cjs reads SHARE.
+  const SHARE = { 1: 40, 2: 30, 3: 18, 4: 9, 5: 3 };
+  const tier = dex => { const r = (LIST[dex] && LIST[dex].rarity) || (G.DEX_BY[dex] && G.DEX_BY[dex].rarity) || 1; return SHARE[r] ? r : 1; };
+  /** { rarity: { pct, n } }: the odds (%) of each rarity that has radiants in `all`, and how many it has. */
+  function tiers(all = pool()) {
+    const n = {};
+    for (const d of all) n[tier(d)] = (n[tier(d)] || 0) + 1;
+    const sum = Object.keys(n).reduce((s, t) => s + SHARE[t], 0), out = {};
+    for (const t in n) out[t] = { pct: 100 * SHARE[t] / sum, n: n[t] };
+    return out;
+  }
   /** Chance (0-1) that the ritual gives dex, among those in pool. */
-  const chance = (dex, all = pool()) => all.includes(+dex) ? weight(dex) / all.reduce((s, d) => s + weight(d), 0) : 0;
+  const chance = (dex, all = pool()) => { if (!all.includes(+dex)) return 0; const t = tiers(all)[tier(dex)]; return t.pct / 100 / t.n; };
   function draw(all) {
-    let r = Math.random() * all.reduce((s, d) => s + weight(d), 0);
-    for (const d of all) if ((r -= weight(d)) < 0) return d;
-    return all[all.length - 1];
+    const ts = tiers(all), ks = Object.keys(ts);
+    let r = Math.random() * 100, t = ks[ks.length - 1];
+    for (const k of ks) if ((r -= ts[k].pct) < 0) { t = k; break; }
+    const inTier = all.filter(d => String(tier(d)) === t);
+    return inTier[Math.floor(Math.random() * inTier.length)];
   }
 
   /** G.Admin.repaint: p's sprite key (base = its Pokémon or its Mega) if it's radiant. */
@@ -139,7 +154,7 @@ G.Radiant = (() => {
     s.sac = s.sac || {};
     for (const d of dexes) { delete s.shiny[d]; s.sac[d] = now; }
     if (dexes.includes(s.partner)) s.partnerShiny = false;
-    const dex = draw(all);                           // by its rarity (WEIGHT)
+    const dex = draw(all);                           // by its rarity's share (SHARE)
     s.radiant = s.radiant || {};
     const dup = !!s.radiant[dex];
     if (dup) s.coins += DUP_COINS;
@@ -293,9 +308,16 @@ G.Radiant = (() => {
     sec.innerHTML = `
   <div class="box wide rad-box">
     <div class="row between"><h2>${icon(22)} Radiant Ritual</h2><button class="btn small ghost" id="rad-back" type="button">Back</button></div>
-    <p class="sub" style="margin:2px 0 8px">Sacrifice <b>${NEED} shiny Pokémon</b> to summon <b>one radiant</b>, at random from every radiant
-      in the game. The sacrificed Pokémon lose their shiny form for good (you keep the normal ones).</p>
-    <div class="rad-pool" id="rad-pool"></div>
+    <div class="split rad-split">
+      <div class="banner rad-banner" id="rad-banner">
+        <h3>Radiant Summon</h3>
+        <p style="margin:4px 0 6px" translate="no">Sacrifice <b>${NEED} shiny Pokémon</b> to summon <b>one radiant</b>, at random from every radiant
+          in the game. The sacrificed Pokémon lose their shiny form for good (you keep the normal ones).</p>
+        <p class="sub" id="rad-owned" style="margin:0"></p>
+        <div class="feat" id="rad-feat"></div>
+      </div>
+      <div class="panel rates" id="rad-rates"></div>
+    </div>
     <div class="row rad-bar">
       <b id="rad-count"></b>
       <button class="btn small ghost" id="rad-auto" type="button">Fill with the commonest</button>
@@ -324,6 +346,7 @@ G.Radiant = (() => {
     build();
     chosen = new Set([...chosen].filter(d => G.DB.ownsShiny(d)));
     confirming = false;
+    featured = [];                                   // 3 new ones each time it opens
     G.UI.show(SCR);
     render();
     refresh().then(ch => { if (ch && G.UI.isOpen(SCR)) render(); });
@@ -347,18 +370,46 @@ G.Radiant = (() => {
     render();
   }
 
+  // The banner: 3 radiants at random (picked when the screen opens), dark silhouettes, or the real
+  // radiant if you have it. Redrawn only when that changes (render runs on every click).
+  let featured = [], featKey = '';
+  function feat(all) {
+    featured = featured.filter(d => all.includes(d));
+    if (featured.length < Math.min(3, all.length)) {
+      const rest = all.filter(d => !featured.includes(d));
+      for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+      featured = featured.concat(rest).slice(0, 3);
+    }
+    const box = $('rad-feat'), key = featured.map(d => d + (owns(d) ? '+' : '')).join();
+    if (key === featKey && box.children.length === featured.length) return;
+    featKey = key;
+    box.innerHTML = '';
+    for (const d of featured) {
+      const cv = G.UI.spriteCanvas(d, 170, 190, owns(d) ? { lively: true, scale: 2, dir: 1, radiant: true } : { scale: 2, dir: 1, radiant: true, silhouette: true });
+      cv.dataset.dex = d;
+      cv.dataset.own = owns(d) ? '1' : '';
+      cv.title = owns(d) ? `Radiant ${G.DEX_BY[d].name}: yours` : 'A radiant waiting to be summoned';
+      box.appendChild(cv);
+    }
+  }
+  // The odds of each rarity, like the gacha's table (how many radiants each has after the %).
+  const pct = v => +v.toFixed(1) + '%';
+  function rates(all) {
+    const ts = tiers(all);
+    $('rad-rates').innerHTML = '<h3>Odds</h3>' + (all.length ? [5, 4, 3, 2, 1].filter(t => ts[t]).map(t => `
+      <div data-tier="${t}"><span style="color:${G.Gacha.RARITY_COLOR[t]}">${G.UI.stars(t, 10)} ${G.Gacha.RARITY_NAME[t]}</span>
+      <span>${pct(ts[t].pct)} · ${ts[t].n}</span></div>`).join('') : '<p class="sub">Nothing to summon yet.</p>') +
+      `<p class="note">· Each rarity's odds are shared evenly by its radiants (how many after the %).<br>
+       · A rarity with no radiants yet doesn't count: its share goes to the others.<br>
+       · A radiant you already have gives ${DUP_COINS} coins instead.</p>`;
+  }
+
   function render() {
     const all = pool(), mine = shinies();
-    $('rad-pool').innerHTML = all.length
-      ? `<span class="sub">${all.length} radiant${all.length === 1 ? '' : 's'} to win:</span>`
-      : '<span class="sub">No radiant forms have been added to the game yet, so there is nothing to summon.</span>';
-    for (const d of all) {
-      const w = document.createElement('span');
-      w.className = 'rad-prize' + (owns(d) ? ' got' : '');
-      w.title = `${G.DEX_BY[d].name}: ${(chance(d, all) * 100).toFixed(1)}% chance` + (owns(d) ? ' (you have it)' : '');
-      w.appendChild(G.UI.spriteCanvas(d, 56, 52, { scale: 1, radiant: true }));
-      $('rad-pool').appendChild(w);
-    }
+    $('rad-owned').textContent = all.length ? `You have ${all.filter(owns).length} of the ${all.length} radiant${all.length === 1 ? '' : 's'}`
+      : 'No radiant forms have been added to the game yet, so there is nothing to summon.';
+    feat(all);
+    rates(all);
     $('rad-count').textContent = `${chosen.size} / ${NEED} chosen` + (mine.length < NEED ? ` · you have ${mine.length} shin${mine.length === 1 ? 'y' : 'ies'}` : '');
     $('rad-warn').checked = warnOn();
     $('rad-auto').disabled = chosen.size >= NEED;
@@ -467,5 +518,5 @@ G.Radiant = (() => {
     gacha.after(b);
   });
 
-  return { NEED, DUP_COINS, WEIGHT, icon, key, has, owns, wants, set, pool, tier, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
+  return { NEED, DUP_COINS, SHARE, icon, key, has, owns, wants, set, pool, tier, tiers, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
 })();

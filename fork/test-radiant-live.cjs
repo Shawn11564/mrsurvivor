@@ -52,13 +52,13 @@ async function open(browser, live) {
 
     console.log('1. Read on load');
     await page.waitForFunction(() => G.Radiant.has(150) && G.Radiant.has(1), null, { timeout: 10000 }).catch(() => {});
-    const s = await page.evaluate(() => ({ pool: G.Radiant.pool(), t: [G.Radiant.tier(1), G.Radiant.tier(150)], c: [G.Radiant.chance(1), G.Radiant.chance(150)], W: G.Radiant.WEIGHT }));
+    const s = await page.evaluate(() => ({ pool: G.Radiant.pool(), t: [G.Radiant.tier(1), G.Radiant.tier(150)], c: [G.Radiant.chance(1), G.Radiant.chance(150)], W: G.Radiant.SHARE }));
     check(s.pool.join() === '1,150', 'both radiants from radiants.json are in the pool (the built list is empty)', s.pool);
     check(s.t.join() === '1,5', 'with their rarities: Common and Legendary', s.t);
     const want150 = s.W[5] / (s.W[1] + s.W[5]);
-    check(Math.abs(s.c[1] - want150) < 1e-9 && Math.abs(s.c[0] + s.c[1] - 1) < 1e-9, `odds by weight: Mewtwo ${(want150 * 100).toFixed(1)}%`, s.c);
+    check(Math.abs(s.c[1] - want150) < 1e-9 && Math.abs(s.c[0] + s.c[1] - 1) < 1e-9, `odds by rarity share (one radiant each): Mewtwo ${(want150 * 100).toFixed(1)}%`, s.c);
 
-    console.log('2. The roll follows the weights');
+    console.log('2. The roll follows the shares');
     const roll = r => page.evaluate(([r, ten]) => { const o = Math.random; Math.random = () => r; try { return G.Radiant.sacrifice(ten).dex; } finally { Math.random = o; } },
       [r, r > 0.5 ? [7, 10, 13, 16, 19, 21, 23, 27, 29, 32] : [35, 37, 39, 41, 43, 46, 48, 50, 52, 4]]);
     check(await roll(0.999) === 150, 'a roll in the top ' + (want150 * 100).toFixed(1) + '% gives the Legendary');
@@ -68,10 +68,10 @@ async function open(browser, live) {
     live.json = Object.assign({}, live.json, { 4: { rarity: 3 } });
     await page.evaluate(() => { G.DB.grantShiny(60, 't'); G.Radiant.open(); });
     await page.waitForSelector('#scr-radiant', { state: 'visible' });
-    check(await page.waitForFunction(() => document.querySelectorAll('#rad-pool .rad-prize').length === 3, null, { timeout: 8000 }).then(() => true, () => false),
-      'opening the ritual reads radiants.json again: 3 prizes, no reload');
-    const titles = await page.$$eval('#rad-pool .rad-prize', e => e.map(x => x.title));
-    check(titles.length === 3 && titles.every(t => /\d+\.\d% chance/.test(t)), 'each prize shows its chance', titles);
+    check(await page.waitForFunction(() => document.querySelectorAll('#rad-feat canvas').length === 3, null, { timeout: 8000 }).then(() => true, () => false),
+      'opening the ritual reads radiants.json again: 3 on the banner, no reload');
+    const rows = await page.$$eval('#rad-rates [data-tier]', e => e.map(x => x.textContent.replace(/\s+/g, ' ').trim()));
+    check(rows.length === 3 && rows.every(t => /[\d.]+% · 1$/.test(t)), 'the odds table has its 3 rarities, one radiant each', rows);
     await page.click('#rad-back');
 
     console.log('4. A run with the radiant');
