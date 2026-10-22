@@ -26,7 +26,7 @@ How to use it:
 - [x] 6. [lab][bug] D3: evolution keeps nature and ability slot, re-resolves the ability (00d69c5)
 - [x] 7. [lab][bug] D4: taught TMs join the Lab pool, pause list and Lab start picks (b1637f3)
 - [x] 8. [lab] Pool bloat: bans 3 → 5, TM cards weighted lower until two slots are filled (adc25bd)
-- [ ] 9. [lab][bug] D5: second starting move gets a Lab twin (`save.pstartLab2`) (claimed: stream D)
+- [x] 9. [lab][bug] D5: second starting move gets a Lab twin (`save.pstartLab2`) (6496928)
 
 ### Close range (stream A)
 - [x] 10. [lab] A1.1: spin, dash and recoil get the 25 % close-range cut (3e77ed1)

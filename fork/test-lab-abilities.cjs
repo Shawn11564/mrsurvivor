@@ -20,7 +20,7 @@
 //      Blaze still, the shiny's stat rolls survive; the ability slot is kept (hidden Solar Power stays) and
 //      re-resolved: Munchlax's Pickup (Lab's +20 % coins) becomes Snorlax's Immunity and the coins go back,
 //      Venonat's Compound Eyes (upstream's +6 % crits) becomes Venomoth's Shield Dust and the crits go back.
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
 let failures = 0;
@@ -233,6 +233,47 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(evo.munch.k0 === 1.2 && /LAB · Immunity/.test(evo.munch.hud), "Pickup's +20 % coins are taken back, and the tag says Immunity", evo.munch);
     check(evo.veno.id0 === 'compound-eyes' && evo.veno.dex === 49 && evo.veno.abilId === 'shield-dust' && evo.veno.drop === 0.06,
       "Venonat's Compound Eyes (+6 % crits) goes when it becomes Venomoth (Shield Dust)", evo.veno);
+
+    console.log('9. The ability shown in every run (plan D6)');
+    const shown = await page.evaluate(async () => {
+      const tag = () => { const h = document.getElementById('abil-hud'); return h && !h.classList.contains('hidden') ? h.textContent : null; };
+      const pause = () => { G.Game.togglePause(); const b = document.querySelector('#pause-sum .abil-pause'), l = document.querySelector('#pause-sum .lab-pause:not(.abil-pause)');
+        const r = { abil: b ? b.textContent.replace(/\s+/g, ' ').trim() : null, lab: !!l }; G.UI.hide('scr-pause'); G.Game.togglePause(); return r; };
+      const out = {};
+      let pl = await __run(4, 0, false);                 // a normal run: upstream's Blaze
+      await __wait(600);
+      out.normal = { tag: tag(), pause: pause() };
+      __end();
+      await __wait(600);
+      out.menu = tag();
+      pl = await __run(4, 0, true);                      // a Lab run: Lab's tag and block, not this one
+      await __wait(600);
+      out.lab = { tag: tag(), pause: pause(), labTag: document.getElementById('lab-hud').textContent };
+      __end();
+      return out;
+    });
+    check(shown.normal.tag === 'Ability · Blaze', 'a normal run shows "Ability · Blaze" at the top', shown);
+    check(!!shown.normal.pause.abil && /^Ability: Blaze \+35 %/.test(shown.normal.pause.abil.replace('+35%', '+35 %')) && !shown.normal.pause.lab,
+      'its pause menu says the ability and upstream\'s effect (+35 %)', shown.normal.pause);
+    check(shown.menu === null, 'nothing in the menu', shown.menu);
+    check(shown.lab.tag === null && !shown.lab.pause.abil && shown.lab.pause.lab && /LAB · Blaze/.test(shown.lab.labTag), 'a Lab run keeps only Lab\'s tag and block', shown.lab);
+
+    // The built page (G is sealed there: only the UI, as a player): a normal run shows the tag and the pause line.
+    const built = await (await browser.newContext({ viewport: { width: 1200, height: 750 } })).newPage();
+    await built.addInitScript(() => { try { localStorage.setItem('ps.savenote.1', '1'); localStorage.setItem('ps.ranknote.1', '1'); localStorage.setItem('ps.lang', 'en'); } catch (e) { /* nothing */ } });
+    built.on('pageerror', e => errors.push('built: ' + String(e)));
+    await built.goto(BASE + '/index.html', { waitUntil: 'load' });
+    await pastStart(built, '#btn-guest');
+    await built.click('#btn-guest');
+    await pickStarter(built);
+    await built.click('#scr-menu [data-go="play"]');
+    const btag = await built.waitForFunction(() => { const h = document.getElementById('abil-hud'); return h && !h.classList.contains('hidden') && h.textContent; }, null, { timeout: 30000 })
+      .then(h => h.jsonValue(), () => null);
+    await built.keyboard.press('Escape');
+    await built.waitForSelector('#pause-sum .abil-pause', { timeout: 5000 }).catch(() => {});
+    const bpause = await built.evaluate(() => { const b = document.querySelector('#pause-sum .abil-pause'); return b ? b.textContent.replace(/\s+/g, ' ').trim() : null; });
+    if (process.env.SHOTS) await built.screenshot({ path: require('path').join(process.env.SHOTS, 'ability-pause.png') });
+    check(/^Ability · \S/.test(btag || '') && /^Ability: \S/.test(bpause || ''), 'the built game (index.html): a normal run shows its ability at the top and in the pause menu', { btag, bpause });
 
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }

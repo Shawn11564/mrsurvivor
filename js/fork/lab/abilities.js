@@ -338,10 +338,11 @@ G.LabAbilities = (() => {
     return describe(pl.abilId, pl.mon);
   }
 
-  /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = Lab's version runs). */
-  function describe(id, mon) {
+  /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = Lab's version runs).
+   *  upstream: upstream's text even when Lab has its own (a normal run, js/fork/ability-show.js). */
+  function describe(id, mon, upstream) {
     if (!id) return null;
-    if (DEF[id]) return { id, name: DEF[id].name, desc: DEF[id].desc, on: true, lab: true };
+    if (DEF[id] && !upstream) return { id, name: DEF[id].name, desc: DEF[id].desc, on: true, lab: true };
     const fx = G.AbilityFX.of(id, mon);
     return { id, name: G.Mons.abilityName(id) || D.abilName[id] || id, desc: [fx.d, fx.d2].filter(Boolean).map(t => G.T(t)).join(' '), on: true, lab: false };
   }

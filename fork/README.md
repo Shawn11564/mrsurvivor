@@ -384,6 +384,9 @@ painted chip and border, also after a reroll. Each card's effect is repeated the
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
 A card may carry its own cap (`c.capMax`: Lab's past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
 
+The run's ability is shown in every run (`js/fork/ability-show.js`, plan D6): upstream picks one per run but
+never showed it; a normal run now has "Ability · Blaze" at the top and "Ability: Blaze" with upstream's effect in
+the pause menu (Lab runs keep Lab's tag and block). `node fork/test-lab-abilities.cjs` part 9, the built page too.
 `node fork/test-pool-bloat.cjs` (server) checks the pool-bloat fix after TMs (`js/fork/pool-bloat.js`, plan G7,
 everyone): Veto (Upgrades) has 5 levels instead of 3 (`G.Upgrades.BY.ban.max`; `js/core/db.js` keeps that many,
 a one-line hook), and while a Pokémon has fewer than 2 moves each TM-taught move enters a level-up hand's draw
