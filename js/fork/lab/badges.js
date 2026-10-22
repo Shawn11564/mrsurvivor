@@ -9,7 +9,7 @@
  *   - physical/special: green at 95 % or more of your damage (G.Stats.fit), yellow from 65 %,
  *     red below; an attack booster (Swords Dance, Nasty Plot), green if it's on your
  *     good side and yellow if not. Speed, defence and healing: nothing (they help everyone the same).
- * Where: level-up cards (only new-move ones), the move bar's tooltip box
+ * Where: level-up cards (new-move ones, signatures included), the move bar's tooltip box
  * (one-line hook in hud.js drawTip) and the type-chart arrows over enemies
  * (one-line hook in enemy.js: enemyMark). All at half their size (the 18×18 PNG,
  * at 9): left of the enemy's health bar, or centred above it if it has none yet.
@@ -65,13 +65,15 @@ G.LabBadges = (() => {
     const s = size(n), smooth = s.c.width > s.w * (devicePixelRatio || 1) ? ' style="image-rendering:auto"' : '';
     return `<img class="pix lb-a" src="${G.Icons.url(n)}" width="${s.w}" height="${s.h}" alt="" draggable="false"${smooth}>`;
   };
+  // A signature's card is gold ('evo', key still 'new:', js/fork/lab/lab.js): its chip is "Signature · " + the same.
   function decorate(c, mon) {
-    if (c.type !== 'new' || !c.key) return;
+    if (!c.key || !c.key.startsWith('new:') || (c.type !== 'new' && c.type !== 'evo')) return;
     const d = G.Moves.BY_ID[c.key.slice(4)];
     const mk = marks(mon, d);
-    if (!mk.type && !mk.cat) return;
+    if (!d || (!mk.type && !mk.cat)) return;
     const word = G.T(d.cat ? G.Stats.NAME[d.cat] : 'Mejora');
-    c.tag = G.U.TYPE_NAME[d.type] + img(mk.type) + `<span translate="no"> · ${word}</span>` + img(mk.cat);
+    const tag = G.U.TYPE_NAME[d.type] + img(mk.type) + `<span translate="no"> · ${word}</span>` + img(mk.cat);
+    c.tag = c.type === 'evo' ? `<span translate="no">Signature · ${G.T(G.U.TYPE_NAME[d.type])}</span>` + img(mk.type) + `<span translate="no"> · ${word}</span>` + img(mk.cat) : tag;
   }
 
   const offer = G.LevelUp.offer;

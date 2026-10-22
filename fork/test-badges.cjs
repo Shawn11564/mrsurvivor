@@ -121,6 +121,23 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       `chip text stays "${want && want.chip}", each arrow after its word`, card && card.html.slice(0, 160));
     check(card && card.size.length && card.size.every(x => x === '9x9'), 'at half size: 9×9', card && card.size);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'badges-cards.png') });
+    // A signature card (gold, "Signature · Fire · Physical"): Scorbunny's Pyro Ball is its type and its side, so both green.
+    // (lab.js makes signature cards 'evo' before badges.js sees the hand: they used to get no arrows.)
+    await start(813, true);
+    const sig = await page.evaluate(async () => {
+      const p = G.Game.player;
+      for (let i = 0; i < 200; i++) {
+        G.Game.state = 'levelup';
+        G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {});
+        if (/Pyro Ball/.test(document.getElementById('cards').textContent)) break;
+      }
+      await new Promise(r => setTimeout(r, 50));
+      const c = [...document.querySelectorAll('#cards .card')].find(x => /Pyro Ball/.test(x.querySelector('.nm').textContent));
+      const chip = c && c.querySelector('.tag-chip');
+      return chip && { chip: chip.textContent.replace(/\s+/g, ' ').trim(), a: [...chip.querySelectorAll('.lb-a')].map(i => i.getAttribute('src')) };
+    });
+    check(sig && /^Signature · Fire/.test(sig.chip) && JSON.stringify(sig.a.map(u => urls[u])) === '["lb-g","lb-g"]',
+      'Scorbunny\'s signature Pyro Ball card: "Signature · Fire ▲ · Physical ▲", both green', sig && { chip: sig.chip, a: sig.a.map(u => urls[u]) });
     await start(4, false);
     c = await cards();
     check(c.cards.every(x => !x.a.length), 'Lab off: no arrows');
