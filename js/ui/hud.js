@@ -91,6 +91,7 @@ G.HUD = (() => {
       const txt = LBL[k] + ' ×' + b.n;
       const tw = ctx.measureText(txt).width + 12;
       roundRect(ctx, bx, by, tw, 15, 7);
+      if (G.EffectTips) G.EffectTips.chip('buff', k, bx, by, tw, 15);          // fork: hover → what it does
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fill();
       ctx.fillStyle = COL[k];
       ctx.fillText(txt, bx + 6, by + 11);
@@ -115,6 +116,7 @@ G.HUD = (() => {
       const tw = ctx.measureText(txt).width + 40;
       const x0 = w - tw - 16 - sa.right - (touch ? 56 : 0), y0 = 14 + sa.top;
       roundRect(ctx, x0, y0, tw, 26, 9);
+      if (G.EffectTips) G.EffectTips.chip('weather', wx.kind, x0, y0, tw, 26);  // fork: hover → what it does
       ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fill();
       G.Icons.draw(ctx, wx.icon, x0 + 6, y0 + 3, 20);
       ctx.fillStyle = wx.color;
@@ -162,6 +164,7 @@ G.HUD = (() => {
       ctx.textAlign = 'left';
       const tw = ctx.measureText(txt).width + 12;
       roundRect(ctx, bx, by, tw, 15, 7);
+      if (G.EffectTips) G.EffectTips.chip('power', pw.def.id, bx, by, tw, 15);  // fork: hover → what it does
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fill();
       ctx.fillStyle = pw.def.color;
       ctx.fillText(txt, bx + 6, by + 11);
