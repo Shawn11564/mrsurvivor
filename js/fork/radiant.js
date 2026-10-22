@@ -363,6 +363,20 @@ G.Radiant = (() => {
   }
 
   const order = (a, b) => G.DEX_BY[a].rarity - G.DEX_BY[b].rarity || a - b;
+  /** Shinies "Fill with the commonest" may take: not legendaries, not your partner; commonest first. */
+  const spare = () => shinies().filter(d => !isLegend(d) && d !== save().partner).sort(order);
+  /** "Open Another" after a reveal (js/fork/open-another.js): can the next 10 spare ones be sacrificed? */
+  const canAgain = () => spare().length >= NEED && pool().length > 0;
+  /** Closes this reveal as Continue does and sacrifices the next 10 spare ones. */
+  function again() {
+    if (!canAgain()) return false;
+    const ok = $('pull-close');
+    if (ok.onclick) ok.onclick();
+    chosen = new Set(spare().slice(0, NEED));
+    confirming = false;
+    roll();
+    return true;
+  }
   function auto() {
     const free = shinies().filter(d => !chosen.has(d) && !isLegend(d) && d !== save().partner).sort(order);
     while (chosen.size < NEED && free.length) chosen.add(free.shift());
@@ -478,6 +492,7 @@ G.Radiant = (() => {
   async function reveal(res) {
     const fx = $('pull-fx'), out = $('pull-results'), ok = $('pull-close'), skipBtn = $('pull-skip');
     const r = tier(res.dex), gachaClose = ok.onclick;
+    fx.dataset.from = 'ritual';                       // for "Open Another" (js/fork/open-another.js)
     out.innerHTML = '';
     ok.classList.add('hidden');
     $('slot-wrap').style.display = '';
@@ -518,5 +533,6 @@ G.Radiant = (() => {
     gacha.after(b);
   });
 
-  return { NEED, DUP_COINS, SHARE, icon, key, has, owns, wants, set, pool, tier, tiers, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual };
+  return { NEED, DUP_COINS, SHARE, icon, key, has, owns, wants, set, pool, tier, tiers, chance, refresh, sacrifice, look, menu, cell, detail, open: openRitual,
+    canAgain, again };
 })();
