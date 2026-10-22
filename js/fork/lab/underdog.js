@@ -128,7 +128,7 @@ G.LabUnderdog = (() => {
 .ud-row .ud-you { grid-column: 1 / -1; color: #ffd23f; font-size: 14px; }
 .ud-row .ud-you b { color: #ffd23f; }
 .ud-mine { margin: 4px 0 0; }
-.ud-play { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #ffd23f; letter-spacing: .2px; }
+.ud-play { display: block; grid-column: 2; margin-top: 3px; font-size: 11px; font-weight: 700; color: #ffd23f; letter-spacing: .2px; }
 .ud-play.hidden { display: none; }
 .ud-play .ud-tag { font-size: 9px; vertical-align: 1px; margin-right: 3px; }
 .ud-opt { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }`;
