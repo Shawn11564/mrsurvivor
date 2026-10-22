@@ -384,6 +384,12 @@ painted chip and border, also after a reroll. Each card's effect is repeated the
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
 A card may carry its own cap (`c.capMax`: Lab's past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
 
+`node fork/test-kecleon.cjs` (server) drives Kecleon's shop through the real UI (upstream has no shop test; plan
+D11): buys a Mint, an Ability Capsule and a TM, uses them on the collection card (nature, Snorlax's ability, Teach
+TM), and a run started with Play has the nature and the TM; with Lab on, the 9th Lab TM (`js/fork/lab/lab-tms.js`,
+see `fork/LAB.md`) is bought, taught, works in a Lab run and not in a normal one. Today's TMs change daily; the
+checks don't depend on which.
+
 The run's ability is shown in every run (`js/fork/ability-show.js`, plan D6): upstream picks one per run but
 never showed it; a normal run now has "Ability · Blaze" at the top and "Ability: Blaze" with upstream's effect in
 the pause menu (Lab runs keep Lab's tag and block). `node fork/test-lab-abilities.cjs` part 9, the built page too.

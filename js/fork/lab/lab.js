@@ -170,8 +170,9 @@ G.Lab = (() => {
   }
   const poolFor = G.Moves.poolFor;
   // `natural` (no TMs) goes through: G.Mons.natural asks for it ("does it know this without a TM?").
+  // Outside a Lab run, a Lab move taught by a Lab TM (js/fork/lab/lab-tms.js) stays out: Lab TMs are Lab-only (plan G5).
   G.Moves.poolFor = (mon, natural) => active() ? labList(mon, natural)
-    : poolFor(mon, natural).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
+    : poolFor(mon, natural).filter(id => !G.Moves.BY_ID[id].lab || G.Moves.BY_ID[id].promote).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
 
   // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
   // hand, in 1 hand out of 3 it takes the place of the last new-move card.

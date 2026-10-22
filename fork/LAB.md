@@ -787,6 +787,17 @@ travels in the cast's level hundreds (next to branches' tens), so a teammate's S
 on your screen too. Not measured with survival-lab: bonds come from legendaries in the rift, which the bot
 never fights. Check: `node fork/test-builds.cjs --only recipes` and `test-builds-coop.cjs`.
 
+## Lab TMs at Kecleon's (2026-10-22, plan D7)
+
+With the Lab setting on, Kecleon's shop has a 9th daily TM (`js/fork/lab/lab-tms.js`): one of the 52 Lab moves that
+species learn by TM in the games and upstream doesn't sell (Revenge, Protect, Reflect, Surf, Fly...; built from
+`G.LabData.learn`'s TM group, signatures left out), the same for everyone each day (`G.Shop.today`), priced with
+upstream's formula (300 + 6 × its power in the games, status moves 400). It's taught from the collection card like
+any TM (`G.TM_OF` lists it with Lab on, unless the species' Lab list already has it), and it stays **Lab-only** (G5):
+it joins the Lab list (D4) and `lab.js` keeps Lab moves out of a normal run's list. Its shop row is tagged LAB
+with "Lab TM: the move works in Lab runs only." `shop.js` buy() checks its own list, so `G.Shop.buy` is wrapped
+for today's Lab TM (same steps). `node fork/test-kecleon.cjs` part 4.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since

@@ -76,7 +76,7 @@ How to use it:
 - [x] 40. [lab] C1.5: per-Pokémon contracts (5e16f22)
 
 ### Kecleon (stream D)
-- [ ] 41. [ui] D6: the ability shown in every run (claimed: stream D)
+- [x] 41. [ui] D6: the ability shown in every run (594605a)
 - [ ] 42. [lab] D7: Kecleon sells Lab TMs with Lab on (9th daily slot); taught Lab moves stay Lab-only (claimed: stream D)
 - [ ] 43. [infra] D11: `fork/test-kecleon.cjs` (buy mint/capsule/TM in the real UI, teach, run with it) (claimed: stream D)
 
