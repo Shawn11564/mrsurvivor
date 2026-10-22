@@ -77,8 +77,8 @@ How to use it:
 
 ### Kecleon (stream D)
 - [x] 41. [ui] D6: the ability shown in every run (594605a)
-- [ ] 42. [lab] D7: Kecleon sells Lab TMs with Lab on (9th daily slot); taught Lab moves stay Lab-only (claimed: stream D)
-- [ ] 43. [infra] D11: `fork/test-kecleon.cjs` (buy mint/capsule/TM in the real UI, teach, run with it) (claimed: stream D)
+- [x] 42. [lab] D7: Kecleon sells Lab TMs with Lab on (9th daily slot); taught Lab moves stay Lab-only (961d802)
+- [x] 43. [infra] D11: `fork/test-kecleon.cjs` (buy mint/capsule/TM in the real UI, teach, run with it) (961d802)
 
 ## Later (phases 4-5, not started)
 
