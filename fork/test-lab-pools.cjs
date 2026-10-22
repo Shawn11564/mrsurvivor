@@ -26,8 +26,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const page = await ctx.newPage();
       page.on('pageerror', e => errors.push(String(e)));
       await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
-      await pastStart(page, '#btn-guest');
-      await page.$eval('#btn-guest', e => e.click());
+      await pastStart(page, '#btn-guest, #scr-menu');     // a guest save from an earlier page comes back (guest-save.js)
+      if (await page.$eval('#btn-guest', e => e.getClientRects().length > 0).catch(() => false)) await page.$eval('#btn-guest', e => e.click());
       await page.waitForFunction(() => G.DB.save && G.MenuUI && G.Lab, null, { timeout: 30000 });
       return page;
     };
@@ -75,6 +75,52 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       return { nature: pl.mon.nature, inRun, picker: G.Lab.poolFor(G.DEX_BY[dex]).sort().join(',') };
     });
     check(run.nature === 'modest' && run.inRun === run.picker, 'a Lab run with a Modest Charmander lists what the picker lists', run);
+    await page.close();
+
+    console.log('3. Taught TMs in Lab runs (plan D4)');
+    page = await open();
+    const tm = await page.evaluate(async () => {
+      const wait = (f, ms = 15000) => new Promise(res => { const t0 = Date.now(); const i = setInterval(() => { if (f() || Date.now() - t0 > ms) { clearInterval(i); res(f()); } }, 30); });
+      const dex = 4, s = G.DB.save, out = {};
+      s.owned[dex] = { at: Date.now() }; s.partner = dex; s.starter = dex; s.pupg = { [dex]: { start: 1 } };
+      // A TM Charmander can learn that its Lab list doesn't have (and that isn't a booster, so it can start with it).
+      const id = out.id = G.TM_OF(dex).find(id => G.Moves.BY_ID[id] && G.Moves.BY_ID[id].kind !== 'buff' && !G.Lab.poolFor(G.DEX_BY[dex], true).includes(id));
+      s.ptm = { [dex]: [id] }; G.DB.commit();
+      G.Settings.set('lab', true);
+      G.UI.hideAll(); G.Flow.goMenu();
+      out.picker = G.startChoices(dex).includes(id);                     // the Lab start picks (menus, Lab on)
+      G.Game.startRun();
+      await wait(() => G.Game.state === 'playing' && G.Game.player);
+      const pl = G.Game.player;
+      out.lab = G.Lab.active;
+      out.pool = G.Moves.poolFor(pl.mon).includes(id);
+      let seen = 0;
+      for (let i = 0; i < 400; i++) if (G.LevelUp.offer(pl).some(c => c.key === 'new:' + id)) seen++;
+      out.offered = seen;
+      G.Game.togglePause();
+      const span = document.querySelector(`#pause-sum .lab-pool [data-move="${id}"]`);
+      out.pause = span ? span.title : null;
+      G.UI.hide('scr-pause'); G.Game.togglePause();
+      // Evolving into Charmeleon: still there (it was taught to Charmander).
+      pl.level = 99;
+      const c = G.LevelUp.offer(pl).find(c => c.key === 'grow:5');
+      if (c) c.apply(pl);
+      out.evolved = pl.dex === 5 && G.Moves.poolFor(pl.mon).includes(id);
+      G.Game.quit();
+      // Starting a Lab run with it (Upgrades → Starting move, the Lab pick).
+      s.pstartLab = { [dex]: id }; G.DB.commit();
+      G.UI.hideAll(); G.Flow.goMenu(); G.Game.startRun();
+      await wait(() => G.Game.state === 'playing' && G.Game.player);
+      out.first = G.Game.player.moves[0].id;
+      G.Game.quit();
+      G.Settings.set('lab', false);
+      return out;
+    });
+    check(!!tm.id && tm.lab && tm.pool, "a taught TM is in the Lab run's list", tm);
+    check(tm.offered > 0, `the level-up cards offer it (${tm.offered} hands of 400)`, tm);
+    check(!!tm.pause && /\(TM\)/.test(tm.pause), 'the pause menu lists it, marked TM', tm);
+    check(tm.evolved, 'it stays in the list after evolving into Charmeleon', tm);
+    check(tm.picker && tm.first === tm.id, 'the Lab start picks have it, and a Lab run starts with it', tm);
     await page.close();
 
     check(!errors.length, 'no page errors', errors);

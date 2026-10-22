@@ -155,9 +155,22 @@ G.Lab = (() => {
     return poolCache[mon.dex].slice();
   }
 
+  /**
+   * The Lab list plus the TMs it was taught at Kecleon's (G.Mons.taught), like upstream's poolFor does for
+   * normal runs (plan D4: they never showed in Lab runs). In a run, after a Lab evolution, the TMs taught
+   * to the Pokémon it started as count too. `natural`: without the TMs.
+   */
+  let startDex = 0;                     // the species the current Lab run started as
+  function labList(mon, natural) {
+    const ids = labPool(mon);
+    if (natural || !G.Mons || !mon || !mon.dex) return ids;
+    const from = active() && startDex && startDex !== mon.dex ? [mon.dex, startDex] : [mon.dex];
+    for (const d of from) for (const id of G.Mons.taught(d)) if (!ids.includes(id)) ids.push(id);
+    return ids;
+  }
   const poolFor = G.Moves.poolFor;
   // `natural` (no TMs) goes through: G.Mons.natural asks for it ("does it know this without a TM?").
-  G.Moves.poolFor = (mon, natural) => active() ? labPool(mon)
+  G.Moves.poolFor = (mon, natural) => active() ? labList(mon, natural)
     : poolFor(mon, natural).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
 
   // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
@@ -200,8 +213,10 @@ G.Lab = (() => {
     const startRun = G.Game.startRun;
     G.Game.startRun = function (coop = null) {
       begin(coop);
+      startDex = 0;
       const r = startRun.apply(this, arguments);
       const pl = G.Game.player;
+      startDex = pl ? pl.dex : 0;
       if (run && pl) {
         G.Game.taint();                                 // doesn't go on the leaderboard
         const sv = G.DB.save;
@@ -316,9 +331,10 @@ G.Lab = (() => {
   function pauseBlock() {
     const pl = G.Game.player;
     if (!pl) return '';
+    const own = labPool(pl.mon);
     const icons = G.Moves.poolFor(pl.mon).map(id => {
       const d = G.Moves.BY_ID[id];
-      return `<span class="${d.sig ? 'lab-sig' : ''}" title="${esc(G.T(d.name, 'move') + (d.sig ? ' (signature)' : ''))}">${G.Icons.html('move:' + id, 18)}</span>`;
+      return `<span class="${d.sig ? 'lab-sig' : ''}" data-move="${id}" title="${esc(G.T(d.name, 'move') + (d.sig ? ' (signature)' : !own.includes(id) ? ' (TM)' : ''))}">${G.Icons.html('move:' + id, 18)}</span>`;
     }).join('');
     // More lines from the other Lab files (evolution, candies, shiny...).
     const more = pauseExtra.map(f => f(pl)).filter(Boolean).map(t => `<div class="lab-more"><small>${t}</small></div>`).join('');
@@ -370,7 +386,7 @@ G.Lab = (() => {
 
   return {
     VERSION, begin, learnOf, settingsRow, SIG, esc,
-    poolFor: labPool,
+    poolFor: labList,
     /** Another line for the Lab block in the pause menu: f(pl) → HTML or ''. */
     pauseLine(f) { pauseExtra.push(f); },
     /** The ability the HUD and the pause menu show (it can change on evolving). */

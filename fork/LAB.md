@@ -129,6 +129,11 @@ for the session (550 of 966 species differed between an Adamant and a Modest fir
 passes upstream's `natural` flag on, so `G.Mons.natural` (Kecleon's "already knows it") leaves taught TMs out.
 `node fork/test-lab-pools.cjs` (server).
 
+**Taught TMs (2026-10-22, plan D4).** TMs taught at Kecleon's (`G.Mons.taught`, `save.ptm`) join the Lab list
+as they join the normal one (`labList` in `lab.js`, also `G.Lab.poolFor`): level-up cards, the pause menu
+(marked TM), the Lab start picks. After a Lab evolution, the TMs taught to the species the run started as
+still count. `node fork/test-lab-pools.cjs` part 3.
+
 ## Phase 3: abilities
 
 Until 2026-10-22 (see "One ability per run" below), each species got the first of its abilities (slot order, hidden last) that is implemented. If
@@ -680,6 +685,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   Evolving: the nature, one Blaze, the shiny's rolls, the hidden slot kept, Pickup and Compound Eyes taken off.
 - `node fork/test-lab-pools.cjs` (server): `natural` reaches upstream's poolFor through Lab's wrapper; every
   species' Lab list is the same with an Adamant or a Modest nature.
+  A taught TM is in a Lab run's list, cards, pause menu, after evolving, and in the Lab start picks.
 - `node fork/test-underdog.cjs` (server): the ladder (ranges, the highlighted rarity, Back/Escape,
   Start run, Random Pokémon, Lab off, the setting off, once per Pokémon), the Play button's tag,
   the gold share of the XP bar and its label, and no gold or label for a Pokémon with no bonus.
