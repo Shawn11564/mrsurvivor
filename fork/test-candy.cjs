@@ -11,6 +11,9 @@
 //   3. Charizard shows Charmander's points (one line).
 //   4. In a Lab run: Attack ×1.03 a point to physical moves only, Sp. Atk to special ones, HP +3 %,
 //      Defense +2 % damage cut, Speed +2 %; nothing without points.
+//   5. The collection (js/fork/lab/candy-name.js): next to the name, the candies its line has left to
+//      spend (Charmander and Charizard the same, after spending some), 0 with Lab on and none earned,
+//      nothing with Lab off and none earned, and still there with Lab off if it has some.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOT = process.argv[3];
@@ -91,6 +94,26 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const r = { phys: +(some.phys / none.phys).toFixed(3), spec: +(some.spec / none.spec).toFixed(3), hp: +(some.hp / none.hp).toFixed(3), def: +(some.def - none.def).toFixed(3), spd: +(some.spd / none.spd).toFixed(3) };
     check(r.phys === 1.09 && r.spec === 1.03 && r.hp >= 1.05 && r.hp <= 1.07 && r.def === 0.02 && r.spd === 1.04,
       'Attack 3 / Sp. Atk 1 / HP 2 / Defense 1 / Speed 2: physical ×1.09, special ×1.03, HP +6 %, damage cut +2 %, speed ×1.04', r);
+
+    console.log('5. Candies by the name in the collection');
+    // dex's page in the collection: the candy count by its name, or null.
+    const chip = dex => page.evaluate(async dex => {
+      G.MenuUI.openDex();
+      await new Promise(r => setTimeout(r, 50));
+      const cell = [...document.querySelectorAll('#dex-grid .cell')].find(c => (c.querySelector('.no') || {}).textContent.startsWith(String(dex).padStart(3, '0')));
+      cell.click();
+      await new Promise(r => setTimeout(r, 50));
+      const h = document.querySelector('#dex-detail h3'), c = h && h.querySelector('.cand-name');
+      return c ? { text: c.textContent.trim(), title: c.title, name: h.firstChild.textContent.trim() } : null;
+    }, dex);
+    await page.evaluate(() => { const s = G.DB.save; G.LabGrowth.reset(4); s.lab.candy = { 4: 20 }; G.LabGrowth.spend(4, 'atk'); G.LabGrowth.spend(4, 'atk'); G.Settings.set('lab', true); });
+    const c4 = await chip(4), c6 = await chip(6), c1 = await chip(1);
+    check(c4 && c4.text === '🍬 17' && c4.name === 'Charmander' && /17 candies left/.test(c4.title), 'Charmander: "🍬 17" by its name (20 earned, 3 spent), with a tooltip', c4);
+    check(c6 && c6.text === '🍬 17', 'Charizard, same line: the same 17', c6);
+    check(c1 && c1.text === '🍬 0', 'Bulbasaur with Lab on and none earned: 🍬 0', c1);
+    await page.evaluate(() => G.Settings.set('lab', false));
+    const off1 = await chip(1), off4 = await chip(4);
+    check(off1 === null && off4 && off4.text === '🍬 17', 'Lab off: nothing for Bulbasaur (none), Charmander still shows its 17', { off1, off4 });
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();
