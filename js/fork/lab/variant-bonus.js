@@ -1,19 +1,18 @@
-/* ============ variant-bonus.js — what the shiny or the radiant gives, on the detail card (Lab, MrSurvivor fork) ============
+/* ============ variant-bonus.js — what the shiny or the radiant gives, on the detail card (MrSurvivor fork) ============
  * On the collection's detail card (showDetail in js/ui/menu.js, a one-line hook), under the
- * stats: the extras its shiny or radiant gives in Lab runs (G.LabShiny.BONUS / RBONUS in
- * js/fork/lab/shiny.js), drawn like the stats: the normal bar and, at its end, another
- * segment in the shiny's colour (light blue) or the radiant's (orange) for what it adds.
- *   Experience and coins    the bar goes up to +25 %; the normal part fills 1/1.25 and the extra the rest.
- *   Card rerolls            one small square per reroll: the Upgrades ones (that Pokémon's) in grey
- *                           and the shiny's or radiant's in its colour.
+ * stats, in the shiny's colour (light blue) or the radiant's (orange):
+ *   Stats     every run, N of its 6 stats get +10 % (shiny) or +20 % (radiant), picked at random;
+ *             N by rarity (js/fork/variant-stats.js): six pips, N of them in the colour.
+ *   Rerolls   in Lab runs, one more card reroll (shiny) or two (radiant) (js/fork/lab/shiny.js): the
+ *             Upgrades ones (that Pokémon's) in grey and the shiny's or radiant's in its colour.
+ * (Until 2026-10-22: +10 % / +20 % XP and coins in Lab runs, shown as bars.)
  * It shows the one you're looking at (the radiant if you use it; if not, the shiny if you view it). If you
  * view the normal one and own its shiny or radiant, it shows dimmed ("Pick ... above to use it"). Viewing the
  * shiny when you also own the radiant, a line says the radiant gives more.
- * Texts in English only, like the rest of Lab. Test: fork/test-variant-bonus.cjs.
+ * Texts in English only. Test: fork/test-variant-bonus.cjs.
  */
 G.VariantBonus = (() => {
   const C = { shiny: '#9ae6ff', radiant: '#ffb347' };
-  const MAX = 1.25;                                // the XP and coins bar reaches +25 %
   const pct = v => Math.round(v * 100);
 
   /** Which extras to show for dex: { kind: 'shiny'|'radiant', on } or null. */
@@ -26,25 +25,25 @@ G.VariantBonus = (() => {
     return null;
   }
 
+  const LAB_ONLY = 'Rerolls: Lab runs only.';
+  G.I18n.add({ [LAB_ONLY]: LAB_ONLY }, 'en');           // (the word pass made it "Lab Runs")
   const bonus = kind => kind === 'radiant' ? G.LabShiny.RBONUS : G.LabShiny.BONUS;
-  const row = (label, add) => `<div class="stat vb-row"><span>${label}</span>
-      <div class="bar vb-bar"><i style="width:${(100 / MAX).toFixed(1)}%"></i><i class="vb-x" style="width:${(add * 100 / MAX).toFixed(1)}%"></i></div>
-      <span class="vb-n">+${pct(add)}%</span></div>`;
 
   function html(dex, w) {
-    const b = bonus(w.kind), name = w.kind === 'radiant' ? 'Radiant' : 'Shiny';
+    const b = bonus(w.kind), name = w.kind === 'radiant' ? 'Radiant' : 'Shiny', VS = G.VariantStats;
+    const n = VS.count(dex), k = pct(VS.K[w.kind]), rar = G.Gacha.RARITY_NAME[G.DEX_BY[dex].rarity];
+    const spips = '<i class="vb-x"></i>'.repeat(n) + '<i></i>'.repeat(VS.STATS.length - n);
     const icon = w.kind === 'radiant' ? G.Radiant.icon(14) : G.Icons.html('shiny', 12);
     const base = G.Upgrades.perks(G.DB.upgradesOf(dex)).rerolls || 0;
     const pips = '<i></i>'.repeat(base) + '<i class="vb-x"></i>'.repeat(b.rerolls);
     const lab = !!G.Settings.get('lab');
     const note = !w.on ? `Pick ${name} above to use it.`
-      : (lab ? 'Active in your Lab runs.' : 'Turn on Lab mode in Settings to get it.') +
-        (w.better ? ` Its radiant gives more: +${pct(G.LabShiny.RBONUS.xp)}% XP and coins, +${G.LabShiny.RBONUS.rerolls} rerolls.` : '');
+      : `Every run, ${n} of its ${VS.STATS.length} stats (${G.T(rar)}) ${n === 1 ? 'gets' : 'get'} +${k}%, picked at random.` + (lab ? '' : ' ' + LAB_ONLY) +
+        (w.better ? ` Its radiant gives more: +${pct(VS.K.radiant)}% stats, +${G.LabShiny.RBONUS.rerolls} rerolls.` : '');
     return `<div class="vb-box${w.on ? '' : ' off'}" id="vb-box" data-kind="${w.kind}" style="--vb:${C[w.kind]}">
-      <div class="vb-head">${icon} <b>${name} bonus</b><span class="vb-lab">LAB RUNS</span></div>
-      ${row('XP', b.xp)}
-      ${row('Coins', b.coins)}
-      <div class="stat vb-row"><span>Rerolls</span><div class="vb-pips">${pips}</div><span class="vb-n">+${b.rerolls}</span></div>
+      <div class="vb-head">${icon} <b>${name} bonus</b></div>
+      <div class="stat vb-row" title="${n} of HP, Attack, Sp. Atk, Defense, Sp. Def and Speed, a new pick every run"><span>Stats</span><div class="vb-pips vb-spips">${spips}</div><span class="vb-n">+${k}%</span></div>
+      <div class="stat vb-row"><span>Rerolls <span class="vb-lab">LAB</span></span><div class="vb-pips">${pips}</div><span class="vb-n">+${b.rerolls}</span></div>
       <p class="vb-note">${note}</p></div>`;
   }
 
@@ -54,7 +53,7 @@ G.VariantBonus = (() => {
   box-shadow: 0 0 12px -6px var(--vb); }
 .vb-box.off { opacity: .55; box-shadow: none; }
 .vb-head { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--vb); }
-.vb-lab { margin-left: auto; font-size: 10px; font-weight: 800; padding: 0 6px; border-radius: 999px;
+.vb-lab { margin-left: 4px; font-size: 9px; font-weight: 800; padding: 0 6px; border-radius: 999px;
   color: #9ff0e2; background: rgba(60,200,180,.2); border: 1px solid rgba(60,200,180,.6); }
 .stat .vb-bar { display: flex; }
 .stat .vb-bar i { background: rgba(230,240,251,.35); }

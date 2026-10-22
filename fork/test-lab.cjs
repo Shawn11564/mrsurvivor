@@ -31,8 +31,8 @@
 //   9. Lower tiers (js/fork/lab/growth.js): Charmander evolves during the run (card, sprite, HP,
 //      ability, pool), then Charizard with Blast Burn; Everstone; Eviolite, Light Ball, items in
 //      chests; underdog XP; candies from gacha duplicates and the bonus of the points they buy.
-//  10. Shinies (js/fork/lab/shiny.js): shiny Charizard's moves use its shiny palette; +10% XP,
-//      +10% coins, +1 reroll.
+//  10. Shinies (js/fork/lab/shiny.js): shiny Charizard's moves use its shiny palette; +1 reroll
+//      (the +10% XP and coins went on 2026-10-22).
 //  11. Mega Evolution, Lab only (js/fork/mega.js): the menu marks with Lab on, the 1 in 30 drop
 //      from minute 5, a real rift giving Gengar its stone, the stats, Mega Charizard X's types.
 //  12. Promotion (phase 8): a Lab move marked `promote` joins the normal game's pools.
@@ -693,7 +693,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   });
   check(sh.pal === 'shiny6' && sh.colors && sh.colors.length === 5 && sh.looks.every(p => p === 'shiny6') && sh.proj === 'shiny6',
     `shiny Charizard: its moves use a palette from its shiny sprite (${sh.colors && sh.colors.join(' ')}), Ember's fireballs included`, { looks: sh.looks, proj: sh.proj });
-  check(Math.abs(sh.xp / plain.xp - 1.1) < 1e-6 && Math.abs(sh.coin / plain.coin - 1.1) < 1e-6 && sh.rr === plain.rr + 1, 'shiny: +10% XP, +10% coins and one more card reroll');
+  check(sh.xp === plain.xp && sh.coin === plain.coin && sh.rr === plain.rr + 1, 'shiny: one more card reroll (no XP or coin extra since 2026-10-22: stat rolls instead, js/fork/variant-stats.js)');
   if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'lab-shiny-moves.png') }); }
   await endRun(); await toMenu();
 

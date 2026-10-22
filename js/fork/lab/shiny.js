@@ -13,15 +13,15 @@
  *     can't be read), its attacks stay as they always are.
  *   - RADIANTS (js/fork/radiant.js), the same with their r/Idle sheet ('radiant{dex}'); while you play
  *     the radiant you don't count as shiny, and its extras are bigger than the shiny's (RBONUS).
- *   - small extras that don't touch the ranking (there's no ranking in the Lab): the shiny +10 %
- *     XP, +10 % coins and one more card reroll (BONUS); the radiant +20 %, +20 % and
- *     two more rerolls (RBONUS). The collection card shows them (js/fork/lab/variant-bonus.js).
+ *   - one more card reroll for the shiny, two for the radiant (BONUS / RBONUS). They also gave
+ *     +10 % / +20 % XP and coins until 2026-10-22; now shinies and radiants roll stat boosts in
+ *     every run instead (js/fork/variant-stats.js). The collection card shows both (js/fork/lab/variant-bonus.js).
  * Co-op: a shiny teammate's ghost (Combat.ghostCast) also comes out in its palette.
  * Test: fork/test-lab.cjs.
  */
 G.LabShiny = (() => {
-  const BONUS = { xp: 0.1, coins: 0.1, rerolls: 1 };      // shiny
-  const RBONUS = { xp: 0.2, coins: 0.2, rerolls: 2 };     // radiant: always more than the shiny
+  const BONUS = { rerolls: 1 };      // shiny
+  const RBONUS = { rerolls: 2 };     // radiant: always more than the shiny
   const W_BASE = 0.05, GREY = 0.06;          // each pixel's vote: W_BASE + chroma²; below GREY, grey
   const pals = {};                         // 'shiny6' / 'radiant6' -> that key | null (no clear difference) ; not computed yet: undefined
 
@@ -123,12 +123,12 @@ G.LabShiny = (() => {
     // With its radiant: its colours and its extras (RBONUS, not the shiny's; it stops counting as shiny).
     if (G.Radiant && G.Radiant.wants(p.dex)) {
       p.shiny = false; p._labRadiant = true;
-      p.xpMul *= 1 + RBONUS.xp; p.coinMul *= 1 + RBONUS.coins; p.rerollBonus = (p.rerollBonus || 0) + RBONUS.rerolls;
+      p.rerollBonus = (p.rerollBonus || 0) + RBONUS.rerolls;
       G.Sprites.preload([p.dex], 8000, false);         // the normal one, to compare with
       return;
     }
     if (!p.shiny) return;
-    p.xpMul *= 1 + BONUS.xp; p.coinMul *= 1 + BONUS.coins; p.rerollBonus = (p.rerollBonus || 0) + BONUS.rerolls;
+    p.rerollBonus = (p.rerollBonus || 0) + BONUS.rerolls;
     p._labShiny = true;
     G.Sprites.preload([p.dex], 8000, false);           // the normal one, to compare with
   }
@@ -144,8 +144,8 @@ G.LabShiny = (() => {
     }
   }, 300);
 
-  G.Lab.pauseLine(p => p._labShiny ? 'Shiny: +10% XP, +10% coins and one more card reroll' + (p._labPal ? '; its moves take its shiny colours.' : '.')
-    : p._labRadiant ? 'Radiant: +20% XP, +20% coins and two more card rerolls' + (p._labPal ? '; its moves take its radiant colours.' : '.') : '');
+  G.Lab.pauseLine(p => p._labShiny ? 'Shiny: one more card reroll' + (p._labPal ? '; its moves take its shiny colours.' : '.')
+    : p._labRadiant ? 'Radiant: two more card rerolls' + (p._labPal ? '; its moves take its radiant colours.' : '.') : '');
 
   return { start, paletteOf, paletteFrom, BONUS, RBONUS };
 })();

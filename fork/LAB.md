@@ -33,7 +33,7 @@ status table as work lands.
 | 4 | New move kinds: leap, recoil, ramp, guard/counter, sleep, confusion, weather and terrain setters, wave (Surf), Metronome, Transform (45 moves) | **done** 2026-10-20 |
 | 5 | Signature moves for 70 lines and legendaries, with their own PMD animations where SpriteCollab has them | **done** 2026-10-20 |
 | 6 | Lower tiers: in-run evolution (and Everstone), Eviolite and species items, underdog XP, duplicate candies | **done** 2026-10-20 |
-| 7 | Shinies: move colours from the shiny sprite, +10% XP and coins, +1 reroll | **done** 2026-10-20 |
+| 7 | Shinies: move colours from the shiny sprite, +1 reroll (and +10% XP and coins until 2026-10-22) | **done** 2026-10-20 |
 | 8 | Balance script (`fork/balance-lab.cjs`) and the `promote` switch; nothing promoted yet | **done** 2026-10-20 (promotion: owner's call) |
 | 9 | Close range and sustain: 50 official moves, 7 new kinds (grab, bind, focus, heal, screen, shout, endure) and hit effects (drain, revenge, reversal, HP cut...), the survival bot | **done** 2026-10-21 (not play-tested yet) |
 
@@ -237,12 +237,13 @@ them. A shiny without that sheet (most) uses the next choice.
 
 `js/fork/lab/shiny.js`. A shiny in a Lab run gets its own move colours: the pixels that change
 between the normal and the shiny Idle sheet give a hue, and a 5-tone palette from it goes into
-`G.VFX.PAL` (`shiny{dex}`) and onto its moves (`m.look.pal`; a teammate's ghosts too). Plus +10%
-XP, +10% coins and one more card reroll (`BONUS`). A radiant gets more: +20% XP, +20% coins and two
-more rerolls (`RBONUS`), not the shiny's. The collection's detail shows them under the stats
-(`variant-bonus.js`): XP and coins as bars whose end is in the shiny's (cyan) or radiant's (orange)
-colour, rerolls as pips (the Pokémon's bought ones grey); dimmed when you view the normal form, and
-on the shiny it says when its radiant, also yours, gives more.
+`G.VFX.PAL` (`shiny{dex}`) and onto its moves (`m.look.pal`; a teammate's ghosts too). Plus one more
+card reroll (`BONUS`); a radiant two (`RBONUS`), not the shiny's. (Until 2026-10-22 also +10% / +20% XP
+and coins; since then shinies and radiants roll stat boosts in every run instead, `js/fork/variant-stats.js`:
+N of 6 stats +10% / +20%, N by rarity.) The collection's detail shows both under the stats
+(`variant-bonus.js`): the stat roll as six pips, N in the shiny's (cyan) or radiant's (orange) colour, and
+rerolls as pips (the Pokémon's bought ones grey); dimmed when you view the normal form, and on the shiny
+it says when its radiant, also yours, gives more.
 
 The hue is the one a person would call the standout colour (`paletteFrom`, 2026-10-20), like the
 wool colour of Pokeblocks' pokédolls (`ColorFactory.sampleDominantWools`): each changed pixel votes
