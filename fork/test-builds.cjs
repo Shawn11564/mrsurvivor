@@ -3,7 +3,7 @@
 // Lab run on dummies that don't move:
 //
 //   node fork/serve.cjs                  (another terminal)
-//   node fork/test-builds.cjs [base-url] [--only branches|sets]
+//   node fork/test-builds.cjs [base-url] [--only branches|sets|synergy]
 //
 // sets (js/fork/lab/sets.js, js/fork/lab/hits.js): each set one move short and then complete, on real hits: Fire +1 burn
 //   stack, Water slows, Electric jumps to the enemy beside it (~35%), Grass and Physical heal, Fighting x1.2 physical
@@ -18,6 +18,10 @@
 //      Heat Wave: twice the spread and 4 more flames than the plain level 4.
 //   4. Volt Switch: switching to it casts it at once, and that cast hits ×1.6.
 //   5. The branch survives the Pokémon's Lab evolution and a resume (reload) of the run.
+// synergy (js/fork/lab/synergy.js): no card without its prerequisites, Frost Fire comes with Ember + Ice Beam (one
+//   at a time, red border and chip), picked on the real screen Ice Beam burns, and it never comes again; on real
+//   hits: Overload (half the hit onto the neighbour of a stunned enemy), Steam Burst x1.5, Wildfire spreading the
+//   burn, Shatter x1.35 on the slowed one only, Quicksand stopping a slowed enemy; the pause line.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
 const only = (args.find(a => a.startsWith('--only=')) || '').slice(7) || (args.includes('--only') ? args[args.indexOf('--only') + 1] : '');
@@ -281,6 +285,80 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(ui.h1 > ui.h0, `a chip under the HP bar while a set is on (${ui.h0} → ${ui.h1} px)`, ui);
     check(/Sets: Fire set/.test(ui.pause) && ui.pause0, 'the pause menu names the active set, and the one a move away', ui.pause.slice(0, 300));
     check(!!ui.note && ui.note.startsWith('new:'), `a new Fire move card says it completes the Fire set (${ui.note})`, ui);
+  }
+
+  if (want('synergy')) {
+    // ---------------- synergy cards ----------------
+    console.log('synergy');
+    await page.evaluate(() => { const pl = G.Game.player; pl.god = true; pl.regenFlat = 0; });
+    const off = await page.evaluate(() => {
+      const pl = G.Game.player;
+      pl._labSyn = [];
+      __only('ember'); pl.maxMoves = 4;
+      let without = 0;
+      for (let i = 0; i < 200; i++) if (G.LevelUp.offer(pl).some(c => c.syn)) without++;
+      __only('ember', 'ice-beam'); pl.maxMoves = 2;
+      let withN = 0, multi = 0;
+      const keys = new Set();
+      for (let i = 0; i < 200; i++) { const s = G.LevelUp.offer(pl).filter(c => c.syn); if (s.length) withN++; if (s.length > 1) multi++; s.forEach(c => keys.add(c.key)); }
+      return { without, withN, multi, keys: [...keys] };
+    });
+    check(off.without === 0, 'no Synergy card without its prerequisites (Ember alone, 200 hands)', off);
+    check(off.withN > 50 && off.multi === 0 && off.keys.join() === 'syn:frost-fire', `with Ember + Ice Beam, Frost Fire comes up (${off.withN} of 200 hands, never two at once)`, off);
+    /** Casts the first move on dummy a (70 px; `prep` puts a status on it first); b stands 40 px beside a. */
+    const shot = (ids, prep, o = {}) => page.evaluate(async ([ids, prep, o]) => {
+      const pl = G.Game.player;
+      const keep = pl._labSyn;
+      __only(...ids);
+      pl._labSyn = keep;
+      const a = __dummy(...__at(o.r || 70)), [bx, by] = __at(o.r || 70);
+      const b = __dummy(bx + 10, by + 38);
+      if (prep === 'stun') a.applyStun(5);
+      if (prep === 'burn') { a.applyBurn(1); a.burnT = 9; }
+      if (prep === 'slow') a.applySlow(0.5, 9);
+      pl.target = a; pl.aim = Math.atan2(a.y - pl.y, a.x - pl.x);
+      const m = pl.moves[0];
+      m.t = 0; m.dealt = 0;
+      await __until(() => m.dealt > 0, 3000);
+      const first = m.dealt;
+      await __wait(60);
+      return { first, a: +(a.maxHp - a.hp).toFixed(2), b: b.maxHp - b.hp, aBurn: a.burn, bBurn: b.burn, aStun: a.stunT, own: +(a.maxHp - a.hp).toFixed(1) };
+    }, [ids, prep, o]);
+    // Pick Frost Fire on the real level-up screen; Ice Beam burns only after it.
+    const ice0 = await shot(['ice-beam', 'ember']);
+    await page.evaluate(() => {
+      const pl = G.Game.player;
+      let h = [];
+      for (let i = 0; i < 300 && !h.some(c => c.syn); i++) h = G.LevelUp.offer(pl);
+      window.__picked = null;
+      G.RunUI.showLevelUp(pl.level, h, c => { window.__picked = c.key; c.apply(pl); });
+    });
+    await page.waitForFunction(() => !document.getElementById('cards').classList.contains('guard'), null, { timeout: 4000 });
+    const look = await page.evaluate(() => { const el = [...document.querySelectorAll('#cards .card')].find(el => /Frost Fire/.test(el.textContent)); return el && { shadow: el.style.boxShadow, chip: el.querySelector('.tag-chip').style.background, text: el.textContent.replace(/\s+/g, ' ').trim() }; });
+    check(!!look && /255, 77, 94/.test(look.shadow) && /255, 77, 94/.test(look.chip), 'the Synergy card is red-bordered with a red chip', look);
+    await page.click('#cards .card.syn');
+    const ice1 = await shot(['ice-beam', 'ember']);
+    check(await page.evaluate(() => window.__picked) === 'syn:frost-fire' && ice0.aBurn === 0 && ice1.aBurn > 0, `Frost Fire picked on screen: Ice Beam now burns (${ice0.aBurn} → ${ice1.aBurn})`, { ice0, ice1 });
+    const taken = await page.evaluate(() => { const pl = G.Game.player; let n = 0; for (let i = 0; i < 200; i++) if (G.LevelUp.offer(pl).some(c => c.syn)) n++; return n; });
+    check(taken === 0, 'once taken, it doesn\'t come again', taken);
+    const pair = async (id, ids, prep, o) => {
+      await page.evaluate(() => { G.Game.player._labSyn = []; });
+      const before = await shot(ids, prep, o);
+      await page.evaluate(id => { G.Game.player._labSyn = [id]; }, id);
+      return [before, await shot(ids, prep, o)];
+    };
+    const [ov0, ov1] = await pair('overload', ['thunder-shock', 'thunder-wave'], 'stun');
+    check(ov0.b === 0 && ov1.b > 0 && Math.abs(ov1.b / (ov1.first - ov1.b) - 0.5) < 0.05, `Overload: Thunder Shock on a stunned enemy explodes onto the one beside it for half the hit (${ov0.b} → ${Math.round(ov1.b)}, hit ${Math.round(ov1.first - ov1.b)})`, { ov0, ov1 });
+    const [st0, st1] = await pair('steam', ['water-gun', 'ember'], 'burn');
+    check(Math.abs(st1.first / st0.first - 1.5) < 0.05, `Steam Burst: Water Gun on a burning enemy ×${(st1.first / st0.first).toFixed(2)}`, { st0, st1 });
+    const [wf0, wf1] = await pair('wildfire', ['vine-whip', 'ember'], 'burn');
+    check(wf0.bBurn === 0 && wf1.bBurn > 0, `Wildfire: Vine Whip on a burning enemy spreads the burn (${wf0.bBurn} → ${wf1.bBurn})`, { wf0, wf1 });
+    const [sh0, sh1] = await pair('shatter', ['karate-chop', 'ice-beam'], 'slow', { r: 40 });
+    check(Math.abs(sh1.a / sh0.a - 1.35) < 0.08 && sh1.b === sh0.b, `Shatter: Karate Chop on the slowed enemy ×${(sh1.a / sh0.a).toFixed(2)}, the other one ×1`, { sh0, sh1 });
+    const [qs0, qs1] = await pair('quicksand', ['mud-shot', 'water-gun'], 'slow');
+    check(!(qs0.aStun > 0) && qs1.aStun > 0, `Quicksand: Mud Shot stops a slowed enemy (stun ${qs0.aStun} → ${qs1.aStun.toFixed(2)})`, { qs0, qs1 });
+    const pause = await page.evaluate(() => { G.Game.player._labSyn = ['frost-fire']; G.RunUI.showPause(); const t = document.getElementById('pause-sum').textContent; G.UI.hide('scr-pause'); return t; });
+    check(/Synergies: Frost Fire/.test(pause), 'the pause menu lists the synergies taken');
   }
 
   check(!errors.length, 'no page errors', errors.slice(0, 5));

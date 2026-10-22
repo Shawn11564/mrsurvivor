@@ -58,17 +58,15 @@ How to use it:
 ## Phase 3: builds
 
 ### Move diversity (stream B)
-- [ ] 27. [lab] B2: branching upgrades at level 3 (claimed: stream B-builds)
-- [x] 28. [lab] B3.1 mark + detonate (9944067)
 - [x] 27. [lab] B2: branching upgrades at level 3 (1ddbefb)
-- [ ] 28. [lab] B3.1 mark + detonate (claimed: stream B-moves)
+- [x] 28. [lab] B3.1 mark + detonate (9944067)
 - [ ] 29. [lab] B3.2 persistent hazard fields (claimed: stream B-moves)
 - [ ] 30. [lab] B3.3 status converters (claimed: stream B-moves)
 - [ ] 31. [lab] B3.4 trade-off buffs (claimed: stream B-moves)
 - [ ] 32. [lab] B3.5 decoy / aggro (claimed: stream B-moves)
 - [ ] 33. [lab] B3.6 Taunt / Attract (claimed: stream B-moves)
 - [ ] 34. [lab] B3.7 combos (claimed: stream B-moves)
-- [ ] 35. [lab] B4: set bonuses (claimed: stream B-builds)
+- [x] 35. [lab] B4: set bonuses (c6ef6dc)
 - [ ] 36. [lab] B4: synergy cards (claimed: stream B-builds)
 - [ ] 37. [lab] B4: bond recipes (claimed: stream B-builds)
 
