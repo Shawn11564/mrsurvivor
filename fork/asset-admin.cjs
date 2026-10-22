@@ -22,10 +22,12 @@
  *   - publish syncs first, commits only the files the tool manages, and pushes; if GitHub has moved
  *     on in between (someone else published), it undoes its commit, syncs and tries again. If the
  *     push fails for any other reason the commit is undone too, so the changes stay visible.
+ *     With no name and email in git, the commit is the signed-in GitHub account's (identity, below).
  * One thing at a time: syncs, applies, imports and publishes queue behind each other.
- * Check: node fork/test-asset-admin.cjs (and fork/test-radiant-admin.cjs for the Radiants tab).
+ * Check: node fork/test-asset-admin.cjs (and fork/test-radiant-admin.cjs for the Radiants tab,
+ * fork/test-asset-admin-identity.cjs for publishing from a PC where git has no name and email).
  */
-const fs = require('fs'), path = require('path'), http = require('http'), crypto = require('crypto');
+const fs = require('fs'), path = require('path'), http = require('http'), crypto = require('crypto'), os = require('os');
 const { execFileSync, execFile } = require('child_process');
 const imp = require('./import-radiant.cjs');
 const rad = require('./radiant-admin.cjs');
@@ -60,6 +62,36 @@ const changedPaths = () => execFileSync('git', ['status', '--porcelain', '-z', '
 /** git with exactly these paths (from stdin: any number, any name). */
 const gitPaths = (a, paths) => execFileSync('git', [...a, '--pathspec-from-file=-', '--pathspec-file-nul'], { cwd: ROOT, encoding: 'utf8', input: paths.join('\0'), stdio: ['pipe', 'pipe', 'pipe'] });
 const count = range => { try { return +git('rev-list', '--count', range); } catch (e) { return 0; } };
+
+// ---------------- who the commit is by ----------------
+// Signing in to GitHub lets git push, but a commit also needs a name and email, and a fresh Git
+// install has none ("Author identity unknown"). When git has none, the commit is the GitHub
+// account's (its name and private noreply address, asked from the GitHub API with the saved
+// sign-in), else "<PC user> (Asset Admin)". Given to that one commit (git -c), never written to
+// anyone's git config. Check: node fork/test-asset-admin-identity.cjs.
+const GITHUB_API = process.env.ASSET_ADMIN_GITHUB_API || 'https://api.github.com';     // tests: a fake
+let account = null;
+async function identity() {
+  try { git('var', 'GIT_AUTHOR_IDENT'); git('var', 'GIT_COMMITTER_IDENT'); return []; } catch (e) { /* none: find one */ }
+  if (!account) account = await gitHubAccount().catch(() => null);
+  const who = account || { name: os.userInfo().username + ' (Asset Admin)', email: 'asset-admin@users.noreply.github.com' };
+  return ['-c', 'user.name=' + who.name, '-c', 'user.email=' + who.email];
+}
+/** The signed-in GitHub account, from the saved sign-in (never asks: no prompt, no window). */
+function gitHubAccount() {
+  return new Promise((ok, no) => {
+    const env = Object.assign({}, process.env, { GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', GIT_ASKPASS: '', SSH_ASKPASS: '' });
+    const p = execFile('git', ['credential', 'fill'], { cwd: ROOT, encoding: 'utf8', timeout: 30000, env }, (e, out) => e ? no(e) : ok(out));
+    p.stdin.end('protocol=https\nhost=github.com\n\n');
+  }).then(async out => {
+    const token = (out.match(/^password=(.+)$/m) || [])[1];
+    if (!token) return null;
+    const r = await fetch(GITHUB_API + '/user', { signal: AbortSignal.timeout(15000),
+      headers: { authorization: 'Bearer ' + token, accept: 'application/vnd.github+json', 'user-agent': 'MrSurvivor-Asset-Admin' } });
+    const u = r.ok ? await r.json() : {};
+    return u.login && u.id ? { name: u.name || u.login, email: `${u.id}+${u.login}@users.noreply.github.com` } : null;
+  });
+}
 
 // ---------------- one thing at a time ----------------
 let queue = Promise.resolve();
@@ -217,9 +249,10 @@ async function publish({ allowAhead }) {
       if (!st.git.changed.length) throw new Error('Nothing to publish: nothing the tool manages has changed.');
       if (st.git.ahead && !allowAhead) throw new Error(`main has ${st.git.ahead} other commit(s) not pushed yet; they would go too.`);
       const msg = [rad.summary(st.git.changed, show('HEAD', 'js/fork/radiants.json') || {}), assetSummary(st.git.changed)].filter(Boolean).join('; ') || 'Assets: update';
+      const by = await identity();
       // Exactly the changed files (a pattern that matches nothing, like no radiants yet, would stop git).
       gitPaths(['add', '-A'], st.git.changed);
-      gitPaths(['commit', '-m', msg], st.git.changed);     // --only these paths: other changes stay out
+      gitPaths([...by, 'commit', '-m', msg], st.git.changed);     // --only these paths: other changes stay out
       const sha = git('rev-parse', '--short', 'HEAD');
       try { const o = await gitNet(['push', 'origin', 'HEAD:main'], { timeout: 180000, prompt: true }); sync.canPush = true; return { sha, msg, out: o }; }
       catch (e) {

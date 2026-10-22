@@ -34,6 +34,10 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
 
 const T = sandbox('assetadmin-');
 const MON = path.join(T, 'assets/pokemon');
+// Start with every icon drawn by the code: the live game's own PNGs (the artist's arrows) would
+// change what the steps below see (an icon with its own PNG has no ×4 download).
+fs.writeFileSync(path.join(T, 'js/fork/icon-overrides.json'), '{}\n');
+fs.rmSync(path.join(T, 'assets/icons/code'), { recursive: true, force: true });
 const sh = (cwd, ...a) => execFileSync('git', a, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const git = (...a) => sh(T, ...a);
 const ORIGIN = T + '-origin.git', OTHER = T + '-other';

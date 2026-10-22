@@ -31,7 +31,8 @@ website accepts uploads.
 
 ## Opening it
 
-Double-click **`fork/Asset Admin.bat`** (Windows) or **`fork/Asset Admin.command`** (Mac) in the
+Double-click **`Asset Admin.bat`** (Windows; it's in the top folder, and in `fork/` too) or
+**`fork/Asset Admin.command`** (Mac) in the
 `mrsurvivor` folder. A black window opens; keep it open while you work, and close it when you're
 done. The page opens in your browser.
 
@@ -72,6 +73,7 @@ Do that, then press **Check again**.
    the game. Nothing is live yet.
 6. **Publish.** **Publish to players** sends them to GitHub, and players get them a minute or two
    later. If Shawn published something in the meantime, the tool merges it in first by itself.
+   GitHub shows the change under your GitHub account. You don't need to set a name or email in Git.
 
 Changed your mind? Before applying, use **Discard**. After applying and before publishing, open
 **Show changed files** and use **Undo**. A code icon can go back to the game's own drawing with
