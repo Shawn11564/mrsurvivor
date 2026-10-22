@@ -29,6 +29,8 @@ into `index.html`. Before you push, `git pull --rebase origin main`; if generate
   hash). Memory holds decisions and gotchas only, not work lists.
 - **Subagents:** `model: "opus"`, `"sonnet"` or `"haiku"` only, never Fable.
 
+## Fork rules
+
 - **Build with `node fork/build.cjs`, never `node tools/build.js`.** The fork build runs
   upstream's tools with the branding applied. Upstream's own build writes an unbranded
   `index.html`/`app.min.js`.
