@@ -69,6 +69,11 @@ Command Center's checkout (`~/Documents/IdeaProjects/commandcenter`), also from 
 Sessions that share this folder each work in their own worktree (`CLAUDE.local.md`); the build skips
 `.claude/`, where those worktrees live.
 
+The work list is `fork/TODO.md`. `/intake <paste>` (`.claude/skills/intake/`) adds a pasted list to it;
+`/notes` (`.claude/skills/notes/`, `fork/notes.cjs`) reads the owner's notes tab straight out of Lightning
+Notes (pictures included) and adds what's new; `/notes watch` polls every 10 min with a session-only
+`CronCreate` job that stops after 3 empty polls or 2 hours and dies with the session.
+
 Never run `node tools/build.js` directly: it writes an unbranded `index.html` and
 `app.min.js`. If you do, `node fork/build.cjs` fixes it.
 
