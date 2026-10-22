@@ -180,7 +180,7 @@ G.Admin = (() => {
   }
 
   const cv = () => document.getElementById('game');
-  const inRun = () => !!G.Game.player && G.Game.state !== 'ui' && G.Game.state !== 'over';
+  const inRun = () => !!(G.Game && G.Game.player) && G.Game.state !== 'ui' && G.Game.state !== 'over';   // (G.Game: dev.html may still be loading js/game.js)
   const COLORS = ['#ff5f6d', '#ffd23f', '#5fe08a', '#4fb4ff', '#c47bff', '#ff8ad8'];
 
   /*

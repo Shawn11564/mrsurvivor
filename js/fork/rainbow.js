@@ -53,6 +53,7 @@ G.Rainbow = (() => {
     return r;
   };
   setInterval(() => {
+    if (!G.Game) return;                           // dev.html may still be loading js/game.js
     const pl = G.Game.player, st = G.Game.st;
     if (G.Game.state === 'playing' && pl && !pl.dead && st && st.time >= TIME && !pl._rainbow30) {
       pl._rainbow30 = true;

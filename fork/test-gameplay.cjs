@@ -435,7 +435,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     for (let i = 0; i < 300; i++) for (const c of G.LevelUp.offer(pl)) {
       if (c.type !== 'new') { if (c.own) bad.push(c.key); continue; }
       const d = G.Moves.BY_ID[c.key.slice(4)];
-      const expect = d.kind !== 'buff' && pl.mon.types.includes(d.type) && G.Stats.fit(pl.mon, d.cat) >= 0.95;
+      // Your type, whichever side the move is on (js/fork/move-text.js part 3; a nature moves the sides).
+      const expect = d.kind !== 'buff' && pl.mon.types.includes(d.type);
       if (!!c.own !== expect) bad.push(c.key);
       expect ? ownSeen++ : otherSeen++;
     }
@@ -451,7 +452,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
       chip: !!el.querySelector('.stab-chip'), border: getComputedStyle(el).borderColor }));
     return { bad, ownSeen, otherSeen, dom };
   });
-  check(cards.bad.length === 0, `own flag matches type + good side on every card (${cards.ownSeen} own, ${cards.otherSeen} other)` + (cards.bad.length ? ' bad: ' + cards.bad.slice(0, 5) : ''));
+  check(cards.bad.length === 0, `own flag matches the type on every card (${cards.ownSeen} own, ${cards.otherSeen} other)` + (cards.bad.length ? ' bad: ' + cards.bad.slice(0, 5) : ''));
   check(cards.ownSeen > 0 && cards.otherSeen > 0, 'both kinds of new-move cards were offered');
   check(cards.dom.every(d => d.own === d.stab && d.own === d.chip), 'rendered cards: .stab and chip exactly on own cards');
   console.log('  ' + JSON.stringify(cards.dom));

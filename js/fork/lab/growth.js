@@ -85,6 +85,7 @@ G.LabGrowth = (() => {
     if (item === 'megastone' || item === 'eviolite') p.equip(null);
     const under0 = p._labUnder || 0;
     p.mon = mon; p.dex = to;
+    p._evoBase = p.level; p._evoDex = to;          // where the evolution HUD's bar starts (evo-hud.js)
     const dHp = mon.hp - old.hp;
     p.maxHp = Math.max(1, p.maxHp + dHp);
     p.hp = Math.min(p.maxHp, p.hp + Math.max(0, dHp) + p.maxHp * 0.25);

@@ -131,8 +131,8 @@ G.Mega = (() => {
   }
   // It's offered back on the map, with no other screen in front (bond, cards...).
   setInterval(() => {
+    if (!pending || !G.Game) return;               // (G.Game: dev.html may still be loading js/game.js)
     const pl = G.Game.player;
-    if (!pending) return;
     if (!pl || G.Game.state === 'ui' || G.Game.state === 'over') { pending = false; return; }
     if (G.Game.state !== 'playing' || G.Rift.inArena || pl.dead) return;
     if (['scr-bond', 'scr-item', 'scr-levelup', 'scr-pause'].some(G.UI.isOpen)) return;

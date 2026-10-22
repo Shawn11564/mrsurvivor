@@ -50,6 +50,7 @@ G.WildLegends = (() => {
   G.EnemyMgr.bossAlive = function () { return bossAlive.apply(this, arguments) && G.EnemyMgr.all().some(e => e.boss && !e.dead && !e.wildLegend); };
 
   setInterval(() => {
+    if (!G.Game) return;                           // dev.html may still be loading js/game.js
     const pl = G.Game.player, st = G.Game.st;
     if (!pl || G.Game.state !== 'playing' || !(G.Lab && G.Lab.active) || !authority() || G.Rift.inArena || (G.Judgment && G.Judgment.active)) return;
     if (st.time < FROM || st.time - last < GAP || alive().length >= MAX) return;

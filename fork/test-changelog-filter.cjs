@@ -5,8 +5,8 @@
 //   node fork/test-changelog-filter.cjs [base-url]
 //
 //   1. Upstream's 2026-10-21 "co-op goes through our server" note (their TURN, off here) is gone
-//      from G.CHANGELOG and from the What's new screen, in Spanish and in English; the date
-//      went with it because nothing else was on it.
+//      from G.CHANGELOG and from the What's new screen, in Spanish and in English; the date stays with
+//      upstream's other lines for it (their big update of 2026-10-21 came later), and no date is left empty.
 //   2. The dates around it are still there, and the What's new dot follows the newest date left.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
@@ -33,10 +33,11 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     console.log('1. The TURN note is gone');
     const cl = await page.evaluate(() => ({
       text: JSON.stringify(G.CHANGELOG), dates: G.CHANGELOG.map(v => v.d),
-      empty: G.CHANGELOG.filter(v => !v.new && !v.chg && !v.fix).length
+      empty: G.CHANGELOG.filter(v => !v.new && !v.chg && !v.fix).length,
+      d21: (v => (v ? ['new', 'chg', 'fix'].reduce((a, k) => a + (v[k] || []).length, 0) : 0))(G.CHANGELOG.find(v => v.d === '2026-10-21'))
     }));
     check(!/nuestro servidor|through our server/.test(cl.text), 'no "goes through our server" line in G.CHANGELOG');
-    check(!cl.dates.includes('2026-10-21') && cl.empty === 0, 'the date it was alone on is gone, and no date is left empty', cl.dates.slice(0, 3));
+    check(cl.d21 > 0 && cl.empty === 0, "2026-10-21 keeps upstream's other lines, and no date is left empty", { lines: cl.d21, dates: cl.dates.slice(0, 3) });
     for (const lang of ['es', 'en']) {
       await page.evaluate(l => { G.I18n.set && G.I18n.set(l); }, lang);
       await page.click('#btn-news');

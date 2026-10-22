@@ -19,7 +19,8 @@ G.LabEvoHud = (() => {
     if (!pl || !pl.mon || pl._labStay || !G.Lab.active || pl !== G.Game.player) return null;
     const t = G.LabGrowth.targets(pl.dex).sort((a, b) => a[1] - b[1]);
     if (!t.length) return null;
-    // The level this form started at: 1, or the level of its last evolution in the run.
+    // The level this form started at: 1, or the level of its last evolution in the run (noted by
+    // growth.js evolveTo when it evolves: a level gained before the next frame used to move it).
     if (pl._evoDex !== pl.dex) { pl._evoBase = pl._evoDex === undefined ? 1 : pl.level; pl._evoDex = pl.dex; }
     const at = t[0][1], base = Math.min(pl._evoBase, at - 1);
     const p = G.U.clamp((pl.level - base + G.U.clamp(pl.xp / pl.xpNext, 0, 1)) / (at - base), 0, 1);

@@ -29,7 +29,7 @@
  * Tests: fork/test-ui-scale.cjs, fork/test-settings-fit.cjs (Settings, pause and News fit at 4K).
  */
 G.UIScale = (() => {
-  const REF_W = 1400, REF_H = 850, MAX = 3, DEF = 0.85, LOW = 0.7, SQUEEZE = 0.8;
+  const REF_W = 1400, REF_H = 850, MAX = 3, DEF = 0.85, LOW = 0.7, SQUEEZE = 0.75, TOO_LONG = 0.75;   // (SQUEEZE was 0.8 until upstream's Upgrades got a row taller, 2026-10-21)
   const pos = () => { const v = +G.Settings.get('uiScale'); return Number.isFinite(v) ? G.U.clamp(v, 0, 100) : 50; };
   // The scale for a w×h screen: [smallest, default, largest] at slider 0, 50 and 100.
   function range(w, h) {
@@ -131,7 +131,8 @@ G.UIScale = (() => {
 
   function squeeze(b, min = SQUEEZE) {
     b.style.zoom = '';
-    if (b.scrollHeight <= b.clientHeight + 1 || b.clientHeight / b.scrollHeight < min - 0.05) return;
+    // A box shorter than TOO_LONG of its content scrolls as it is (squeezing would only make the scroll bar shorter).
+    if (b.scrollHeight <= b.clientHeight + 1 || b.clientHeight / b.scrollHeight < TOO_LONG) return;
     for (let z = 1, i = 0; i < 12 && b.scrollHeight > b.clientHeight + 1 && z > min; i++) {
       z = Math.max(min, z * Math.max(0.9, b.clientHeight / b.scrollHeight));
       b.style.zoom = String(z);

@@ -134,7 +134,7 @@ G.LabShiny = (() => {
   }
   // Until both sheets have loaded (and on evolving, the evolution's).
   setInterval(() => {
-    const p = G.Game.player;
+    const p = G.Game && G.Game.player;             // (dev.html may still be loading js/game.js)
     if (!p || !(p._labShiny || p._labRadiant) || !G.Lab.active) return;
     if (p._labPalDex !== p.dex) {
       const key = paletteOf(p.dex, !!p._labRadiant);
