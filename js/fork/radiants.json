@@ -11,7 +11,16 @@
     ],
     "rarity": 5
   },
+  "492": {
+    "lab": [
+      "SpAttack"
+    ],
+    "rarity": 5
+  },
   "890": {
     "rarity": 5
+  },
+  "1019": {
+    "rarity": 4
   }
 }
