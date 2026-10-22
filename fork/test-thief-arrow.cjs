@@ -23,7 +23,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB && G.DB.playAsGuest && G.Game, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await page.evaluate(() => { G.DB.save.owned[4] = { at: Date.now() }; G.DB.save.partner = 4; G.Game.startRun(); });
     await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 30000 });
     const label = await page.evaluate(() => new Promise(res => {

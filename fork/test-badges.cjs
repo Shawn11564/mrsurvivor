@@ -16,7 +16,7 @@
 //   6. The built index.html (node fork/build.cjs): no setting left, and its CSS places the arrows.
 // Set SHOTS=<dir> to save screenshots of the cards, the tooltip and the enemies.
 const path = require('path');
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOTS = process.env.SHOTS;
 
@@ -35,7 +35,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.addStyleTag({ url: BASE + '/css/brand.css' });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
 
     const start = (dex, lab = true, moveId = null) => page.evaluate(([dex, lab, moveId]) => {
       if (G.Game.player && G.Game.state !== 'ui') G.Game.quit();
@@ -218,19 +218,14 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await enemyArrows('normal run');
 
     console.log('6. Built index.html');
-    // G is sealed in app.min.js (fork/build.cjs), so as a player would: guest, the starter quiz,
+    // G is sealed in app.min.js (fork/build.cjs), so as a player would: guest, the starter grid,
     // Settings → Experimental. The CSS is checked on a span with the arrows' class.
     const built = await browser.newPage({ viewport: { width: 1100, height: 700 } });
     built.on('pageerror', e => errs.push('index.html: ' + e.message));
     await built.goto(BASE + '/index.html', { waitUntil: 'load' });
     await pastStart(built, '#btn-guest');
     await built.click('#btn-guest');
-    await built.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
-    for (let i = 0; i < 20 && !(await built.isVisible('#scr-result')); i++) {
-      await built.click('#test-a button >> nth=0').catch(() => {});
-      await built.waitForTimeout(250);
-    }
-    await built.click('#res-ok');
+    await pickStarter(built);   // a new player's first screen (js/fork/starter-pick.js)
     await built.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
     await built.click('#btn-settings');
     await built.click('#set-tabs [data-t="lab"]');

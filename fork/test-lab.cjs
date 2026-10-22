@@ -38,7 +38,7 @@
 //  12. Promotion (phase 8): a Lab move marked `promote` joins the normal game's pools.
 // Co-op (host on, guest off; host off, guest on) is in fork/test-lab-coop.cjs.
 const path = require('path');
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOTS = process.argv[3] || null;
 
@@ -56,7 +56,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.addStyleTag({ url: BASE + '/css/brand.css' });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(() => {
     for (const d of [4, 10]) G.DB.save.owned[d] = G.DB.save.owned[d] || { at: Date.now() };
     G.DB.save.partner = 4;
@@ -801,7 +801,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
 
   // ---------------- 6. the built page ----------------
   // index.html + app.min.js (node fork/build.cjs): G is sealed there, so only the UI is used,
-  // as a player would: guest, the starter quiz, Settings, Play.
+  // as a player would: guest, the starter grid, Settings, Play.
   console.log('Built page (index.html)');
   const built = await browser.newPage({ viewport: { width: 1100, height: 700 } });
   const berr = [];
@@ -809,12 +809,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await built.goto(BASE + '/index.html', { waitUntil: 'load' });
   await pastStart(built, '#btn-guest');
   await built.click('#btn-guest');
-  await built.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
-  for (let i = 0; i < 20 && !(await built.isVisible('#scr-result')); i++) {
-    await built.click('#test-a button >> nth=0').catch(() => {});
-    await built.waitForTimeout(250);
-  }
-  await built.click('#res-ok');
+  await pickStarter(built);   // a new player's first screen (js/fork/starter-pick.js)
   await built.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
   await built.click('#btn-settings');
   await built.click('#set-tabs [data-t="lab"]');

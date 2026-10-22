@@ -7,7 +7,7 @@
  *   1. Drop the artists' zips (the Radiant Sprite Kit's layout, assets/0150_mewtwo/...): every
  *      Pokémon in them is checked like fork/import-radiant.cjs does (same code), with an
  *      animated preview, normal next to radiant, of every sheet.
- *   2. Pick which to import and each one's rarity (1-5, its weight in the Radiant Ritual; the
+ *   2. Pick which to import and each one's rarity (1-5, its tier in the Radiant Ritual's odds; the
  *      Pokémon's own rarity by default). Import copies the sheets to assets/pokemon/{dex}/r/,
  *      r/lab/ and m{dex}/r/, keeps the rarity in js/fork/radiants.json and runs fork/radiants.cjs.
  *      The rarity of radiants already in the game can be changed too.
@@ -33,10 +33,10 @@ const G = imp.gameData();
 const uploads = new Map();                        // id -> { name, mons: Map(dex -> { files, labels }) }
 
 const radiants = () => { try { return JSON.parse(fs.readFileSync(JSON_FILE, 'utf8')); } catch (e) { return {}; } };
-/** The ritual's weights, read from the game so the page's odds can't drift from it. */
+/** The ritual's share for each rarity tier, read from the game so the page's odds can't drift from it. */
 function weights() {
-  const m = fs.readFileSync(path.join(ROOT, 'js', 'fork', 'radiant.js'), 'utf8').match(/const WEIGHT = (\{[^}]*\})/);
-  return m ? JSON.parse(m[1].replace(/(\d+):/g, '"$1":')) : { 1: 40, 2: 25, 3: 15, 4: 7, 5: 3 };
+  const m = fs.readFileSync(path.join(ROOT, 'js', 'fork', 'radiant.js'), 'utf8').match(/const SHARE = (\{[^}]*\})/);
+  return m ? JSON.parse(m[1].replace(/(\d+):/g, '"$1":')) : { 1: 40, 2: 30, 3: 18, 4: 9, 5: 3 };
 }
 const name = d => (G.DEX.find(p => p.dex === +d) || {}).name || '#' + d;
 

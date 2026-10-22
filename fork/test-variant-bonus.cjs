@@ -35,7 +35,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.Radiant && G.VariantBonus, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await page.evaluate(() => {
       const s = G.DB.save;
       for (const d of [150, 6, 25]) G.DB.grant(d, 't');

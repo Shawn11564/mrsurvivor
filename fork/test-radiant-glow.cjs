@@ -14,7 +14,7 @@
 //      0%, and a normal (non-radiant) partner gets nothing.
 const fs = require('fs');
 const path = require('path');
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOTS = process.env.SHOTS;
 
@@ -32,7 +32,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await pastStart(page, '#btn-guest, #scr-menu');
     if (await page.isVisible('#btn-guest')) {                // after the reload, the guest save is kept (guest-save.js)
       await page.click('#btn-guest');
-      await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+      await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     }
     await page.evaluate(() => {
       const s = G.DB.save;
@@ -195,12 +195,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await built.goto(BASE + '/index.html', { waitUntil: 'load' });
     await pastStart(built, '#btn-guest');
     await built.click('#btn-guest');
-    await built.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
-    for (let i = 0; i < 20 && !(await built.isVisible('#scr-result')); i++) {
-      await built.click('#test-a button >> nth=0').catch(() => {});
-      await built.waitForTimeout(250);
-    }
-    await built.click('#res-ok');
+    await pickStarter(built);   // a new player's first screen (js/fork/starter-pick.js)
     await built.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
     await built.click('#btn-settings');
     await built.click('#set-tabs [data-t="gfx"]');

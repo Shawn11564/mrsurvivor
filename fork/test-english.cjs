@@ -479,7 +479,7 @@ async function game() {
     await shot(); await collect('login');
     await page.$eval('#btn-guest', e => e.click());
     await page.waitForFunction(() => G.DB.save, null, { timeout: 30000 });
-    await shot(); await collect('after guest (personality test / notices)');
+    await shot(); await collect('after guest (starter grid / notices)');
     await page.evaluate(() => { const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.owned[25] = { at: Date.now() }; s.partner = 4; s.starter = 4; s.coins = 5000; G.DB.commit(); G.Flow.goMenu(); });
     await shot(); await collect('main menu');
     for (const go of ['dex', 'upgrades', 'gacha', 'goals', 'friends', 'rank']) {
@@ -502,12 +502,8 @@ async function game() {
     await page.evaluate(() => G.SettingsUI.close());
     await page.evaluate(() => document.getElementById('btn-news').click()); await shot(); await collect('what\'s new');
     await page.evaluate(() => G.NewsUI.close());
-    // The personality test, its result and the partner list.
-    await page.evaluate(() => G.TestUI.start()); await shot(); await collect('personality test');
-    for (let i = 0; i < 40 && await page.evaluate(() => G.UI.isOpen('scr-test')); i++) {
-      await page.evaluate(() => document.querySelector('#test-a .answer').click()); await page.waitForTimeout(60);
-    }
-    await shot(); await collect('test result');
+    // A new player's first screen: the partner list (no personality test since js/fork/starter-pick.js).
+    await page.evaluate(() => G.TestUI.start()); await shot(); await collect('starters (first screen)');
     // Every personality trait, as the result screen (capitalised) and the starter list (lower case) show
     // it, through the page's own translation pass. The walk above can't flag these: a Spanish word in
     // no dictionary isn't 'translatable', and SPANISH doesn't list them. js/fork/trait-names.js.

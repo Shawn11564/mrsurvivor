@@ -99,7 +99,7 @@ console.log('3. Resets');
     for (const [label, m] of [['old copy first', merge(local, cloud)], ['cloud first', merge(cloud, local)]]) {
       const owned = Object.keys(m.owned || {}).length;
       const ok = owned === 0 && Object.keys(m.shiny || {}).length === 0 && Object.keys(m.radiant || {}).length === 0 && m.partner == null && m.starter == null;
-      check(ok, `${kind} (${label}): no Pokémon, no partner (the test runs again)`, { owned, partner: m.partner });
+      check(ok, `${kind} (${label}): no Pokémon, no partner (the starter grid comes back)`, { owned, partner: m.partner });
       if (kind === 'mons') check(m.coins === 10000 && m.tickets.t1 === 30 && m.stats.runs === 40 && !(m.lab.candy || {})[25] && !m.pupg[25] && m.profile.favs.length === 0,
         `mons (${label}): coins, tickets and stats stay; upgrades, candies, favourites go`, { coins: m.coins, t1: m.tickets.t1 });
       if (kind === 'monscur') check(m.coins === 500 && m.tickets.t1 === 0 && m.tickets.t10 === 0 && m.tickets.t25 === 0 && m.gems === 0 && m.stats.runs === 40,

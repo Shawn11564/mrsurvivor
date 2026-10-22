@@ -40,7 +40,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await pastStart(page, '#btn-guest');
   // Play as guest (in-memory save, nothing is written); a new save opens the starter test.
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
 
   // Charmander: fire, starts with a fire move.
   await page.evaluate(() => { G.DB.save.partner = 4; G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.MenuUI.open(); });

@@ -21,7 +21,7 @@
 //   7. The built index.html (node fork/build.cjs first), through the UI only, Firebase blocked:
 //      a guest who did the test is back on the menu with the same partner after a reload, and
 //      after the real updater reloads for a newer version.json.
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
   databaseURL: 'http://127.0.0.1:9000?ns=demo-ps-default-rtdb', emulator: true };`;
@@ -279,12 +279,7 @@ const RULE_GAP = () => new Promise(res => setTimeout(res, 21000));
     await w.goto(BASE + '/index.html', { waitUntil: 'load' });
     await pastStart(w, '#btn-guest');
     await w.click('#btn-guest');
-    await w.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
-    for (let i = 0; i < 20 && !(await w.isVisible('#scr-result')); i++) {
-      await w.click('#test-a button >> nth=0').catch(() => {});
-      await w.waitForTimeout(250);
-    }
-    await w.click('#res-ok');
+    await pickStarter(w);   // a new player's first screen (js/fork/starter-pick.js)
     await w.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
     const mon = (await w.textContent('#menu-partner-name')).trim();
     await w.reload({ waitUntil: 'load' });

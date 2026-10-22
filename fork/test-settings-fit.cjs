@@ -11,7 +11,7 @@
 //   2. A real click on the dimmed backdrop closes Settings (js/ui/settings-ui.js); a click inside the box
 //      doesn't, and dragging the Radiant glow slider out of the box and letting go there doesn't either.
 //   3. The built index.html at 4K, as a player gets there (the gear button): it fits, the backdrop closes it.
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOTS = process.env.SHOTS;
 
@@ -28,7 +28,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB && G.UIScale, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await page.evaluate(() => { G.UI.hideAll(); G.Game.toUI(); });
     return page;
   }
@@ -91,12 +91,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await built.goto(BASE + '/index.html', { waitUntil: 'load' });
     await pastStart(built, '#btn-guest');
     await built.click('#btn-guest');
-    // A new guest: the personality test first (first answer each time), then its partner, then the menu.
-    await built.waitForSelector('#test-a .answer', { timeout: 30000 });
-    for (let i = 0; i < 40 && await built.evaluate(() => !!document.querySelector('#scr-test:not(.hidden) #test-a .answer')); i++) {
-      await built.evaluate(() => document.querySelector('#test-a .answer').click()); await built.waitForTimeout(80);
-    }
-    await built.click('#res-ok');
+    // A new guest: the grid of starters first (js/fork/starter-pick.js), then the menu.
+    await pickStarter(built);
     await built.waitForSelector('#btn-settings', { state: 'visible', timeout: 30000 });
     await built.click('#btn-settings');
     await built.waitForSelector('#scr-settings:not(.hidden)');

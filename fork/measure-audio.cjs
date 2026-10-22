@@ -62,7 +62,7 @@ const BASE = process.argv[2] || 'http://127.0.0.1:8123';
   await page.waitForTimeout(1500); await take('(warm-up)');
   await page.waitForTimeout(6000); const menu = await take('menu music');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible' });
+  await page.waitForSelector('#scr-starters', { state: 'visible' });
   await page.evaluate(() => { G.DB.save.partner = 4; G.Game.startRun(); });
   await page.waitForFunction(() => G.Game.state === 'playing');
   await page.waitForTimeout(2000); await take('(run start)');

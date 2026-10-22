@@ -44,7 +44,7 @@ const LIKE = { recoil: 'dash', ramp: 'melee', leap: 'meteor', sleep: 'stun', wav
   await page.waitForFunction(() => window.G && G.DB && G.Game && G.Lab, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(() => {
     G.DB.save.owned[151] = { at: 1 }; G.DB.save.partner = 151; G.Settings.set('lab', true); G.MenuUI.open(); G.Game.startRun();
   });

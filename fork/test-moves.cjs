@@ -96,7 +96,7 @@ async function solo(browser) {
   await page.waitForFunction(() => window.G && G.DB && G.DB.playAsGuest && G.Game && G.EnemyMgr, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   // Gengar (Ghost/Poison): learns Hex.
   await page.evaluate(() => { G.DB.save.partner = 94; G.DB.save.owned[94] = G.DB.save.owned[94] || { at: Date.now() }; G.Flow.goMenu(); G.Game.startRun(null, { dex: 94, shiny: false }); });
   await page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player && G.Game.player.activeMove(), null, { timeout: 30000 });

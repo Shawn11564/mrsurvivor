@@ -35,7 +35,7 @@ async function open(browser, live) {
   await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.Radiant, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(() => {
     const s = G.DB.save;
     for (const d of [4, 7, 10, 13, 16, 19, 21, 23, 27, 29, 32, 35, 37, 39, 41, 43, 46, 48, 50, 52]) G.DB.grantShiny(d, 'test');

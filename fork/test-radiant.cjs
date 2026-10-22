@@ -20,7 +20,7 @@
 //      with a black or dark-grey body and a red tail attacks in red); in a Lab run a radiant's
 //      moves take its radiant palette and it gets the radiant's extras, not the shiny's, even if you own
 //      the shiny and had picked it.
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const FAKE = { 1: {}, 4: {}, 6: { lab: ['SpAttack'], mega: true } };
 
@@ -45,7 +45,7 @@ async function open(browser, list) {
   await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.Radiant, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(() => {
     const s = G.DB.save;
     for (const d of [4, 7, 10, 13, 16, 19, 21, 23, 27, 29, 32, 35, 37, 39, 41, 150]) G.DB.grantShiny(d, 'test');
@@ -250,12 +250,7 @@ const pickCells = (page, dexes) => (async () => { for (const d of dexes) await p
   await built.goto(BASE + '/index.html', { waitUntil: 'load' });
   await pastStart(built, '#btn-guest');
   await built.click('#btn-guest');
-  await built.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
-  for (let i = 0; i < 20 && !(await built.isVisible('#scr-result')); i++) {
-    await built.click('#test-a button >> nth=0').catch(() => {});
-    await built.waitForTimeout(250);
-  }
-  await built.click('#res-ok');
+  await pickStarter(built);   // a new player's first screen (js/fork/starter-pick.js)
   await built.waitForSelector('#menu-radiant', { state: 'visible', timeout: 15000 });
   await built.click('#menu-radiant');
   await built.waitForSelector('#scr-radiant', { state: 'visible' });

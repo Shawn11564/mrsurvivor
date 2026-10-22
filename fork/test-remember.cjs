@@ -10,27 +10,25 @@
 //      the name pill (Profile) uses and remembers Profile.
 //   3. The Pokémon screen keeps its generation, filters and sort after a reload (not the search).
 //   4. The same on the built index.html.
-const { chromium, pastStart } = require('./pw.cjs');
+const { chromium, pastStart, pickStarter } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 
 let failures = 0;
 const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (extra !== undefined ? ' (' + JSON.stringify(extra) + ')' : '')); if (!ok) failures++; };
 
-// Into the menu as a guest. dev.html skips the starter quiz; the built page answers it.
+// Into the menu as a guest. dev.html skips the starter grid; the built page picks the first starter.
+// After a reload a guest goes straight back to the menu (js/fork/guest-save.js): nothing to click then.
 async function toMenu(page, file) {
   await page.goto(BASE + '/' + file, { waitUntil: 'load' });
   if (file === 'dev.html') await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.SettingsUI, null, { timeout: 30000 });
-  await pastStart(page, '#btn-guest');
+  await pastStart(page, '#btn-guest, #scr-menu');
+  if (await page.isVisible('#scr-menu')) return;
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
   if (file === 'dev.html') {
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await page.evaluate(() => { G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.DB.save.partner = 4; G.MenuUI.open(); });
   } else {
-    for (let i = 0; i < 20 && !(await page.isVisible('#scr-result')); i++) {
-      await page.click('#test-a button >> nth=0').catch(() => {});
-      await page.waitForTimeout(250);
-    }
-    await page.click('#res-ok');
+    await pickStarter(page);   // a new player's first screen (js/fork/starter-pick.js)
   }
   await page.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
 }

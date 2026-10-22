@@ -36,7 +36,7 @@ async function menu(browser, { partner = 4, lab = true } = {}) {
   await page.waitForFunction(() => window.G && G.DB && G.MenuUI && G.LabUnderdog, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(({ partner, lab }) => {
     const s = G.DB.save;
     for (const d of [4, 6, 10]) G.DB.grant(d, 'test');

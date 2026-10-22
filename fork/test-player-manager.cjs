@@ -16,7 +16,7 @@
 //      the player (online, in the menu) gets them at once with a message.
 //   4. Delete: Cancel keeps it, Delete removes it (the confirmation comes first, always).
 //   5. Reset Pokémon, coins and tickets: typing the name to confirm; the player's game reloads
-//      into the personality test with 500 coins; their public profile's favourites are cleared.
+//      into the starter grid with 500 coins; their public profile's favourites are cleared.
 //   6. Status of a solo run, then Join run: the player's game opens a closed room, the admin
 //      joins it as a co-op teammate next to them, sees the enemies already there; their run is
 //      no longer ranked.
@@ -241,7 +241,7 @@ async function pickCards(pages) {
     if (reloaded) {
       await pastStart(p1, '#scr-test, #scr-menu, #scr-starters', 60000).catch(() => {});
       check(await settle(p1, () => G.DB.save && G.DB.save.coins === 500 && Object.keys(G.DB.save.owned).length === 0 && (G.UI.isOpen('scr-test') || G.UI.isOpen('scr-starters')), null, 20000),
-        'and lands in the personality test with 500 coins and no Pokémon', await p1.evaluate(() => G.DB.save && { coins: G.DB.save.coins, owned: Object.keys(G.DB.save.owned).length }));
+        'and lands in the starter grid with 500 coins and no Pokémon', await p1.evaluate(() => G.DB.save && { coins: G.DB.save.coins, owned: Object.keys(G.DB.save.owned).length }));
     }
 
     // ---------------- 6. a solo run: status and Join ----------------

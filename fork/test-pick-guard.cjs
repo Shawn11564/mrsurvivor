@@ -23,7 +23,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     // The level-up screen, and the moment its cards showed (the guard starts there).
     await page.evaluate(async () => {
       G.DB.grant(4, 't'); G.DB.save.partner = 4; G.Settings.set('lab', false); G.DB.commit();

@@ -28,7 +28,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB && G.LabMoves, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     const strike = id => page.evaluate(async id => {
       G.Settings.set('lab', true); G.Settings.set('underdogLadder', false); G.DB.grant(487, 't');
       if (G.Game.player && G.Game.state !== 'ui') G.Game.quit();

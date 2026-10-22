@@ -116,11 +116,14 @@ label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
   let st = null;                                  // /api/state
   const found = [];                               // checked Pokémon from the zips
 
-  // ---------------- odds (same weights as the game, js/fork/radiant.js WEIGHT) ----------------
+  // ---------------- odds (as the game, js/fork/radiant.js SHARE) ----------------
+  // Each rarity tier that has radiants gets its share (the empty ones' goes to the rest), split
+  // evenly among the radiants in it.
   function odds(pool) {                           // { dex: rarity } -> { dex: % }
-    const w = d => st.weights[pool[d]] || st.weights[1];
-    const sum = Object.keys(pool).reduce((s, d) => s + w(d), 0);
-    const out = {}; for (const d in pool) out[d] = sum ? 100 * w(d) / sum : 0;
+    const tierOf = d => (st.weights[pool[d]] ? pool[d] : 1), n = {};
+    for (const d in pool) n[tierOf(d)] = (n[tierOf(d)] || 0) + 1;
+    const sum = Object.keys(n).reduce((s, t) => s + st.weights[t], 0);
+    const out = {}; for (const d in pool) out[d] = sum ? 100 * st.weights[tierOf(d)] / sum / n[tierOf(d)] : 0;
     return out;
   }
   const pct = v => v.toFixed(1) + '%';
@@ -130,7 +133,7 @@ label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
     const list = st.radiants, ds = Object.keys(list).map(Number).sort((a, b) => a - b);
     if (!ds.length) { $('current').innerHTML = '<p class="sub">None yet. The ritual has nothing to give until one is published.</p>'; return; }
     const o = odds(Object.fromEntries(ds.map(d => [d, list[d].rarity])));
-    $('current').innerHTML = `<table><thead><tr><th>Pokémon</th><th>Sheets</th><th>Rarity (ritual weight)</th><th>Ritual odds</th></tr></thead><tbody>` +
+    $('current').innerHTML = `<table><thead><tr><th>Pokémon</th><th>Sheets</th><th>Rarity (ritual tier)</th><th>Ritual odds</th></tr></thead><tbody>` +
       ds.map(d => `<tr data-dex="${d}"><td>${esc((DEX[d] || {}).name || '#' + d)} <span class="sub">#${d}</span></td>` +
         `<td class="sub">standard${list[d].lab ? ', Lab' : ''}${list[d].mega ? ', Mega' : ''}</td><td>${raritySelect(list[d].rarity, 'cur-rar')}</td><td class="n">${pct(o[d])}</td></tr>`).join('') +
       `</tbody></table><div class="row"><button id="save-rar" disabled>Save rarities</button><span class="sub" id="rar-note"></span></div>`;

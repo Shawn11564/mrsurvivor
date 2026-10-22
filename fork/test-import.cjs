@@ -145,7 +145,7 @@ async function register(page, base, file, name, pass) {
 
     // Reload: the imported save is what loads.
     await page.reload({ waitUntil: 'load' });
-    await pastStart(page, '#scr-menu, #scr-test');
+    await pastStart(page, '#scr-menu, #scr-starters');
     await page.waitForFunction(() => window.G && G.DB && G.DB.loggedIn, null, { timeout: 20000 });
     const reloaded = await page.evaluate(() => ({ owned: Object.keys(G.DB.save.owned).length, coins: G.DB.save.coins }));
     check(reloaded.owned === after.owned.length && reloaded.coins === after.coins, 'the import is still there after a reload');

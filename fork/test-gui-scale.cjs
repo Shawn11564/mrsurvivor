@@ -38,7 +38,7 @@ const near = (a, b) => Math.abs(a - b) < 1e-6;
     await page.waitForFunction(() => window.G && G.DB && G.UIScale && G.OverFit, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await page.evaluate(v => {
       const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.owned[25] = { at: Date.now() }; s.partner = 4; s.starter = 4; s.coins = 5000;
       G.Settings.set('lab', false); G.DB.commit();

@@ -27,4 +27,17 @@ async function pastStart(page, sel, ms = 90000) {
   }
 }
 
-module.exports = { chromium, pastStart };
+/**
+ * A new player's first screen after logging in: the grid of starters (js/fork/starter-pick.js; it was a
+ * personality test). Picks the first one (or the one whose dex is given) and waits for the menu.
+ */
+async function pickStarter(page, dex = null) {
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 30000 });
+  const cells = page.locator('#starter-grid .cell');
+  if (dex == null) await cells.first().click();
+  else await page.evaluate(d => { const i = G.STARTERS.findIndex(s => s.dex === d); document.querySelectorAll('#starter-grid .cell')[i].click(); }, dex);
+  await page.click('#starter-ok');
+  await page.waitForSelector('#scr-menu', { state: 'visible', timeout: 30000 });
+}
+
+module.exports = { chromium, pastStart, pickStarter };

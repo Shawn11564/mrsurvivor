@@ -65,7 +65,7 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
     let g = await game(browser);
     await g.page.evaluate(() => G.AssetOverrides.loaded);
     await pastStart(g.page, '#btn-guest'); await g.page.click('#btn-guest');
-    await g.page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await g.page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await startRun(g.page, 4);
     await g.page.waitForTimeout(800);
     const idle = g.reqs.filter(u => /assets\/pokemon\/4\/Idle\.png/.test(u)), walk = g.reqs.filter(u => /assets\/pokemon\/4\/Walk\.png/.test(u));
@@ -111,7 +111,7 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
       // Until a card's chip has a green arrow (Charmander: a Fire or a special move).
       for (let i = 0; i < 60; i++) { G.RunUI.showLevelUp(p.level, G.LevelUp.offer(p), () => {}); if ([...document.querySelectorAll('#cards .lb-a')].some(a => /code\/lb-g\.png/.test(a.getAttribute('src')))) break; } });
     const card = await g.page.$$eval('#cards .lb-a', as => as.filter(a => /code\/lb-g\.png/.test(a.getAttribute('src'))).map(a => [a.getAttribute('src').split('/').pop(), a.width, a.height]));
-    check(card.length && card.every(([, w, h]) => w === 9 && h === 9), 'a Lab card\'s green arrow is the PNG, at half its 18×18', card);
+    check(card.length && card.every(([, w, h]) => w === 12 && h === 12), 'a Lab card\'s green arrow is the PNG, at 2/3 of its 18×18 (the cards\' are a bit bigger since 45a4722)', card);
     check(!g.errs.length, 'no page errors', g.errs);
     await g.ctx.close();
 
@@ -126,7 +126,7 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
     console.log('   asked for before the list came in');
     g = await game(browser, { hold: true });
     await pastStart(g.page, '#btn-guest'); await g.page.click('#btn-guest');
-    await g.page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await g.page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
     await startRun(g.page, 4);
     await g.page.waitForTimeout(600);
     const before = g.reqs.filter(u => /4\/Idle\.png/.test(u));
@@ -149,7 +149,7 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
       await page.route('**/assets/icons/code/*.png*', r => r.fulfill({ contentType: 'image/png', body: solid(48, 48, [255, 0, 200, 255]) }));
       await page.goto(BASE + '/index.html', { waitUntil: 'load' });
       await pastStart(page, '#btn-guest'); await page.click('#btn-guest');
-      await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+      await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
       await page.waitForTimeout(800);
       const has = re => reqs.some(u => re.test(u));
       check(has(/js\/fork\/asset-rev\.json\?t=/) && has(/js\/fork\/icon-overrides\.json\?t=/) && has(/assets\/icons\/code\/coin\.png\?v=1111111111/) && !has(/evil\.png/),
@@ -172,7 +172,7 @@ const startRun = (page, dex, lab = false) => page.evaluate(([dex, lab]) => {
         await page.evaluate(() => G.AssetOverrides.loaded);
         // The first time as a guest; after that the guest's save opens the menu.
         await pastStart(page, '#btn-guest, #scr-menu');
-        if (await page.isVisible('#btn-guest')) { await page.click('#btn-guest'); await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 }); }
+        if (await page.isVisible('#btn-guest')) { await page.click('#btn-guest'); await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 }); }
         await startRun(page, 4);
         await page.waitForFunction(() => G.Sprites.sheet(4, 'Idle').ready, null, { timeout: 15000 });
         return page.evaluate(async () => (await (await caches.open('ps-art-v1')).keys()).map(r => r.url).filter(u => /pokemon\/4\/Idle\.png/.test(u)));

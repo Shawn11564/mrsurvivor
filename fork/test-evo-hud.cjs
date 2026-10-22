@@ -33,7 +33,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForFunction(() => window.G && G.DB && G.LabEvoHud, null, { timeout: 30000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
 
     const start = (dex, lab = true) => page.evaluate(([dex, lab]) => {
       if (G.Game.player && G.Game.state !== 'ui') G.Game.quit();

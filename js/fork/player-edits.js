@@ -128,7 +128,7 @@ G.PlayerEdits = (() => {
     if (isObj(s.lab)) { delete s.lab.candy; delete s.lab.cpts; }
     fixPartner(s);
     fixFavs(s);
-    // With nothing left, the personality test runs again and gives a starter.
+    // With nothing left, the starter grid comes back (js/fork/starter-pick.js).
     if (!Object.keys(owned).length) { s.partner = null; s.partnerShiny = false; s.starter = null; s.personality = null; }
   }
 

@@ -36,7 +36,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   await page.waitForFunction(() => window.G && G.DB && G.Game && G.Lab && G.LabKinds2, null, { timeout: 60000 });
   await pastStart(page, '#btn-guest');
   await page.click('#btn-guest');
-  await page.waitForSelector('#scr-test', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 15000 });
   await page.evaluate(() => {
     for (const d of [4, 448]) G.DB.save.owned[d] = { at: Date.now() };
     G.DB.save.partner = 448; G.Settings.set('lab', true); G.MenuUI.open();

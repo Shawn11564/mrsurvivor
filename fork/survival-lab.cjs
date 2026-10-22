@@ -67,7 +67,7 @@ async function oneRun(browser, b) {
     await page.waitForFunction(() => window.G && G.DB && G.Game && G.Lab, null, { timeout: 60000 });
     await pastStart(page, '#btn-guest');
     await page.click('#btn-guest');
-    await page.waitForSelector('#scr-test', { state: 'visible', timeout: 30000 });
+    await page.waitForSelector('#scr-starters', { state: 'visible', timeout: 30000 });
     await page.evaluate(() => {
       G.DB.save.owned[151] = { at: 1 }; G.DB.save.partner = 151; G.Settings.set('lab', true);
       G.Settings.set('underdogLadder', false); G.MenuUI.open(); G.Game.startRun();
