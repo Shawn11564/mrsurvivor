@@ -9,8 +9,12 @@
 //   2. A solo Lab run, played a while (level, moves levelled and evolved, a card, time, position):
 //      reloading the page offers "Unfinished Lab run" with the Pokémon, time and level; Resume puts
 //      it all back (and the same map), and the offer is gone.
-//   3. Again, then "End run": the run ends at once with its rewards (coins for the time), and
-//      nothing is left to resume.
+//   3. Again, then "End run": the run is just forgotten (you stay on the menu, it never starts, no
+//      summary or coins), and nothing is left to resume.
+//   4. A run you fell in can't be resumed: reloaded on the summary (a forced update), on the menu
+//      (an update) or while fainting, nothing is offered.
+//   5. Nor one you quit.
+//   6. The Revive card gets you up and the run stays resumable.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 
@@ -31,7 +35,12 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.evaluate(() => { const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.partner = 4; s.starter = 4; G.DB.commit(); G.Flow.goMenu(); });
     const start = lab => page.evaluate(lab => { G.Settings.set('lab', lab); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, lab)
       .then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 15000 }))
-      .then(() => page.evaluate(() => { G.Spawner.update = () => {}; const p = G.Game.player; (function alive() { if (G.Game.player !== p) return; p.invuln = 99; p.xpMul = 0; /* no level-up screen: nothing is saved while one is open */ requestAnimationFrame(alive); })(); }));
+      .then(() => page.evaluate(() => { G.Spawner.update = () => {}; const p = G.Game.player; (function alive() { if (G.Game.player !== p || p._mortal) return; p.invuln = 99; p.xpMul = 0; /* no level-up screen: nothing is saved while one is open */ requestAnimationFrame(alive); })(); }));
+    // Waits for a save newer than now (none during the start countdown: up to ~8 s after starting).
+    const savedNow = () => page.waitForFunction(t => { const r = G.Resume.read(); return r && r.at > t; }, Date.now() + 100, { timeout: 15000 }).then(() => true, () => false);
+    // Knocks the player down the way the game does (a hit), Focus Sash and invulnerability aside.
+    const kill = () => page.evaluate(() => { const p = G.Game.player; p._mortal = true; p.invuln = 0; p.sashT = performance.now(); p.hurt(p.maxHp * 100, null, true); return p.dead; });
+    const offered = async () => { await page.waitForTimeout(800); return !!(await page.$('#resume-box')) || !!(await page.evaluate(() => G.Resume.read())); };
     const reload = async () => {
       await page.reload({ waitUntil: 'load' });
       await page.waitForFunction(() => window.G && G.DB && G.DB.save && G.DB.guest && G.Resume, null, { timeout: 30000 });
@@ -87,14 +96,66 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       judge: !!(G.Judgment && G.Judgment.active), dead: G.Game.player && G.Game.player.dead, coop: G.Coop.active, ui: [...document.querySelectorAll('section.scr:not(.hidden)')].map(x => x.id) }))) + ')');
     await reload();
     await page.waitForSelector('#resume-box', { timeout: 8000 });
-    const c0 = await page.evaluate(() => G.DB.save.coins);
+    const c0 = await page.evaluate(() => ({ coins: G.DB.save.coins, runs: G.DB.save.stats.runs }));
+    // Watched from before the click: the run must never start, not even for a frame.
+    await page.evaluate(() => { window.__states = []; (function watch() { window.__states.push(G.Game.state); if (window.__states.length < 120) requestAnimationFrame(watch); })(); });
     await page.click('#resume-box [data-e]');
-    const over = await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 15000 }).then(() => true, () => false);
-    const c1 = await page.evaluate(() => G.DB.save.coins);
-    check(over && c1 - c0 >= 80, 'End run: the run ends with its rewards (coins for 6+ minutes)', { gained: c1 - c0 });
+    await page.waitForTimeout(2500);
+    const ended = await page.evaluate(() => ({ coins: G.DB.save.coins, runs: G.DB.save.stats.runs, states: [...new Set(window.__states)], player: !!G.Game.player,
+      menu: G.UI.isOpen('scr-menu'), box: !!document.getElementById('resume-box'), left: !!G.Resume.read() }));
+    check(ended.states.join() === 'ui' && ended.menu && !ended.box && !ended.left, 'End run: the menu stays, the run never starts, and the save is gone', ended);
+    check(ended.coins === c0.coins && ended.runs === c0.runs, 'and it isn\'t played out (no summary, no end-of-run coins)', { before: c0, after: ended });
     await reload();
     await page.waitForTimeout(800);
     check(!(await page.$('#resume-box')) && !(await page.evaluate(() => G.Resume.read())), 'and there is nothing left to resume');
+
+    // A run that ended (you fell, or quit) is over even if the page reloads straight after: an update
+    // reloads on the summary at once (forced) or on the menu (js/core/updater.js), sooner than the 5 s save.
+    console.log('4. A run you fell in can\'t be resumed');
+    await start(true);
+    check(await savedNow(), 'saved before falling');
+    check(await kill(), 'down');
+    await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 15000 });
+    await reload();
+    check(!(await offered()), 'reloaded on the summary (a forced update): nothing to resume');
+
+    await page.evaluate(() => G.Flow.goMenu());
+    await start(true);
+    check(await savedNow(), 'saved before falling');
+    await kill();
+    await page.waitForFunction(() => G.Game.state === 'over', null, { timeout: 15000 });
+    await page.click('#btn-again');
+    await page.waitForFunction(() => G.Game.state === 'ui', null, { timeout: 15000 });
+    await reload();
+    check(!(await offered()), 'back to the menu, then reloaded (an update): nothing to resume');
+
+    await page.evaluate(() => G.Flow.goMenu());
+    await start(true);
+    check(await savedNow(), 'saved before falling');
+    await kill();
+    check(await page.evaluate(() => G.Game.state !== 'over'), 'still fainting (before the summary)');
+    await reload();
+    check(!(await offered()), 'reloaded while fainting: nothing to resume');
+
+    console.log('5. A run you quit can\'t be resumed');
+    await page.evaluate(() => G.Flow.goMenu());
+    await start(true);
+    check(await savedNow(), 'saved before quitting');
+    await page.evaluate(() => G.Game.quit());
+    await reload();
+    check(!(await offered()), 'quit, then reloaded: nothing to resume');
+
+    console.log('6. The Revive card keeps the run going, and resumable');
+    await page.evaluate(() => G.Flow.goMenu());
+    await start(true);
+    check(await savedNow(), 'saved');
+    await page.evaluate(() => { G.Game.player.selfRevive = 1; });
+    await kill();
+    const up = await page.evaluate(() => new Promise(r => setTimeout(() => r({ dead: G.Game.player.dead, left: !!G.Resume.read() }), 50)));
+    check(!up.dead && up.left,'got back up with the card, and the run is still saved (as it was before the fall)', up);
+    check(await savedNow(), 'and it saves again');
+    await page.evaluate(() => G.Game.quit());
+
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

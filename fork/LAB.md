@@ -398,10 +398,15 @@ A solo Lab run is saved in the browser every 5 s and when the tab closes (`js/fo
 `localStorage ms.resume`; not in a rift, before Arceus, or with a choice screen open). Back at the menu,
 "Unfinished Lab run" offers **Resume** (time, map seed, position, level, HP, multipliers, cards, moves
 with levels and evolutions, slots, item, bonds, coins and the `_lab*` state come back; enemies start
-fresh at that hour) or **End run** (resumed and ended at once, with the usual rewards). Tickets were
+fresh at that hour) or **End run** (since 2026-10-22 the save is just deleted: you stay on the menu and the run never
+starts, so no summary and no end-of-run coins; before, it was resumed and quit at once). Tickets were
 banked when picked up, so they don't count again. The clock is set with `debugTime` (no leaderboard;
-Lab never counts anyway). Co-op can't be resumed: the host runs it. `node fork/test-resume.cjs`
-(server) reloads a real page.
+Lab never counts anyway). Co-op can't be resumed: the host runs it. A run that ended can't be
+resumed either: the save is deleted the moment you fall (unless the Revive card gets you up; falling
+in the rift arena doesn't count) and when the summary shows, quitting included. Before 2026-10-22 it was
+only deleted by the 5 s save, so an update that reloaded the page on the summary or the menu brought a
+dead run back. `node fork/test-resume.cjs` (server) reloads a real page, including after falling,
+fainting and quitting.
 
 ## Mega and Primal rift legendaries (2026-10-21, from doofcraft)
 
