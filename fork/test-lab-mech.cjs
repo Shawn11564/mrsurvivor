@@ -30,6 +30,10 @@
 // evos     B1: Hail evolves into Avalanche (×2 right after you were hit), Flail into Endeavor (an
 //          enemy down to your share of HP, a boss at most 8% more), Whirlwind into Tailwind (×1.3
 //          speed). (Future Sight, Stealth Rock, Sticky Web, Venoshock, Belly Drum: their sections.)
+// fields   B1: every field-less move (and the shoves) has a Lab field and a note; the five spins and
+//          four shoves all differ; Rapid Spin's speed, Vacuum Wave point-blank, Disarming Voice and
+//          Night Slash marks, Hydro Pump's push, Night Shade's level, crits, paralysis, Ancient
+//          Power's boost, Whirlwind's gust, Magnitude's spread; a normal run has none of it.
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -466,7 +470,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       const T = m => G.T(m.name, 'move');
       // Avalanche: Hail evolved, ×2 if you were just hit.
       const [av] = __only(['hail'], { lvl: 5, evolve: true });
-      out.av = T(av);
+      out.av = T(av); av.count = 1;          // one hailstone, on the dummy (the others fall at random)
       const once = async (prep) => { G.EnemyMgr.clear(); const e = __dummy(...__at(90)); pl.target = e; prep(); const d0 = av.dealt || 0; await __fire(av, 900); return (av.dealt || 0) - d0; };
       out.calm = await once(() => { pl._labHurtAt = 0; });
       out.hurt = await once(() => { pl._labHurtAt = performance.now(); });
@@ -495,6 +499,68 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(r.en === 'Endeavor' && /share of HP/.test(r.enTip) && r.enShare <= 0.301, `Flail evolves into Endeavor: at 30% HP one hit leaves an enemy at ${r.enShare * 100}% of its HP`, r);
     check(r.bossShare >= 0.9, `a boss loses at most 8% more (${(r.bossShare * 100).toFixed(1)}% left)`, r);
     check(r.tw === 'Tailwind' && Math.abs(r.twK - 1.3) < 0.02, `Whirlwind evolves into Tailwind: ×${r.twK} speed after a gust`, r);
+  }
+
+  // ---------------- B1 one field each for the moves that had none ----------------
+  if (want('fields')) {
+    console.log('B1 fields for the field-less moves');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, M = G.LabMech, out = {};
+      const NONE = ['hydro-pump', 'razor-leaf', 'leaf-storm', 'giga-drain', 'discharge', 'psybeam', 'bug-buzz', 'dragon-rage', 'fairy-wind',
+        'dazzling-gleam', 'flash-cannon', 'night-shade', 'psycho-cut', 'spikes', 'substitute', 'hyper-beam', 'rapid-spin', 'whirlpool',
+        'solar-beam', 'sand-tomb', 'magnitude', 'ancient-power', 'rolling-kick', 'ominous-wind', 'outrage', 'gyro-ball', 'night-slash'];
+      const SHOVES = ['extrasensory', 'whirlwind', 'vacuum-wave', 'disarming-voice'];
+      const sig = id => { const m = G.Moves.instance(id, 1), d = G.Moves.BY_ID[id]; return Object.keys(m).filter(k => !(k in d) && !['def', 'lvl', 't', 'labId'].includes(k)).sort().join(','); };
+      out.missing = NONE.concat(SHOVES).filter(id => !sig(id) || !M.noteOf(G.Moves.instance(id, 1)));
+      out.spins = ['rapid-spin', 'rolling-kick', 'outrage', 'gyro-ball', 'night-slash'].map(sig);
+      out.shoves = SHOVES.map(sig);
+      const one = async (id, prep = () => {}, at = 60, o = {}) => {
+        const [m] = __only([id], o); prep(m);
+        const e = __dummy(...__at(at)); pl.target = e; pl.aim = 0;
+        const d0 = m.dealt || 0, x0 = e.x;
+        await __fire(m, o.ms || 350);
+        return { m, e, d: (m.dealt || 0) - d0, moved: Math.round(e.x - x0) };
+      };
+      // Each new kind of field once, through a real cast.
+      out.rapid = await one('rapid-spin').then(() => !!(pl._labHaste && pl._labHaste.k === 0.2));
+      const near = await one('vacuum-wave', () => {}, 30), far = await one('vacuum-wave', () => {}, 85);
+      out.vacuum = +(near.d / far.d).toFixed(2);
+      out.disarm = await one('disarming-voice').then(x => !!x.e._meek);
+      out.slash = await one('night-slash', () => {}, 40, { ms: 700 }).then(x => !!(x.e._weak && x.e._weak.cat === 'physical'));
+      out.hydro = (await one('hydro-pump', () => {}, 100)).moved;
+      out.shade = await (async () => { pl.level = 1; const a = await one('night-shade', () => {}, 40); pl.level = 41; const b = await one('night-shade', () => {}, 40); pl.level = 1; return Math.round(b.d - a.d); })();
+      out.crit = await (async () => { const a = await one('razor-leaf', m => { m.crit = 0; }, 80, { ms: 900 }), b = await one('razor-leaf', m => { m.crit = 1; }, 80, { ms: 900 }); return +(b.d / a.d).toFixed(2); })();
+      out.para = await one('discharge', m => { m.para = 1; }).then(x => x.e.stunT > 0);
+      out.omni = await one('ancient-power', m => { m.omni = 1; }, 70, { ms: 1200 }).then(() => pl.buffs.patk.n > 0 && pl.buffs.satk.n > 0);
+      // Whirlwind blows away the shots around you.
+      const [ww] = __only(['whirlwind']);
+      const shooter = __dummy(...__at(60)); pl.target = shooter;
+      for (let i = 0; i < 4; i++) G.Projectiles.spawn({ x: pl.x + 40 + i * 5, y: pl.y + 20, vx: -1, vy: 0, dmg: 5, r: 4, life: 5, friendly: false, color: '#fff', hits: new Set() });
+      const before = G.Projectiles.all().filter(p => !p.friendly).length;
+      await __fire(ww, 200);
+      out.gust = [before, G.Projectiles.all().filter(p => !p.friendly).length];
+      // Magnitude: the damage changes from one quake to the next.
+      const ds = [];
+      for (let i = 0; i < 6; i++) ds.push(Math.round((await one('magnitude', () => {}, 60, { ms: 700 })).d));
+      out.mag = ds;
+      return out;
+    });
+    check(!r.missing.length, 'all 27 field-less moves and the 4 shoves have a Lab field and a note in their box', r.missing);
+    check(new Set(r.spins).size === 5 && new Set(r.shoves).size === 4, `the five spins (${r.spins.join(' / ')}) and the four shoves (${r.shoves.join(' / ')}) are no longer interchangeable`);
+    check(r.rapid, 'Rapid Spin gives you +20% speed');
+    check(r.vacuum > 1.25, `Vacuum Wave hits harder point-blank (×${r.vacuum} at 30 px against 85 px)`);
+    check(r.disarm && r.slash, 'Disarming Voice makes them deal less; Night Slash makes them take more from physical moves');
+    check(r.hydro > 20, `Hydro Pump pushes the enemy back (${r.hydro} px)`);
+    check(r.shade >= 15, `Night Shade adds half your level (+${r.shade} at level 41)`);
+    check(Math.abs(r.crit - 1.5) < 0.05, `Razor Leaf's crits (×${r.crit})`);
+    check(r.para && r.omni, 'Discharge can paralyze; Ancient Power can raise Attack and Sp. Atk');
+    check(r.gust[0] === 4 && r.gust[1] === 0, `Whirlwind blows away the enemy shots around you (${r.gust[0]} → ${r.gust[1]})`);
+    check(new Set(r.mag).size >= 2, `Magnitude's damage changes from quake to quake (${r.mag})`);
+
+    await start(false);
+    const n = await page.evaluate(() => ['rapid-spin', 'vacuum-wave', 'hydro-pump', 'magnitude'].map(id => { const m = G.Moves.instance(id, 1); return !!(m.haste || m.close || m.labKnock || m.magnitude || m.labId); }));
+    check(n.every(x => !x), 'in a normal run the same moves have no Lab field', n);
   }
 
   // ---------------- the built game ----------------

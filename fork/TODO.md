@@ -55,7 +55,7 @@ How to use it:
 - [ ] 24. [feat] G12: once 23's targets are met, promote the Phase 9 close-range kit and the spin/dash/recoil cut to normal runs (claimed: stream A)
 
 ### Move diversity (stream B)
-- [ ] 25. [lab] B1: honest evolutions (Future Sight, Stealth Rock, Venoshock, Belly Drum, Avalanche, Endeavor, Tailwind) (claimed: stream B-moves)
+- [x] 25. [lab] B1: honest evolutions (Future Sight, Stealth Rock, Venoshock, Belly Drum, Avalanche, Endeavor, Tailwind) (009bec2)
 - [ ] 26. [lab] B1: the 26 field-less moves get one field each (spins and shoves first) (claimed: stream B-moves)
 
 ## Phase 3: builds

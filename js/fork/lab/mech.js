@@ -42,6 +42,12 @@
  *    tailwind        (Whirlwind's evolution Tailwind) each cast: +tailwind speed for TAIL_T s, for you
  *                    and the teammates near you (they get it from your ghost cast).
  *    revenge         kinds2.js's ×2 after a hit you took (Hail's evolution Avalanche): shown here.
+ *    B1 fields (the moves that had none): haste (+speed per cast), weakHit / meekHit (kinds2.js's
+ *                    weak / meek marks on what it hits, 4 s), crit (+crit chance), para (stun chance),
+ *                    omni (chance of +Attack and +Sp. Atk), levelDmg (+ your level x it), close (x
+ *                    up to 1 + close point-blank), labKnock (knockback for kinds that pass none),
+ *                    gust (clears enemy shots around you), magnitude (random x per cast); and the
+ *                    fields that already existed (slow, burn, knock, flinch, revenge, conf, leech).
  *    combo     B3.7  ×2 damage and ×1.4 radius when the partner move (`combo`: its id) was cast in
  *                    the last COMBO_MS by anyone (you, or a teammate's ghost cast): Fusion Flare and
  *                    Fusion Bolt. `pledge`: a Pledge cast within COMBO_MS of a different one makes a
@@ -66,10 +72,49 @@ G.LabMech = (() => {
 
   // ---------------- 1. identity of the normal game's moves (Lab runs) ----------------
   const ID = {
+    // ---- B1: the normal game's moves that had no field of their own (one each, Lab only) ----
+    // The five spins and four shoves first: they were interchangeable.
+    'rapid-spin': { add: { haste: 0.2, hasteT: 1.5 },
+      upsAt: { 4: { t: '-25% recharge, +30% damage, and the speed burst lasts 3 s', m: { cd: 0.75, dmg: 1.3, hasteT: 3 } } },
+      note: 'Lab: each spin also gives you +20% speed for 1.5 s.' },
+    'rolling-kick': { add: { flinch: 0.5 },
+      note: 'Lab: the first kick on each enemy stuns it for 0.5 s.' },
+    'outrage': { add: { revenge: 1.5 },
+      note: 'Lab: ×1.5 damage if an enemy hit you in the last 1.5 s.' },
+    'gyro-ball': { add: { slow: 0.35 },
+      note: 'Lab: the heavy steel spin slows what it hits.' },
+    'night-slash': { add: { weakHit: 0.2, weakCat: 'physical' },
+      note: 'Lab: what it cuts takes 20% more from physical moves for 4 s.' },
+    'extrasensory': { add: { flinch: 0.6 },
+      note: 'Lab: the first wave on each enemy stuns it for 0.6 s.' },
+    'vacuum-wave': { add: { close: 1 },
+      note: 'Lab: the closer the enemy, the harder it hits: up to ×2 point-blank.' },
+    'disarming-voice': { add: { meekHit: 0.25 },
+      note: 'Lab: the enemies it hits deal 25% less damage for 4 s.' },
+    // The others.
+    'hydro-pump': { add: { labKnock: 180 }, note: 'Lab: the blast pushes the enemies back along the beam.' },
+    'razor-leaf': { add: { crit: 0.25 }, note: 'Lab: +25% chance of a critical hit.' },
+    'leaf-storm': { add: { slow: 0.25 }, note: 'Lab: the petals slow what they hit.' },
+    'giga-drain': { add: { meekHit: 0.15 }, note: 'Lab: the roots sap their strength: the enemies they hit deal 15% less for 4 s.' },
+    'discharge': { add: { para: 0.08 }, note: 'Lab: each shock has an 8% chance to paralyze (stun) the enemy for 0.5 s.' },
+    'bug-buzz': { add: { weakHit: 0.15, weakCat: 'special' }, note: 'Lab: the buzz rattles them: 15% more damage from special moves for 4 s.' },
+    'dragon-rage': { add: { burn: 1 }, note: 'Lab: the draconic flames burn.' },
+    'fairy-wind': { add: { knock: 80 }, note: 'Lab: the breeze blows the enemies back.' },
+    'dazzling-gleam': { add: { labKnock: 70 }, note: 'Lab: the flash pushes nearby enemies back a little.' },
+    'flash-cannon': { add: { meekHit: 0.2 }, note: 'Lab: the glare blinds them: the enemies it hits deal 20% less for 4 s.' },
+    'night-shade': { add: { levelDmg: 0.5 }, note: 'Lab: each hit also deals half your level in damage.' },
+    'psycho-cut': { add: { conf: 0.8 }, note: 'Lab: the blades confuse what they cut for 0.8 s.' },
+    'hyper-beam': { add: { labKnock: 220 }, note: 'Lab: the beam blasts the enemies back.' },
+    'solar-beam': { add: { leech: 0.15 }, note: 'Lab: you heal 15% of the damage it deals (up to 5% of your HP a second).' },
+    'whirlpool': { add: { slow: 0.35 }, note: 'Lab: the current slows the enemies it holds.' },
+    'sand-tomb': { add: { meekHit: 0.2 }, note: 'Lab: sand in their eyes: the enemies it hits deal 20% less for 4 s.' },
+    'ominous-wind': { add: { omni: 0.1 }, note: 'Lab: each hit has a 10% chance to raise your Attack and Sp. Atk for 5 s.' },
+    'ancient-power': { add: { omni: 0.1 }, note: 'Lab: each hit has a 10% chance to raise your Attack and Sp. Atk for 5 s.' },
+    'magnitude': { add: { magnitude: 1 }, note: 'Lab: each quake has a random magnitude, from ×0.5 to ×1.8 damage.' },
     // B3.1: Psychic marks; Psybeam's evolution, Future Sight, marks everything its beam touches.
     'psychic': { add: { mark: 0.35 },
       note: 'Lab: marks the enemies it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
-    'psybeam': {
+    'psybeam': { add: { conf: 1 }, note: 'Lab: the beam confuses what it hits for 1 s.',
       evo: { t: '×1.6 damage and a wider beam. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
              m: { dmg: 1.6, width: 1.3 }, set: { mark: 1 } },
       evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
@@ -100,7 +145,8 @@ G.LabMech = (() => {
     'hail': {
       evo: { t: '×1.6 damage, +2 hailstones and a bigger area. Avalanche: twice the damage if an enemy hit you in the last 1.5 s.', m: { dmg: 1.6, radius: 1.2 }, add: { count: 2 }, set: { revenge: 2 } },
       evoNote: 'Avalanche: twice the damage if an enemy hit you in the last 1.5 s.' },
-    'whirlwind': {
+    'whirlwind': { add: { gust: 1 },
+      note: 'Lab: the gust also blows away the enemy shots around you.',
       evo: { t: '×1.6 damage and a wider gust that pushes harder. Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.', m: { dmg: 1.6, radius: 1.2, knock: 1.3 }, set: { tailwind: 0.3 } },
       evoNote: 'Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.' },
     // B3.5: Substitute's doll draws the enemies near it.
@@ -224,6 +270,13 @@ G.LabMech = (() => {
     const k = convert(this, m);
     if (k !== 1) { amount *= k; credit(pl, m, amount - amount / k); }
     if (m.endeavor) { const x = endeavor(this, pl, amount, m); if (x > 0) { amount += x; credit(pl, m, x); } }
+    // B1 fields.
+    let add = 0;
+    if (m.close) { const d = G.U.dist(pl.x, pl.y, this.x, this.y), k2 = m.close * Math.max(0, 1 - d / Math.max(1, (m.radius || 90) + this.r)); add += amount * k2; }
+    if (m.levelDmg) add += m.levelDmg * pl.level;
+    if (m.crit && eff !== 'crit' && Math.random() < m.crit) { add += amount * 0.5; eff = 'crit'; }
+    if (add > 0) { amount += add; credit(pl, m, add); }
+    if (m.labKnock && !knock) knock = m.labKnock;
     if (m.revenge && now() - (pl._labHurtAt || -1e9) < 1500 && now() - revAt > 400) {
       revAt = now(); G.FX.dmgText(this.x, this.y - this.bodyH - 18, G.T(m.name, 'move') + ' ×' + m.revenge, col(m), true);
     }
@@ -231,6 +284,7 @@ G.LabMech = (() => {
     // B3.1: another move's hit sets the mark off; a marking move stamps (again).
     if (mk && mk.by !== m.id) detonate(this);
     if (m.mark && !this.dead) stamp(this, pl, m, amount);
+    if (!this.dead) afterHit(this, pl, m);
     return r;
   };
 
@@ -257,6 +311,20 @@ G.LabMech = (() => {
     const s = spdD.get.call(this), h = this._labHaste;
     return h && h.t > 0 ? s * (1 + h.k) : s;
   } });
+
+  // ---------------- B1 fields: after a hit ----------------
+  const OMNI_AT = { k: 0.1, s: 5 };
+  function afterHit(e, pl, m) {
+    if (m.para && Math.random() < m.para) e.applyStun(0.5 * (boss(e) ? 0.35 : 1));
+    if (m.meekHit) G.LabKinds2.mark(e, { meek: m.meekHit, dur: 4 });
+    if (m.weakHit) G.LabKinds2.mark(e, { weak: m.weakHit, weakCat: m.weakCat || null, dur: 4 });
+    if (m.omni && Math.random() < m.omni) {
+      for (const st of ['patk', 'satk']) pl.addBuff(st, OMNI_AT.k, OMNI_AT.s, 1);
+      G.FX.dmgText(pl.x, pl.y - pl.bodyH - 10, 'Power up!', '#ffd23f');
+      for (let i = 0; i < 3; i++) G.FX.sp('arrow', 'normal', pl.x + G.U.rand(-10, 10), pl.y - G.U.rand(0, pl.bodyH), { vy: -70, life: 0.6 });
+    }
+  }
+  const MAGNITUDE = [[4, 0.5], [5, 0.7], [6, 0.9], [7, 1.1], [8, 1.3], [9, 1.5], [10, 1.8]];
 
   // ---------------- B3.3 status converters ----------------
   const st = (e, bit) => !!(e.net && e.net.st & bit);
@@ -483,6 +551,18 @@ G.LabMech = (() => {
   };
   function onCast(pl, m) {
     const t = now();
+    if (m.haste && !pl.remote) haste(pl, m.haste, m.hasteT || 1.5);
+    if (m.gust && !pl.remote) {
+      const ps = G.Projectiles.all(), r2 = (m.radius || 96) ** 2;
+      let n = 0;
+      for (let i = ps.length - 1; i >= 0; i--) if (!ps[i].friendly && G.U.dist2(ps[i].x, ps[i].y, pl.x, pl.y) <= r2) { G.FX.burst(ps[i].x, ps[i].y, '#e6f7ff', 4, 60); ps.splice(i, 1); n++; }
+      if (n) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 10, 'Blown away', '#e6f7ff');
+    }
+    if (m.magnitude) {
+      const [n, k] = G.U.pick(MAGNITUDE);
+      boostCast(m, k);
+      if (!pl.remote) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 18, 'Magnitude ' + n + '!', col(m), n >= 9);
+    }
     if (m.tailwind) {
       const me = G.Game.player;
       if (!pl.remote) haste(pl, m.tailwind, TAIL_T);

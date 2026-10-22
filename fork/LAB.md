@@ -409,6 +409,38 @@ Venoshock (Acid Spray) uses poison up, Belly Drum (Swords Dance) pays half your 
 - **Tailwind** (Whirlwind): ×1.6 damage, a wider gust, and +30% speed for 4 s on each cast (wind
   streaks behind you), for teammates within 160 px too (they get it from your ghost cast).
 
+**A field each for the moves that had none (B1).** The plan counted 26 of the normal game's moves
+with no field beyond their kind's numbers (27 attacking ones by our count, without the boosters);
+in Lab each now has one, said in its box. Thunderbolt is left to its B2 branches
+(`js/fork/lab/branches.js`) and U-turn to stream A's pivots. The spins and shoves, interchangeable
+before, come first:
+
+| Move | Lab field |
+|---|---|
+| Rapid Spin | +20% speed for 1.5 s a spin (`haste`; its own level-5 step: the burst lasts 3 s) |
+| Rolling Kick | the first kick on each enemy stuns it 0.5 s (`flinch`) |
+| Outrage | ×1.5 if you were hit in the last 1.5 s (`revenge`) |
+| Gyro Ball | slows 0.35 |
+| Night Slash | what it cuts takes +20% from physical moves for 4 s (`weakHit`) |
+| Extrasensory | the first wave on each enemy stuns it 0.6 s (`flinch`) |
+| Whirlwind | blows away the enemy shots around you (`gust`) |
+| Vacuum Wave | up to ×2 point-blank (`close`) |
+| Disarming Voice | the enemies it hits deal 25% less for 4 s (`meekHit`) |
+| Hydro Pump, Hyper Beam, Dazzling Gleam | knock enemies back (`labKnock` 180 / 220 / 70: their kinds pass none) |
+| Razor Leaf | +25% crit chance (`crit`) |
+| Leaf Storm (Petal Blizzard), Whirlpool | slow 0.25 / 0.35 |
+| Giga Drain (Grass Knot), Flash Cannon, Sand Tomb | the enemies they hit deal 15 / 20 / 20% less for 4 s (`meekHit`) |
+| Discharge | 8% chance per shock to stun 0.5 s (`para`) |
+| Bug Buzz | +15% from special moves for 4 s (`weakHit`) |
+| Dragon Rage | burns |
+| Fairy Wind | knock 80 |
+| Night Shade | + half your level per hit (`levelDmg`) |
+| Psybeam, Psycho Cut | confuse 1 / 0.8 s (`conf`) |
+| Solar Beam | heals 15% of its damage (`leech`) |
+| Ancient Power, Ominous Wind | 10% a hit to raise Attack and Sp. Atk for 5 s (`omni`) |
+| Magnitude | a random magnitude each quake, ×0.5 to ×1.8 ("Magnitude 9!") |
+| Spikes, Substitute | B3.2 and B3.5 below |
+
 | Mechanic | Moves | What it does |
 |---|---|---|
 | mark (B3.1) | Psychic (×0.35), Future Sight (Psybeam's evolution, ×1), Doom Desire (×0.8) | a hit stamps the enemy with `mark` × its damage (up to 4 hits' worth, 6 s; a pink eye over it). The next hit on it from **another** move sets the stored damage off on every enemy within 70 px. Its own hits never set it off; marks are per player |
@@ -420,7 +452,7 @@ Venoshock (Acid Spray) uses poison up, Belly Drum (Swords Dance) pays half your 
 | combos (B3.7) | Fusion Flare (Reshiram, Kyurem; meteor) and Fusion Bolt (Zekrom, Kyurem; chain), signatures with `combo`; Grass, Fire and Water Pledge (new, `pledge`; the starters learn them) | a combo move cast within 2 s of its partner (by you, or a teammate's cast as it arrives) does ×2 damage with a ×1.4 radius ("Fusion ×2!"); in one bond the two always combo. A Pledge cast within 2 s of a different one makes a field (90 px, 6 s) where its line lands: Grass + Fire a sea of fire (burns and hurts every 0.5 s), Grass + Water a swamp (slows by half), Fire + Water a rainbow (heals whoever stands in it 1.5% HP a second). The per-cast × goes through `m._castK`, read in `Player.atkFor` |
 
 For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,
-`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `decoy(pl, m, x, y, life, r)`, `decoys()`, `decoyFor(e)`, `taunt(e, s)`, `attract(e, s)`, `boostCast(m, k, kr)`, `pledges()`, `endeavor(e, pl, amount, m)`, `haste(pl, k, s)`, `labify(s)`, `noteOf(m)`, `ID`.
+`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `decoy(pl, m, x, y, life, r)`, `decoys()`, `decoyFor(e)`, `taunt(e, s)`, `attract(e, s)`, `boostCast(m, k, kr)`, `pledges()`, `endeavor(e, pl, amount, m)`, `haste(pl, k, s)`, `noteOf(m)`, `labify(s)`, `noteOf(m)`, `ID`.
 
 `node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
 and that a normal run's moves don't change.
