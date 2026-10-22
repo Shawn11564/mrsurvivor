@@ -1,11 +1,14 @@
 /* ============ bewear.js — a secret south of the map (MrSurvivor fork) ============
  * In every run, far south of where you start (about 3000 px down, at the first free spot),
  * a Bewear waits. Reach it and it gives you a hug and unlocks "Corazones" (Hearts) in Settings →
- * Graphics (save.hearts): with it on, every projectile you fire is a heart (only
- * the drawing; your teammates see them as usual). It's drawn with G.Events.drawables (sorted
- * by Y with the rest) and doesn't get in the way (not solid, nobody attacks it); it isn't in a
- * rift's arena. Its Settings row goes after the radiant glow's (G.RadiantGlow.settingsRow).
- * Test: fork/test-bewear.cjs.
+ * Graphics (save.hearts): with it on, every projectile you fire is a heart (only the
+ * drawing). In co-op your teammates see your hearts too: each player sends { k:'hearts', u, on }
+ * at the start of a run, when the setting changes and every few seconds (the host passes it on),
+ * and a teammate's ghost shots (Combat.ghostCast) are drawn as hearts while theirs is on.
+ * Bewear is drawn with G.Events.drawables (sorted by Y with the rest) and doesn't get in the
+ * way (not solid, nobody attacks it); it isn't in a rift's arena. Its Settings row goes after the radiant
+ * glow's (G.RadiantGlow.settingsRow).
+ * Tests: fork/test-bewear.cjs, and fork/test-bewear-coop.cjs for co-op.
  */
 G.Bewear = (() => {
   const DEX = 760, SOUTH = 3000, NEAR = 56;
@@ -60,17 +63,45 @@ G.Bewear = (() => {
   // A new spot each run (the world changes).
   function wrapRun() {
     const startRun = G.Game.startRun;
-    G.Game.startRun = function () { spot = null; hugT = 0; return startRun.apply(this, arguments); };
+    G.Game.startRun = function () { spot = null; hugT = 0; const r = startRun.apply(this, arguments); share(); return r; };
   }
   if (G.Game) wrapRun(); else addEventListener('DOMContentLoaded', wrapRun);
 
   // ---------------- the hearts ----------------
+  const mine = () => unlocked() && !!G.Settings.get('hearts');
   const spawn = G.Projectiles.spawn;
   G.Projectiles.spawn = function (o) {
-    if (o && o.friendly !== false && !o.ghost && o.owner && o.owner === G.Game.player && unlocked() && G.Settings.get('hearts'))
+    if (o && o.friendly !== false && o.owner && (o.ghost ? mateHearts(o.owner) : o.owner === G.Game.player && mine()))
       o = Object.assign({}, o, { vis: Object.assign({}, o.vis, { proj: 'heart', pal: 'fairy', trail: null }) });
     return spawn.call(this, o);
   };
+
+  // ---------------- co-op: teammates see your hearts ----------------
+  const others = new Map();                           // uid -> their hearts are on
+  function mateHearts(pl) {
+    if (!G.Coop.active) return false;
+    for (const m of G.Coop.mates) if (m.pl === pl) return !!others.get(m.uid);
+    return false;
+  }
+  function share() {
+    if (!G.Coop.active || !G.Net.uid) return;
+    const msg = { k: 'hearts', u: G.Net.uid, on: mine() };
+    if (G.Coop.isHost) { for (const m of G.Coop.mates) if (m.connected) G.Net.send(m.uid, msg); }
+    else G.Net.toHost(msg);
+  }
+  G.Net.on((from, msg) => {
+    if (!msg || msg.k !== 'hearts' || typeof msg.on !== 'boolean' || typeof msg.u !== 'string') return;
+    // The host only takes what each player says about themselves, and passes it on; a guest, only what the host sends.
+    if (G.Coop.isHost) {
+      if (msg.u !== from) return;
+      for (const m of G.Coop.mates) if (m.connected && m.uid !== from) G.Net.send(m.uid, msg);
+    } else if (from !== G.Net.hostUid) return;
+    others.set(msg.u, msg.on);
+  });
+  G.Settings.on(k => { if (k === 'hearts') share(); });
+  // Every few seconds too, so a teammate who joins or reconnects mid-run gets it.
+  setInterval(() => { if (G.Game && G.Game.player && G.Game.state !== 'over') share(); }, 4000);
+
   if (G.RadiantGlow) {
     const row = G.RadiantGlow.settingsRow;
     G.RadiantGlow.settingsRow = function (section) {
