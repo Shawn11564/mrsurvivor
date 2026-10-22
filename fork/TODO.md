@@ -39,7 +39,7 @@ How to use it:
 
 ### Run structure (stream C)
 - [x] 17. [feat] Legendary upgrade card ×3 → ×2 (`js/fork/card-rarity.js`, everyone) (d920725)
-- [ ] 18. [lab] C1.1: boss slots after 15:00 (18, 21, 24, 27, then every 3 min past 30 in endless) (claimed: stream C)
+- [ ] 18. [lab] C1.1: boss slots after 15:00 (18, 21, 24, 27, then every 3 min past 30 in endless) (38b813c)
 - [ ] 19. [lab] C1.2: XP per kill keeps pace after 8:20 (claimed: stream C)
 
 ## Phase 2: control and identity (Lab)
