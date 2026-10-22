@@ -61,12 +61,20 @@ check(boot(null, 'es-ES', '/', true).lang === 'en', 'storage blocked: English');
 // ---------------------------------------------------------------- 2. upstream's i18n tests
 console.log('2. Upstream\'s tests/i18n.test.cjs');
 {
-  const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', path.join(ROOT, 'tests', 'i18n.test.cjs')], { encoding: 'utf8', cwd: ROOT });
+  // It rewrites js/lang/*.js with upstream's build_langs, without fork/build.cjs's branding
+  // ("PokéSurvivor" in the French... dictionaries): the built ones are put back after it.
+  const LANG = path.join(ROOT, 'js', 'lang'), built = new Map(fs.readdirSync(LANG).map(f => [f, fs.readFileSync(path.join(LANG, f))]));
+  let r;
+  try { r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', path.join(ROOT, 'tests', 'i18n.test.cjs')], { encoding: 'utf8', cwd: ROOT }); }
+  finally { for (const [f, b] of built) fs.writeFileSync(path.join(LANG, f), b); }
   const out = r.stdout + r.stderr;
   const fails = [...out.matchAll(/^not ok \d+ - (.*)$/gm)].map(m => m[1]);
   const pass = (out.match(/^# pass (\d+)/m) || [])[1] | 0;
   check(pass > 10 && fails.length === 1 && /^locale precedence/.test(fails[0]),
     'all pass but "locale precedence" (it expects the browser\'s language)', { pass, fails });
+  const unbranded = [...built].filter(([, b]) => b.includes('PokéSurvivor')).map(([f]) => f);
+  check(!unbranded.length && [...built].every(([f]) => fs.readFileSync(path.join(LANG, f)).equals(built.get(f))),
+    'js/lang/*.js: branded by the build, and left as built', unbranded);
 }
 
 // ---------------------------------------------------------------- 3. built pages
