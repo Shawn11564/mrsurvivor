@@ -11,7 +11,7 @@
 //   2. A slowed enemy has an ice-blue ring at its feet; a clean one doesn't.
 //   3. Level-up cards with Tatsugiri (Dragon/Water, a special attacker: physical at 71 %): Dragon
 //      Claw (physical Dragon) and Water Gun get "Your type"; the physical one's note says it's
-//      the category ("Physical move: Tatsugiri hits for only 71% with these"), not "Weaker for".
+//      the category ("Physical move: Tatsugiri does -29% damage with these"), not "Weaker for".
 //   4. Co-op (if the emulator is up): a guest's Mist Ball slows the host's enemy for 2 s, and the
 //      guest sees the ring on an enemy the host slowed (status bit 8).
 const { chromium, pastStart } = require('./pw.cjs');
@@ -139,8 +139,8 @@ async function player(browser, name, dex) {
     });
     check(cards['dragon-claw'] && cards['dragon-claw'].own && cards['water-gun'] && cards['water-gun'].own,
       'Dragon Claw (physical) and Water Gun both get "Your type" for a Dragon/Water Pokémon', cards);
-    check(/^Physical move: Tatsugiri hits for only 71% with these/.test(cards.en) && !/Weaker for/.test(cards.en), 'the note says it\'s the category, in English', cards.en);
-    check(cards.tip.some(s => /^Physical move: Tatsugiri hits for only 71%/.test(s)), 'the move tooltip says the same', cards.tip);
+    check(/^Physical move: Tatsugiri does -29% damage with these/.test(cards.en) && !/Weaker for/.test(cards.en), 'the note says it\'s the category, in English', cards.en);
+    check(cards.tip.some(s => /^Physical move: Tatsugiri does -29% damage/.test(s)), 'the move tooltip says the same', cards.tip);
     check(!errors.length, 'no page errors', errors);
     await page.close();
 

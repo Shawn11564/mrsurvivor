@@ -502,7 +502,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   });
   await page.waitForTimeout(50);
   const wn = weak && await page.evaluate(i => (document.querySelectorAll('#cards .card')[i].querySelector('.fit-low') || {}).textContent || '', weak.i);
-  check(!!weak && weak.side === 'special' && wn === `${weak.side === 'special' ? 'Physical' : 'Special'} move: Gengar hits for only ${weak.pct}% with these (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
+  check(!!weak && weak.side === 'special' && wn === `${weak.side === 'special' ? 'Physical' : 'Special'} move: Gengar does -${100 - weak.pct}% damage with these (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
   // The card box keeps its width whatever the cards say (#scr-levelup .box in css/style.css).

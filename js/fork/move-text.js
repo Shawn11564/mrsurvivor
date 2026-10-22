@@ -62,14 +62,17 @@
   const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
   // Melee (player.js hurt) and the Lab's close-range families (G.LabKinds2.CLOSE): -25 % damage taken.
   const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
-  // The weak side, by category (it used to be "Peor para X: sólo hace un N %", which read as if it were about the move).
+  // The weak side, by category (it used to be "Peor para X: sólo hace un N %", which read as if it were about the move;
+  // then "hits for only 71 %"; since 2026-10-22 it says how much less: "-29% damage"). English only (English first).
   const OFF = {
-    physical: 'Ataque físico: {x} sólo hace un {x} % del daño con estos (lo suyo es el especial).',
-    special: 'Ataque especial: {x} sólo hace un {x} % del daño con estos (lo suyo es el físico).'
+    physical: 'Physical move: {x} does -{x}% damage with these (it’s a special attacker).',
+    special: 'Special move: {x} does -{x}% damage with these (it’s a physical attacker).'
   };
+  // Kept as they are by the English pass ("damage", "move"... are also Spanish keys).
+  G.I18n.add({ [OFF.physical]: OFF.physical, [OFF.special]: OFF.special }, 'en');
   const offNote = (mon, cat) => {
     const f = G.Stats.fit(mon, cat);
-    return f < 0.95 ? OFF[cat].replace('{x}', mon.name).replace('{x}', Math.round(f * 100)) : '';
+    return f < 0.95 ? OFF[cat].replace('{x}', mon.name).replace('{x}', 100 - Math.round(f * 100)) : '';
   };
   const close = m => m.kind === 'melee' || !!(G.LabKinds2 && G.LabKinds2.CLOSE.has(m.kind));
 
@@ -115,16 +118,6 @@
      'Corpo a corpo: finché è attiva subisci il 25% di danni in meno.',
      'Corpo a corpo: enquanto estiver ativo, você recebe 25% menos dano.',
      '近身：启用时受到的伤害减少25%。', '近身：啟用時受到的傷害減少25%。'],
-    [OFF.physical, 'Physical move: {x} hits for only {x}% with these (it’s a special attacker).',
-     'Attaque physique : {x} ne fait que {x} % des dégâts avec celles-ci (c’est un attaquant spécial).',
-     'Mossa fisica: {x} fa solo il {x} % dei danni con queste (è un attaccante speciale).',
-     'Golpe físico: {x} só causa {x} % do dano com estes (é um atacante especial).',
-     '物理招式：{x}使用这类招式只有 {x} % 伤害（它擅长特殊攻击）。', '物理招式：{x}使用這類招式只有 {x} % 傷害（牠擅長特殊攻擊）。'],
-    [OFF.special, 'Special move: {x} hits for only {x}% with these (it’s a physical attacker).',
-     'Attaque spéciale : {x} ne fait que {x} % des dégâts avec celles-ci (c’est un attaquant physique).',
-     'Mossa speciale: {x} fa solo il {x} % dei danni con queste (è un attaccante fisico).',
-     'Golpe especial: {x} só causa {x} % do dano com estes (é um atacante físico).',
-     '特殊招式：{x}使用这类招式只有 {x} % 伤害（它擅长物理攻击）。', '特殊招式：{x}使用這類招式只有 {x} % 傷害（牠擅長物理攻擊）。'],
     [BOTH, 'Boosts your physical and special moves.', 'Renforce vos attaques physiques et spéciales.',
      'Potenzia i tuoi attacchi fisici e speciali.', 'Fortalece seus ataques físicos e especiais.',
      '强化你的物理和特殊招式。', '強化你的物理和特殊招式。'],

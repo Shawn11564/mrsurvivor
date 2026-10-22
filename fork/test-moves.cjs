@@ -275,7 +275,7 @@ async function solo(browser) {
     }));
     // Gengar is a special attacker: a physical move gets the "weaker" note too.
     const cases = [['shadow-ball', /Special: hits with your Special Attack\. Boosted by Nasty Plot\./, null],
-                   ['lick', /Physical: hits with your Attack\. Boosted by Swords Dance and Dragon Dance\./, /Physical move: Gengar hits for only \d+% with these/],
+                   ['lick', /Physical: hits with your Attack\. Boosted by Swords Dance and Dragon Dance\./, /Physical move: Gengar does -\d+% damage with these/],
                    ['nasty-plot', /Boosts your special moves\./, null],
                    ['agility', null, null]];
     for (const [id, want, also] of cases) {
