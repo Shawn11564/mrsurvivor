@@ -72,7 +72,7 @@ How to use it:
 
 ### Run structure (stream C)
 - [ ] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (1490485)
-- [ ] 39. [lab] C1.4: late-hand decisions (Speed 9+ / Reflexes 11+ for max HP; post-cap EV card with auto-pick) (claimed: stream C)
+- [ ] 39. [lab] C1.4: late-hand decisions (Speed 9+ / Reflexes 11+ for max HP; post-cap EV card with auto-pick) (3e6818e)
 - [ ] 40. [lab] C1.5: per-Pokémon contracts (claimed: stream C)
 
 ### Kecleon (stream D)

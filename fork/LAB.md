@@ -62,6 +62,7 @@ status table as work lands.
 | `js/fork/lab/xp-pace.js` | `G.LabXpPace`: regular enemies' XP × (1 + max(0, t − 500)/600) (plan C1.2) |
 | `js/fork/lab/branches.js` | `G.LabBranches`: branching upgrades at move level 3 (phase 11) |
 | `js/fork/lab/late-hand.js` | `G.LabLateHand`: Carrera/Reflejos past their cap for max HP, EV cards and auto-pick in endless (plan C1.4) |
+| `js/fork/lab/contracts.js` | `G.LabContracts`: per-Pokémon contracts paid in coins for that Pokémon's upgrades (plan C1.5) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
@@ -618,6 +619,28 @@ Late in a run the hand collapses to the same few cards (`js/fork/lab/late-hand.j
 paid, the stat given), never past cap + 4, an Epic one, none in a normal run; EV cards in every endless
 hand and none before; the toggle on the real level-up screen, three real level-ups auto-picked with no
 menu, and the menu still there before Eternatus falls.
+
+## Per-Pokémon contracts (2026-10-22, plan C1.5)
+
+Goals for one Pokémon, paid in **coins for that Pokémon's upgrades** (`js/fork/lab/contracts.js`):
+
+| Contract | Goal | Coins |
+|---|---|---|
+| side20 | Reach 20:00 with 3 physical (or special: its strong side) moves | 1500 |
+| mono15 | Reach 15:00 with 3+ moves, every one of your own type | 1200 |
+| rift | Win a rift fight without switching your active move | 1000 |
+
+Lab first: they show (Missions, a "Contracts" block for your partner) and progress only with the Lab on,
+for the Pokémon the run started with (a Lab evolution keeps its contracts). Claim in Missions; the
+Upgrades screen with that Pokémon selected says "Contract coins: N" and its buy buttons spend them first
+(menu.js's own buy does the purchase; the coins are added just for it and taken back if it fails). The
+save: `save.contracts[dex][id] = { prog, done, claimed }` and `save.cspent[dex]`; the balance is what the
+claimed ones paid minus `cspent`, so `G.forkMerge` keeps either copy's done/claimed and the larger
+`cspent`. The defs are also in `G.MissionDefs` (`contracts`, `BY`), never drawn as daily or weekly missions.
+`node fork/test-contracts.cjs` (server): the block with the Lab on and not off; side20 and mono15 in real
+Lab runs (not a second early, not in a normal run); a real rift won without switching (not with one, not
+in a normal run); Claim, then an upgrade bought with contract coins and none of yours; `G.DB.merge` of
+two copies both ways.
 
 ## Starting move in Lab runs (2026-10-22)
 
