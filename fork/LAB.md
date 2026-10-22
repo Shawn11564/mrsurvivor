@@ -117,6 +117,12 @@ The pool is fixed per species: the same Pokémon always gets the same list. For 
 Charmander gets Metal Claw and Dragon Rage as coverage (both level-up moves in the games), and
 Caterpie's three real moves are topped up with Bug moves.
 
+Since 2026-10-22 the list is scored on the species itself (`G.DEX_BY`), never on the run's copy with its
+nature applied: the nature moved which side fits, and whichever copy was asked for first fixed the list
+for the session (550 of 966 species differed between an Adamant and a Modest first call). And the wrapper
+passes upstream's `natural` flag on, so `G.Mons.natural` (Kecleon's "already knows it") leaves taught TMs out.
+`node fork/test-lab-pools.cjs` (server).
+
 ## Phase 3: abilities
 
 Each species gets the first of its abilities (slot order, hidden last) that is implemented. If
@@ -512,6 +518,8 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   every Lab move at its top level; signatures (pools, card, animation, evolution); in-run
   evolution, Everstone, items, underdog XP, candies; shiny colours and bonuses; Mega Evolution;
   promotion; the **built** `index.html` through the UI.
+- `node fork/test-lab-pools.cjs` (server): `natural` reaches upstream's poolFor through Lab's wrapper; every
+  species' Lab list is the same with an Adamant or a Modest nature.
 - `node fork/test-underdog.cjs` (server): the ladder (ranges, the highlighted rarity, Back/Escape,
   Start run, Random Pokémon, Lab off, the setting off, once per Pokémon), the Play button's tag,
   the gold share of the XP bar and its label, and no gold or label for a Pokémon with no bonus.

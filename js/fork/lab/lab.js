@@ -121,9 +121,13 @@ G.Lab = (() => {
    * Normal-type moves that only exist in the Lab (Protect, Double-Edge...) count only if it
    * learns them by level, egg or tutor: almost everyone learns them by TM.
    * Fixed per species (rng(dex)): Charmander always learns the same.
+   * Scored on the species itself (G.DEX_BY), never on a copy with its nature applied (G.Mons.monFor):
+   * the nature shifts which side fits, and the first copy asked for used to fix the list for the
+   * whole session, so the picker and the run could disagree (fork/test-lab-pools.cjs).
    */
   function labPool(mon) {
     if (poolCache[mon.dex]) return poolCache[mon.dex].slice();
+    mon = G.DEX_BY[mon.dex] || mon;
     const L = learnOf(mon.dex), r = rng(mon.dex);
     const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const ownAll = [...new Set(mon.types.flatMap(ofType))];
@@ -152,8 +156,9 @@ G.Lab = (() => {
   }
 
   const poolFor = G.Moves.poolFor;
-  G.Moves.poolFor = mon => active() ? labPool(mon)
-    : poolFor(mon).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
+  // `natural` (no TMs) goes through: G.Mons.natural asks for it ("does it know this without a TM?").
+  G.Moves.poolFor = (mon, natural) => active() ? labPool(mon)
+    : poolFor(mon, natural).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
 
   // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
   // hand, in 1 hand out of 3 it takes the place of the last new-move card.
