@@ -6,7 +6,8 @@
  * Runs against the REAL Firebase project in js/core/firebase-config.js, in headless
  * Edge, each browser step in a fresh profile (no localStorage carried over):
  *   1. index.html (the branded build): the login screen says the cloud is on, and
- *      signing up a throwaway name+password account works.
+ *      signing up a throwaway name+password account works; then a starter and the Save button
+ *      (a new account waits for Save before its first upload).
  *   2. Firebase REST, signed in as that account with the page's own API key and origin:
  *      its save document exists in Firestore, so the page really wrote to the cloud.
  *   3. a fresh profile logs in on index.html.
@@ -19,6 +20,7 @@
  * Needs Playwright: from this repo's node_modules, or PLAYWRIGHT_DIR=<folder with node_modules>.
  */
 const path = require('path'), fs = require('fs');
+const { pickStarter } = require('./pw.cjs');
 const { chromium } = require(require.resolve('playwright', {
   paths: [__dirname, process.env.PLAYWRIGHT_DIR || path.join(__dirname, '..', '..', 'commandcenter')]
 }));
@@ -85,7 +87,15 @@ const fsReq = (method, docPath, token) => fetch(`${FS}/${docPath}`, { method, he
     let r = await submit(page, 'register');
     created = r.left && !r.err;
     check(created, 'sign-up on index.html' + (r.err ? ': ' + r.err : ''));
-    await page.waitForTimeout(3000);                 // let the first save reach Firestore
+    // A new account isn't uploaded on sign-up (upstream, 20-10-2026: it waits for Save, or the fork's
+    // 10-minute backup, js/fork/cloud-backup.js): pick a starter and press Save, as a player would.
+    if (created) {
+      await pickStarter(page).catch(e => check(false, 'starter grid after sign-up: ' + e.message));
+      for (const id of ['savenote-ok']) if (await page.isVisible('#' + id)) await page.click('#' + id);
+      const saved = await page.waitForSelector('#btn-save', { state: 'visible', timeout: 15000 }).then(() => page.click('#btn-save')).then(() => true, () => false);
+      check(saved, 'the Save button is there after picking a starter, and pressed');
+    }
+    await page.waitForTimeout(4000);                 // let the save reach Firestore
     check(!page.errs.length, 'no page errors on index.html' + (page.errs.length ? ': ' + page.errs.join(' | ') : ''));
     await ctx.close();
 
@@ -104,6 +114,9 @@ const fsReq = (method, docPath, token) => fetch(`${FS}/${docPath}`, { method, he
     await ctx.close();
 
     // 4. local only: the save round-trips through the game's own sync
+    // firestore.rules lets a save be written again only 20 s after the last one (an anti-loop cap; the
+    // game retries later): step 1's Save was a few seconds ago.
+    await new Promise(r => setTimeout(r, 21000));
     if (LOCAL) {
       ({ ctx, page } = await fresh('dev.html'));
       await devReady(page);
