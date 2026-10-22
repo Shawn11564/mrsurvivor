@@ -63,7 +63,7 @@ async function guestPage(browser) {
   await page.evaluate(() => { const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.partner = 4; s.starter = 4; G.DB.commit(); G.Flow.goMenu(); });
   return page;
 }
-const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('lab', lab); if (G.Game.player && G.Game.state !== 'ui') G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, lab)
+const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', lab); if (G.Game.player && G.Game.state !== 'ui') G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, lab)
   .then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 15000 }))
   .then(() => page.evaluate(() => { G.Spawner.update = () => {}; G.Game.player.level = 8; }))
   .then(() => page.waitForTimeout(3300));
@@ -131,7 +131,7 @@ const startRun = (page, lab) => page.evaluate(lab => { G.Settings.set('lab', lab
     if (!(await up('http://127.0.0.1:9099/'))) console.log('  (skipped: no Firebase emulator)');
     else {
       const host = await player(browser, 'rvh' + tag, 4, [], []), guest = await player(browser, 'rvg' + tag, 7, [], []);
-      for (const p of [host, guest]) await p.evaluate(() => G.Settings.set('lab', true));
+      for (const p of [host, guest]) await p.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', true); });
       const id = await host.evaluate(async () => (await G.Social.createRoom()).id);
       const j = await guest.evaluate(id => G.Social.joinRoom(id), id);
       if (!j.ok) throw new Error('join: ' + JSON.stringify(j));

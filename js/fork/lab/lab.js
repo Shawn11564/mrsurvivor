@@ -281,13 +281,19 @@ G.Lab = (() => {
   const NOTE = 'Lab run: experimental moves and abilities. It won\'t count for leaderboards, achievements or records.';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  /** In a group room: will the run be Lab? (the host's setting; a guest's comes in its 'lab' message) */
+  function roomLab() {
+    const room = G.Social.room;
+    if (!room) return false;
+    if (room.isHost) return !!G.Settings.get('lab');
+    const h = hostLab.get(room.host);
+    return !!(h && h.on);
+  }
   /** The group lobby: will it be Lab? */
   function lobby() {
     const el = $('lab-lobby'), room = G.Social.room;
     if (!el) return;
-    let on = false, other = false;
-    if (room && room.isHost) on = !!G.Settings.get('lab');
-    else if (room) { const h = hostLab.get(room.host); on = !!(h && h.on); other = on && h.v !== VERSION; }
+    const on = roomLab(), h = room && !room.isHost && hostLab.get(room.host), other = !!(on && h && h.v !== VERSION);
     el.classList.toggle('hidden', !on);
     el.innerHTML = '<span class="lab-badge">LAB</span> ' + esc(other
       ? 'The host has a different version of Lab mode. Reload the page so you both see the same moves.'
@@ -365,6 +371,8 @@ G.Lab = (() => {
     /** The ability the HUD and the pause menu show (it can change on evolving). */
     setAbility(a) { info = a; badge(); },
     get active() { return active(); },
+    /** In a group room: will the run be Lab? (js/fork/lab/underdog.js shows its ladder in the lobby then) */
+    get roomLab() { return roomLab(); },
     get ability() { return info; }
   };
 })();

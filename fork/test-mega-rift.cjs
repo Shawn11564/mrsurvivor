@@ -84,7 +84,7 @@ async function legend(page, t, roll) {
     check(JSON.stringify(c) === JSON.stringify([0, 0.05, 0.1, 0.15, 0.225, 0.3, 0.3]), 'none before 15:00; 5% at 15, 15% at 30, 30% at 60 (straight lines between)', c);
 
     console.log('2. A Lab run');
-    const run = lab => page.evaluate(lab => { G.Settings.set('lab', lab); if (G.Game.player && G.Game.state !== 'ui') G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, lab)
+    const run = lab => page.evaluate(lab => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', lab); if (G.Game.player && G.Game.state !== 'ui') G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, lab)
       .then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 15000 }))
       .then(() => page.evaluate(() => { G.Spawner.update = () => {}; G.Game.player.god = true; }));
     await run(true);
@@ -105,7 +105,7 @@ async function legend(page, t, roll) {
     if (!(await up('http://127.0.0.1:9099/'))) console.log('  (skipped: no Firebase emulator)');
     else {
       const host = await player(browser, 'mrh' + tag, 4, [], []), guest = await player(browser, 'mrg' + tag, 7, [], []);
-      for (const p of [host, guest]) await p.evaluate(() => G.Settings.set('lab', true));
+      for (const p of [host, guest]) await p.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', true); });
       const id = await host.evaluate(async () => (await G.Social.createRoom()).id);
       const j = await guest.evaluate(id => G.Social.joinRoom(id), id);
       if (!j.ok) throw new Error('join: ' + JSON.stringify(j));

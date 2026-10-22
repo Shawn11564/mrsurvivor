@@ -36,7 +36,7 @@ async function player(browser, name, dex) {
     s.partner = dex; s.owned[dex] = { at: Date.now(), from: 'starter' };
     delete s.hearts;
     G.DB.commit();
-    G.Settings.set('lab', false);
+    G.Settings.set('underdogLadder', false); G.Settings.set('lab', false);
     G.Settings.set('hearts', false);
     const st = await G.Social.start();
     const nick = st === 'ok' ? { ok: true } : await G.Social.claimNick(name);

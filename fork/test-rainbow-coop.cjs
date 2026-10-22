@@ -33,7 +33,7 @@ async function player(browser, name, dex) {
     const s = G.DB.save;
     s.partner = dex; s.owned[dex] = { at: Date.now(), from: 'starter' };
     G.DB.commit();
-    G.Settings.set('lab', false);
+    G.Settings.set('underdogLadder', false); G.Settings.set('lab', false);
     const st = await G.Social.start();
     const nick = st === 'ok' ? { ok: true } : await G.Social.claimNick(name);
     G.Flow.afterLogin();

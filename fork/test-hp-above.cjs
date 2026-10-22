@@ -51,7 +51,7 @@ async function solo(browser) {
   await page.waitForFunction(() => G.DB.save && G.MenuUI, null, { timeout: 30000 });
   await page.evaluate(() => {
     const s = G.DB.save; s.owned[4] = { at: Date.now() }; s.partner = 4; G.DB.commit();
-    G.Settings.set('lab', false); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false });
+    G.Settings.set('underdogLadder', false); G.Settings.set('lab', false); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false });
   });
   await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 15000 });
   await page.evaluate(() => { G.Spawner.update = () => {}; G.EnemyMgr.clear(); const p = G.Game.player; p.regenFlat = 0; p.hurt = () => {}; });
@@ -95,7 +95,7 @@ async function coopPlayer(browser, name, dex) {
     const reg = await G.DB.register(name, 'pw-' + name);
     if (!reg.ok) return reg;
     const s = G.DB.save; s.partner = dex; s.owned[dex] = { at: Date.now(), from: 'starter' }; G.DB.commit();
-    G.Settings.set('lab', false);
+    G.Settings.set('underdogLadder', false); G.Settings.set('lab', false);
     const st = await G.Social.start();
     const nick = st === 'ok' ? { ok: true } : await G.Social.claimNick(name);
     G.Flow.afterLogin();

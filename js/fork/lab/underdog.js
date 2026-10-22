@@ -12,6 +12,10 @@
  *     so several runs in a row with the same one don't repeat it. It can be turned off for good
  *     (G.Settings 'underdogLadder', for this device). Only those two buttons arm it, so
  *     whoever calls G.Game.startRun on their own (tests, group) doesn't see it.
+ *   - In a group, the run starts for everyone at once and can't wait for it: the ladder shows in the
+ *     lobby instead, as soon as the room is a Lab one (G.Lab.roomLab: the host's setting), for the Pokémon
+ *     you'll play (the lobby's random pick, or your partner), with "Got it" instead of "Start run".
+ *     Same rules: once per Pokémon, and not if it was turned off (fork/test-underdog-coop.cjs).
  *   - Always, on the menu's Play button (with the Lab on): your partner's "LAB · Underdog +N% XP"
  *     (#ud-play), so it's known without the ladder.
  * Texts in English only, like the rest of the Lab. Test: fork/test-underdog.cjs.
@@ -129,14 +133,15 @@ G.LabUnderdog = (() => {
 .ud-play .ud-tag { font-size: 9px; vertical-align: 1px; margin-right: 3px; }
 .ud-opt { display: inline-flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }`;
 
-  /** Shows the ladder for mon; go() starts the run. */
-  function show(mon, go) {
+  /** Shows the ladder for mon; go() starts the run (label: its button's text). */
+  function show(mon, go, label = 'Start run') {
     let box = $('ud-ladder');
     if (!box) {
       if (!$('ud-css')) { const st = document.createElement('style'); st.id = 'ud-css'; st.textContent = CSS; document.head.appendChild(st); }
       box = document.createElement('div'); box.id = 'ud-ladder'; document.body.appendChild(box);
     }
     box.innerHTML = html(mon);
+    $('ud-go').textContent = label;
     box.classList.remove('hidden');
     const close = () => { box.classList.add('hidden'); document.removeEventListener('keydown', key, true); };
     // Seen with a run started: it doesn't come back until you play another one (Back doesn't count).
@@ -171,6 +176,18 @@ G.LabUnderdog = (() => {
       show(mon, () => startRun.apply(self, args));
     };
   });
+
+  // ---------------- in a group lobby ----------------
+  // Checked a few times a second while the lobby is open: the host's Lab setting reaches a guest by message.
+  setInterval(() => {
+    const room = G.Social && G.Social.room, box = $('ud-ladder');
+    if (!room || !G.UI.isOpen('scr-lobby') || !G.Lab.roomLab || !on() || (box && !box.classList.contains('hidden'))) return;
+    const pick = G.LobbyPick && G.LobbyPick.get(), mon = G.DEX_BY[pick ? pick.dex : G.DB.save && G.DB.save.partner];
+    if (!mon || G.Settings.get('underdogSeen') === mon.dex || shownIn === room.id + ':' + mon.dex) return;
+    shownIn = room.id + ':' + mon.dex;                 // Back: not again in this room with this one
+    show(mon, () => {}, 'Got it');
+  }, 400);
+  let shownIn = '';
 
   // ---------------- on the Play button ----------------
 

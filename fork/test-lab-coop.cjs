@@ -97,8 +97,8 @@ async function finish(all) {
     const host = await player(browser, 'labh' + tag, 4);        // Charmander
     const guest = await player(browser, 'labg' + tag, 7);       // Squirtle
     const ALL = [host, guest];
-    await host.evaluate(() => G.Settings.set('lab', true));
-    await guest.evaluate(() => G.Settings.set('lab', false));
+    await host.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', true); });
+    await guest.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', false); });
     await party(host, [guest]);
     console.log('Party of 2 connected peer to peer');
 
@@ -192,8 +192,8 @@ async function finish(all) {
 
     // ---------------- 4. host off, guest on ----------------
     console.log('Host Lab off, guest Lab on');
-    await host.evaluate(() => G.Settings.set('lab', false));
-    await guest.evaluate(() => G.Settings.set('lab', true));
+    await host.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', false); });
+    await guest.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', true); });
     check(await settle(guest, () => document.getElementById('lab-lobby').classList.contains('hidden')), 'the guest\'s lobby no longer mentions Lab');
     check(await badge(host) === null, 'neither does the host\'s');
     await forceStart(host, ALL);
