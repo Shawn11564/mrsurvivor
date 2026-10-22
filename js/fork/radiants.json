@@ -1,8 +1,17 @@
 {
+  "59": {
+    "lab": [
+      "QuickStrike"
+    ],
+    "rarity": 4
+  },
   "150": {
     "lab": [
       "SpAttack"
     ],
+    "rarity": 5
+  },
+  "890": {
     "rarity": 5
   }
 }
