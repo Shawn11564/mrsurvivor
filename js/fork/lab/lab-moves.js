@@ -506,7 +506,9 @@ G.LabMoves = [
     cd: 0.55, dmg: 14, radius: 56, arc: 1.8, knock: 70, look: { melee: 'impact' }, evo: ['Low Kick', 'atk'] },
   { id: 'flail', name: 'Flail', type: 'normal', kind: 'melee', cat: 'physical', reversal: 2,
     desc: 'Flail about wildly: the less HP you have, the harder it hits (up to three times).',
-    cd: 0.5, dmg: 13, radius: 54, arc: 2.2, knock: 60, look: { melee: 'impact' }, evo: ['Endeavor', 'atk'] },
+    cd: 0.5, dmg: 13, radius: 54, arc: 2.2, knock: 60, look: { melee: 'impact' }, evo: ['Endeavor', 'atk'],
+    labEvo: { t: '×1.6 damage, more reach, all around you. Endeavor: each hit brings the enemy down to at least your share of HP left (a boss loses at most 8% of what it has).', m: { dmg: 1.6, radius: 1.2 }, set: { arc: 9, endeavor: 1 } },
+    labEvoNote: 'Endeavor: each hit brings the enemy down to at least your share of HP left (a boss loses at most 8% of what it has).' },
   // ---- take away part of the HP they have left ----
   { id: 'super-fang', name: 'Super Fang', type: 'normal', kind: 'melee', cat: 'physical', cut: 0.5,
     desc: 'A bite that takes away half the HP the enemy has left (a little from bosses).',

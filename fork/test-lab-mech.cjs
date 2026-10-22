@@ -27,6 +27,9 @@
 // combo    B3.7: Fusion Flare right after Fusion Bolt ×2 damage and ×1.4 blast; Kyurem learns both;
 //          each pair of Pledges makes its field (sea of fire burns, swamp slows, rainbow heals);
 //          one Pledge alone makes none.
+// evos     B1: Hail evolves into Avalanche (×2 right after you were hit), Flail into Endeavor (an
+//          enemy down to your share of HP, a boss at most 8% more), Whirlwind into Tailwind (×1.3
+//          speed). (Future Sight, Stealth Rock, Sticky Web, Venoshock, Belly Drum: their sections.)
 // built    the built index.html's bundle has the mechanics.
 const { chromium, pastStart } = require('./pw.cjs');
 const args = process.argv.slice(2);
@@ -34,7 +37,7 @@ const BASE = args.find(a => /^https?:/.test(a)) || require('./pw.cjs').BASE;
 const ONLY = args.includes('--only') ? args[args.indexOf('--only') + 1].split(',') : null;
 const want = name => !ONLY || ONLY.includes(name);
 // Names each mechanic leaves in the built bundle (checked in 'built').
-const BUILT = ['HZ_STEP'];
+const BUILT = ['HZ_STEP', '_labFrail', '_labCurse', '_labTaunt', '_labAttract', 'labEvoNote', 'decoyFor', '_labHaste', 'boostCast'];
 
 let failures = 0;
 const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + what + (!ok && info !== undefined ? ' ' + JSON.stringify(info) : '')); if (!ok) failures++; };
@@ -117,7 +120,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       out.name = G.T(fs.name, 'move'); out.markField = fs.mark;
       out.evoText = G.Moves.evoInfo(Object.assign(G.Moves.instance('psybeam', 5), { evolved: false }), { cd: 1 }).text;
       out.tip = G.MoveText.tipNotes(fs, pl).map(n => n[0]).join(' | ');
-      const a = __dummy(...__at(70)), b = __dummy(pl.x + 70, pl.y + 62);       // b: next to a, off the beam
+      const a = __dummy(...__at(70)), b = __dummy(pl.x + 105, pl.y + 52);      // b: 63 px from a, off the beam, farther from you than a
       pl.target = a; pl.aim = 0;
       await __fire(fs, 350);
       out.marked = !!a._labMark; out.stored = a._labMark ? Math.round(a._labMark.dmg) : 0;
@@ -454,6 +457,46 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     check(r.alone1 === 0, 'one Pledge on its own makes no field');
   }
 
+  // ---------------- B1 honest evolutions (the ones not checked with their mechanic above) ----------------
+  if (want('evos')) {
+    console.log('B1 honest evolutions');
+    await start(true);
+    const r = await page.evaluate(async () => {
+      const pl = G.Game.player, out = {};
+      const T = m => G.T(m.name, 'move');
+      // Avalanche: Hail evolved, ×2 if you were just hit.
+      const [av] = __only(['hail'], { lvl: 5, evolve: true });
+      out.av = T(av);
+      const once = async (prep) => { G.EnemyMgr.clear(); const e = __dummy(...__at(90)); pl.target = e; prep(); const d0 = av.dealt || 0; await __fire(av, 900); return (av.dealt || 0) - d0; };
+      out.calm = await once(() => { pl._labHurtAt = 0; });
+      out.hurt = await once(() => { pl._labHurtAt = performance.now(); });
+      // Endeavor: Flail evolved; at 30% HP a hit brings an enemy down to 30%; a boss loses at most 8% more.
+      const [en] = __only(['flail'], { lvl: 5, evolve: true });
+      out.en = T(en); out.enTip = G.MoveText.tipNotes(en, pl).map(n => n[0]).join(' | ');
+      pl.hp = pl.maxHp * 0.3;
+      const e = __dummy(...__at(40), { hp: 100000 }); pl.target = e;
+      await __fire(en, 250);
+      out.enShare = +(e.hp / e.maxHp).toFixed(3);
+      G.EnemyMgr.clear();
+      const b = __dummy(...__at(40), { hp: 100000, boss: true }); pl.target = b;
+      await __fire(en, 250);
+      out.bossShare = +(b.hp / b.maxHp).toFixed(3);
+      pl.hp = pl.maxHp;
+      // Tailwind: Whirlwind evolved, +30% speed for 4 s.
+      const [tw] = __only(['whirlwind'], { lvl: 5, evolve: true });
+      out.tw = T(tw);
+      const s0 = pl.spd;
+      __dummy(...__at(50)); pl.target = G.EnemyMgr.all()[0];
+      await __fire(tw, 200);
+      out.twK = +(pl.spd / s0).toFixed(2);
+      return out;
+    });
+    check(r.av === 'Avalanche' && r.hurt / r.calm > 1.9, `Hail evolves into Avalanche: ×${(r.hurt / r.calm).toFixed(2)} right after you were hit`, r);
+    check(r.en === 'Endeavor' && /share of HP/.test(r.enTip) && r.enShare <= 0.301, `Flail evolves into Endeavor: at 30% HP one hit leaves an enemy at ${r.enShare * 100}% of its HP`, r);
+    check(r.bossShare >= 0.9, `a boss loses at most 8% more (${(r.bossShare * 100).toFixed(1)}% left)`, r);
+    check(r.tw === 'Tailwind' && Math.abs(r.twK - 1.3) < 0.02, `Whirlwind evolves into Tailwind: ×${r.twK} speed after a gust`, r);
+  }
+
   // ---------------- the built game ----------------
   // index.html seals G, so: its bundle has this file's code (names survive the obfuscator), and
   // the page loads with no errors.
@@ -467,8 +510,10 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       return s ? (await fetch(s)).text() : '';
     });
     const names = ['G.LabMech', '_labMark'].concat(BUILT || []);
+    // The obfuscator hides a tenth of the strings (tools/build.js --string-array-threshold 0.1), so
+    // most of these names, not all, show as they are; without mech.js none would.
     const miss = names.filter(n => !src.includes(n.replace(/^G\./, '')));
-    check(src.length > 0 && !miss.length, `index.html's bundle has the Lab mechanics (${names.join(', ')})`, miss);
+    check(src.length > 0 && miss.length <= names.length * 0.3, `index.html's bundle has the Lab mechanics (${names.length - miss.length} of ${names.length} names found)`, miss);
     await p2.waitForTimeout(1500);
     await p2.close();
   }

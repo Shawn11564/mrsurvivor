@@ -395,6 +395,18 @@ own). A Lab move can bring `labEvo` the same way. The instance gets its own copy
 normal game's data never changes. What it does is said in English under the type in the move's box
 (`note` / `evoNote` through `G.MoveText.tipNotes`, teal), on its new-move card and on the evolution card.
 
+**Honest evolutions (B1).** Seven evolved names promised something their kind's evolution doesn't
+do; in Lab they do it: Future Sight (Psybeam) marks, Stealth Rock (Rock Slide) leaves stones,
+Venoshock (Acid Spray) uses poison up, Belly Drum (Swords Dance) pays half your HP for every stack
+(rows below), and:
+- **Avalanche** (Hail): ×1.6 damage, +2 hailstones, and ×2 if an enemy hit you in the last 1.5 s
+  (kinds2.js's `revenge`; "Avalanche ×2" shows when it applies).
+- **Endeavor** (Flail, a Lab move; `labEvo` in lab-moves.js): ×1.6 damage, 360°, and each hit brings
+  the enemy down to at least your share of HP left (B3.12 style; a boss loses at most 8% of what it
+  has; kinds2.js's reversal still multiplies the hit, and the extra is sized for it).
+- **Tailwind** (Whirlwind): ×1.6 damage, a wider gust, and +30% speed for 4 s on each cast (wind
+  streaks behind you), for teammates within 160 px too (they get it from your ghost cast).
+
 | Mechanic | Moves | What it does |
 |---|---|---|
 | mark (B3.1) | Psychic (×0.35), Future Sight (Psybeam's evolution, ×1), Doom Desire (×0.8) | a hit stamps the enemy with `mark` × its damage (up to 4 hits' worth, 6 s; a pink eye over it). The next hit on it from **another** move sets the stored damage off on every enemy within 70 px. Its own hits never set it off; marks are per player |
@@ -406,7 +418,7 @@ normal game's data never changes. What it does is said in English under the type
 | combos (B3.7) | Fusion Flare (Reshiram, Kyurem; meteor) and Fusion Bolt (Zekrom, Kyurem; chain), signatures with `combo`; Grass, Fire and Water Pledge (new, `pledge`; the starters learn them) | a combo move cast within 2 s of its partner (by you, or a teammate's cast as it arrives) does ×2 damage with a ×1.4 radius ("Fusion ×2!"); in one bond the two always combo. A Pledge cast within 2 s of a different one makes a field (90 px, 6 s) where its line lands: Grass + Fire a sea of fire (burns and hurts every 0.5 s), Grass + Water a swamp (slows by half), Fire + Water a rainbow (heals whoever stands in it 1.5% HP a second). The per-cast × goes through `m._castK`, read in `Player.atkFor` |
 
 For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,
-`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `decoy(pl, m, x, y, life, r)`, `decoys()`, `decoyFor(e)`, `taunt(e, s)`, `attract(e, s)`, `boostCast(m, k, kr)`, `pledges()`, `labify(s)`, `noteOf(m)`, `ID`.
+`detonate(e)`, `hazard(kind, pl, m, x, y, dmg, life)`, `hazards()`, `convert(e, m)`, `curse(pl, m)`, `decoy(pl, m, x, y, life, r)`, `decoys()`, `decoyFor(e)`, `taunt(e, s)`, `attract(e, s)`, `boostCast(m, k, kr)`, `pledges()`, `endeavor(e, pl, amount, m)`, `haste(pl, k, s)`, `labify(s)`, `noteOf(m)`, `ID`.
 
 `node fork/test-lab-mech.cjs` (server; `--only mark,...`): each mechanic in a real Lab run on dummies,
 and that a normal run's moves don't change.

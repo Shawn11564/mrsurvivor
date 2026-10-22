@@ -65,7 +65,7 @@ How to use it:
 - [x] 31. [lab] B3.4 trade-off buffs (c6aa396)
 - [x] 32. [lab] B3.5 decoy / aggro (15a3c31)
 - [x] 33. [lab] B3.6 Taunt / Attract (ed31289)
-- [ ] 34. [lab] B3.7 combos (claimed: stream B-moves)
+- [x] 34. [lab] B3.7 combos (dd47f73)
 - [x] 35. [lab] B4: set bonuses (c6ef6dc)
 - [x] 36. [lab] B4: synergy cards (22e17dc)
 - [x] 37. [lab] B4: bond recipes (6567ff1)

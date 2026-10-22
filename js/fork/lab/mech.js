@@ -37,6 +37,11 @@
  *                    they're slowed (the shout's `slow`) and can't hit you by contact (bosses half).
  *                    Every screen marks its own copies (a teammate's shout comes as a ghost); the
  *                    AI part runs where the AI does (the host).
+ *    endeavor  B3.12 (Flail's evolution Endeavor) a hit brings the enemy down to at least your share
+ *                    of HP left; a boss loses at most ENDEAVOR_BOSS of what it has.
+ *    tailwind        (Whirlwind's evolution Tailwind) each cast: +tailwind speed for TAIL_T s, for you
+ *                    and the teammates near you (they get it from your ghost cast).
+ *    revenge         kinds2.js's ×2 after a hit you took (Hail's evolution Avalanche): shown here.
  *    combo     B3.7  ×2 damage and ×1.4 radius when the partner move (`combo`: its id) was cast in
  *                    the last COMBO_MS by anyone (you, or a teammate's ghost cast): Fusion Flare and
  *                    Fusion Bolt. `pledge`: a Pledge cast within COMBO_MS of a different one makes a
@@ -91,6 +96,13 @@ G.LabMech = (() => {
       evo: { t: 'Casts on its own from any slot and +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.',
              add: { stacks: 1 }, set: { passive: true, drum: 0.5 } },
       evoNote: 'Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.' },
+    // B1 honest evolutions: Avalanche hits back, Tailwind speeds you up.
+    'hail': {
+      evo: { t: '×1.6 damage, +2 hailstones and a bigger area. Avalanche: twice the damage if an enemy hit you in the last 1.5 s.', m: { dmg: 1.6, radius: 1.2 }, add: { count: 2 }, set: { revenge: 2 } },
+      evoNote: 'Avalanche: twice the damage if an enemy hit you in the last 1.5 s.' },
+    'whirlwind': {
+      evo: { t: '×1.6 damage and a wider gust that pushes harder. Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.', m: { dmg: 1.6, radius: 1.2, knock: 1.3 }, set: { tailwind: 0.3 } },
+      evoNote: 'Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.' },
     // B3.5: Substitute's doll draws the enemies near it.
     'substitute': { add: { decoy: true, decoyR: 180 },
       note: 'Lab: enemies near the doll go for it instead of you while it stands (bosses do not fall for it).' }
@@ -184,7 +196,7 @@ G.LabMech = (() => {
     const id = ID[k];
     keep(id.note, id.evoNote, id.evo && id.evo.t, ...Object.values(id.upsAt || {}).map(u => u.t));
   }
-  for (const d of G.LabMoves) if (d.labEvo) keep(d.labEvo.t);
+  for (const d of G.LabMoves) if (d.labEvo) keep(d.labEvo.t, d.labEvoNote);
 
   // ---------------- 2. hits: what the mechanics do to the damage ----------------
   // Combat calls G.RunStats.tag(e, m) on each of your hits right before e.hurt (as kinds2.js).
@@ -211,12 +223,40 @@ G.LabMech = (() => {
     // B3.3: converters change the damage before it lands.
     const k = convert(this, m);
     if (k !== 1) { amount *= k; credit(pl, m, amount - amount / k); }
+    if (m.endeavor) { const x = endeavor(this, pl, amount, m); if (x > 0) { amount += x; credit(pl, m, x); } }
+    if (m.revenge && now() - (pl._labHurtAt || -1e9) < 1500 && now() - revAt > 400) {
+      revAt = now(); G.FX.dmgText(this.x, this.y - this.bodyH - 18, G.T(m.name, 'move') + ' ×' + m.revenge, col(m), true);
+    }
     const r = ehurt.call(this, amount, color, dx, dy, knock, eff);
     // B3.1: another move's hit sets the mark off; a marking move stamps (again).
     if (mk && mk.by !== m.id) detonate(this);
     if (m.mark && !this.dead) stamp(this, pl, m, amount);
     return r;
   };
+
+  // ---------------- B1 honest evolutions: Endeavor, Tailwind ----------------
+  const ENDEAVOR_BOSS = 0.08, TAIL_T = 4, TAIL_R = 160;
+  let revAt = 0;
+  /** Endeavor: what a hit of `amount` must add so e ends at most at your share of HP. kinds2.js's
+   *  hit effects (Flail's reversal...) multiply what comes after this, so the extra is divided by them. */
+  function endeavor(e, pl, amount, m) {
+    const k2 = m && G.LabKinds2.boost ? Math.max(1e-6, G.LabKinds2.boost(pl, e, m, 1)) : 1;
+    const left = e.hp - amount * k2, floor = e.maxHp * (pl.hp / pl.maxHp);
+    if (left <= floor) return 0;
+    const x = left - floor;
+    return (boss(e) ? Math.min(x, e.hp * ENDEAVOR_BOSS) : x) / k2;
+  }
+  /** +k speed for s seconds (Tailwind; Rapid Spin). */
+  function haste(pl, k, s) {
+    const h = pl._labHaste;
+    if (h && h.t > 0 && h.k > k) { h.t = Math.max(h.t, s); return; }
+    pl._labHaste = { k, t: s };
+  }
+  const spdD = Object.getOwnPropertyDescriptor(G.Player.prototype, 'spd');
+  Object.defineProperty(G.Player.prototype, 'spd', { configurable: true, get() {
+    const s = spdD.get.call(this), h = this._labHaste;
+    return h && h.t > 0 ? s * (1 + h.k) : s;
+  } });
 
   // ---------------- B3.3 status converters ----------------
   const st = (e, bit) => !!(e.net && e.net.st & bit);
@@ -310,6 +350,9 @@ G.LabMech = (() => {
     return phurt.call(this, amount, type, pure, cat);
   };
   function tickPlayer(p, dt) {
+    const h = p._labHaste;
+    if (h && (h.t -= dt) <= 0) p._labHaste = null;
+    else if (h && Math.random() < dt * 14) G.FX.px(p.x - Math.cos(p.aim) * 10 + G.U.rand(-8, 8), p.y - G.U.rand(2, p.bodyH), '#e6f7ff', { vx: -Math.cos(p.aim) * 90, vy: -Math.sin(p.aim) * 60, life: 0.3 });
     if (p._labFrail && (p._labFrail.t -= dt) <= 0) p._labFrail = null;
     if (p._labCurseT > 0) p._labCurseT -= dt;
   }
@@ -440,6 +483,12 @@ G.LabMech = (() => {
   };
   function onCast(pl, m) {
     const t = now();
+    if (m.tailwind) {
+      const me = G.Game.player;
+      if (!pl.remote) haste(pl, m.tailwind, TAIL_T);
+      else if (me && !me.dead && G.U.dist(me.x, me.y, pl.x, pl.y) <= TAIL_R) haste(me, m.tailwind, TAIL_T);
+      G.FX.ring(pl.x, pl.y, 10, TAIL_R, '#c8f0ff', 0.4, 2);
+    }
     if (m.combo) {
       const p = recent[m.combo];
       if (p && t - p.at < COMBO_MS) {
@@ -715,6 +764,8 @@ G.LabMech = (() => {
     taunt, attract,
     /** B3.7: × damage k and × radius kr on m for its current cast only; the Pledge fields. */
     boostCast, pledges: () => pledges, COMBO_MS,
+    /** B1: Endeavor's extra for a hit; +k speed for s seconds. */
+    endeavor, haste,
     MARK_R, HZ_STEP,
     counts: () => ({ marked: marked.size, hazards: hz.length })
   };
