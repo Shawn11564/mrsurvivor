@@ -74,6 +74,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const r3 = await run(false);
     check(r3.first === 'flamethrower', 'the normal run still has its own pick', r3);
     await page.reload({ waitUntil: 'load' });
+    await pastStart(page, '#scr-menu');                // a cold page can stop on "Press to start" first (fork/pw.cjs)
     await page.waitForFunction(() => window.G && G.DB && G.DB.save && G.DB.guest && G.MenuUI, null, { timeout: 30000 });
     const kept = await page.evaluate(dex => ({ n: G.DB.save.pstart[dex], l: (G.DB.save.pstartLab || {})[dex] }), DEX);
     check(kept.n === 'flamethrower' && kept.l === 'pyro-ball', 'both picks survive a reload', kept);
@@ -129,6 +130,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(r11.lab && r11.moves[0] === 'ember' && r11.moves[1] === 'pyro-ball', 'a Lab run starts with Ember and Pyro Ball', r11);
     check(!r12.lab && r12.moves[0] === 'ember' && r12.moves[1] === 'flamethrower', 'a normal run with Ember and Flamethrower (the Lab pick no longer replaces it, or gets dropped)', r12);
     await page.reload({ waitUntil: 'load' });
+    await pastStart(page, '#scr-menu');                // a cold page can stop on "Press to start" first (fork/pw.cjs)
     await page.waitForFunction(() => window.G && G.DB && G.DB.save && G.DB.guest && G.MenuUI, null, { timeout: 30000 });
     const r13 = await run2(true), r14 = await run2(false);
     check(r13.moves[1] === 'pyro-ball' && r14.moves[1] === 'flamethrower', 'both survive a reload', { lab: r13, normal: r14 });

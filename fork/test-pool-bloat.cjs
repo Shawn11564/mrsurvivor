@@ -44,6 +44,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const picked = await page.evaluate(dex => G.DB.save.pban[dex].slice(), DEX);
     check(/\/5\)/.test(label) && picked.length === 5 && picked.every(id => ids.slice(0, 5).includes(id)), 'the Upgrades picker takes 5 vetoes (a 6th is refused)', { label, picked });
     await page.reload({ waitUntil: 'load' });
+    await pastStart(page, '#scr-menu');                // a cold page can stop on "Press to start" first (fork/pw.cjs)
     await page.waitForFunction(() => window.G && G.DB && G.DB.save && G.DB.guest && G.MenuUI, null, { timeout: 30000 });
     const kept = await page.evaluate(dex => (G.DB.save.pban[dex] || []).slice(), DEX);
     check(kept.length === 5, 'all 5 survive a reload', kept);
