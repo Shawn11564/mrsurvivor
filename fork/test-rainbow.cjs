@@ -11,6 +11,7 @@
 //   3. Where they come from: a rift legendary (1 in 10, forced here), 30:00 in a run (once), and the
 //      4 big achievements (paid once on saving, also to whoever already had them; shown in rewards).
 //   4. It stays: after a reload, and in the currency ledger; save.r25 is joined when two copies merge.
+//   5. The ticket count at the top of the menu shows the rainbow tickets too.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || 'http://127.0.0.1:8123';
 const SHOT = process.argv[3];
@@ -118,6 +119,18 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(led === 2, 'two devices that each earned one merge to 2 (the currency ledger counts t25)', led);
     const mg = await page.evaluate(() => { const r = {}; G.forkMerge(r, { r25: { own500: 1 } }, { r25: { time20: 2 } }); return Object.keys(r.r25).sort().join(); });
     check(mg === 'own500,time20', 'two copies merge their paid achievements', mg);
+
+    console.log('5. The menu\'s ticket count');
+    // (The rainbow count goes in right after ui.js redraws the pill: a microtask, before the screen is painted.)
+    const pill = await page.evaluate(async () => {
+      const tick = () => new Promise(r => setTimeout(r, 0));
+      const s = G.DB.save; s.tickets.t1 = 4; s.tickets.t10 = 2; s.tickets.t25 = 3; G.UI.refreshCoins(); await tick();
+      const el = document.getElementById('tickets-pill'), a = { text: el.textContent.replace(/\s+/g, ' ').trim(), icon: [...el.querySelectorAll('.t25 img')].some(i => i.getAttribute('src') === G.Icons.url('ticket25')) };
+      s.tickets.t25 = 0; G.UI.refreshCoins(); await tick();
+      return { with: a, without: el.textContent.replace(/\s+/g, ' ').trim() };
+    });
+    check(pill.with.text === '4 2 3' && pill.with.icon, 'the pill at the top shows ×1, ×10 and rainbow ×25 tickets (with its icon)', pill.with);
+    check(pill.without === '4 2 0', 'and the rainbow count shows at 0 too', pill.without);
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

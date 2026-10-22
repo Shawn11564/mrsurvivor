@@ -9,7 +9,8 @@
  *     They're paid on save (G.DB.commit) if the achievement is there and wasn't paid yet (save.r25),
  *     also to players who already had it; save.r25 is joined on merge (G.forkMerge).
  * In the gacha: the "Arcoíris ×25" (Rainbow ×25) button under the others, how many you have and a
- * line in the notes (hook: G.PityBar.draw, which the gacha calls on every paint). Test: fork/test-rainbow.cjs.
+ * line in the notes (hook: G.PityBar.draw, which the gacha calls on every paint). In the menu: the count in the
+ * ticket pill at the top, after the ×1 and ×10. Test: fork/test-rainbow.cjs.
  */
 G.Rainbow = (() => {
   const $ = id => document.getElementById(id);
@@ -106,6 +107,15 @@ G.Rainbow = (() => {
     const note = $('gacha-rates') && $('gacha-rates').querySelector('.note');
     if (note && !note.querySelector('.n25')) note.insertAdjacentHTML('beforeend', `<br><span class="n25">· ${G.T('La tirada ×25 arcoíris, con un ticket arcoíris, trae al menos una Legendaria.')}</span>`);
   }
+  // The ticket count at the top (js/ui/ui.js refreshCoins writes ×1 and ×10; it's also called from inside ui.js,
+  // so the pill is watched): the rainbow ones after them.
+  document.addEventListener('DOMContentLoaded', () => {
+    const pill = $('tickets-pill');
+    if (!pill) return;
+    const add = () => { if (!pill.querySelector('.t25')) pill.insertAdjacentHTML('beforeend', ` <span class="t25">&nbsp;${G.Icons.html('ticket25', 18)} ${have()}</span>`); };
+    new MutationObserver(add).observe(pill, { childList: true });
+    add();
+  });
   if (G.PityBar) {
     const draw = G.PityBar.draw;
     // The gacha calls draw midway through its refresh, before it writes the tickets and notes: paint after.
