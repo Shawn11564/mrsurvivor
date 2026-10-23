@@ -34,7 +34,7 @@ How to use it:
 - [x] 64. [lab][bug] Contracts: reward coins and 1 candy of the Pokémon; check the progress tracking (e.g. 15:00 with 3+ moves of its own type); the Upgrades screen should make the contract coin balance clear · Lab (bda575b)
 - [x] 65. [ui] Main menu: a gem count in the same bubble as the coin balance · everyone (21de947)
 - [ ] 66. [bug][ui] Phone held upright (390 px and 360 px): the main menu top bar pushes the coin, ticket and user bubbles off the left edge of the screen (seen 2026-10-23, with or without the gem count) · everyone
-- [ ] 67. [ui] English review: every text in menus, runs, moves, items and Pokémon names in correct, natural English ("Choose de Partner", Spanish names like Bramaluna for Roaring Moon, "Fill with the commonest") · everyone (claimed: cloud session claude/quirky-fermi-6gua9j)
+- [x] 67. [ui] English review: every text in menus, runs, moves, items and Pokémon names in correct, natural English ("Choose de Partner", Spanish names like Bramaluna for Roaring Moon, "Fill with the commonest") · everyone (7056b24, d7afdd2, d0fe4b3)
 
 ## Phase 1: fixes and cheap tuning
 
