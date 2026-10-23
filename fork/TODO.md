@@ -31,7 +31,7 @@ How to use it:
 - [x] 61. [ui] Gacha machine: the Skip button under the machine instead of next to it (the Radiant Ritual uses the same machine) · everyone (9aa381c)
 - [ ] 62. [infra] fork/test-radiant-ritual.cjs fails 7 checks: it assumes a fixed pool of 3 radiants (Arcanine, Mewtwo, Eternatus), but the artist's publishes have made it 13, so its banner and odds numbers no longer hold; make it set up its own pool (found 2026-10-23)
 - [x] 63. [ui] Kecleon shop: always show a TM's move description, even when your partner can learn it (the "can learn it" line replaced it) · everyone (d778a03)
-- [ ] 64. [lab][bug] Contracts: reward coins and 1 candy of the Pokémon; check the progress tracking (e.g. 15:00 with 3+ moves of its own type); the Upgrades screen should make the contract coin balance clear · Lab (claimed: cc-oubt6)
+- [x] 64. [lab][bug] Contracts: reward coins and 1 candy of the Pokémon; check the progress tracking (e.g. 15:00 with 3+ moves of its own type); the Upgrades screen should make the contract coin balance clear · Lab (bda575b)
 - [ ] 65. [ui] Main menu: a gem count in the same bubble as the coin balance · everyone (claimed: cc-oubt6)
 
 ## Phase 1: fixes and cheap tuning
