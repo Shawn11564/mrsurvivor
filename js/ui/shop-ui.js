@@ -561,8 +561,10 @@ G.ShopUI = (() => {
       const fits = partner && G.Mons.canLearn(partner, id);
       const cat = G.Stats.NAME[m.cat || (m.stat === 'patk' ? 'physical' : m.stat === 'satk' ? 'special' : '')];
       const tag = `<span class="tag-chip" style="background:${G.U.TYPE_COLOR[m.type]}">${G.U.TYPE_NAME[m.type]}</span>${cat ? `<span class="tag-chip cat">${cat}</span>` : ''}`;
-      const note = fits ? `<span class="gold">${G.I18n.f('{x} la puede aprender', G.DEX_BY[partner].name)}</span>`
-        : partner && G.Mons.taught(partner).includes(id) ? G.I18n.f('{x} ya la sabe', G.DEX_BY[partner].name) : G.T(m.desc);
+      // Fork: the move's description always, and whether your partner can learn it under it.
+      const who = fits ? `<span class="gold">${G.I18n.f('{x} la puede aprender', G.DEX_BY[partner].name)}</span>`
+        : partner && G.Mons.taught(partner).includes(id) ? G.I18n.f('{x} ya la sabe', G.DEX_BY[partner].name) : '';
+      const note = G.T(m.desc) + (who ? '<br>' + who : '');
       h += row(G.Icons.html('move:' + id, 32), `${G.T('MT')} ${moveName(id)} ${tag}${mine(G.Shop.tmCount(id))}`, note, buyBtn('tm:' + id, G.Shop.tmPrice(id)));
     }
     return h + '</div>';

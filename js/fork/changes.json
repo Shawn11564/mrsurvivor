@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions",
       "items": [
+        { "k": "change", "s": "all", "a": "Shop", "t": "Kecleon shop: every TM shows its move's description; when your partner can learn it (or already knows it), that line comes under the description instead of replacing it." },
         { "k": "change", "s": "all", "a": "Gacha", "t": "The slot machine's Skip button is under the machine, centred, instead of next to its lever (the gacha and the Radiant Ritual)." },
         { "k": "fix", "s": "all", "a": "Performance", "t": "Long runs use less memory: the game kept every Pokémon sprite of the whole run loaded (every enemy wave and boss so far), above its own limit. Now only the ones in play or about to come stay; the others load again if they come back.", "n": "late run: 337 -> ~240 sprite sheets, ~85 -> ~68 Mpx of images (about 70 MB less)" },
         { "k": "nerf", "s": "all", "a": "Bonds", "t": "Keep them apart (turning a bond down) gives less damage, and only the first 5 times in a run; after that it still keeps your moves apart, with no bonus. The button says how many are left.", "n": "+10% per bond, no limit -> +2.5% per bond, 5 at most (x1.13 in all)" },

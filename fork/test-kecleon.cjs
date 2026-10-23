@@ -5,7 +5,8 @@
 //   node fork/serve.cjs                 (in the repo root, another terminal)
 //   node fork/test-kecleon.cjs [base-url]
 //
-//   1. Lab off: the shop lists 8 TMs (no Lab one); buying a Mint, an Ability Capsule and a TM Charmander can learn
+//   1. Lab off: the shop lists 8 TMs (no Lab one), each with its move's description (and, if your partner
+//      can learn it, a line saying so under it); buying a Mint, an Ability Capsule and a TM Charmander can learn
 //      takes the coins and fills the bag.
 //   2. The collection card uses them: the Mint changes Charmander's nature, the Capsule Snorlax's ability, and
 //      Teach TM teaches Charmander the TM (gone from the bag).
@@ -63,6 +64,13 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     console.log('1. Buying (Lab off)');
     const tms = await openShop();
     const tm = await page.evaluate(list => list.find(id => G.Mons.canLearn(4, id)), tms);
+    // Every TM row has its move's description; one your partner can learn also says so, under it.
+    const rows = await page.evaluate(list => list.map(id => {
+      const sub = document.querySelector(`#shop-body [data-buy="tm:${id}"]`).closest('.upg-item').querySelector('.sub');
+      return { id, desc: sub.textContent.includes(G.T(G.Moves.BY_ID[id].desc)), can: /can learn it/.test(sub.textContent), fits: G.Mons.canLearn(4, id) };
+    }), tms);
+    check(rows.every(r => r.desc), 'every TM shows its move\'s description', rows.filter(r => !r.desc));
+    check(rows.some(r => r.fits) && rows.every(r => r.can === r.fits), 'the ones Charmander can learn also say so (under the description)', rows);
     const c0 = await page.evaluate(() => G.DB.save.coins);
     await buy('mint'); await buy('cap'); await buy('tm:' + tm);
     const bought = await page.evaluate(([tm, c0]) => { const s = G.DB.save; return { mint: (s.bag || {}).mint, cap: (s.bag || {}).cap, tm: (s.tms || {})[tm], spent: c0 - s.coins, want: 3000 + G.Shop.tmPrice(tm) }; }, [tm, c0]);
