@@ -23,7 +23,7 @@ How to use it:
 - [x] 53. [feat][lab] Lab leaderboard: the same boards as the regular one (solo/group; today, week, month, all-time, per Pokémon), counting only Lab runs (a0dc40b)
 - [x] 54. [ui] Boss health bars: one bar per boss alive (late runs have several), only for bosses within a wide radius of you so it stays uncluttered · everyone (b48d672)
 - [ ] 55. [infra][ui] Performance: FPS in late runs (many enemies, effects, bosses) and memory that grows over a long session in the Chrome tab · everyone (claimed: cc-oubt6 perf agent)
-- [ ] 56. [feat][ui] Move dex: a tab that lists every move and what it does · everyone (claimed: cc-oubt6)
+- [x] 56. [feat][ui] Move dex: a tab that lists every move and what it does · everyone (050245e)
 - [x] 57. [feat] Choice Band: picking it up asks which move to lock into (it locked to whatever slot was active) · everyone (15181d3)
 
 ## Phase 1: fixes and cheap tuning
