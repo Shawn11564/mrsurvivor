@@ -15,9 +15,10 @@
 //   2b. The guest's Hypnosis and Confuse Ray put the host's enemies to sleep / confuse them (and the
 //      guest sees them asleep), its Rain Dance brings rain for both, its Fly is seen on the host,
 //      it evolves during the run (Wartortle, Blastoise), and as a Lucario Mega Evolves; the host sees it all.
-//   3. The host does not send the Lab run to the group leaderboard.
+//   3. The host sends the Lab run as a Lab run (the Lab group boards, js/net/ranking.js;
+//      fork/test-lab-ranking.cjs checks where it lands), never as a normal one.
 //   4. Host Lab off, guest Lab on: the lobby says nothing, the run is normal for both, and the
-//      host sends it to the leaderboard.
+//      host sends it to the regular leaderboard.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -48,10 +49,11 @@ async function player(browser, name, dex) {
     const nick = st === 'ok' ? { ok: true } : await G.Social.claimNick(name);
     G.Flow.afterLogin();
     for (let i = 0; i < 5 && !document.getElementById('scr-savenote').classList.contains('hidden'); i++) document.getElementById('savenote-ok').click();
-    // Leaderboard spy: what the host's endRun sends.
-    window.__group = 0;
+    // Leaderboard spy: what the host's endRun sends, and whether it was a Lab run then (lab.js's
+    // wrapper, inside this one, sends a Lab run to the Lab boards).
+    window.__group = [];
     const sub = G.Ranking.submitGroup;
-    G.Ranking.submitGroup = function () { window.__group++; return sub.apply(this, arguments); };
+    G.Ranking.submitGroup = function () { window.__group.push(G.Lab.active); return sub.apply(this, arguments); };
     return { ok: nick.ok !== false, uid: G.DB.fb.uid };
   }, [name, dex]);
   if (!r.ok) throw new Error(`${name}: could not set up: ${JSON.stringify(r)}`);
@@ -210,7 +212,8 @@ async function finish(all) {
 
     // ---------------- 3. leaderboard ----------------
     await finish(ALL);
-    check(await host.evaluate(() => window.__group === 0), 'the host does not send the Lab run to the group leaderboard');
+    const sent1 = await host.evaluate(() => window.__group.slice());
+    check(sent1.every(lab => lab === true), 'the host sends the Lab run only as a Lab run (the Lab leaderboard): ' + JSON.stringify(sent1));
 
     // ---------------- 4. host off, guest on ----------------
     console.log('Host Lab off, guest Lab on');
@@ -222,7 +225,8 @@ async function finish(all) {
     const st2 = await Promise.all(ALL.map(p => p.evaluate(() => ({ active: G.Lab.active, ability: G.Game.player.labAbility || null }))));
     check(!st2[0].active && !st2[1].active && !st2[0].ability && !st2[1].ability, 'the run is normal for both (the host decides)');
     await finish(ALL);
-    check(await host.evaluate(() => window.__group === 1), 'the host sends the normal run to the group leaderboard');
+    const sent2 = await host.evaluate(() => window.__group.slice());
+    check(sent2.length === sent1.length + 1 && sent2[sent2.length - 1] === false, 'the host sends the normal run to the regular group leaderboard: ' + JSON.stringify(sent2));
 
     for (const p of ALL) check(p.errs.length === 0, `no page errors (${p.name})` + (p.errs.length ? ': ' + p.errs.slice(0, 3).join(' | ') : ''));
   } finally {
