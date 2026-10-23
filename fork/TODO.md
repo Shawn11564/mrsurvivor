@@ -21,7 +21,7 @@ How to use it:
 - [ ] 51. [?] G12 follow-up: close builds can't beat the 3:00 boss alone (they must stand next to it), so 24's survival targets aren't met even with a 45 % cut or +50 % damage. Owner: change the targets, or give melee a way past the boss?
 - [x] 52. [ui][infra] Admin Change Log: every change to the game by day (new / buff / nerf / changed / removed / fixed, Lab or everyone, was → now numbers), backfilled from the whole history, and a check that every game commit adds its lines · admin (47482d7)
 - [x] 53. [feat][lab] Lab leaderboard: the same boards as the regular one (solo/group; today, week, month, all-time, per Pokémon), counting only Lab runs (a0dc40b)
-- [ ] 54. [ui] Boss health bars: one bar per boss alive (late runs have several), only for bosses within a wide radius of you so it stays uncluttered · everyone (claimed: cc-oubt6)
+- [x] 54. [ui] Boss health bars: one bar per boss alive (late runs have several), only for bosses within a wide radius of you so it stays uncluttered · everyone (b48d672)
 
 ## Phase 1: fixes and cheap tuning
 
