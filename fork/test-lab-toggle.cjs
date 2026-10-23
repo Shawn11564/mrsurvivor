@@ -8,8 +8,8 @@
 //   2. The switch is the Lab mode setting: flipping it turns Lab mode on (Settings → Experimental shows it
 //      on, the Play button's Underdog tag appears) without starting a run, and the other way round:
 //      changed in Settings, the switch follows. It stays after a reload.
-//   3. The "i": hidden until hovered, then what Lab mode is and what it doesn't count for (leaderboards,
-//      achievements, records) and that the host decides in co-op. A tap opens it too (touch screens).
+//   3. The "i": hidden until hovered, then what Lab mode is, that its runs go on the Lab leaderboard,
+//      what they don't count for (the regular leaderboard, achievements, records) and that the host decides in co-op. A tap opens it too (touch screens).
 //   4. Play still starts a run.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
@@ -68,8 +68,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.hover('.lab-i');
     await page.waitForTimeout(250);
     s = await state();
-    check(s.tip && s.tip.shown && /leaderboards/.test(s.tip.text) && /achievements/.test(s.tip.text) && /records/.test(s.tip.text) && /host/.test(s.tip.text),
-      'hovered: what Lab mode is, no leaderboards / achievements / records, the host decides in co-op', s.tip);
+    check(s.tip && s.tip.shown && /Lab leaderboard/.test(s.tip.text) && /regular leaderboard/.test(s.tip.text) && /achievements/.test(s.tip.text) && /records/.test(s.tip.text) && /host/.test(s.tip.text),
+      'hovered: what Lab mode is, the Lab leaderboard, no regular leaderboard / achievements / records, the host decides in co-op', s.tip);
     await page.mouse.move(5, 5);
     await page.waitForTimeout(250);
     await page.evaluate(() => document.querySelector('.lab-i').click());

@@ -21,6 +21,7 @@ status table as work lands.
 | 2026-10-21 | **Move badges** in Lab: same-type arrow only when it adds damage (one type); weak side yellow from 65 %, red under; the enemy arrows redrawn in the same colours (x4 magenta). |
 | 2026-10-21 | The badges are the **4 plain arrows only**, drawn by the artist (18×18, own size); the symbols version and its setting are gone. |
 | 2026-10-21 | Every arrow at **half size** (the 18×18 PNGs at 9); over an enemy with no health bar yet (full health, not a boss), **centred above it**. |
+| 2026-10-23 | Lab runs have their own **Lab leaderboard** (the owner's ask): every board the regular one has (solo / group; today, week, month, all-time, all-time per Pokémon), counting only Lab runs. Lab runs still never reach the regular boards. |
 
 ## Status
 
@@ -95,7 +96,16 @@ as `G.X.y`.
   guests take the host's choice. A guest whose `labV` differs gets a toast to reload.
 - **`G.Lab.active`** is true only while a Lab run has a player. Menus outside a run never see Lab
   pools, so Lab moves can't reach the starting-move picker, the ban list or the save.
-- **Protections:** the run is tainted (`G.Game.taint()`), so it never reaches the leaderboards.
+- **Lab leaderboard** (2026-10-23): the run is no longer tainted. `lab.js` wraps
+  `G.Ranking.submitSolo` / `submitGroup` to add `lab: true` (from `begin()`'s flag), and
+  `js/net/ranking.js` then writes the Lab copy of each board: the period id with an `L` in front
+  (`s_Ld20261023r`, `g_Lall3`, `s_Lall3_p25`; modes `'ls'` / `'lg'`). `firestore.rules` needed no
+  change: it only reads the `s_` / `g_` prefix. game.js's anti-cheat `clean()` applies as usual, and
+  a resumed run (`debugTime`) or one the admin dropped into is still tainted and goes nowhere. The
+  leaderboard screen has a **LAB** switch after Solo / Group (starts as the Lab setting). The
+  moderation screen names a Lab board "Lab · Solo · ..." and deletes from the Lab boards. Check:
+  `node fork/test-lab-ranking.cjs` (Firebase emulator: the real SDK and rules).
+- **Protections:** a Lab run never reaches the regular leaderboards (above).
   `G.Progress.event/kill/checkAch` do nothing during it, and `save.stats` is put back at the end
   (on the `runEnd` event, right after `endRun` writes it). The summary shows no time record and a
   "Lab run" note. Coins, tickets and shinies are kept.

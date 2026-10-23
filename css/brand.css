@@ -88,3 +88,9 @@ p.fork-credit { font-size: 0.9em; }
 
 /* Bond screen: the note under a move's description (js/ui/run-ui.js renderBond). */
 .card .ds.bond-note { color: #ffb3e6; margin-top: 2px; }
+
+/* Leaderboard: the LAB switch next to Solo / Group (js/ui/ranking-ui.js). */
+#rk-mode .rk-lab { margin-left: auto; }
+#rk-mode .rk-lab:not(.on) .lab-badge { opacity: .55; }
+#rk-mode .rk-lab.on { border-color: #2ec4aa; background: rgba(46,196,170,.14); }
+#rk-labnote { margin: 0 0 6px; }

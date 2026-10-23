@@ -2,11 +2,14 @@
  * Pestañas Solo / Grupo, periodo (diario ... histórico), todos o sólo amigos,
  * filtro por Pokémon (sólo en el histórico) y tu puesto abajo aunque no salgas
  * en el top. Lo leído se guarda 2 h (ver ranking.js).
+ * Fork: a LAB switch next to Solo / Group shows the Lab copy of every board
+ * (Lab runs only; mode 'ls' / 'lg' in ranking.js). It starts as the Lab setting.
  */
 G.RankingUI = (() => {
   const $ = G.UI.$;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let mode = 's', period = 'w', scope = 'all', dex = null;
+  let mode = 's', period = 'w', scope = 'all', dex = null, lab = null;
+  const m = () => (lab ? 'l' : '') + mode;            // the board's mode (fork: Lab)
   let token = 0;
 
   function init() {
@@ -36,6 +39,7 @@ G.RankingUI = (() => {
     G.UI.show('scr-rank', true);
     if (!G.Social.started) G.Social.start();
     $('rk-mod').classList.toggle('hidden', !G.Ranking.isAdmin());
+    if (lab === null) lab = !!G.Settings.get('lab');
     tabs();
     load();
   }
@@ -53,6 +57,17 @@ G.RankingUI = (() => {
     };
     mk($('rk-mode'), [['s', `<b>${G.Icons.html('user', 16)} Solo</b>`], ['g', `<b>${G.Icons.html('friends', 16)} Grupo</b>`]],
        mode, k => { mode = k; }, 'gen-tab');
+    // Fork: the Lab boards (Lab runs only), a switch at the end of the row.
+    const lb = document.createElement('button');
+    lb.className = 'gen-tab rk-lab' + (lab ? ' on' : '');
+    lb.title = 'Lab runs only: experimental moves and abilities';
+    lb.innerHTML = '<span class="lab-badge">LAB</span>';
+    lb.onclick = () => { lab = !lab; tabs(); load(); };
+    $('rk-mode').appendChild(lb);
+    let note = $('rk-labnote');
+    if (!note) { $('rk-mode').insertAdjacentHTML('afterend', '<p id="rk-labnote" class="note lab-note"></p>'); note = $('rk-labnote'); }
+    note.classList.toggle('hidden', !lab);
+    note.innerHTML = '<span class="lab-badge">LAB</span> Lab leaderboard: Lab runs only. Normal runs are on the regular one.';
     mk($('rk-period'), G.Ranking.PERIODS, period, k => {
       period = k;
       if (k !== 'a' && dex) { dex = null; $('rk-poke').value = ''; $('rk-clear').classList.add('hidden'); }
@@ -70,8 +85,8 @@ G.RankingUI = (() => {
     let rows = [], me = null;
     try {
       [rows, me] = await Promise.all([
-        G.Ranking.top(mode, period, dex, scope === 'friends'),
-        G.Social.me ? G.Ranking.myRank(mode, period, dex) : Promise.resolve(null)
+        G.Ranking.top(m(), period, dex, scope === 'friends'),
+        G.Social.me ? G.Ranking.myRank(m(), period, dex) : Promise.resolve(null)
       ]);
     } catch (e) {
       if (my !== token) return;
@@ -84,7 +99,7 @@ G.RankingUI = (() => {
       list.innerHTML = '<p class="sub">Todavía no hay marcas aquí. ¡Sé el primero!</p>';
     }
     const uid = G.Social.uid;
-    const b = G.Ranking.board(mode, period, dex), done = G.Ranking.reported();
+    const b = G.Ranking.board(m(), period, dex), done = G.Ranking.reported();
     rows.forEach((r, i) => list.appendChild(rowEl(r, i + 1, r.uids.includes(uid), b, done)));
 
     // La frase se monta en cada idioma (traducirla por trozos sale rara).
@@ -102,8 +117,8 @@ G.RankingUI = (() => {
     const pn = en ? { d: 'today', w: 'this week', m: 'this month', y: 'this year', a: 'of all time' }[period]
                   : { d: 'de hoy', w: 'de esta semana', m: 'de este mes', y: 'de este año', a: 'de siempre' }[period];
     const mon = dex ? G.DEX_BY[dex].name : '';
-    const where = en ? (mode === 's' ? 'solo' : 'group') + (dex ? ' with ' + mon : '')
-                     : (mode === 's' ? 'en solitario' : 'en grupo') + (dex ? ' con ' + mon : '');
+    const where = (lab ? 'Lab ' : '') + (en ? (mode === 's' ? 'solo' : 'group') + (dex ? ' with ' + mon : '')
+                     : (mode === 's' ? 'en solitario' : 'en grupo') + (dex ? ' con ' + mon : ''));
     $('rk-me').removeAttribute('translate');
     $('rk-me').innerHTML = !G.Social.me ? 'Elige un apodo (en Amigos) para salir en el ranking.'
       : me && me.out ? (en ? `<span translate="no">You're not in the top 50 ${where} ${pn} yet. Your rank is in All-time.</span>`

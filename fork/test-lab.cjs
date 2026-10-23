@@ -14,7 +14,8 @@
 //      Caterpie topped up to the minimum); Swift can be learned and cast (star projectiles,
 //      no errors); its ability is attached (Charmander: Blaze); "LAB" on the HUD; the pause
 //      screen shows the ability and the pool.
-//   4. Protections: the Lab run is not sent to the leaderboard, save.stats and
+//   4. Protections: the Lab run is sent as a Lab run (to the Lab leaderboard; which boards it
+//      lands on: fork/test-lab-ranking.cjs), save.stats and
 //      achievements are as before (missions do count: fork/test-lab-missions.cjs), coins are kept, the summary says it's a Lab run and shows
 //      no time record; back in the menu G.Lab.active is false and pools are normal again.
 //   5. Abilities, on a real Player: damage taken (Levitate, Thick Fat, Intimidate, Water
@@ -66,7 +67,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     // Leaderboard spy: what endRun sends (guest saves never reach the server anyway).
     window.__sent = [];
     const sub = G.Ranking.submitSolo;
-    G.Ranking.submitSolo = r => { window.__sent.push(r); return sub(r); };
+    G.Ranking.submitSolo = r => { window.__sent.push({ lab: G.Lab.active }); return sub(r); };
     G.MenuUI.open();
   });
 
@@ -183,11 +184,11 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const after = await page.evaluate(() => {
     const s = G.DB.save;
     return { stats: JSON.stringify(s.stats), ach: JSON.stringify(s.ach || {}), missions: JSON.stringify(s.missions || {}), coins: s.coins,
-             sent: window.__sent.length, note: !!document.querySelector('#over-stats .lab-over'),
+             sent: window.__sent.map(x => x.lab), note: !!document.querySelector('#over-stats .lab-over'),
              // The time-record line (run-ui.js showOver), not the Lab note (which mentions records).
              record: [...document.querySelectorAll('#over-stats > div')].some(d => !d.classList.contains('lab-over') && /récord|record/i.test(d.textContent)) };
   });
-  check(after.sent === 1, 'the Lab run is not sent to the leaderboard');
+  check(JSON.stringify(after.sent) === '[false,true]', 'the Lab run is sent as a Lab run (the Lab leaderboard)', after.sent);
   check(after.stats === before.stats, 'save.stats (records, run counts) are as before');
   check(after.ach === before.ach, 'achievements are as before');
   check(after.coins > before.coins, `coins are kept (${before.coins} → ${after.coins})`);

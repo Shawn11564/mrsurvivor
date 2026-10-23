@@ -13,7 +13,8 @@
  * In a Lab run:
  *   - G.Moves.poolFor(mon) gives its Lab list (poolFor, below): what it learns in the games.
  *   - its ability (js/fork/lab/abilities.js)
- *   - it doesn't go on the leaderboard (G.Game.taint) and doesn't count for achievements or records: the
+ *   - it goes on the Lab leaderboard, never the regular one (the Lab boards in js/net/ranking.js:
+ *     submitSolo / submitGroup get lab: true, below), and doesn't count for achievements or records: the
  *     G.Progress notices are muted and save.stats goes back to how it was at the end. Missions,
  *     coins, tickets and shinies do count (missions() below). Test: fork/test-lab-missions.cjs.
  *   - "LAB" on the HUD, its ability and its list in the pause menu, and a note on the final summary.
@@ -220,7 +221,6 @@ G.Lab = (() => {
       const pl = G.Game.player;
       startDex = pl ? pl.dex : 0;
       if (run && pl) {
-        G.Game.taint();                                 // doesn't go on the leaderboard
         const sv = G.DB.save;
         stats0 = sv && sv.stats ? JSON.parse(JSON.stringify(sv.stats)) : null;
         info = G.LabAbilities.describe(pl.abilId, pl.mon);   // set by pl.setAbility (abilities.js), not attached twice
@@ -279,6 +279,14 @@ G.Lab = (() => {
     told.t = setTimeout(() => el.classList.add('hidden'), 2800);
   }
 
+  // A Lab run's time goes on the Lab boards (js/net/ranking.js), the regular ones never see it.
+  // game.js calls these at the end of the run, before the next begin(), so `run` is still this run's.
+  // (The anti-cheat clean() still applies; a resumed run is tainted by debugTime and doesn't go on.)
+  for (const k of ['submitSolo', 'submitGroup']) {
+    const f = G.Ranking[k];
+    G.Ranking[k] = function (r) { return f.call(this, Object.assign({}, r, { lab: run })); };
+  }
+
   // ---------------- co-op ----------------
   const broadcast = G.Net.broadcast;
   G.Net.broadcast = function (msg) {
@@ -300,7 +308,7 @@ G.Lab = (() => {
   G.Social.on(what => { if (what === 'room') lobby(); });
 
   // ---------------- what you see ----------------
-  const NOTE = 'Lab run: experimental moves and abilities. It won\'t count for leaderboards, achievements or records.';
+  const NOTE = 'Lab run: experimental moves and abilities. It goes on the Lab leaderboard, and won\'t count for the regular leaderboard, achievements or records.';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /** In a group room: will the run be Lab? (the host's setting; a guest's comes in its 'lab' message) */
@@ -319,14 +327,14 @@ G.Lab = (() => {
     el.classList.toggle('hidden', !on);
     el.innerHTML = '<span class="lab-badge">LAB</span> ' + esc(other
       ? 'The host has a different version of Lab mode. Reload the page so you both see the same moves.'
-      : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It won\'t count for leaderboards, achievements or records.');
+      : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It goes on the Lab leaderboard, not the regular one, and won\'t count for achievements or records.');
   }
 
   /** The Settings → Experimental tab (settings-ui.js draws it with its own pieces). */
   function settingsRow(toggle, section) {
     return section('Experimental')
       + toggle('lab', 'Lab mode', 'Try moves and abilities that are still being tested: each Pokémon gets the moves it learns in the games and one of its abilities. '
-        + 'Lab runs give coins, tickets and shinies and count for missions as usual, but not for leaderboards, achievements or records. In co-op, the host\'s setting decides.');
+        + 'Lab runs give coins, tickets and shinies and count for missions as usual. Their times go on the Lab leaderboard (Leaderboards → LAB), not the regular one, and they don\'t count for achievements or records. In co-op, the host\'s setting decides.');
   }
 
   /** Pause: its ability and what it can learn here. */

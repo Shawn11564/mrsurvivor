@@ -21,6 +21,11 @@
  *                    las tablas empezaron de cero)
  *   id = tu uid (solitario) o los uid del equipo ordenados y unidos con "_".
  *
+ * Lab (MrSurvivor fork): the Lab runs have their own copy of every board, the
+ * period id with an "L" in front (s_Ld20261023r, g_Lall3, s_Lall3_p25). Their
+ * modes are 'ls' / 'lg'; the rules see the s_ / g_ as usual (firestore.rules).
+ * Check: fork/test-lab-ranking.cjs.
+ *
  * Ahorros:
  *   - Lo leído se guarda 2 h en el navegador (cambiar de pestaña y volver: 0).
  *   - Tus mejores marcas se recuerdan en el navegador: al acabar una partida
@@ -93,9 +98,15 @@ G.Ranking = (() => {
     return Object.assign({}, p, { d: p.d + GEN, w: p.w + GEN, m: p.m + GEN, y: p.y + GEN });
   }
 
+  // Lab (fork): mode 'ls' / 'lg' = the Lab copy of 's' / 'g' (see above).
+  const LAB = 'L';
+  const base = mode => mode.slice(-1);
+  /** Is board b (its period part) one of now's (or all-time), normal or Lab? */
+  const isCur = (b, cur) => { const s = b.split('_')[1] || ''; return cur.some(p => s === p || s === LAB + p); };
+
   /** El filtro por Pokémon sólo existe en el histórico. */
   function board(mode, period, dex) {
-    return mode + '_' + boardIds()[period] + (dex && period === 'a' ? '_p' + dex : '');
+    return base(mode) + '_' + (mode.length > 1 ? LAB : '') + boardIds()[period] + (dex && period === 'a' ? '_p' + dex : '');
   }
 
   const col = b => fbx().fs.collection('lb').doc(b).collection('e');
@@ -139,7 +150,7 @@ G.Ranking = (() => {
   function saveBests(b) {
     // Sólo se conservan las tablas de los periodos actuales y las históricas.
     const cur = Object.values(boardIds());
-    for (const k of Object.keys(b)) if (!cur.some(p => k.split(':')[0].split('_')[1] === p)) delete b[k];
+    for (const k of Object.keys(b)) if (!isCur(k.split(':')[0], cur)) delete b[k];
     try { localStorage.setItem(bestKey(), JSON.stringify(b)); } catch (e) { /* lleno */ }
   }
 
@@ -161,7 +172,7 @@ G.Ranking = (() => {
     t[b] = low;
     // Sólo las tablas de los periodos de ahora (y las históricas).
     const cur = Object.values(boardIds());
-    for (const k of Object.keys(t)) if (!cur.some(p => k.split('_')[1] === p)) delete t[k];
+    for (const k of Object.keys(t)) if (!isCur(k, cur)) delete t[k];
     try { localStorage.setItem(THR, JSON.stringify(t)); } catch (e) { /* lleno */ }
   }
 
@@ -303,10 +314,11 @@ G.Ranking = (() => {
     return better;
   }
 
-  function announce(better) {
+  function announce(better, lab) {
     if (!better.length) return;
     const names = { d: 'de hoy', w: 'de la semana', m: 'del mes', a: 'histórico' };
     const best = PERIODS.map(p => p[0]).filter(p => better.includes(p)).pop();
+    if (lab) { G.UI.toast('New best ' + { d: 'today', w: 'this week', m: 'this month', a: 'of all time' }[best] + ' on the Lab leaderboard!', 3400); return; }
     G.UI.toast('¡Nueva mejor marca ' + names[best] + ' en el ranking!', 3400);
   }
 
@@ -315,12 +327,12 @@ G.Ranking = (() => {
     const fb = fbx();
     if (!fb || !G.Social.me || r.t < MIN_T) return [];
     flushDeferred();
-    const ids = boardIds();
+    const m = r.lab ? 'ls' : 's';                      // a Lab run: the Lab boards (fork)
     const entry = { t: r.t, uids: [fb.uid], names: [G.Social.me.name], dex: [r.dex], shiny: [!!r.shiny], lv: r.lv, kills: r.kills };
-    const boards = PERIODS.map(([p]) => ['s_' + ids[p], p]);
-    if (r.t >= MIN_T_MON) boards.push(['s_' + ALL + '_p' + r.dex, 'p']);
+    const boards = PERIODS.map(([p]) => [board(m, p), p]);
+    if (r.t >= MIN_T_MON) boards.push([board(m, 'a', r.dex), 'p']);
     const better = await store(boards, fb.uid, entry);
-    announce(better);
+    announce(better, r.lab);
     return better;
   }
 
@@ -333,11 +345,11 @@ G.Ranking = (() => {
     const id = ms.map(m => m.uid).join('_');
     const entry = { t: r.t, uids: ms.map(m => m.uid), names: ms.map(m => m.name), dex: ms.map(m => m.dex),
                     shiny: ms.map(m => !!m.shiny), lv: r.lv, kills: r.kills };
-    const ids = boardIds();
-    const boards = PERIODS.map(([p]) => ['g_' + ids[p], p]);
-    if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push(['g_' + ALL + '_p' + d, 'p']);
+    const m = r.lab ? 'lg' : 'g';                      // a Lab run: the Lab boards (fork)
+    const boards = PERIODS.map(([p]) => [board(m, p), p]);
+    if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push([board(m, 'a', d), 'p']);
     const better = await store(boards, id, entry);
-    announce(better);
+    announce(better, r.lab);
     return better;
   }
 
@@ -378,7 +390,7 @@ G.Ranking = (() => {
     const ck = 'f:' + b + ':' + circle.slice().sort().join(',');
     let extra = cacheGet(ck);
     if (extra === undefined) {
-      if (mode === 's') {
+      if (base(mode) === 's') {
         const missing = circle.filter(u => !inTop.some(r => r.id === u));
         const docs = await Promise.all(missing.map(u => col(b).doc(u).get().catch(() => null)));
         extra = docs.filter(d => d && d.exists).map(d => rowOf(d.id, d.data()));
@@ -407,10 +419,10 @@ G.Ranking = (() => {
     const c = cacheGet(ck);
     if (c !== undefined) return c;
     // Si este navegador ya sabe que no tienes marca en esta tabla, no se mira.
-    const kb = bests(), mk = b + ':' + (mode === 's' ? fb.uid : '*');
+    const kb = bests(), mk = b + ':' + (base(mode) === 's' ? fb.uid : '*');
     if (kb[mk] === 0) { cacheSet(ck, null); return null; }
     let mine = null;
-    if (mode === 's') {
+    if (base(mode) === 's') {
       const d = await col(b).doc(fb.uid).get();
       if (d.exists) mine = rowOf(d.id, d.data());
     } else {
@@ -458,9 +470,8 @@ G.Ranking = (() => {
   async function removeMine() {
     const fb = fbx();
     if (!fb) return;
-    const ids = boardIds();
     const boards = new Set();
-    for (const m of ['s', 'g']) for (const [p] of PERIODS) boards.add(m + '_' + ids[p]);
+    for (const m of ['s', 'g', 'ls', 'lg']) for (const [p] of PERIODS) boards.add(board(m, p));
     for (const k of Object.keys(bests())) boards.add(k.split(':')[0]);
     await Promise.all([...boards].map(b => fb.fs.runTransaction(async tx => {
       const s = await tx.get(sumRef(b));
@@ -536,9 +547,8 @@ G.Ranking = (() => {
 
   /** Admin: quita la marca de un jugador o equipo de todas las tablas de ahora (y de `also`). */
   async function removeEverywhere(e, mode, dexes = [], also = null) {
-    const ids = boardIds();
-    const boards = new Set(PERIODS.map(([p]) => mode + '_' + ids[p]));
-    for (const d of dexes) boards.add(mode + '_' + ALL + '_p' + d);
+    const boards = new Set(PERIODS.map(([p]) => board(mode, p)));
+    for (const d of dexes) boards.add(board(mode, 'a', d));
     if (also) boards.add(also);
     await Promise.all([...boards].map(b => removeEntry(b, e)));
   }
@@ -571,7 +581,7 @@ G.Ranking = (() => {
       mem.delete('s:' + d.id); try { localStorage.removeItem('ps.rk.c.s:' + d.id); } catch (e) { /* nada */ }
     }
     // Las marcas del histórico que no están en el top 50 (sirven para el puesto exacto).
-    for (const b of ['s_' + ALL, 'g_' + ALL]) {
+    for (const b of ['s_' + ALL, 'g_' + ALL, 's_' + LAB + ALL, 'g_' + LAB + ALL]) {
       const q = await col(b).where('t', '>', maxT).get();
       await Promise.all(q.docs.map(e => e.ref.delete().catch(() => {})));
       rows += q.size;

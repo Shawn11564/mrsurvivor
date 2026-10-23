@@ -16,8 +16,8 @@
   const $ = id => document.getElementById(id);
   const TIP = `<b>Lab mode</b> (experimental): each Pokémon gets the moves it learns in the games, one of its
     abilities, signature moves, evolving during the run, items and extra XP for weak Pokémon, and candies.
-    <span class="lab-tip-r"><b>Lab runs</b> give coins, tickets and shinies and count for missions, but
-    <b>not for leaderboards, achievements or records</b>.</span>
+    <span class="lab-tip-r"><b>Lab runs</b> give coins, tickets and shinies and count for missions, and go on
+    the <b>Lab leaderboard</b>, but <b>not the regular leaderboard, achievements or records</b>.</span>
     <span class="lab-tip-r">In co-op, the host's setting decides for everyone.</span>`;
   const CSS = `
 #lab-play { position: relative; grid-column: 1 / -1; }
