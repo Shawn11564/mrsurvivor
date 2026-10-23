@@ -9,7 +9,7 @@
 //      upstream's table continued at its trend (×1.35 HP, ×1.2 damage, as rollRun does).
 //   2. The 18:00 boss really spawns at 18:00 (the real spawner), with bossScale(t) on top: HP and damage.
 //   3. Endless: with Eternatus beaten, the 33:00 boss spawns; at 60:00 the spawner still has one
-//      (made later, with the 60:00 slot's numbers).
+//      (made later, with the 60:00 slot's numbers, and js/fork/lab/boss-power.js's ×1.2^15 past 30:00).
 //   4. A resumed run (G.Resume, the real save and resume) at 21:05 gets only the 21:00 boss, not
 //      every boss since 3:00 at once.
 //   5. A normal run keeps upstream's five: nothing at 18:00.
@@ -87,7 +87,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       await __run(true, 3598, true);
       await __wait(() => __bosses().length, 10000);
       const e = __bosses()[0], b = G.Enemies.BOSSES.find(x => x.at === 3600), n = b && G.LabBossSlots.defNumbers(G.LabBossSlots.slotAt(3600));
-      return { dex: e && e.dex, b: b && { dex: b.dex, hp: b.hp, dmg: b.dmg, xp: b.xp }, n, hp: e && e.maxHp, wantHp: b && Math.round(b.hp * G.Enemies.bossScale(3600).hp), count: G.Enemies.BOSSES.length };
+      return { dex: e && e.dex, b: b && { dex: b.dex, hp: b.hp, dmg: b.dmg, xp: b.xp }, n, hp: e && e.maxHp, wantHp: b && Math.round(b.hp * G.Enemies.bossScale(3600).hp * (G.LabPower ? G.LabPower.hpK(3600) : 1)), count: G.Enemies.BOSSES.length };
     });
     check(s60.b && s60.dex === s60.b.dex && s60.b.hp === s60.n.hp && s60.b.dmg === s60.n.dmg && Math.abs(s60.hp - s60.wantHp) <= 0.01 * s60.wantHp,
       'at 60:00 a boss still comes, with the 60:00 slot\'s numbers', s60);

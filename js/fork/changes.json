@@ -3,8 +3,12 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up",
       "items": [
+        { "k": "nerf", "s": "lab", "a": "Bosses", "t": "From 15:00 bosses, wild legendaries and rift legendaries get HP from the team's own damage (a power meter of the best single-target damage per second), so a strong build can't one-shot them: they last at least that many seconds of your damage.", "n": "no floor -> boss 17 s / wild 11.5 s / rift 22 s of your damage at 30:00, 24 / 16 / 30 s at 45:00, 31 / 20.5 / 38 s at 60:00" },
+        { "k": "nerf", "s": "lab", "a": "Bosses", "t": "From 20:00 one hit takes at most 10% of a boss's max HP.", "n": "no cap -> 10% of max HP per hit" },
+        { "k": "nerf", "s": "lab", "a": "Bosses", "t": "Past 30:00 bosses grow like the horde: more HP and harder hits (they give more XP for it).", "n": "HP x1 -> x3.9 at 45:00, x15.4 at 60:00; damage x1 -> x2.1 at 45:00, x3.6 at 60:00; XP up to x3" },
+        { "k": "nerf", "s": "lab", "a": "Wild legendaries", "t": "Wild legendaries scale with the clock like other bosses.", "n": "at 45:00: 18 800 HP, 138 damage -> 406 000 HP, 715 damage (before the damage-based floor)" },
         { "k": "nerf", "s": "lab", "a": "Enemies", "t": "From 20:00 the horde gets stronger and faster the longer the run goes, and past 30:00 it grows exponentially (Megabonk-style), so an endless run ends even with a strong build. Applies to regular enemies as they spawn.", "n": "HP x1 -> x1.5 at 25:00, x2 at 30:00, x13.7 at 45:00, x77 at 60:00; damage x1 -> x1.33 at 30:00, x4.3 at 45:00, x12.8 at 60:00; speed x1 -> x1.1 at 30:00, x1.4 at 45:00, at most x1.6" },
         { "k": "nerf", "s": "lab", "a": "Enemies", "t": "Past 30:00 a growing share of regular enemies are elites and some carry an elite affix, even below the enemy cap.", "n": "extra elites 0 -> 25% at 45:00, 50% at 60:00; extra affixes 0 -> 15% at 45:00, 30% at 60:00" },
         { "k": "buff", "s": "lab", "a": "XP", "t": "Regular enemies' XP from 20:00 grows with the square root of their extra HP, so levels keep coming as the horde toughens.", "n": "x1 -> x1.22 at 25:00, x3.7 at 45:00" },

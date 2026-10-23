@@ -68,6 +68,7 @@ status table as work lands.
 | `js/fork/lab/late-hand.js` | `G.LabLateHand`: Carrera/Reflejos past their cap for max HP, EV cards and auto-pick in endless (plan C1.4) |
 | `js/fork/lab/contracts.js` | `G.LabContracts`: per-Pokémon contracts paid in coins for that Pokémon's upgrades (plan C1.5) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
+| `js/fork/lab/boss-power.js` | `G.LabPower`: the team's damage meter, late bosses' HP floors, the per-hit cap and their clock past 30:00 |
 | `js/fork/lab/endgame.js` | `G.LabEndgame`: the horde's late-game curve (HP, damage, speed, elites and affixes from 20:00, exponential past 30:00) and the THREAT label (plan C2.6, part) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
@@ -998,6 +999,42 @@ too. Regular enemies only: bosses, legendaries, obelisks, split copies, thieves 
 60 minutes; the curve's values; what keeps its own numbers; extra elites and affixes from real spawns only
 past 30:00; the THREAT label. `test-xp-pace.cjs` counts the √ factor at 25:00.
 
+## Late bosses keep up (2026-10-23)
+
+A strong build one-shot rift and wild legendaries at 45:00: their HP grows with the clock (the rift's
+3200 + 9 HP a second, a wild one's 2600 + 6) while a build's damage grows far faster. In a Lab run, on the
+machine that runs the enemies (`js/fork/lab/boss-power.js`):
+
+- **The power meter.** Every hit already lands in `G.Judgment.noteDmg` (Enemy.hurt calls it where the enemies
+  run, the guests' hits included), so each second keeps the most damage one enemy took and the biggest single
+  hit. `G.LabPower.power()` is the mean of the 5 best seconds of the last 60 (the team's single-target damage
+  per second, overkill included), `maxHit()` the biggest hit of the last 60 s.
+- **HP floors from 15:00.** A boss that joins the fight gets at least `power() × S` seconds of HP, and never
+  less than 8 of your biggest hits. S grows with the clock, u = (t − 15:00)/30 min, at most 1.5:
+
+| | S | 30:00 | 45:00 | 60:00 |
+|---|---|---|---|---|
+| boss slot | 10 + 14u | 17 s | 24 s | 31 s |
+| wild legendary | 7 + 9u | 11.5 s | 16 s | 20.5 s |
+| rift legendary | 14 + 16u | 22 s | 30 s | 38 s |
+
+- **No bursting from 20:00.** One hit takes at most 10 % of a boss's max HP. The file loads before every Lab
+  file that multiplies a hit (`kinds.js`, `kinds2.js`, `mech.js`), so the cap is on the final number.
+- **The clock past 30:00**, like the horde (`endgame.js`): HP × 1.2^((t − 30:00)/2 min) (×3.9 at 45:00,
+  ×15.4 at 60:00), damage × √(the horde's damage factor) (×2.1 at 45:00, ×3.6 at 60:00), XP × √(the HP gained),
+  at most ×3. Wild legendaries also get the bosses' own clock they lacked: HP × (1 + t/10 min), damage ×
+  (1 + t/30 min) (rift-scaling.js's for the rift): at 45:00 a wild one has 406 000 HP and 715 damage with an
+  empty meter (was 18 800 and 138).
+
+Not for Arceus's Judgment, Eternatus and its obelisks, or a raid's or site's guardian (`_noPower`): those set
+their own HP from `power()`. Load order: before `rift-scaling.js` (its `G.EnemyMgr.add` wrapper is inner, so
+the floor sees what rift-scaling and a Mega made of the legendary). Co-op: the host's meter counts the whole
+team; the HP travels in `'ne'`, and a guest's hit reaches the host's copy, where the cap applies.
+`node fork/test-boss-power.cjs [--solo]` (server; co-op part with the emulator): the meter; the three floors at
+45:00 with a huge meter; the clock with an empty one; the cap at 25:00 and none at 18:00; nothing before 15:00
+or in a normal run; in co-op the guest sees the full max HP and its one-shot takes 10 % on the host.
+`test-wild-legends.cjs` and `test-boss-slots.cjs` count the new clock.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -1084,6 +1121,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
 - `node fork/test-gameplay.cjs` checks Mega Evolution in a normal run; `test-admin.cjs` that an
   admin's Mega Stone Mega Evolves a friend in a normal co-op run, seen by everyone.
 - `node fork/test-endgame.cjs` (server): the endgame wall, see its section.
+- `node fork/test-boss-power.cjs [--solo]` (server + Firebase emulator): late bosses, see their section.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):
