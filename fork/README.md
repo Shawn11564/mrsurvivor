@@ -270,6 +270,8 @@ Missions/Achievements/Profile open on their last tab, and the Pokémon screen ke
 generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `dexSave` in
 `js/ui/menu.js`; all in this device's localStorage, the search box isn't kept).
 
+`node fork/test-rift-rewards.cjs` (server; the Firebase emulator for its co-op part) checks beating a rift legendary (`js/fork/rift-rewards.js`): no held item drops for the nearest player to grab, each player gets their own item back on the map (solo: after the bond, against the one held), and in co-op a guest who's down when the legendary falls is back up at once, still in the arena.
+
 `node fork/test-count-in.cjs` (server) checks the 3 s "Resuming…" count-in (`js/game.js` countInAfter): after the pause menu, a level-up card, a held item to swap or a bond, done within 10 s the run goes straight back to playing, after more than 10 s the count-in plays (the 10 s pass on the game's clock, not for real). Co-op holds and level-ups: `fork/test-coop.cjs`.
 
 `node fork/test-gameplay.cjs` (with the server running) plays the game in headless Edge:
