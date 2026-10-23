@@ -399,6 +399,19 @@ async function game() {
       if (LIST) for (const s of bad.out) console.log('    ' + s);
     }
 
+    // Pokémon names: Type: Null and the Paradox Pokémon have Spanish names in js/data/pokedex.js
+    // ("Bramaluna"); in English the dex carries the English one (js/fork/en-names.js), and the dictionary
+    // has them for texts that arrive with the Spanish name.
+    {
+      const EN_NAMES = { 772: 'Type: Null', 984: 'Great Tusk', 985: 'Scream Tail', 987: 'Flutter Mane', 988: 'Slither Wing',
+        989: 'Sandy Shocks', 991: 'Iron Bundle', 992: 'Iron Hands', 994: 'Iron Moth', 995: 'Iron Thorns', 1005: 'Roaring Moon',
+        1006: 'Iron Valiant', 1009: 'Walking Wake', 1010: 'Iron Leaves' };
+      const names = await page.evaluate(EN => Object.keys(EN).map(d => [d, G.DEX_BY[d].name, G.I18n.t(G.DEX_BY[d].name)]), EN_NAMES);
+      const wrong = names.filter(([d, n, t]) => n !== EN_NAMES[d] || t !== EN_NAMES[d]);
+      const es = await page.evaluate(() => ['Bramaluna', 'Ferropaladín', 'Código Cero'].map(s => G.I18n.t(s)));
+      check(!wrong.length && es.join() === 'Roaring Moon,Iron Valiant,Type: Null', 'Pokémon names in English (Type: Null, the Paradox Pokémon)', wrong.length ? wrong : undefined);
+    }
+
     // No Spanish left: every text upstream's game can show (spanishSources) and its data tables
     // (achievements, missions, items, moves, upgrades, the personality test), through the game's
     // English: none may still have a Spanish word. js/fork/en-fixes.js, js/fork/trait-names.js.

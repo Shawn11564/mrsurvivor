@@ -29,6 +29,15 @@ const LANGS = (() => {
   return ['en', ...ids.filter(id => id !== 'en')];
 })();
 
+// The Pokémon whose Spanish name isn't their English one (js/fork/en-names.js): the English site
+// pages show the English one (the game gets them through its dictionary).
+const EN_NAMES = (() => {
+  const G = { I18n: { add() {} } };
+  require('vm').runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'fork', 'en-names.js'), 'utf8'), { G });
+  return G.FORK_EN_NAMES;
+})();
+const NAME_RX = new RegExp(`(?<![\\p{L}])(${Object.keys(EN_NAMES).join('|')})(?![\\p{L}])`, 'gu');
+
 // The root page's tags that come from en/index.html (upstream's English).
 const FROM_EN = [
   /<html lang="[^"]*">/,
@@ -86,6 +95,7 @@ const RULES = [
   ['sitemap-support', f => f === 'sitemap.xml', /\s*<url><loc>[^<]*\/(?:apoyar|en\/support)\/<\/loc>.*?<\/url>/g, ''],
   ['manifest-desc', f => f === 'manifest.webmanifest', /"description": "[^"]*"/, '"description": "A free fan game: survive the hordes with your Pokémon partner. No ads, nothing to buy."'],
   ['manifest-lang', f => f === 'manifest.webmanifest', /"lang": "[^"]*"/, '"lang": "en"'],
+  ['en-names', f => f.startsWith('en/') && f.endsWith('.html'), NAME_RX, m => EN_NAMES[m]],
   // ---- no donations here
   ['foot-donations', f => f.endsWith('.html'), ' with no ads or purchases (only voluntary donations for the servers).', ' with no ads or purchases.'],
   ['foot-donaciones', f => f.endsWith('.html'), ' sin anuncios ni compras (sólo donaciones voluntarias para los servidores).', ' sin anuncios ni compras.'],

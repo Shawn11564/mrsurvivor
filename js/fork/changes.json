@@ -5,6 +5,7 @@
       "d": "2026-10-23",
       "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, English review",
       "items": [
+        { "k": "fix", "s": "all", "a": "Text", "t": "Type: Null and the 13 Paradox Pokémon showed their Spanish names; they now have their English ones everywhere, the site's English Pokédex too.", "n": "Bramaluna -> Roaring Moon, Ferropaladín -> Iron Valiant, Colmilargo -> Great Tusk (and 11 more)" },
         { "k": "fix", "s": "all", "a": "Text", "t": "English texts no longer pick up stray capitals from the game's word-by-word translation pass (\"Lab Runs\", \"Co-op\", \"a Psychic beam\", \"FIRE SET\")." },
         { "k": "new", "s": "all", "a": "Menu", "t": "The coin bubble at the top of the main menu also shows your gems." },
         { "k": "new", "s": "lab", "a": "Contracts", "t": "Contracts also give 1 candy of their Pokémon when you claim them, on top of the contract coins.", "n": "contract coins -> contract coins + 1 candy" },
