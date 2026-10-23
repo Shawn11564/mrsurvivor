@@ -385,7 +385,8 @@ async function game() {
             if (l === 'en' && (!c || c === 'move')) en.push(v); else if (l !== 'en') other.add(v);
           }
         }
-        const out = [], squash = s => s.replace(/\s+/g, ' ').toLowerCase();
+        // (Case counts: the word-by-word pass made "Lab runs" "Lab Runs" and "co-op" "Co-op".)
+        const out = [], squash = s => s.replace(/\s+/g, ' ');
         const texts = new Set([...en, ...fork.filter(s => !other.has(s))]);
         for (const s of texts) {
           if (G.I18n.has(s)) continue;                       // a Spanish text with its translation
@@ -470,8 +471,8 @@ async function game() {
       const before = seen.size;
       for (const [s, t] of texts) {
         seen.add(s);
-        // (The dictionary's word-by-word pass may only change a capital: "joystick" → "Joystick".)
-        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t.toLowerCase() !== s.toLowerCase() ? 'translatable'
+        // (A capital counts too: the word-by-word pass keeps an English word's case since 2026-10-23.)
+        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t !== s ? 'translatable'
           : (s.toLowerCase().match(/[\p{L}’']+/gu) || []).some(w => SPANISH_ONLY.has(w)) ? 'Spanish word' : null;
         if (why && !flagged.has(s)) flagged.set(s, `${where} [${why}]${t !== s ? ' → ' + t : ''}`);
       }
