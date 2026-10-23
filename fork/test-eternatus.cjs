@@ -11,7 +11,7 @@
 //      all broken, no barrier and no more healing. At 60 % 3 new obelisks rise (the barrier is back, their
 //      healing stops at 60 %); at 25 % Eternamax: 2 of the 6 crystals shatter. One hit takes at most 5 %.
 //   3. The Eternabeam takes 75% of your HP in the open (death cause: Eternabeam); behind a crystal, nothing.
-//   4. Beating it: a ×25 rainbow ticket, back to the map, the run goes on, no Arceus, rifts again.
+//   4. Beating it: a ×25 rainbow ticket, back to the map, the run goes on, no Arceus, rifts again (the next raid: 45:00).
 //   5. Time runs out: the run ends (knocked out by Eternatus, time ran out).
 //   6. A normal run: Arceus at 30:00 as always.
 //   7. Co-op: the raid for both (the guest sees Eternatus and the obelisks, and the barrier), the beam warns the
@@ -175,7 +175,8 @@ async function beam(page, hide) {
     await page.waitForFunction(() => !G.Eternatus.active, null, { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(2500);
     const w2 = await st(page);
-    check(!w2.on && !w2.arceus && !w2.jActive && w2.state === 'playing' && w2.at === 'never', 'then back to the map, the run goes on, Arceus never comes and rifts open again', w2);
+    check(!w2.on && !w2.arceus && !w2.jActive && w2.state === 'playing' && w2.at === 2700,
+      'then back to the map, the run goes on, Arceus never comes and rifts open again (until 2 min before the 45:00 raid, js/fork/lab/necrozma.js)', w2);
 
     console.log('5. Losing');
     await run(true);

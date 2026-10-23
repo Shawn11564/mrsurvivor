@@ -204,8 +204,8 @@ G.Eternatus = (() => {
       if (p.dead) continue;
       const a = Math.atan2(p.y - boss.y, p.x - boss.x);
       for (const k of [-0.32, 0, 0.32]) {
-        G.Hazards.add({ kind: 'beam', x: boss.x, y: boss.y, angle: a + k, len, w: 30, delay: 1.15, dmg: Math.round(boss.shotDmg()),
-          pct: CANNON_PCT, type: 'dragon', color: RED, cat: boss.cat });
+        boss.hazard({ kind: 'beam', x: boss.x, y: boss.y, angle: a + k, len, w: 30, delay: 1.15, dmg: Math.round(boss.shotDmg()),
+          pct: CANNON_PCT, type: 'dragon', color: RED });
       }
     }
     boss.anim.play('Charge', { speed: 1.1 });

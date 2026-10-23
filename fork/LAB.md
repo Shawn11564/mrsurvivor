@@ -71,6 +71,7 @@ status table as work lands.
 | `js/fork/lab/boss-power.js` | `G.LabPower`: the team's damage meter, late bosses' HP floors, the per-hit cap and their clock past 30:00 |
 | `js/fork/lab/relics.js` | `G.LabRelics`: relics, run-long bonuses picked from a level-up hand of three after beating a map site or a late raid |
 | `js/fork/lab/sites.js` | `G.LabSites`: temples, dungeons and wormholes that rise on the map from 20:00, their seal, guardians and mechanics |
+| `js/fork/lab/necrozma.js` | `G.Necrozma`: the Necrozma raid at 45:00 (light and darkness, prisms, Prism Armor, Ultra Burst) |
 | `js/fork/lab/endgame.js` | `G.LabEndgame`: the horde's late-game curve (HP, damage, speed, elites and affixes from 20:00, exponential past 30:00) and the THREAT label (plan C2.6, part) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
@@ -1100,6 +1101,38 @@ horde back); the dungeon's waves and the Lord's allies; the wormhole's dive, eme
 running out; the Eternatus raid waiting for a site fight; in co-op the site on both maps, the guest starting it,
 the guest lighting a plate, the relic hands, a dive hidden on the guest's screen.
 
+## The Necrozma raid at 45:00 (2026-10-23)
+
+Once Eternatus is beaten, Lab's endless had no second milestone. Now at **45:00** everyone travels to a psychic
+arena ("Ultra Space") against **Necrozma** (`js/fork/lab/necrozma.js`, the `eternatus.js` pattern), and the fight is
+about light:
+- **The light** starts full and Necrozma drinks it, 4 % a second; the screen darkens as it falls (each player sees
+  a shrinking circle around their own Pokémon, the prisms glimmer through it). At 0 the **darkness** takes 8 % of
+  your max HP a second (pure; death cause "darkness") and heals Necrozma 1.5 % a second.
+- **4 prisms** stand round the arena (still enemies, no hits). Breaking one floods it with light (back to 100 %),
+  stuns Necrozma 2.5 s and **exposes** it for 7 s; a broken prism re-forms 25 s later.
+- **Prism Armor**: Necrozma takes half of every hit, ×1.25 while exposed (on the hit as capped; one hit takes at
+  most 5 %). So the choice is when to break a prism: now, for a damage window, or later, when the dark comes.
+- Its own boss attacks, **Photon Geyser** every 7 s (a warned pillar of light under each of you, 25 % of your HP) and
+  the **Prismatic Laser** every 12 s (9 warned beams sweeping the arena, 30 % of your HP each).
+- At half HP, **Ultra Burst**: ×1.25 speed, the light drains 6 % a second, geysers every 5 s, prisms re-form in 18 s.
+- Its HP: the most of 3× a rift legendary's, 45 s of your single-target damage and 45 s of the team's power meter;
+  damage with the late bosses' factor (`boss-power.js`).
+- 3:30. Beat it: a ×25 rainbow ticket and 3 gems each, half your HP, **two relic picks** each (`relics.js`), XP for at
+  least a level, back to the map and the run goes on (`pl._labNecrozma`, kept by `resume.js`; rifts open again).
+  Time runs out: the run ends.
+- `G.Judgment.AT` is 45:00 between the two raids (rifts stop at 43:00, map sites 190 s before); a site fight under
+  way finishes first. While it lasts `G.Judgment.active` is true, as for Eternatus.
+- Co-op: the host runs it (`{ k:'labnecro', a: start | ids | st | shatter | stage | win | lose | back }`; `st` carries
+  the light 4 times a second); Necrozma and the prisms are ordinary enemies, its attacks hazards; each computer
+  hurts its own Pokémon in the dark.
+
+`node fork/test-necrozma.cjs [--solo]` (server; co-op with the emulator): nothing at 44:50 and AT 45:00; at 45:00
+the raid (4 prisms, power-based HP); no Necrozma without Eternatus beaten; Prism Armor, the drain, a prism breaking
+(light, stun, exposure, the 5 % cap) and re-forming; the dark's damage and healing; Ultra Burst's faster drain;
+winning (ticket, gems, two picks, back, rifts again); losing; co-op (prisms on the guest, the shared light, a
+ticket each, back together).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -1188,6 +1221,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
 - `node fork/test-endgame.cjs` (server): the endgame wall, see its section.
 - `node fork/test-boss-power.cjs [--solo]` (server + Firebase emulator): late bosses, see their section.
 - `node fork/test-sites.cjs [--solo]` (server + Firebase emulator): map sites and relics, see their section.
+- `node fork/test-necrozma.cjs [--solo]` (server + Firebase emulator): the 45:00 raid, see its section.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):
