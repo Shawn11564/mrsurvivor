@@ -28,7 +28,8 @@ How to use it:
 - [x] 58. [bug][lab][coop] Auto-pick EV cards: still opened the menu and didn't pick (co-op never auto-picked; ticking it left the open hand); co-op should skip the menu and wait for the others · Lab (e850c9d)
 - [x] 59. [feat][coop] End run: a button in the pause menu from 20:00 that ends the run with the usual screens; in co-op everyone votes and all must say yes · everyone (0a261a9)
 - [x] 60. [feat] Bond "Keep them apart": +2.5% damage (was +10%), and the bonus only the first 5 times · everyone (673462d)
-- [ ] 61. [ui] Gacha machine: the Skip button under the machine instead of next to it (the Radiant Ritual uses the same machine) · everyone (claimed: cc-oubt6)
+- [x] 61. [ui] Gacha machine: the Skip button under the machine instead of next to it (the Radiant Ritual uses the same machine) · everyone (9aa381c)
+- [ ] 62. [infra] fork/test-radiant-ritual.cjs fails 7 checks: it assumes a fixed pool of 3 radiants (Arcanine, Mewtwo, Eternatus), but the artist's publishes have made it 13, so its banner and odds numbers no longer hold; make it set up its own pool (found 2026-10-23)
 
 ## Phase 1: fixes and cheap tuning
 
