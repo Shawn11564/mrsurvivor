@@ -632,14 +632,14 @@ G.Judgment = (() => {
     }
     ctx.globalAlpha = 1;
     // Contador bajo el reloj.
-    const boss = G.EnemyMgr.all().some(e => e.boss && !e.dead);
+    const y = G.BossBars.below(76);                  // fork: under the boss bars (js/fork/boss-bars.js)
     ctx.textAlign = 'center';
     ctx.font = F(800, 12);
     ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)';
     const txt = 'SENTENCIA · ' + G.U.mmss(arenaT) + ' · JEFES ' + downs;
-    ctx.strokeText(txt, w / 2, boss ? 98 : 76);
+    ctx.strokeText(txt, w / 2, y);
     ctx.fillStyle = GOLD;
-    ctx.fillText(txt, w / 2, boss ? 98 : 76);
+    ctx.fillText(txt, w / 2, y);
     // Flecha hacia Arceus si no se ve.
     const cam = G.Camera;
     const sx = (A.x - cam.left()) * cam.scale, sy = (A.y - A.bodyH * 0.5 - cam.top()) * cam.scale;

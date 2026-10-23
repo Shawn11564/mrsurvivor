@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard",
+      "title": "Lab leaderboard, a bar per boss",
       "items": [
+        { "k": "change", "s": "all", "a": "HUD", "t": "Boss health bars: every boss near you gets its own bar under the clock, nearest first (up to 4, then \"+N MORE\"); bosses far away don't show, and one off screen has a dimmer bar. Before, only one boss had a bar, wherever it was.", "n": "1 bar -> up to 4, within ~1.4 screen widths" },
         { "k": "new", "s": "lab", "a": "Leaderboard", "t": "Lab leaderboard: Lab runs now go on their own copy of every leaderboard (solo and group; today, week, month, all-time and all-time per Pokémon). The LAB switch next to Solo / Group shows it. Lab runs still never count for the regular leaderboard." }
       ]
     },
