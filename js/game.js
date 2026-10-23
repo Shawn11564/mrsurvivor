@@ -549,25 +549,33 @@ G.Game = (() => {
     let mine = false;            // esta elección es la que ha parado el juego
     const take = got => {
       openItem = null;
-      if (got !== pl.item) {
+      const fresh = got !== pl.item;
+      if (fresh) {
         pl.equip(got);
         G.Spawner.say('¡Llevas ' + G.Items.BY[got].name + '!', 2.6, true);
         G.Progress.event('item', { id: got });
       }
+      // Fork: the Choice Band asks which move it locks into, the game still stopped (js/fork/choice-lock.js).
+      if (fresh && got === 'choiceband' && G.ChoiceLock && G.ChoiceLock.ask(pl, done)) return;
+      done();
+    };
+    const done = () => {
       if (!mine) { afterLevelUp(); return; }
       if (state === 'choice') { if (holdBy.length) state = 'held'; else countInAfter(choiceAt); }
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
-    if (!pl.item) { take(id); return; }
-    if (pl.item === id) { G.Spawner.say('Ya llevas ' + G.Items.BY[id].name, 2, true); return; }
     // Se para el juego mientras eliges; en grupo, para todos (como con las
     // fusiones). Antes en grupo seguía y te pegaban mientras elegías.
-    if (state === 'playing' || state === 'held') {
+    const stop = () => {
+      if (state !== 'playing' && state !== 'held') return;
       mine = true;
       state = 'choice'; choiceAt = performance.now();
       if (G.Coop.active) G.Coop.holdStart();
-    }
+    };
+    if (!pl.item) { if (id === 'choiceband' && G.ChoiceLock && G.ChoiceLock.needed(pl)) stop(); take(id); return; }   // fork: its pick stops the game too
+    if (pl.item === id) { G.Spawner.say('Ya llevas ' + G.Items.BY[id].name, 2, true); return; }
+    stop();
     openItem = { cur: pl.item, next: id, take, get mine() { return mine; } };
     G.RunUI.showItemChoice(pl.item, id, take);
   }
@@ -646,8 +654,9 @@ G.Game = (() => {
       return;
     }
     if (G.UI.isOpen('scr-item')) {
-      for (let i = 0; i < 2; i++) {
-        if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) document.querySelectorAll('#item-cards .card')[i].click();
+      for (let i = 0; i < 4; i++) {          // fork: 4, for the Choice Band's moves (js/fork/choice-lock.js)
+        const c = document.querySelectorAll('#item-cards .card')[i];
+        if (c && (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1)))) c.click();
       }
       return;
     }
