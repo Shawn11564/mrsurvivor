@@ -7,7 +7,9 @@
 //   1. Every card keeps its move's description: the second step of a pair and a move joining a group
 //      showed only "will fire together with ..." in its place; now that note goes under it.
 //   2. "Keep them apart": the bond is spent without joining anything, your moves stay as they were,
-//      +10 % damage on every move for the rest of the run (twice: ×1.21), and the run goes on.
+//      +2.5 % damage on every move for the rest of the run, and the run goes on. The button says how
+//      many bonuses are left; five times stack to ×1.025^5, and a sixth keeps them apart with no bonus
+//      (the button says "no bonus left").
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -60,19 +62,32 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     console.log('2. Keep them apart');
     const before = await page.evaluate(() => { const pl = G.Game.player; return { slots: pl.slots.map(s => s.map(m => m.id).join('+')), bonds: pl.bonds, atk: pl.atkFor(pl.moves[0]) }; });
     const btn = await page.evaluate(() => { const b = document.getElementById('bond-skip'); return b && b.offsetParent ? b.textContent.trim() : null; });
-    check(btn && /keep them apart/i.test(btn) && /10/.test(btn), 'the bond screen has a "Keep them apart" button that says what it gives', btn);
+    check(btn && /keep them apart/i.test(btn) && /\+2\.5% damage, 5 of 5 left/.test(btn), 'the bond screen has a "Keep them apart" button that says what it gives and how many are left', btn);
     await page.click('#bond-skip');
     await page.waitForFunction(() => !G.UI.isOpen('scr-bond'), null, { timeout: 3000 });
     const after = await page.evaluate(() => { const pl = G.Game.player; return { slots: pl.slots.map(s => s.map(m => m.id).join('+')), bonds: pl.bonds, atk: pl.atkFor(pl.moves[0]) }; });
     check(after.bonds === before.bonds - 1 && after.slots.join() === before.slots.join(), 'the bond is spent, the moves stay as they were', { before, after });
-    check(Math.abs(after.atk / before.atk - 1.1) < 1e-9, 'every move: +10 % damage', +(after.atk / before.atk).toFixed(4));
+    check(Math.abs(after.atk / before.atk - 1.025) < 1e-9, 'every move: +2.5 % damage', +(after.atk / before.atk).toFixed(4));
     check(await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 8000 }).then(() => true, () => false), 'and the run goes on');
-    await open();
-    await page.waitForFunction(() => G.UI.isOpen('scr-bond'), null, { timeout: 5000 });
-    await unguard();
-    await page.click('#bond-skip');
-    const twice = await page.evaluate(b => +(G.Game.player.atkFor(G.Game.player.moves[0]) / b).toFixed(4), before.atk);
-    check(twice === 1.21, 'twice: ×1.21', twice);
+    const skipOnce = async () => {
+      await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 8000 });
+      await open();
+      await page.waitForFunction(() => G.UI.isOpen('scr-bond'), null, { timeout: 5000 });
+      await unguard();
+      const label = await page.textContent('#bond-skip');
+      await page.click('#bond-skip');
+      await page.waitForFunction(() => !G.UI.isOpen('scr-bond'), null, { timeout: 3000 });
+      return { label: label.trim(), k: await page.evaluate(b => G.Game.player.atkFor(G.Game.player.moves[0]) / b, before.atk) };
+    };
+    const labels = [];
+    let k = 1.025;
+    for (let i = 2; i <= 5; i++) { const r = await skipOnce(); labels.push(r.label); k = r.k; }
+    check(Math.abs(k - Math.pow(1.025, 5)) < 1e-9, 'five times: ×1.025^5 (×' + Math.pow(1.025, 5).toFixed(4) + ')', +k.toFixed(4));
+    check(labels.join(' | ') === [4, 3, 2, 1].map(n => `Keep them apart (+2.5% damage, ${n} of 5 left)`).join(' | '), 'the button counts down', labels);
+    const sixth = await skipOnce();
+    check(sixth.label === 'Keep them apart (no bonus left)' && Math.abs(sixth.k - k) < 1e-9, 'a sixth keeps them apart with no bonus, and says so', sixth);
+    const kept = await page.evaluate(() => ({ bonds: G.Game.player.bonds, kept: G.Game.player.bondsKept }));
+    check(kept.kept === 6, 'six bonds kept apart, all spent', kept);
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

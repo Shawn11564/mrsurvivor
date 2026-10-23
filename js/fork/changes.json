@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf",
       "items": [
+        { "k": "nerf", "s": "all", "a": "Bonds", "t": "Keep them apart (turning a bond down) gives less damage, and only the first 5 times in a run; after that it still keeps your moves apart, with no bonus. The button says how many are left.", "n": "+10% per bond, no limit -> +2.5% per bond, 5 at most (x1.13 in all)" },
         { "k": "new", "s": "all", "a": "Run", "t": "End run: from 20:00 the pause menu has an End run button that ends the run at once with the usual summary and rewards. In co-op it starts a vote: the run ends for everyone only if every player says yes (30 s to answer; one No and it goes on)." },
         { "k": "fix", "s": "lab", "a": "Level-up", "t": "Auto-pick EV cards works in co-op too: your cards don't open, the EV card is taken and a small banner says who you're waiting for. Ticking the box with a hand open now takes that hand's EV card at once (it used to leave the menu open)." },
         { "k": "new", "s": "all", "a": "Collection", "t": "Move dex: the Pokémon screen has a Pokémon / Moves switch. Moves lists every move (Lab-only ones with the LAB chip), searchable and filtered by type and category; each one shows how it works, its numbers at Lv.1 and max level, its upgrades, its evolution and who learns it." },

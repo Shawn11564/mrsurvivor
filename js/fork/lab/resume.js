@@ -16,7 +16,7 @@
 G.Resume = (() => {
   const KEY = 'ms.resume', EVERY = 5000;
   const PRIM = ['level', 'xp', 'xpNext', 'hp', 'maxHp', 'kills', 'bosses', 'coins', 'bonds', 'atkMul', 'spdMul', 'cdMul', 'dmgReduce',
-    'regenFlat', 'magnet', 'xpMul', 'coinMul', 'critChance', 'rerolls', 'rerollBonus', 'maxMoves', 'selfRevive', 'prestige', 'passiveBuffs', 'x', 'y'];
+    'regenFlat', 'magnet', 'xpMul', 'coinMul', 'critChance', 'rerolls', 'rerollBonus', 'maxMoves', 'selfRevive', 'prestige', 'passiveBuffs', 'bondsKept', 'x', 'y'];
   let seed = 1;
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
   const write = v => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* nothing */ } };
