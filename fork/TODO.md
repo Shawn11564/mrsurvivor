@@ -35,7 +35,7 @@ How to use it:
 - [x] 65. [ui] Main menu: a gem count in the same bubble as the coin balance · everyone (21de947)
 - [ ] 66. [bug][ui] Phone held upright (390 px and 360 px): the main menu top bar pushes the coin, ticket and user bubbles off the left edge of the screen (seen 2026-10-23, with or without the gem count) · everyone
 - [x] 67. [lab] Late game: the horde gets stronger and faster from 20:00 and exponentially past 30:00 (Megabonk-style), so endless runs end even with a strong build · Lab (59abc01e)
-- [ ] 68. [lab][bug] Late bosses (boss slots, rift and wild legendaries) were one-shot at 45:00: HP that keeps up with the team's damage, a per-hit cap, harder hits · Lab (claimed: endgame session)
+- [x] 68. [lab][bug] Late bosses (boss slots, rift and wild legendaries) were one-shot at 45:00: HP that keeps up with the team's damage, a per-hit cap, harder hits · Lab (f782e412)
 - [ ] 69. [lab] Eternatus raid harder: someone beat it without breaking the obelisks; obelisks must matter, phases · Lab (claimed: endgame session)
 - [ ] 70. [lab][coop] A second raid at 45:00, like Eternatus's but with its own mechanic, solo and co-op · Lab (claimed: endgame session)
 - [ ] 71. [lab][coop] Rare map sites from 20:00 (temples, dungeons): travel there and fight a strong guardian with a mechanic; rewards that help the run; solo and co-op · Lab (claimed: endgame session)
