@@ -19,6 +19,7 @@
  *     out, the run ends (it faints all of you). Going down in the arena is going down, as always.
  * While it lasts, G.Judgment.active is true: nothing else spawns (waves, events, weather, biome
  * change, wild legendaries) and speed has the Judgment's soft cap.
+ * A map site's fight (js/fork/lab/sites.js) that runs into 30:00 finishes first.
  * Hooks: G.Judgment.update (in Lab it doesn't let Arceus start; it does measure your damage, for
  * Eternatus's HP), .active, .AT (rifts look at AT − 2 min), .reset, .drawAir and .drawOverlay;
  * G.Events.drawables (the crystals, sorted by Y); G.World.biomeName. pl._labEternatus: already won (comes back with
@@ -140,7 +141,7 @@ G.Eternatus = (() => {
 
   function tick(dt, pl, time) {
     if (!raid) {
-      if (authority() && lab() && !done() && time >= AT && !G.Rift.inArena && G.Game.state === 'playing') start();
+      if (authority() && lab() && !done() && time >= AT && !G.Rift.inArena && !(G.LabSites && G.LabSites.busy) && G.Game.state === 'playing') start();
       return;
     }
     raid.t += dt;

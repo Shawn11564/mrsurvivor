@@ -69,6 +69,8 @@ status table as work lands.
 | `js/fork/lab/contracts.js` | `G.LabContracts`: per-Pokémon contracts paid in coins for that Pokémon's upgrades (plan C1.5) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
 | `js/fork/lab/boss-power.js` | `G.LabPower`: the team's damage meter, late bosses' HP floors, the per-hit cap and their clock past 30:00 |
+| `js/fork/lab/relics.js` | `G.LabRelics`: relics, run-long bonuses picked from a level-up hand of three after beating a map site or a late raid |
+| `js/fork/lab/sites.js` | `G.LabSites`: temples, dungeons and wormholes that rise on the map from 20:00, their seal, guardians and mechanics |
 | `js/fork/lab/endgame.js` | `G.LabEndgame`: the horde's late-game curve (HP, damage, speed, elites and affixes from 20:00, exponential past 30:00) and the THREAT label (plan C2.6, part) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
@@ -1049,6 +1051,55 @@ team; the HP travels in `'ne'`, and a guest's hit reaches the host's copy, where
 or in a normal run; in co-op the guest sees the full max HP and its one-shot takes 10 % on the host.
 `test-wild-legends.cjs` and `test-boss-slots.cjs` count the new clock.
 
+## Map sites: temples, dungeons and wormholes (2026-10-23)
+
+From 20:00 in a Lab run a **site** now and then rises on the map, 1100-1500 px from one of you (a gold arrow with
+the distance points to it, and a banner says what it is): a check every 30 s, 14 % more likely after each miss,
+at least 200 s after the last one ended, never in the 190 s before a raid (`G.Judgment.AT`) or during one. You have
+2:30 to get there; nobody comes and it sinks back. Walk into it and a **seal** (radius 300 px, standing stones round
+it) closes: the horde is driven off (`G.EnemyMgr.stash`, as in the rift), nothing else spawns (the spawner, the
+game's events, wild legendaries and rifts wait; a raid due meanwhile starts after), everyone is pulled in and nobody
+leaves (`js/fork/lab/sites.js`). Its **guardian** fights you on the spot:
+
+| Site | Guardian | Mechanic | Fight |
+|---|---|---|---|
+| Ancient Temple | a Regi (Regigigas 15 %) | its stone seal takes 90 % off every hit; four rune plates (braille dots) ring the temple: stand on one 1.3 s to light it (1.8 s below half HP), it stays lit 16 s (15 s); all four lit: the seal shatters, the guardian is stunned 3 s and for 10 s takes ×1.25 | 2:30 |
+| Mystery Dungeon | a pseudo-legendary Dungeon Lord | a Monster House: 10 of the run's own enemies (×1.5 HP), then 14 more each with an elite affix (4 more each per extra player), then the Lord, who calls 3 allies every 12 s and takes 15 % less damage per ally standing (at most 60 %) | 3:00 |
+| Ultra Wormhole | an Ultra Beast | every 9 s (6.5 s below half HP) it dives into Ultra Space (out of reach, hits do nothing) and bursts out of another of the three wormholes in a warned charge; where it dived it leaves an **Ultra Core** (two below half): break it within 7 s or it bursts and gives the beast a Beast Boost (×1.12 damage, ×1.05 speed, heals 6 %, up to 8) | 2:30 |
+
+The guardian is strong: HP from the clock (a boss slot's at that minute, `boss-slots.js`, with the bosses' clock,
+more in co-op) or the team's power meter × 22 s (temple), 18 s (dungeon), 20 s (wormhole), ×1.5 by 45:00, whichever is
+more; one hit takes at most 8 % of it; damage like a boss slot's ×1.1. Beat it: its boss drops plus 14 × 8 coins,
+2 tickets, a ×10 ticket half the time, 2 gems each, half your HP back, downed teammates up, XP for at least one level
+and a **relic pick** each: that level's hand is three **relics** (`js/fork/lab/relics.js`), one from the site's own
+pool, and they last the whole run and stack:
+
+| Relic | Pool | Bonus |
+|---|---|---|
+| Titan's Heart | temple | +25 % max HP, heals you fully |
+| Stone Ward | temple | +15 % damage reduction (toughness in Lab) |
+| Life Seed | temple | regenerate 0.5 % of your max HP (as it is then) a second |
+| Phoenix Ash | temple | get up once when knocked out (solo, while you have none) |
+| Fortune Stone | dungeon | +25 % coins, +15 % XP |
+| Training Scroll | dungeon | every move +1 level (if it has one left) |
+| Keen Eye | dungeon | +6 % critical-hit chance |
+| Ancient Might | wormhole | +12 % damage |
+| Swift Feather | wormhole | +10 % speed |
+| Wind Rune | wormhole | −8 % cooldowns |
+
+A reroll draws three others. Relics change the player's own numbers, so a resumed run keeps them; `pl._labRelics`
+counts them (the pause menu lists them), `pl._labRelicPick` holds the picks to make. Time running out: the guardian
+withdraws, no reward. Going down inside is going down (the run ends solo; in co-op the usual revive).
+Co-op: the host decides and runs the guardian (`{ k:'labsite', a: open | close | fight | ids | st | say | dive |
+emerge | won | lost | end }`; a guest's `enter` asks the host to start it; the plates and wormholes come from the
+host in `fight`); each computer keeps its own Pokémon inside the seal; the host lights a plate for whoever stands on
+it; every computer gives its own player the relic pick and the team's level-up opens everyone's hand.
+`node fork/test-sites.cjs [--solo]` (server; co-op with the emulator): when they rise and sink; the seal (the horde
+driven off, no leaving); the temple's seal, plates, exposure and cap; beating it (relic hand, applied, gems, the
+horde back); the dungeon's waves and the Lord's allies; the wormhole's dive, emergence and Beast Boost; time
+running out; the Eternatus raid waiting for a site fight; in co-op the site on both maps, the guest starting it,
+the guest lighting a plate, the relic hands, a dive hidden on the guest's screen.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -1136,6 +1187,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   admin's Mega Stone Mega Evolves a friend in a normal co-op run, seen by everyone.
 - `node fork/test-endgame.cjs` (server): the endgame wall, see its section.
 - `node fork/test-boss-power.cjs [--solo]` (server + Firebase emulator): late bosses, see their section.
+- `node fork/test-sites.cjs [--solo]` (server + Firebase emulator): map sites and relics, see their section.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):
