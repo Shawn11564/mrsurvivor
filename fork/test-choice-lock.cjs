@@ -14,7 +14,7 @@
 //      the move (2 locks the second slot).
 //   3. Holding Leftovers and keeping them: no move pick.
 //   4. One move only: nothing to ask, the band goes on at once and the run doesn't stop.
-//   5. The band's description says you pick the move.
+//   5. The band's description says you choose the move.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -109,7 +109,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
 
     console.log('5. The description');
     const desc = await page.evaluate(() => G.T(G.Items.BY.choiceband.desc));
-    check(/move you pick/.test(desc), 'the band says you pick the move', desc);
+    check(/move you choose/.test(desc), 'the band says you choose the move', desc);
 
     check(!errors.length, 'no page errors', errors.slice(0, 5));
   } catch (e) {

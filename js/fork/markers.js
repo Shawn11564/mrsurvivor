@@ -9,7 +9,7 @@
  *     going down...), they all gather for a moment in a circle right around your Pokémon (FOCUS) and
  *     go back to their places
  *   - the same while you hold F (or Y on a controller), or when you press it if in Settings → Controls
- *     you choose "Pulsar para cambiar" (Press to switch) (markerKey: 'hold' | 'toggle')
+ *     you choose "Pulsar para cambiar" (Toggle) (markerKey: 'hold' | 'toggle')
  *   - in a group, an on-screen notice when a teammate goes down
  *
  *   at(key, sx, sy, w, h) → { x, y, a, k, hot } where to draw the marker (k: scale), or null if
@@ -33,14 +33,14 @@ G.Markers = (() => {
   };
   // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
-    [T.key, 'Bring markers close', 'Rapprocher les repères', 'Avvicina gli indicatori', 'Aproximar marcadores', '拉近标记', '拉近標記'],
-    [T.keyDesc, 'With F (or Y on a controller) the markers for what you can\'t see gather around your Pokémon.',
+    [T.key, 'Gather markers', 'Rapprocher les repères', 'Avvicina gli indicatori', 'Aproximar marcadores', '拉近标记', '拉近標記'],
+    [T.keyDesc, 'F (or Y on a controller) gathers the markers for off-screen things around your Pokémon.',
      'Avec F (ou Y à la manette), les repères de ce que tu ne vois pas se regroupent autour de ton Pokémon.',
      'Con F (o Y sul controller) gli indicatori di ciò che non vedi si raccolgono attorno al tuo Pokémon.',
      'Com F (ou Y no controle) os marcadores do que você não vê se juntam ao redor do seu Pokémon.',
      '按F（手柄按Y）时，看不到的东西的标记会聚到你的宝可梦周围。', '按F（手把按Y）時，看不到的東西的標記會聚到你的寶可夢周圍。'],
     [T.hold, 'Hold', 'Maintenir', 'Tieni premuto', 'Segurar', '按住', '按住'],
-    [T.toggle, 'Press to switch', 'Appuyer pour basculer', 'Premi per alternare', 'Pressionar para alternar', '按一下切换', '按一下切換'],
+    [T.toggle, 'Toggle', 'Appuyer pour basculer', 'Premi per alternare', 'Pressionar para alternar', '按一下切换', '按一下切換'],
     [T.down, '{x} is down!', '{x} est K.O. !', '{x} è a terra!', '{x} caiu!', '{x}倒下了！', '{x}倒下了！'],
     [T.downSub, 'Follow their arrow and stay next to them to revive them', 'Suis sa flèche et reste à côté pour le relever',
      'Segui la sua freccia e restagli accanto per rianimarlo', 'Siga a seta e fique ao lado para reanimar',

@@ -22,7 +22,7 @@ G.MoveDex = (() => {
     nova: 'A burst in every direction.', aura: 'A ring of steady damage around you.',
     buff: 'Boosts you for a while (stacks). It deals no damage.', boomerang: 'Flies out to the enemy and back, hitting both ways.',
     chain: 'Hits one enemy and jumps to the next nearest ones.', mine: 'Mines on the ground that blow up when stepped on.',
-    meteor: 'Meteors fall on nearby enemies (a shadow warns first).', turret: 'Leaves something that fires by itself for a while.',
+    meteor: 'Meteors fall on nearby enemies (a shadow warns first).', turret: 'Leaves a turret that fires on its own for a while.',
     dash: 'You dash at the enemy, hitting everything on the way.', trail: 'You leave puddles that hurt whatever walks on them.',
     cone: 'Many short shots in a fan (breath, spray...).', homing: 'Projectiles that chase enemies.',
     bounce: 'One projectile that bounces from enemy to enemy.', charge: 'Charges up, then fires a huge beam.',
@@ -36,7 +36,7 @@ G.MoveDex = (() => {
     weather: 'Sets the weather for a while.', terrain: 'A field on the ground that helps you while you stand in it.',
     wave: 'A wide wave that moves forward and drags enemies along.', metronome: 'A random move from the whole game, every time.',
     transform: 'You turn into the nearest enemy for a while.', grab: 'You grab the nearest enemy and throw it into the others.',
-    bind: 'Holds enemies in place for a while, hurting them.', focus: 'Charges a huge punch; if you\'re hit while charging, nothing.',
+    bind: 'Holds enemies in place for a while, hurting them.', focus: 'Charges a huge punch that fails if you\'re hit while charging.',
     heal: 'Heals you.', screen: 'You take less physical or special damage for a while.',
     shout: 'Weakens the enemies around you.', endure: 'A hit that would knock you out leaves you at 1 HP instead.',
     ally: 'Helps your teammates (co-op).'
@@ -102,7 +102,7 @@ G.MoveDex = (() => {
     for (const [k, l] of SORTS) sort.appendChild(chip(l, f.sort === k, () => { f.sort = k; }));
 
     const rows = list();
-    $('mdex-count').textContent = rows.length + ' moves';
+    $('mdex-count').textContent = rows.length + (rows.length === 1 ? ' move' : ' moves');
     const box = $('mdex-list');
     box.innerHTML = '';
     for (const m of rows) {
@@ -149,11 +149,11 @@ G.MoveDex = (() => {
     let evo = '';
     try {
       const e = hi && G.Moves.evoInfo(hi, null);
-      if (e) evo = `<b>${esc(T(e.name, 'move'))}</b>: at Lv.${m.maxLvl}${e.needs ? ', once you\'ve taken a ' + esc(T(e.needName)) + ' upgrade' : ''}. ${esc(T(e.text))}`;
+      if (e) evo = `<b>${esc(T(e.name, 'move'))}</b>: at Lv.${m.maxLvl}${e.needs ? ', once you\'ve taken the ' + esc(T(e.needName)) + ' upgrade' : ''}. ${esc(T(e.text))}`;
     } catch (err) { /* no evolution */ }
     const types = [m.type];
     const who = [];
-    if (!labOnly(m)) who.push(m.type === 'normal' ? 'Every Pokémon, in normal runs.' : `Pokémon of the ${esc(G.T(G.U.TYPE_NAME[m.type] || m.type))} type, in normal runs.`);
+    if (!labOnly(m)) who.push(m.type === 'normal' ? 'Every Pokémon, in normal runs.' : `${esc(G.T(G.U.TYPE_NAME[m.type] || m.type))}-type Pokémon, in normal runs.`);
     if (G.Lab) {
       const l = labLearners(id);
       if (l.length) who.push(`<span class="lab-badge">LAB</span> Learned by ${l.length} Pokémon: ${monNames(l)}.`);

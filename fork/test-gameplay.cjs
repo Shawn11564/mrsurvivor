@@ -172,14 +172,14 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(await page.evaluate(() => G.Game.state === 'resuming'), 'Esc on the pause screen also resumes through the countdown (after 10 s)');
   if (SHOTS) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, 'resume-countdown.png') }); }
   await page.waitForFunction(() => G.Game.state === 'playing', null, { timeout: 5000 });
-  // Settings → Graphics → "Countdown after pausing" (pauseCount, fork) turns off only the pause's countdown.
+  // Settings → Graphics → "Countdown on resume" (pauseCount, fork) turns off only the pause's countdown.
   await page.evaluate(() => document.getElementById('btn-settings').click());
   await page.click('#set-tabs [data-t="gfx"]');
   const pcRow = await page.$('#set-body .switch[data-k="pauseCount"]');
   const pcText = pcRow && await page.evaluate(el => el.closest('.set-row').querySelector('b').textContent, pcRow);
   if (pcRow) await pcRow.click();
   await page.evaluate(() => document.getElementById('set-close').click());
-  check(!!pcRow && pcText === 'Countdown after pausing' && await page.evaluate(() => G.Settings.get('pauseCount') === false),
+  check(!!pcRow && pcText === 'Countdown on resume' && await page.evaluate(() => G.Settings.get('pauseCount') === false),
     `Settings → Graphics has "${pcText}" (on by default) and clicking it turns it off`);
   await page.evaluate(() => { if (G.Game.state !== 'paused') G.Game.togglePause(); });
   await page.waitForTimeout(150);
@@ -496,8 +496,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   if (boost.dom) boost.dom = await page.evaluate(dom => dom.map((d, i) => Object.assign(d, {
     note: (document.querySelectorAll('#cards .card')[i].querySelector('.fit-good') || {}).textContent || '' })), boost.dom);
   const bc = (boost.dom || []).find(d => d.boost);
-  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /^Good for Charmander: boosts its special moves, its strong side\.$/.test(bc.note),
-    `rendered: ${bc && bc.key} gets .boost, the "Good for you" chip and "${bc && bc.note}"`);
+  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /^Good for Charmander: boosts its special moves, its strong suit\.$/.test(bc.note),
+    `rendered: ${bc && bc.key} gets .boost, the "Good fit" chip and "${bc && bc.note}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-boost.png') }); }
 
   // A new attack on the Pokémon's weaker side: the note says plainly that it's worse for it,
@@ -516,7 +516,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   });
   await page.waitForTimeout(50);
   const wn = weak && await page.evaluate(i => (document.querySelectorAll('#cards .card')[i].querySelector('.fit-low') || {}).textContent || '', weak.i);
-  check(!!weak && weak.side === 'special' && wn === `${weak.side === 'special' ? 'Physical' : 'Special'} move: Gengar does -${100 - weak.pct}% damage with these (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
+  check(!!weak && weak.side === 'special' && wn === `${weak.side === 'special' ? 'Physical' : 'Special'} move: Gengar deals ${100 - weak.pct}% less damage with ${weak.side === 'special' ? 'physical' : 'special'} moves (it’s a special attacker).`, `weaker-side card ${weak && weak.key} says "${wn}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-weak.png') }); }
 
   // The card box keeps its width whatever the cards say (#scr-levelup .box in css/style.css).
@@ -794,7 +794,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(evo.has && evo.title === 'Swords Dance → Belly Drum', `at its top level, Swords Dance's evolution card comes up with no stat card needed ("${evo.title}")`);
   await page.waitForTimeout(80);
   const evoDs = evo.has && await page.evaluate(i => document.querySelectorAll('#cards .card')[i].querySelector('.ds').textContent, evo.i);
-  check(evoDs === 'Casts on its own from any slot (no more switching to it) and +1 max stack', `the card says what it does: "${evoDs}"`);
+  check(evoDs === 'Casts on its own from any slot (no more switching to it), +1 max stack', `the card says what it does: "${evoDs}"`);
   const evo2 = await page.evaluate(() => new Promise(r => {
     const pl = G.Game.player, sd = pl.moves.find(m => m.id === 'swords-dance');
     G.Moves.evolve(sd); G.UI.hide('scr-levelup');
@@ -863,7 +863,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   await page.keyboard.press('KeyF');
   await page.waitForTimeout(900);
   const tog2 = await mkPos();
-  check(tog.k > 0.9 && tog2.k === 0, `with "Press to switch", F gathers them until pressed again (${tog.k.toFixed(2)} → ${tog2.k.toFixed(2)})`);
+  check(tog.k > 0.9 && tog2.k === 0, `with "Toggle", F gathers them until pressed again (${tog.k.toFixed(2)} → ${tog2.k.toFixed(2)})`);
   await page.evaluate(() => { G.Settings.set('markerKey', 'hold'); G.Game.quit(); });
   await page.setViewportSize({ width: vw, height: vh });
   await page.evaluate(() => G.Flow.goMenu());
@@ -872,7 +872,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const mkRow = await page.evaluate(() => { const c = document.querySelectorAll('#set-body .chip[data-k="markerKey"]');
     return { n: c.length, on: [...c].findIndex(b => b.classList.contains('on')), labels: [...c].map(b => b.textContent) }; });
   await page.evaluate(() => document.getElementById('set-close').click());
-  check(mkRow.n === 2 && mkRow.on === 0 && mkRow.labels.join() === 'Hold,Press to switch', `Settings → Controls: the F key's "Hold" / "Press to switch" choice (${JSON.stringify(mkRow)})`);
+  check(mkRow.n === 2 && mkRow.on === 0 && mkRow.labels.join() === 'Hold,Toggle', `Settings → Controls: the F key's "Hold" / "Toggle" choice (${JSON.stringify(mkRow)})`);
 
   check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();

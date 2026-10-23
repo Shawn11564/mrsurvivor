@@ -2,7 +2,7 @@
  * Next to Continue at the end of a roll (#pull-fx, shared by the gacha and the Radiant Ritual):
  *   - Gacha: the same pull again (×1, ×10 with normal tickets or a ×10 ticket, rainbow ×25) right away,
  *     if you can still pay for it (G.Gacha.costOf). The last pull is noted by wrapping G.Gacha.pull.
- *   - Radiant Ritual: the next 10 shinies "Fill with the commonest" would take (never legendaries or your
+ *   - Radiant Ritual: the next 10 shinies "Fill with Most Common" would take (never legendaries or your
  *     partner), sacrificed right away (G.Radiant.again), if you have 10 of them. The button says so.
  * It shows whenever Continue does (a MutationObserver on #pull-close) and you can afford it.
  * English only. Test: fork/test-open-another.cjs.
@@ -31,7 +31,7 @@ G.OpenAnother = (() => {
       } };
     }
     if (from === 'ritual' && G.Radiant && G.Radiant.canAgain())
-      return { label: `Open Another <small>the ${G.Radiant.NEED} commonest shinies</small>`, go: () => G.Radiant.again() };
+      return { label: `Open Another <small>your ${G.Radiant.NEED} most common shinies</small>`, go: () => G.Radiant.again() };
     return null;
   }
 

@@ -821,8 +821,8 @@ first time and kept (`pl._labBrPair`), so a reroll can't fish for the third.
 | Bite | Hyper Fang: `flinch` 0.7 | Jaw Lock: a bind (Bind's) | Assurance: `revenge` 1.6 |
 | Karate Chop | Low Sweep: slows | Vital Throw: a grab (Circle Throw's) | Brick Break: `cut` 0.08 |
 | Ice Beam | Frost Breath: a slowing cone | Freezing Glare: `flinch` 0.8 | Blizzard: hail (meteor) |
-| Shadow Ball | Shadow Vortex: a vortex | Astral Barrage: +1, homing | Shadow Shackle: slows by half |
-| Sludge | Sludge Bomb: poisons 3, bigger | Toxic Trap: mines (Toxic Spikes') | Gunk Shot: bounces (Acid Spray's) |
+| Shadow Ball | Ominous Wind: a vortex | Astral Barrage: +1, homing | Spirit Shackle: slows by half |
+| Sludge | Sludge Bomb: poisons 3, bigger | Toxic Spikes: mines | Gunk Shot: bounces (Acid Spray's) |
 
 - A field branch (`mul` / `add` / `set`) comes on top of the move's own level 4 upgrade; the card says both.
 - A `like` branch becomes that move: its kind and numbers at level 4 (`G.Moves.instance(like, 4)`), and its

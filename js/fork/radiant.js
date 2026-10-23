@@ -311,8 +311,8 @@ G.Radiant = (() => {
     <div class="split rad-split">
       <div class="banner rad-banner" id="rad-banner">
         <h3>Radiant Summon</h3>
-        <p style="margin:4px 0 6px" translate="no">Sacrifice <b>${NEED} shiny Pokémon</b> to summon <b>one radiant</b>, at random from every radiant
-          in the game. The sacrificed Pokémon lose their shiny form for good (you keep the normal ones).</p>
+        <p style="margin:4px 0 6px" translate="no">Sacrifice <b>${NEED} shiny Pokémon</b> to summon <b>one radiant</b>, picked at random from all the
+          radiants in the game. The sacrificed Pokémon lose their shiny forms for good (you keep their normal forms).</p>
         <p class="sub" id="rad-owned" style="margin:0"></p>
         <div class="feat" id="rad-feat"></div>
       </div>
@@ -320,7 +320,7 @@ G.Radiant = (() => {
     </div>
     <div class="row rad-bar">
       <b id="rad-count"></b>
-      <button class="btn small ghost" id="rad-auto" type="button">Fill with the commonest</button>
+      <button class="btn small ghost" id="rad-auto" type="button">Fill with Most Common</button>
       <button class="btn small ghost" id="rad-clear" type="button">Clear</button>
       <input id="rad-q" type="search" placeholder="Search your shinies" autocomplete="off">
       <label class="rad-opt"><input type="checkbox" id="rad-warn"> Warn me before sacrificing a shiny legendary</label>
@@ -363,7 +363,7 @@ G.Radiant = (() => {
   }
 
   const order = (a, b) => G.DEX_BY[a].rarity - G.DEX_BY[b].rarity || a - b;
-  /** Shinies "Fill with the commonest" may take: not legendaries, not your partner; commonest first. */
+  /** Shinies "Fill with Most Common" may take: not legendaries, not your partner; most common first. */
   const spare = () => shinies().filter(d => !isLegend(d) && d !== save().partner).sort(order);
   /** "Open Another" after a reveal (js/fork/open-another.js): can the next 10 spare ones be sacrificed? */
   const canAgain = () => spare().length >= NEED && pool().length > 0;
@@ -413,7 +413,7 @@ G.Radiant = (() => {
     $('rad-rates').innerHTML = '<h3>Odds</h3>' + (all.length ? [5, 4, 3, 2, 1].filter(t => ts[t]).map(t => `
       <div data-tier="${t}"><span style="color:${G.Gacha.RARITY_COLOR[t]}">${G.UI.stars(t, 10)} ${G.Gacha.RARITY_NAME[t]}</span>
       <span>${pct(ts[t].pct)} · ${ts[t].n}</span></div>`).join('') : '<p class="sub">Nothing to summon yet.</p>') +
-      `<p class="note">· Each rarity's odds are shared evenly by its radiants (how many after the %).<br>
+      `<p class="note">· Each rarity's odds are split evenly among its radiants (the number after the % is how many).<br>
        · A rarity with no radiants yet doesn't count: its share goes to the others.<br>
        · A radiant you already have gives ${DUP_COINS} coins instead.</p>`;
   }

@@ -6,7 +6,7 @@
 (() => {
   const ROWS = [
     ['· Desde la tirada {x} sin Legendaria, su probabilidad sube {x} puntos por tirada.',
-     '· From pull {x} without a Legendary, its chance rises by {x} percentage points per pull.',
+     '· Starting at pull {x} without a Legendary, the chance of one rises by {x} percentage points per pull.',
      '· À partir du tirage {x} sans Légendaire, sa probabilité augmente de {x} points par tirage.',
      '· Dal lancio {x} senza Leggendario, la sua probabilità sale di {x} punti a lancio.',
      '· A partir do giro {x} sem Lendário, a chance sobe {x} pontos percentuais por giro.',

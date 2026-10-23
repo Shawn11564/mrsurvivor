@@ -28,7 +28,7 @@
 //          each pair of Pledges makes its field (sea of fire burns, swamp slows, rainbow heals);
 //          one Pledge alone makes none.
 // evos     B1: Hail evolves into Avalanche (×2 right after you were hit), Flail into Endeavor (an
-//          enemy down to your share of HP, a boss at most 8% more), Whirlwind into Tailwind (×1.3
+//          enemy down to your HP percentage, a boss at most 8% more), Whirlwind into Tailwind (×1.3
 //          speed). (Future Sight, Stealth Rock, Sticky Web, Venoshock, Belly Drum: their sections.)
 // fields   B1: every field-less move (and the shoves) has a Lab field and a note; the five spins and
 //          four shoves all differ; Rapid Spin's speed, Vacuum Wave point-blank, Disarming Voice and
@@ -279,7 +279,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       check(Math.abs(x.stun / x.plain - 3) < 0.15 && Math.abs(x.sleep / x.plain - 3) < 0.15, `${id}: ×3 on a stunned (${x.stun}) and a sleeping (${x.sleep}) enemy, against ${x.plain}`, x);
       check(!(x.stunAfter > 0) && !(x.sleepAfter > 0), `${id}: the enemy snaps out of it`, x);
     }
-    check(r.vName === 'Venoshock' && /uses the poison up/.test(r.vText), 'Acid Spray evolves into Venoshock and its box says what it does', r);
+    check(r.vName === 'Venoshock' && /uses up the poison/.test(r.vText), 'Acid Spray evolves into Venoshock and its box says what it does', r);
     check(Math.abs(r.vPois / r.vPlain - 3) < 0.15 && r.poisonAfter <= 1, `Venoshock: ×3 on 4 poison stacks (${r.vPois} against ${r.vPlain}), the poison used up (then 1 again from its own hit: ${r.poisonAfter})`, r);
   }
 
@@ -496,7 +496,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       return out;
     });
     check(r.av === 'Avalanche' && r.hurt / r.calm > 1.9, `Hail evolves into Avalanche: ×${(r.hurt / r.calm).toFixed(2)} right after you were hit`, r);
-    check(r.en === 'Endeavor' && /share of HP/.test(r.enTip) && r.enShare <= 0.301, `Flail evolves into Endeavor: at 30% HP one hit leaves an enemy at ${r.enShare * 100}% of its HP`, r);
+    check(r.en === 'Endeavor' && /your HP percentage/.test(r.enTip) && r.enShare <= 0.301, `Flail evolves into Endeavor: at 30% HP one hit leaves an enemy at ${r.enShare * 100}% of its HP`, r);
     check(r.bossShare >= 0.9, `a boss loses at most 8% more (${(r.bossShare * 100).toFixed(1)}% left)`, r);
     check(r.tw === 'Tailwind' && Math.abs(r.twK - 1.3) < 0.02, `Whirlwind evolves into Tailwind: ×${r.twK} speed after a gust`, r);
   }

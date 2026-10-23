@@ -66,7 +66,7 @@ Between runs:
   shinies for one radiant.
 - Daily and weekly **missions**, **achievements** with medals and titles, and a **profile** with
   your favourite Pokémon and records.
-- **Co-op** for up to 4 friends (add them by nickname, invite them to your room) and
+- **Co-op** for up to 4 players (add them by nickname, invite them to your lobby) and
   **leaderboards** (solo or group, daily to all-time, by Pokémon). Co-op connects players
   directly, peer to peer, so a few strict networks can't join.
 

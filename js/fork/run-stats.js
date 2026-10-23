@@ -28,7 +28,7 @@ G.RunStats = (() => {
     ['% del daño', '% of damage', '% des dégâts', '% dei danni', '% do dano', '伤害占比', '傷害占比'],
     ['Daño total', 'Total damage', 'Dégâts totaux', 'Danni totali', 'Dano total', '总伤害', '總傷害'],
     ['Daño recibido', 'Damage taken', 'Dégâts subis', 'Danni subiti', 'Dano recebido', '承受伤害', '承受傷害'],
-    ['Más daño del equipo', 'Most damage in the team', 'Le plus de dégâts de l’équipe', 'Più danni della squadra', 'Mais dano da equipe', '队伍中伤害最高', '隊伍中傷害最高'],
+    ['Más daño del equipo', 'Most damage on the team', 'Le plus de dégâts de l’équipe', 'Più danni della squadra', 'Mais dano da equipe', '队伍中伤害最高', '隊伍中傷害最高'],
     ['Tú', 'You', 'Toi', 'Tu', 'Você', '你', '你']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));

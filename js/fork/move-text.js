@@ -14,20 +14,20 @@
   // ---------------- 1. descriptions ----------------
   const EN = {
     'Lametazo espectral que paraliza un poco.':'A ghostly lick that slows the foes it touches.',
-    'Burbujas en abanico que ralentizan a quien tocan.': 'A ring of bubbles in every direction that slows whatever they touch.',
+    'Burbujas en abanico que ralentizan a quien tocan.': 'A ring of bubbles that spreads in every direction, slowing whatever it touches.',
     'Látigos de largo alcance en arco amplio.': 'Whips that lash far out in front of you.',
     'Rayo psíquico ancho y contundente.': 'A wide psychic beam that’s hard to miss.',
     'Raíces que atrapan y machacan todo lo que tienes cerca.': 'Roots lash up from the ground and pound everything near you.',
-    'Esquirlas rapidísimas que persiguen al enemigo.': 'Fires ice shards in rapid succession that chase the enemy.',
+    'Esquirlas rapidísimas que persiguen al enemigo.': 'Fires a rapid volley of ice shards that chase the enemy.',
     'Un muñeco que se queda disparando por ti.': 'Leaves a stand-in behind you that shoots nearby enemies on its own.',
-    'No hace daño: acumula ATAQUE (físico) más rápido que Danza Espada.': 'Deals no damage: builds (physical) ATTACK in quicker, smaller steps than Swords Dance.',
+    'No hace daño: acumula ATAQUE (físico) más rápido que Danza Espada.': 'Deals no damage: builds physical Attack in quicker, smaller steps than Swords Dance.',
     'Rayo helado que congela casi del todo.': 'An icy beam that heavily slows foes.',
     'Campo eléctrico permanente alrededor de ti.': 'An electric field around you that shocks everything nearby.',
     'Deja telarañas en el suelo que atrapan y frenan mucho al que las pisa.': 'Leaves sticky webs that burst when stepped on, damaging foes and greatly slowing them.',
     'Chorro perforante. Fiable a cualquier distancia.': 'A water jet that passes through the first enemy it hits.',
     'Mordisco rápido en arco corto.': 'A quick, short-range bite.',
-    'Un ciclón de hojas gira amplio a tu alrededor.': 'A whirl of petals spins widely around you.',
-    'Bola de fuego al enemigo más cercano.': 'A fireball at the nearest enemy that burns.',
+    'Un ciclón de hojas gira amplio a tu alrededor.': 'A whirl of petals spins in a wide circle around you.',
+    'Bola de fuego al enemigo más cercano.': 'Hurls a fireball at the nearest enemy, burning it.',
     'Llamas que giran a tu alrededor. Defensa constante.': 'Flames that spin around you and burn what they touch.',
     'Explota en llamas en todas las direcciones.': 'Bursts of flame in every direction that burn foes.',
     'Corres envuelto en fuego y dejas un rastro de llamas.': 'You run wrapped in fire, leaving a trail of flames that burns foes.',
@@ -38,12 +38,12 @@
     'Esfera de energía que nunca falla.': 'An energy sphere that hunts down the nearest foe.',
     'Placaje con todo el peso: lento, corto y brutal.': 'A full-weight tackle: slow, short and brutal, sending foes flying.',
     'Golpe seco y potente al frente.': 'A sharp, powerful blow straight ahead that knocks foes back.',
-    'Cruzas como un rayo hacia el enemigo y golpeas todo el camino.': 'You dash at the enemy like lightning and hit everything on the way, briefly untouchable.',
+    'Cruzas como un rayo hacia el enemigo y golpeas todo el camino.': 'You dash at the enemy like lightning, hitting everything along the way, briefly untouchable.',
     'Te lanzas en picado y cortas todo lo que cruzas.': 'You dive and slash everything you pass through, briefly untouchable.',
     'Te lanzas envuelto en llamas y quemas todo el camino.': 'You dash wrapped in flames, burning everything in your path, briefly untouchable.',
     'Cruzas entre los enemigos golpeando a todos los del camino.': 'You dash through the enemies, hitting everyone in your path, briefly untouchable.',
     'Una sombra que se escurre por el suelo hasta el enemigo.': 'A shadow that darts after the enemy.',
-    'Dos meteoros de acero que aplastan donde caen.': 'Steel meteors that crush where they land.',
+    'Dos meteoros de acero que aplastan donde caen.': 'Steel meteors that crush whatever they land on.',
     'Dos cuchillas de aire que buscan al enemigo.': 'Blades of air that seek out the enemy.',
     '×1,8 daño, rayo un 50% más grueso y más largo': '×1.8 damage, a 50% wider and longer beam, and 15% less cooldown'
   };
@@ -65,8 +65,8 @@
   // The weak side, by category (it used to be "Peor para X: sólo hace un N %", which read as if it were about the move;
   // then "hits for only 71 %"; since 2026-10-22 it says how much less: "-29% damage"). English only (English first).
   const OFF = {
-    physical: 'Physical move: {x} does -{x}% damage with these (it’s a special attacker).',
-    special: 'Special move: {x} does -{x}% damage with these (it’s a physical attacker).'
+    physical: 'Physical move: {x} deals {x}% less damage with physical moves (it’s a special attacker).',
+    special: 'Special move: {x} deals {x}% less damage with special moves (it’s a physical attacker).'
   };
   // Kept as they are by the English pass ("damage", "move"... are also Spanish keys).
   G.I18n.add({ [OFF.physical]: OFF.physical, [OFF.special]: OFF.special }, 'en');
@@ -103,12 +103,12 @@
      'Maldição que salta entre inimigos. Muito mais dano se estiverem queimados, envenenados, lentos ou atordoados (paralisados, congelados...).',
      '在敌人之间跳跃的诅咒。目标处于灼伤、中毒、减速或眩晕（麻痹、冰冻……）时伤害大幅提高。',
      '在敵人之間跳躍的詛咒。目標處於灼傷、中毒、減速或暈眩（麻痺、冰凍……）時傷害大幅提高。'],
-    [PHYS, 'Physical: hits with your Attack. Boosted by Swords Dance and Dragon Dance.',
+    [PHYS, 'Physical: uses your Attack. Boosted by Swords Dance and Dragon Dance.',
      'Physique : utilise votre Attaque. Renforcé par Danse Lames et Danse Draco.',
      'Fisico: usa il tuo Attacco. Potenziato da Danzaspada e Dragodanza.',
      'Físico: usa seu Ataque. Fortalecido por Swords Dance e Dragon Dance.',
      '物理：使用你的攻击。剑舞和龙之舞可以强化。', '物理：使用你的攻擊。劍舞和龍之舞可以強化。'],
-    [SPEC, 'Special: hits with your Special Attack. Boosted by Nasty Plot.',
+    [SPEC, 'Special: uses your Special Attack. Boosted by Nasty Plot.',
      'Spécial : utilise votre Attaque Spéciale. Renforcé par Machination.',
      'Speciale: usa il tuo Attacco Speciale. Potenziato da Congiura.',
      'Especial: usa seu Ataque Especial. Fortalecido por Nasty Plot.',

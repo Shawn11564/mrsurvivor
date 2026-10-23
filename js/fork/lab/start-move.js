@@ -69,7 +69,7 @@ G.LabStart = (() => {
     const ids = labChoices(dex).sort((a, b) => name(a).localeCompare(name(b)));
     const el = document.createElement('div');
     el.className = 'panel ban-picker';
-    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose which attack it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
+    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose which move it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
       <div class="ban-moves">${ids.map(id => `<button class="chip ${id === cur ? 'on' : ''}" data-id="${id}">${G.Icons.html('move:' + id, 16)} ${name(id)}` +
         (id === base ? ' <small>(default)</small>' : !normal.includes(id) ? ' <small class="lab-only">LAB</small>' : '') + '</button>').join('')}</div>`;
     el.querySelectorAll('[data-id]').forEach(b => {
@@ -95,7 +95,7 @@ G.LabStart = (() => {
     const ids = labChoices(dex).filter(id => id !== first).sort((a, b) => name(a).localeCompare(name(b)));
     const el = document.createElement('div');
     el.className = 'panel ban-picker';
-    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose the second attack it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
+    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose the second move it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
       <div class="ban-moves"><button class="chip ${!cur ? 'on' : ''}" data-id="">Random</button>${ids.map(id => `<button class="chip ${id === cur ? 'on' : ''}" data-id="${id}">${G.Icons.html('move:' + id, 16)} ${name(id)}` +
         (!normal.includes(id) ? ' <small class="lab-only">LAB</small>' : '') + '</button>').join('')}</div>`;
     el.querySelectorAll('[data-id]').forEach(b => {
@@ -107,7 +107,7 @@ G.LabStart = (() => {
         if (i >= 0) l.splice(i, 1);
         G.DB.commit();
         G.Audio.sfx('select');
-        G.UI.toast(id ? G.DEX_BY[dex].name + ' will also start Lab runs with ' + name(id) : 'Lab runs: the second attack will be random');
+        G.UI.toast(id ? G.DEX_BY[dex].name + ' will also start Lab runs with ' + name(id) : 'Lab runs: the second move will be random');
         redraw();
       };
     });

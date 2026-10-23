@@ -142,7 +142,7 @@ G.LabLateHand = (() => {
       row.id = 'lab-ev-auto';
       row.setAttribute('translate', 'no');
       row.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-size:13px;color:var(--muted);cursor:pointer';
-      row.innerHTML = '<input type="checkbox"><span>Auto-pick EV cards in endless (no menu)</span>';
+      row.innerHTML = '<input type="checkbox"><span>Auto-pick EV cards in endless mode (skip the menu)</span>';
       const cards = document.getElementById('cards');
       cards.parentNode.insertBefore(row, cards.nextSibling);
       row.querySelector('input').onchange = e => { G.Settings.set('labEvAuto', e.target.checked); if (e.target.checked) pickOpen(); };

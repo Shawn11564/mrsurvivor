@@ -75,7 +75,7 @@ G.LabMech = (() => {
     // ---- B1: the normal game's moves that had no field of their own (one each, Lab only) ----
     // The five spins and four shoves first: they were interchangeable.
     'rapid-spin': { add: { haste: 0.2, hasteT: 1.5 },
-      upsAt: { 4: { t: '-25% recharge, +30% damage, and the speed burst lasts 3 s', m: { cd: 0.75, dmg: 1.3, hasteT: 3 } } },
+      upsAt: { 4: { t: '-25% cooldown, +30% damage, and the speed burst lasts 3 s', m: { cd: 0.75, dmg: 1.3, hasteT: 3 } } },
       note: 'Lab: each spin also gives you +20% speed for 1.5 s.' },
     'rolling-kick': { add: { flinch: 0.5 },
       note: 'Lab: the first kick on each enemy stuns it for 0.5 s.' },
@@ -84,7 +84,7 @@ G.LabMech = (() => {
     'gyro-ball': { add: { slow: 0.35 },
       note: 'Lab: the heavy steel spin slows what it hits.' },
     'night-slash': { add: { weakHit: 0.2, weakCat: 'physical' },
-      note: 'Lab: what it cuts takes 20% more from physical moves for 4 s.' },
+      note: 'Lab: enemies it cuts take 20% more damage from physical moves for 4 s.' },
     'extrasensory': { add: { flinch: 0.6 },
       note: 'Lab: the first wave on each enemy stuns it for 0.6 s.' },
     'vacuum-wave': { add: { close: 0.6 },
@@ -95,19 +95,19 @@ G.LabMech = (() => {
     'hydro-pump': { add: { labKnock: 180 }, note: 'Lab: the blast pushes the enemies back along the beam.' },
     'razor-leaf': { add: { crit: 0.25 }, note: 'Lab: +25% chance of a critical hit.' },
     'leaf-storm': { add: { slow: 0.25 }, note: 'Lab: the petals slow what they hit.' },
-    'giga-drain': { add: { meekHit: 0.15 }, note: 'Lab: the roots sap their strength: the enemies they hit deal 15% less for 4 s.' },
+    'giga-drain': { add: { meekHit: 0.15 }, note: 'Lab: the roots sap their strength: the enemies they hit deal 15% less damage for 4 s.' },
     'discharge': { add: { para: 0.08 }, note: 'Lab: each shock has an 8% chance to paralyze (stun) the enemy for 0.5 s.' },
-    'bug-buzz': { add: { weakHit: 0.15, weakCat: 'special' }, note: 'Lab: the buzz rattles them: 15% more damage from special moves for 4 s.' },
+    'bug-buzz': { add: { weakHit: 0.15, weakCat: 'special' }, note: 'Lab: the buzz rattles them: they take 15% more damage from special moves for 4 s.' },
     'dragon-rage': { add: { burn: 1 }, note: 'Lab: the draconic flames burn.' },
     'fairy-wind': { add: { knock: 80 }, note: 'Lab: the breeze blows the enemies back.' },
     'dazzling-gleam': { add: { labKnock: 70 }, note: 'Lab: the flash pushes nearby enemies back a little.' },
-    'flash-cannon': { add: { meekHit: 0.2 }, note: 'Lab: the glare blinds them: the enemies it hits deal 20% less for 4 s.' },
+    'flash-cannon': { add: { meekHit: 0.2 }, note: 'Lab: the glare blinds them: the enemies it hits deal 20% less damage for 4 s.' },
     'night-shade': { add: { levelDmg: 0.5 }, note: 'Lab: each hit also deals half your level in damage.' },
     'psycho-cut': { add: { conf: 0.8 }, note: 'Lab: the blades confuse what they cut for 0.8 s.' },
     'hyper-beam': { add: { labKnock: 220 }, note: 'Lab: the beam blasts the enemies back.' },
     'solar-beam': { add: { leech: 0.15 }, note: 'Lab: you heal 15% of the damage it deals (up to 5% of your HP a second).' },
     'whirlpool': { add: { slow: 0.35 }, note: 'Lab: the current slows the enemies it holds.' },
-    'sand-tomb': { add: { meekHit: 0.2 }, note: 'Lab: sand in their eyes: the enemies it hits deal 20% less for 4 s.' },
+    'sand-tomb': { add: { meekHit: 0.2 }, note: 'Lab: sand in their eyes: the enemies it hits deal 20% less damage for 4 s.' },
     'ominous-wind': { add: { omni: 0.1 }, note: 'Lab: each hit has a 10% chance to raise your Attack and Sp. Atk for 5 s.' },
     'ancient-power': { add: { omni: 0.1 }, note: 'Lab: each hit has a 10% chance to raise your Attack and Sp. Atk for 5 s.' },
     'magnitude': { add: { magnitude: 1 }, note: 'Lab: each quake has a random magnitude, from ×0.5 to ×1.8 damage.' },
@@ -115,14 +115,14 @@ G.LabMech = (() => {
     'psychic': { add: { mark: 0.35 },
       note: 'Lab: marks the enemies it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
     'psybeam': { add: { conf: 1 }, note: 'Lab: the beam confuses what it hits for 1 s.',
-      evo: { t: '×1.8 damage, a wider, longer beam and -15% recharge. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
+      evo: { t: '×1.8 damage, a wider, longer beam and -15% cooldown. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
              m: { dmg: 1.8, width: 1.5, radius: 1.2, cd: 0.85 }, set: { mark: 1 } },
       evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
     // B3.2: hazards that stay.
     'spikes': { add: { persist: 60 },
-      note: 'Lab: the spikes stay for 60 s instead of bursting: every enemy that steps on them is hurt, again each second it stays on them.' },
+      note: 'Lab: the spikes stay for 60 s instead of bursting: they hurt every enemy that steps on them, and again every second it stays on them.' },
     'toxic-spikes': { add: { persist: 60 },
-      note: 'Lab: the spikes stay for 60 s instead of bursting: every enemy that steps on them is hurt and poisoned, again each second it stays on them.' },
+      note: 'Lab: the spikes stay for 60 s instead of bursting: they hurt and poison every enemy that steps on them, and again every second it stays on them.' },
     'string-shot': { add: { persist: 60, web: 1 },
       note: 'Lab: the webs stay for 60 s instead of bursting: every enemy in a web is slowed, and hurt when it first walks in.',
       evo: { t: '×1.5 damage, +1 web, bigger webs that slow more. Sticky Web: they stay for 60 s.', m: { dmg: 1.5, radius: 1.3 }, add: { count: 1 }, set: { slow: 0.75 } },
@@ -133,12 +133,12 @@ G.LabMech = (() => {
       evoNote: 'Stealth Rock: each rock that lands stays for 75 s as a pointed stone that hurts every enemy that walks into it.' },
     // B3.3: converters.
     'acid-spray': {
-      evo: { t: '×1.6 damage, +2 bounces and +1 shot. Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack).',
+      evo: { t: '×1.6 damage, +2 bounces and +1 projectile. Venoshock: against a poisoned enemy, it uses up the poison for ×(1 + 0.5 per poison stack) damage.',
              m: { dmg: 1.6, size: 1.2, spread: 1.3 }, add: { bounce: 2, count: 1 }, set: { venoshock: 0.5 } },
-      evoNote: 'Venoshock: against a poisoned enemy it uses the poison up for ×(1 + 0.5 per poison stack), then poisons it again.' },
+      evoNote: 'Venoshock: against a poisoned enemy, it uses up the poison for ×(1 + 0.5 per poison stack) damage, then poisons it again.' },
     // B3.4: trade-offs.
     'swords-dance': {
-      evo: { t: 'Casts on its own from any slot and +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.',
+      evo: { t: 'Casts on its own from any slot, +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.',
              add: { stacks: 1 }, set: { passive: true, drum: 0.5 } },
       evoNote: 'Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.' },
     // B1 honest evolutions: Avalanche hits back, Tailwind speeds you up.
@@ -147,11 +147,11 @@ G.LabMech = (() => {
       evoNote: 'Avalanche: twice the damage if an enemy hit you in the last 1.5 s.' },
     'whirlwind': { add: { gust: 1 },
       note: 'Lab: the gust also blows away the enemy shots around you.',
-      evo: { t: '×1.8 damage and a wider gust that pushes harder. Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.', m: { dmg: 1.8, radius: 1.25, knock: 1.4 }, set: { tailwind: 0.3 } },
-      evoNote: 'Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.' },
+      evo: { t: '×1.8 damage and a wider gust that pushes harder. Tailwind: each gust also gives you and nearby teammates +30% speed for 4 s.', m: { dmg: 1.8, radius: 1.25, knock: 1.4 }, set: { tailwind: 0.3 } },
+      evoNote: 'Tailwind: each gust also gives you and nearby teammates +30% speed for 4 s.' },
     // B3.5: Substitute's doll draws the enemies near it.
     'substitute': { add: { decoy: true, decoyR: 180 },
-      note: 'Lab: enemies near the doll go for it instead of you while it stands (bosses do not fall for it).' }
+      note: 'Lab: enemies near the stand-in go for it instead of you while it stands (bosses don\'t fall for it).' }
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
@@ -343,7 +343,7 @@ G.LabMech = (() => {
     if (m.salts) {
       const asleep = e.labSleep > 0 || e.labSleepNet > 0, stunned = e.stunT > 0 || st(e, 16);
       if (asleep || stunned) {
-        k *= m.salts; say = (asleep ? 'Wake up! ×' : 'Snap out! ×') + m.salts;
+        k *= m.salts; say = (asleep ? 'Wake up! ×' : 'Snap out of it! ×') + m.salts;
         if (!e.remote) { e.labSleep = 0; e.stunT = 0; }
         G.FX.burst(e.x, e.y - e.bodyH * 0.6, '#ffe14d', 10, 140);
       }

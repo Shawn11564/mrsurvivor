@@ -2,7 +2,7 @@
  * The extra XP (G.LabGrowth.underdogK, js/fork/lab/growth.js: up to +60 % based on base
  * stats) shows in two places:
  *   - On the XP bar (G.HUD.draw): the part that comes from the extra, in gold at the end
- *     of the filled part, with "Underdog Bonus +N%" under it; it flashes for a moment when you gain XP.
+ *     of the filled part, with "Underdog +N% XP" under it; it flashes for a moment when you gain XP.
  *     The extra multiplies all XP (xpMul), so its part of the bar is always
  *     k / (1 + k) of the filled part: no need to keep count of each gem.
  *   - Before starting: on pressing Play or Random Pokémon with the Lab on (solo), a
@@ -52,7 +52,7 @@ G.LabUnderdog = (() => {
     ctx.globalAlpha = 1;
     ctx.font = '700 10px Pixelify,"Segoe UI",system-ui,sans-serif';
     ctx.textBaseline = 'top';
-    const text = `Underdog Bonus +${pct(u)}%`, tw = ctx.measureText(text).width;
+    const text = `Underdog +${pct(u)}% XP`, tw = ctx.measureText(text).width;
     // Under the gold part, without going off screen or over the "LAB · ability" tag
     // in the middle (js/fork/lab/lab.js): if it lands on it, to whichever side is closer to the gold.
     let x = G.U.clamp(end - tw, 6, w - tw - 6);
@@ -96,8 +96,8 @@ G.LabUnderdog = (() => {
         ${r === mon.rarity ? `<span class="ud-you">${mon.name}: <b>${mine > 0 ? '+' + pct(mine) + '% XP' : 'no bonus'}</b></span>` : ''}</div>`).join('');
     return `<div class="ud-card" role="dialog" aria-labelledby="ud-title">
       <h2 id="ud-title"><span class="ud-tag">LAB</span> Underdog XP</h2>
-      <p class="sub">Weaker Pokémon level up faster in Lab runs: the lower its base stats, the more XP it gets,
-        up to +60%. Evolving during the run changes it.</p>
+      <p class="sub">Weaker Pokémon level up faster in Lab runs: the lower their base stats, the more XP they get,
+        up to +60%. Evolving during the run changes the bonus.</p>
       <div class="ud-ladder">${rows}</div>
       <p class="ud-mine" style="color:${col(mon.rarity)}">${mine > 0
         ? `${mon.name} gets <b>+${pct(mine)}% XP</b>. It shows in gold on your XP bar.`

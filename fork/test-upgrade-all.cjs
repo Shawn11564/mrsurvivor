@@ -37,7 +37,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await open(); await page.waitForTimeout(200);
     const q = await page.evaluate(() => G.UpgradeAll.quote(4)), have = await page.evaluate(() => G.DB.save.coins);   // (an achievement may have paid a few)
     const p0 = await panel();
-    check(p0 && p0.btn.off && p0.what.includes(q.total.toLocaleString() + ' coins in all: ' + (q.total - have).toLocaleString() + ' more needed'), `too few coins: total ${q.total}, the rest needed, button off`, p0);
+    check(p0 && p0.btn.off && p0.what.includes(q.total.toLocaleString() + ' coins in total: ' + (q.total - have).toLocaleString() + ' more needed'), `too few coins: total ${q.total}, the rest needed, button off`, p0);
 
     console.log('2. A single buy');
     await page.evaluate(() => { G.DB.save.coins = 100000; G.UI.refreshCoins(); document.getElementById('upg-mon').dispatchEvent(new Event('change')); });
@@ -46,7 +46,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.click('#upg-list .upg-item [data-buy]');
     await page.waitForTimeout(150);
     const q1 = await page.evaluate(() => G.UpgradeAll.quote(4)), p1 = await panel();
-    check(q1.total === q.total - price && p1.what.includes(q1.total.toLocaleString() + ' coins in all') && !p1.btn.off, 'after buying one, the panel shows the new total', { before: q.total, price, after: q1.total, p1 });
+    check(q1.total === q.total - price && p1.what.includes(q1.total.toLocaleString() + ' coins in total') && !p1.btn.off, 'after buying one, the panel shows the new total', { before: q.total, price, after: q1.total, p1 });
 
     console.log('3. Upgrade all');
     await page.click('#upgall-panel [data-all]');

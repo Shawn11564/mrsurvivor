@@ -124,7 +124,7 @@ G.GuestSave = (() => {
 
   const ROWS = [
     ['Tu partida se guarda en la nube: entra desde cualquier ordenador. Como invitado, sólo en este navegador.',
-     'Your game is saved in the cloud: log in from any computer. As a guest, only in this browser.',
+     'Your progress is saved in the cloud: log in from any computer. As a guest, it\'s saved in this browser only.',
      'Ta partie est sauvegardée dans le cloud : connecte-toi depuis n’importe quel ordinateur. En invité, seulement dans ce navigateur.',
      'La tua partita è salvata nel cloud: accedi da qualsiasi computer. Come ospite, solo in questo browser.',
      'Seu jogo fica salvo na nuvem: entre de qualquer computador. Como convidado, só neste navegador.',
@@ -139,7 +139,7 @@ G.GuestSave = (() => {
      'Seu progresso de convidado ({x} Pokémon) vai para a conta que você criar ou em que entrar.',
      '你的游客进度（{x} 只宝可梦）将转入你创建或登录的账号。', '你的訪客進度（{x} 隻寶可夢）將轉入你建立或登入的帳號。'],
     ['Hay una versión nueva, pero este navegador no guarda la partida de invitado: crea una cuenta y recarga para no perderla.',
-     'There’s a new version, but this browser can’t keep your guest game: create an account, then reload, so you don’t lose it.',
+     'There’s a new version, but this browser can’t keep your guest progress: create an account, then reload, so you don’t lose it.',
      'Il y a une nouvelle version, mais ce navigateur ne garde pas ta partie d’invité : crée un compte puis recharge pour ne pas la perdre.',
      'C’è una nuova versione, ma questo browser non conserva la partita da ospite: crea un account e ricarica per non perderla.',
      'Há uma versão nova, mas este navegador não guarda o jogo de convidado: crie uma conta e recarregue para não perdê-lo.',
@@ -149,7 +149,7 @@ G.GuestSave = (() => {
     ['Modo invitado: guardado sólo en este navegador', 'Guest mode: saved in this browser only', 'Mode invité : sauvegardé dans ce navigateur seulement',
      'Modalità ospite: salvato solo in questo browser', 'Modo convidado: salvo só neste navegador', '游客模式：仅保存在此浏览器', '訪客模式：僅保存在此瀏覽器'],
     ['Estás jugando como {x}: tu progreso se guarda sólo en este navegador. Crea una cuenta o entra en la tuya y pasará a ella.',
-     'You\'re playing as a {x}: your progress is saved in this browser only. Create an account or log in and it moves there.',
+     'You\'re playing as a {x}: your progress is saved in this browser only. Create an account or log in and it will move to that account.',
      'Tu joues en tant qu’{x} : ta progression est sauvegardée dans ce navigateur seulement. Crée un compte ou connecte-toi et elle y passera.',
      'Stai giocando come {x}: i tuoi progressi sono salvati solo in questo browser. Crea un account o accedi e passeranno lì.',
      'Você está jogando como {x}: seu progresso fica salvo só neste navegador. Crie uma conta ou entre na sua e ele vai para ela.',
@@ -162,7 +162,7 @@ G.GuestSave = (() => {
   G.I18n.add({
     'Estás jugando como': 'You\'re playing as a',
     ': tu progreso se guarda sólo en este navegador. Crea una cuenta o entra en la tuya y pasará a ella.':
-      ': your progress is saved in this browser only. Create an account or log in and it moves there.'
+      ': your progress is saved in this browser only. Create an account or log in and it will move to that account.'
   }, 'en');
 
   return { store, load, safe, get kept() { return kept; } };

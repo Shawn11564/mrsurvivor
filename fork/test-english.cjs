@@ -401,7 +401,8 @@ async function game() {
 
     // Pokémon names: Type: Null and the Paradox Pokémon have Spanish names in js/data/pokedex.js
     // ("Bramaluna"); in English the dex carries the English one (js/fork/en-names.js), and the dictionary
-    // has them for texts that arrive with the Spanish name.
+    // has them for texts that arrive with the Spanish name. And texts that only had the word-by-word pass:
+    // the partner button without "(shiny)" was "Choose de Partner"; the fullscreen button "Log out".
     {
       const EN_NAMES = { 772: 'Type: Null', 984: 'Great Tusk', 985: 'Scream Tail', 987: 'Flutter Mane', 988: 'Slither Wing',
         989: 'Sandy Shocks', 991: 'Iron Bundle', 992: 'Iron Hands', 994: 'Iron Moth', 995: 'Iron Thorns', 1005: 'Roaring Moon',
@@ -410,6 +411,8 @@ async function game() {
       const wrong = names.filter(([d, n, t]) => n !== EN_NAMES[d] || t !== EN_NAMES[d]);
       const es = await page.evaluate(() => ['Bramaluna', 'Ferropaladín', 'Código Cero'].map(s => G.I18n.t(s)));
       check(!wrong.length && es.join() === 'Roaring Moon,Iron Valiant,Type: Null', 'Pokémon names in English (Type: Null, the Paradox Pokémon)', wrong.length ? wrong : undefined);
+      const t = await page.evaluate(() => [G.I18n.t('Elegir de compañero'), G.I18n.t('Elegir de compañero (shiny)'), G.T('Salir', 'fullscreen'), G.I18n.t('Salir')]);
+      check(t.join('|') === 'Choose as partner|Choose as partner (shiny)|Exit|Log out', 'the partner button and the fullscreen button in English', t);
     }
 
     // No Spanish left: every text upstream's game can show (spanishSources) and its data tables

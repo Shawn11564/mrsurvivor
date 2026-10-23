@@ -25,14 +25,14 @@ G.EffectTips = (() => {
     patk:  ['Attack boost (physical)', v => `+${pct(v)}% damage to your physical moves`],
     satk:  ['Sp. Atk boost (special)', v => `+${pct(v)}% damage to your special moves`],
     spd:   ['Speed boost', v => `+${pct(v)}% speed`],
-    def:   ['Defense boost', (v, pl) => `+${pct(v)}% damage reduction (${pct(pl.reduction)}% in all, 80% at most)`],
+    def:   ['Defense boost', (v, pl) => `+${pct(v)}% damage reduction (${pct(pl.reduction)}% total, max 80%)`],
     regen: ['Regeneration boost', v => `+${(Math.round(v * 10) / 10)} HP a second`]
   };
   const POWER = {
     dmg: ['Damage ×2', 'All your moves hit twice as hard.'],
     spd: ['+45% speed', 'You run much faster.'],
     mag: ['Magnet', 'You pull in every pickup from far away.'],
-    cd:  ['−40% cooldown', 'Your moves come back much sooner.']
+    cd:  ['−40% cooldown', 'Your moves cool down much faster.']
   };
 
   /** [title, color, lines] for a chip, or null. */
@@ -55,7 +55,7 @@ G.EffectTips = (() => {
       lines.push(`${types.join(' · ')} damage, for you and the enemies.`);
       const mine = pl.moves.filter(m => m.cat && G.Weather.mult(m.type) !== 1).map(m => `${G.T(m.name, 'move')} ${mul(G.Weather.mult(m.type))}`);
       if (mine.length) lines.push(`Your moves: ${mine.join(', ')}.`);
-      if (G.Weather.hurts(pl.mon.types)) lines.push(`It wears your HP down a little every 2 s (never to a KO). ${wx.safe.map(TYPE).join(', ')} types are safe.`);
+      if (G.Weather.hurts(pl.mon.types)) lines.push(`It chips away at your HP every 2 s (it can't knock you out). ${wx.safe.map(TYPE).join(', ')} types are immune.`);
       const sp = G.Weather.speedFor(pl.mon.types);
       if (sp < 1) lines.push(`You move ${pct(1 - sp)}% slower (Ice types don't).`);
       const ab = pl.abil, as = ab && ab.speed ? ab.speed(pl) : 1;

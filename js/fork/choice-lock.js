@@ -8,7 +8,7 @@
  * Test: fork/test-choice-lock.cjs.
  */
 G.ChoiceLock = (() => {
-  G.I18n.add({ '+40% de daño, pero no puedes cambiar de movimiento.': '+40% damage, locked into the move you pick when you get it.' }, 'en');
+  G.I18n.add({ '+40% de daño, pero no puedes cambiar de movimiento.': '+40% damage, but you\'re locked into the move you choose when you pick it up.' }, 'en');
   const $ = id => document.getElementById(id);
   const GUARD = 1000;                 // ms the cards ignore clicks (run-ui.js's guard: keys pressed mid-fight)
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -46,7 +46,7 @@ G.ChoiceLock = (() => {
       const el = document.createElement('div');
       el.className = 'card' + (i === pl.active ? ' evo' : '');
       el.innerHTML = `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
-        <div class="txt"><div class="nm">${names} <span class="tag-chip" style="background:${col}">Lv.${m.lvl}</span>${i === pl.active ? ' <small>(now)</small>' : ''}</div>
+        <div class="txt"><div class="nm">${names} <span class="tag-chip" style="background:${col}">Lv.${m.lvl}</span>${i === pl.active ? ' <small>(current)</small>' : ''}</div>
         <div class="ds">${m.desc || ''}</div></div>
         <div class="key">${i + 1}</div>`;
       el.dataset.sfx = 'none';

@@ -97,11 +97,11 @@ G.FxOpacity = (() => {
   // Columns: Spanish, English, French, Italian, Portuguese (Brazil), Simplified and Traditional Chinese.
   const ROWS = [
     ['Tus efectos', 'Your move effects', 'Vos effets', 'I tuoi effetti', 'Seus efeitos', '你的招式特效', '你的招式特效'],
-    ['Lo transparentes que se ven tus ataques (proyectiles, golpes, rayos...).', 'How see-through your attacks look (projectiles, hits, beams...).',
+    ['Lo transparentes que se ven tus ataques (proyectiles, golpes, rayos...).', 'How visible your attacks are (projectiles, hits, beams...). Lower is more see-through.',
      'La transparence de vos attaques (projectiles, coups, rayons...).', 'Quanto sono trasparenti i tuoi attacchi (proiettili, colpi, raggi...).',
      'O quão transparentes ficam seus ataques (projéteis, golpes, raios...).', '你的攻击（弹幕、打击、光束……）的透明度。', '你的攻擊（彈幕、打擊、光束……）的透明度。'],
     ['Efectos de tus compañeros', 'Teammates\' move effects', 'Effets de vos coéquipiers', 'Effetti dei compagni', 'Efeitos dos companheiros', '队友的招式特效', '隊友的招式特效'],
-    ['Lo transparentes que se ven los ataques de tus compañeros en cooperativo.', 'How see-through your teammates\' attacks look in co-op.',
+    ['Lo transparentes que se ven los ataques de tus compañeros en cooperativo.', 'How visible your teammates\' attacks are in co-op. Lower is more see-through.',
      'La transparence des attaques de vos coéquipiers en coopération.', 'Quanto sono trasparenti gli attacchi dei compagni in cooperativa.',
      'O quão transparentes ficam os ataques dos companheiros no cooperativo.', '合作模式中队友攻击的透明度。', '合作模式中隊友攻擊的透明度。']
   ];

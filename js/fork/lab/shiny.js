@@ -144,8 +144,8 @@ G.LabShiny = (() => {
     }
   }, 300);
 
-  G.Lab.pauseLine(p => p._labShiny ? 'Shiny: one more card reroll' + (p._labPal ? '; its moves take its shiny colours.' : '.')
-    : p._labRadiant ? 'Radiant: two more card rerolls' + (p._labPal ? '; its moves take its radiant colours.' : '.') : '');
+  G.Lab.pauseLine(p => p._labShiny ? 'Shiny: one more card reroll' + (p._labPal ? '; its moves take on its shiny colours.' : '.')
+    : p._labRadiant ? 'Radiant: two more card rerolls' + (p._labPal ? '; its moves take on its radiant colours.' : '.') : '');
 
   return { start, paletteOf, paletteFrom, BONUS, RBONUS };
 })();

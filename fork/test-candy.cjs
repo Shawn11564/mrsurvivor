@@ -108,7 +108,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     }, dex);
     await page.evaluate(() => { const s = G.DB.save; G.LabGrowth.reset(4); s.lab.candy = { 4: 20 }; G.LabGrowth.spend(4, 'atk'); G.LabGrowth.spend(4, 'atk'); G.Settings.set('lab', true); });
     const c4 = await chip(4), c6 = await chip(6), c1 = await chip(1);
-    check(c4 && c4.text === '🍬 17' && c4.name === 'Charmander' && /17 candies left/.test(c4.title), 'Charmander: "🍬 17" by its name (20 earned, 3 spent), with a tooltip', c4);
+    check(c4 && c4.text === '🍬 17' && c4.name === 'Charmander' && /17 candy left/.test(c4.title), 'Charmander: "🍬 17" by its name (20 earned, 3 spent), with a tooltip', c4);
     check(c6 && c6.text === '🍬 17', 'Charizard, same line: the same 17', c6);
     check(c1 && c1.text === '🍬 0', 'Bulbasaur with Lab on and none earned: 🍬 0', c1);
     await page.evaluate(() => G.Settings.set('lab', false));

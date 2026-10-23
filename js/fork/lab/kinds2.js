@@ -64,35 +64,35 @@ G.LabKinds2 = (() => {
   Object.assign(K.LADDERS, {
     grab: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: 'Throws 30% further', m: { knock: 1.3 } },
-      { t: '-25% recharge', m: { cd: 0.75 } }, { t: '+50% damage and +25% reach', m: { dmg: 1.5, radius: 1.25 } }],
+      { t: '-25% cooldown', m: { cd: 0.75 } }, { t: '+50% damage and +25% range', m: { dmg: 1.5, radius: 1.25 } }],
     bind: [
-      { t: 'Holds one more at a time', m: { count: 1 } }, { t: '+40% damage', m: { dmg: 1.4 } },
-      { t: 'Holds them 30% longer', m: { dur: 1.3 } }, { t: 'One more at a time and +40% damage', m: { count: 1, dmg: 1.4 } }],
+      { t: 'Holds one more enemy at a time', m: { count: 1 } }, { t: '+40% damage', m: { dmg: 1.4 } },
+      { t: 'Holds them 30% longer', m: { dur: 1.3 } }, { t: 'Holds one more enemy and +40% damage', m: { count: 1, dmg: 1.4 } }],
     focus: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: 'Charges 25% faster', m: { charge: 0.75 } },
-      { t: '+25% area', m: { radius: 1.25 } }, { t: '-20% recharge and +40% damage', m: { cd: 0.8, dmg: 1.4 } }],
+      { t: '+25% area', m: { radius: 1.25 } }, { t: '-20% cooldown and +40% damage', m: { cd: 0.8, dmg: 1.4 } }],
     heal: [
-      { t: '+25% healing', m: { amount: 1.25 } }, { t: '-20% recharge', m: { cd: 0.8 } },
-      { t: '+25% healing', m: { amount: 1.25 } }, { t: '-20% recharge and +20% healing', m: { cd: 0.8, amount: 1.2 } }],
+      { t: '+25% healing', m: { amount: 1.25 } }, { t: '-20% cooldown', m: { cd: 0.8 } },
+      { t: '+25% healing', m: { amount: 1.25 } }, { t: '-20% cooldown and +20% healing', m: { cd: 0.8, amount: 1.2 } }],
     screen: [
-      { t: '+30% duration', m: { dur: 1.3 } }, { t: '-20% recharge', m: { cd: 0.8 } },
-      { t: '+30% area', m: { radius: 1.3 } }, { t: '+30% duration and -15% recharge', m: { dur: 1.3, cd: 0.85 } }],
+      { t: '+30% duration', m: { dur: 1.3 } }, { t: '-20% cooldown', m: { cd: 0.8 } },
+      { t: '+30% area', m: { radius: 1.3 } }, { t: '+30% duration and -15% cooldown', m: { dur: 1.3, cd: 0.85 } }],
     shout: [
-      { t: '+25% stronger', m: { amount: 1.25 } }, { t: '+25% area', m: { radius: 1.25 } },
-      { t: 'Lasts 40% longer', m: { dur: 1.4 } }, { t: '-30% recharge and +20% area', m: { cd: 0.7, radius: 1.2 } }],
+      { t: '25% stronger', m: { amount: 1.25 } }, { t: '+25% area', m: { radius: 1.25 } },
+      { t: 'Lasts 40% longer', m: { dur: 1.4 } }, { t: '-30% cooldown and +20% area', m: { cd: 0.7, radius: 1.2 } }],
     endure: [
-      { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'Untouchable 40% longer', m: { dur: 1.4 } },
-      { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'Also heals 25% of your HP', m: { amount: 0.25 } }]
+      { t: '-20% cooldown', m: { cd: 0.8 } }, { t: 'Untouchable 40% longer', m: { dur: 1.4 } },
+      { t: '-20% cooldown', m: { cd: 0.8 } }, { t: 'Also heals 25% of your HP', m: { amount: 0.25 } }]
   });
   // On evolving: multiplies (like LabKinds.EVO, but here amount too; nothing is added).
   const EVO = {
     grab:   { t: '×1.8 damage and the thrown enemy hits twice as hard', m: { dmg: 1.8, splash: 2 } },
     bind:   { t: '×1.8 damage and holds them longer', m: { dmg: 1.8, dur: 1.3 } },
     focus:  { t: '×1.8 damage and a bigger area', m: { dmg: 1.8, radius: 1.2 } },
-    heal:   { t: '×1.4 healing and -20% recharge', m: { amount: 1.4, cd: 0.8 } },
+    heal:   { t: '×1.4 healing and -20% cooldown', m: { amount: 1.4, cd: 0.8 } },
     screen: { t: '×1.3 duration and a stronger screen', m: { dur: 1.3, amount: 1.2 } },
-    shout:  { t: '×1.3 stronger and a bigger area', m: { amount: 1.3, radius: 1.3 } },
-    endure: { t: 'Half the recharge', m: { cd: 0.5 } }
+    shout:  { t: '×1.3 strength and a bigger area', m: { amount: 1.3, radius: 1.3 } },
+    endure: { t: 'Half the cooldown', m: { cd: 0.5 } }
   };
   // A move can bring its own evolution (evoMod, js/fork/lab/lab-moves.js): it overrides its family's.
   const evoOf = m => m.evoMod || (m.def && m.def.evoMod) || EVO[m.kind];

@@ -79,7 +79,7 @@ const RULES = [
   ['noscript-js', GAME, /<p>(\S+) necesita JavaScript para funcionar\. Actívalo para jugar\.<\/p>/,
     (m, name) => `<p>${name} needs JavaScript to run. Turn it on to play.</p>`],
   ['noscript-about', GAME, /<p>Fan game gratuito de supervivencia con (\d+) Pokémon de las 9 regiones: [^<]*<\/p>/,
-    (m, n) => `<p>A free Pokémon survival fan game with ${n} Pokémon from all 9 regions: pick your partner, survive the hordes, evolve your moves, take on legendaries and play co-op with up to 4 friends.</p>`],
+    (m, n) => `<p>A free Pokémon survival fan game with ${n} Pokémon from all 9 regions: pick your partner, survive the hordes, evolve your moves, take on legendaries and play co-op with up to 3 friends.</p>`],
   ['noscript-links', GAME, /<a href="([^"]*)">Guía del juego<\/a> · <a href="([^"]*)">Pokédex: todos los Pokémon jugables<\/a>/,
     (m, a, b) => `<a href="${a}">Game guide</a> · <a href="${b}">Pokédex: every playable Pokémon</a>`],
   // ---- en/index.html is the same English game as /
@@ -96,6 +96,8 @@ const RULES = [
   ['manifest-desc', f => f === 'manifest.webmanifest', /"description": "[^"]*"/, '"description": "A free fan game: survive the hordes with your Pokémon partner. No ads, nothing to buy."'],
   ['manifest-lang', f => f === 'manifest.webmanifest', /"lang": "[^"]*"/, '"lang": "en"'],
   ['en-names', f => f.startsWith('en/') && f.endsWith('.html'), NAME_RX, m => EN_NAMES[m]],
+  // Co-op is for 4 players in all (js/net/social.js MAX_PLAYERS): you and up to 3 friends.
+  ['coop-friends', f => f.endsWith('.html'), /with up to 4 friends/g, 'with up to 3 friends'],
   // ---- no donations here
   ['foot-donations', f => f.endsWith('.html'), ' with no ads or purchases (only voluntary donations for the servers).', ' with no ads or purchases.'],
   ['foot-donaciones', f => f.endsWith('.html'), ' sin anuncios ni compras (sólo donaciones voluntarias para los servidores).', ' sin anuncios ni compras.'],

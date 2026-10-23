@@ -25,12 +25,12 @@
 G.LabTraits = (() => {
   const lab = () => !!(G.Lab && G.Lab.active);
   const PARRY = 0.3;
-  const STEP4 = { t: '+50% damage and +20% reach', m: { dmg: 1.5, radius: 1.2 } };
-  const EVO = { t: '×1.9 damage, more reach and a wider arc', m: { dmg: 1.9, radius: 1.3, arc: 1.3 } };
+  const STEP4 = { t: '+50% damage and +20% range', m: { dmg: 1.5, radius: 1.2 } };
+  const EVO = { t: '×1.9 damage, more range and a wider arc', m: { dmg: 1.9, radius: 1.3, arc: 1.3 } };
   const TEXT = {
     reach: 'Lab: long reach in a narrow arc.',
-    heavy: 'Lab: heavy. It knocks enemies far back and makes each one flinch the first time.',
-    leech: 'Lab: heals you 25% of the damage it deals.',
+    heavy: 'Lab: heavy. It knocks enemies far back, and its first hit on each one makes it flinch.',
+    leech: 'Lab: heals you for 25% of the damage it deals.',
     flinch: 'Lab: the first hit on each enemy makes it flinch.',
     parry: 'Lab: parry. Right after each swing, the first hit you take is blocked and the nearest enemy is stunned.',
     pivot: 'Lab: pivot. After the hit you switch to your next move.',
@@ -54,7 +54,7 @@ G.LabTraits = (() => {
   };
   const M = G.LabMech;
   for (const id in TRAITS) M.ID[id] = TRAITS[id](G.Moves.BY_ID[id]);
-  const MOVER = 'Lab: it goes the way you walk (at your target when you stand still), hits everything on the way, and you stay where you were.';
+  const MOVER = 'Lab: it goes the way you\'re walking (toward your target when you stand still), hits everything in its path, and you stay where you are.';
   // In Lab the close-range cut is 35 % (js/fork/lab/kinds2.js LAB_CLOSE): the box says so.
   const CLOSE_ES = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
   const CLOSE_LAB = 'Close range (Lab): you take 35% less damage while it’s active.';

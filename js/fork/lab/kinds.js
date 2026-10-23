@@ -61,41 +61,41 @@ G.LabKinds = (() => {
   const LADDERS = {
     leap: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+30% landing area', m: { radius: 1.3 } },
-      { t: '-25% recharge', m: { cd: 0.75 } }, { t: '+60% damage and +20% landing area', m: { dmg: 1.6, radius: 1.2 } }],
+      { t: '-25% cooldown', m: { cd: 0.75 } }, { t: '+60% damage and +20% landing area', m: { dmg: 1.6, radius: 1.2 } }],
     recoil: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+30% distance', m: { radius: 1.3 } },
-      { t: '-25% recharge', m: { cd: 0.75 } }, { t: '+60% damage and wider', m: { dmg: 1.6, width: 1.4 } }],
+      { t: '-25% cooldown', m: { cd: 0.75 } }, { t: '+60% damage and wider', m: { dmg: 1.6, width: 1.4 } }],
     ramp: [
-      { t: '+35% damage', m: { dmg: 1.35 } }, { t: 'Builds up one more time', m: { stacks: 1 } },
-      { t: '+25% reach', m: { radius: 1.25 } }, { t: '-20% recharge and +30% damage', m: { cd: 0.8, dmg: 1.3 } }],
+      { t: '+35% damage', m: { dmg: 1.35 } }, { t: '+1 max stack', m: { stacks: 1 } },
+      { t: '+25% range', m: { radius: 1.25 } }, { t: '-20% cooldown and +30% damage', m: { cd: 0.8, dmg: 1.3 } }],
     guard: [
-      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% recharge', m: { cd: 0.8 } },
+      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% cooldown', m: { cd: 0.8 } },
       { t: '+50% damage', m: { dmg: 1.5 } }, { t: '+30% duration and a bigger blast', m: { dur: 1.3, radius: 1.3 } }],
     sleep: [
       { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+25% area', m: { radius: 1.25 } },
-      { t: 'They sleep 40% longer', m: { stun: 1.4 } }, { t: '-25% recharge and +25% area', m: { cd: 0.75, radius: 1.25 } }],
+      { t: 'Enemies sleep 40% longer', m: { stun: 1.4 } }, { t: '-25% cooldown and +25% area', m: { cd: 0.75, radius: 1.25 } }],
     weather: [
-      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% recharge', m: { cd: 0.8 } },
-      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-25% recharge', m: { cd: 0.75 } }],
+      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-20% cooldown', m: { cd: 0.8 } },
+      { t: '+40% duration', m: { dur: 1.4 } }, { t: '-25% cooldown', m: { cd: 0.75 } }],
     terrain: [
       { t: '+30% area', m: { radius: 1.3 } }, { t: '+40% duration', m: { dur: 1.4 } },
-      { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+30% area and +30% duration', m: { radius: 1.3, dur: 1.3 } }],
+      { t: '-20% cooldown', m: { cd: 0.8 } }, { t: '+30% area and +30% duration', m: { radius: 1.3, dur: 1.3 } }],
     wave: [
-      { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+25% wider', m: { width: 1.25 } },
-      { t: '+30% distance', m: { radius: 1.3 } }, { t: '-25% recharge and +40% damage', m: { cd: 0.75, dmg: 1.4 } }],
+      { t: '+40% damage', m: { dmg: 1.4 } }, { t: '+25% width', m: { width: 1.25 } },
+      { t: '+30% distance', m: { radius: 1.3 } }, { t: '-25% cooldown and +40% damage', m: { cd: 0.75, dmg: 1.4 } }],
     metronome: [
-      { t: 'The moves it calls are one level higher', m: {} }, { t: '-20% recharge', m: { cd: 0.8 } },
-      { t: 'The moves it calls are one level higher', m: {} }, { t: 'One level higher and -20% recharge', m: { cd: 0.8 } }],
+      { t: 'The moves it calls are one level higher', m: {} }, { t: '-20% cooldown', m: { cd: 0.8 } },
+      { t: 'The moves it calls are one level higher', m: {} }, { t: 'One level higher and -20% cooldown', m: { cd: 0.8 } }],
     transform: [
       { t: 'The copied move is one level higher', m: {} }, { t: '+40% duration', m: { dur: 1.4 } },
-      { t: '-20% recharge', m: { cd: 0.8 } }, { t: 'One level higher and +40% duration', m: { dur: 1.4 } }]
+      { t: '-20% cooldown', m: { cd: 0.8 } }, { t: 'One level higher and +40% duration', m: { dur: 1.4 } }]
   };
   // On evolving (with its condition, like the others): { t, m } with multipliers (MUL) or additions (ADD).
   const EVO = {
-    leap:    { t: '×1.9 damage, bigger landing and less recharge', m: { dmg: 1.9, radius: 1.3, cd: 0.8 } },
+    leap:    { t: '×1.9 damage, a bigger landing area and a shorter cooldown', m: { dmg: 1.9, radius: 1.3, cd: 0.8 } },
     recoil:  { t: '×1.8 damage and half the recoil', m: { dmg: 1.8, recoil: 0.5 } },
     ramp:    { t: '×1.7 damage and it builds up twice as fast', m: { dmg: 1.7, step: 2 } },
-    guard:   { t: '×1.8 damage, lasts longer and recharges faster', m: { dmg: 1.8, dur: 1.3, cd: 0.8 } },
+    guard:   { t: '×1.8 damage, lasts longer and has a shorter cooldown', m: { dmg: 1.8, dur: 1.3, cd: 0.8 } },
     sleep:   { t: '×1.8 damage, bigger area and longer sleep', m: { dmg: 1.8, radius: 1.3, stun: 1.3 } },
     wave:    { t: '×1.8 damage, a wider and longer wave', m: { dmg: 1.8, width: 1.3, radius: 1.2 } }
   };

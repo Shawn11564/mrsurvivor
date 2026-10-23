@@ -80,7 +80,7 @@
   const ROWS = [
     ['Otro al azar', 'Reroll', 'Un autre au hasard', 'Un altro a caso', 'Outro aleatório', '再随机一个', '再隨機一個'],
     ['Volver a mi compañero', 'Back to my partner', 'Revenir à mon partenaire', 'Torna al mio compagno', 'Voltar ao meu parceiro', '换回我的伙伴', '換回我的夥伴'],
-    ['Quita "Estoy listo" para cambiar de Pokémon.', 'Un-ready to change Pokémon.', 'Annule « Je suis prêt » pour changer de Pokémon.',
+    ['Quita "Estoy listo" para cambiar de Pokémon.', 'Press "Not ready" to change Pokémon.', 'Annule « Je suis prêt » pour changer de Pokémon.',
      'Togli "Sono pronto" per cambiare Pokémon.', 'Desmarque "Estou pronto" para trocar de Pokémon.', '取消“准备好了”才能更换宝可梦。', '取消「準備好了」才能更換寶可夢。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));

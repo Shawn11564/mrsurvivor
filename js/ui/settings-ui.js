@@ -96,7 +96,7 @@ G.SettingsUI = (() => {
         + G.UIScale.settingsRows(section, choice)                     // fork: GUI (icon size, GUI scale), js/fork/ui-scale.js
         + (G.RadiantGlow ? G.RadiantGlow.settingsRow(section) : '')   // fork: brillo de los radiantes (js/fork/radiant-glow.js)
         + (canFull() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>Sin barras del navegador.</small></div>
-             <button class="btn small" id="set-full">${isFull() ? 'Salir' : 'Activar'}</button></div>`
+             <button class="btn small" id="set-full">${isFull() ? G.T('Salir', 'fullscreen') : 'Activar'}</button></div>`
            : iosTip() ? `<div class="set-row"><div class="grow"><b>Pantalla completa</b><small>${esc(IOS_TIP)}</small></div></div>` : '');
     } else if (tab === 'lab' && G.Lab) {
       box.innerHTML = G.Lab.settingsRow(toggle, section);             // pestaña Experimental del fork (js/fork/lab/lab.js)

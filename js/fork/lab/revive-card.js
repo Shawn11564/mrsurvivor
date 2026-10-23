@@ -20,7 +20,7 @@ G.ReviveCard = (() => {
     return {
       w: 0, type: 'up', key: 'rare:revive', icon: 'heart', rarity: LEGEND.r, color: GOLD, tag: G.Gacha.RARITY_NAME[LEGEND.r],
       title: 'Revive',
-      desc: 'Kept in its own slot: when you fall, get back up with 50% HP, 3 s untouchable, and the enemies around you are thrown back. In co-op you choose when to use it.',
+      desc: 'Kept in its own slot: when you\'re knocked out, you get back up with 50% HP and are untouchable for 3 s, and nearby enemies are thrown back. In co-op, you choose when to use it.',
       apply: p => { p.selfRevive = 1; G.FX.ring(p.x, p.y, 8, 90, GOLD, 0.6, 5); G.Audio.sfx('legend'); }
     };
   }

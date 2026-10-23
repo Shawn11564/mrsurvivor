@@ -84,7 +84,7 @@ G.CardRarity = (() => {
 
   // The texts with an open number: the game's text, with its number swapped for {x} (en, fr, it, pt-BR, zh).
   const ROWS = [
-    [S.hp.t, '+{x} max HP (and heals it).', '+{x} PV max (et les récupère).', '+{x} PS massimi (e li ripristina).', '+{x} de vida máxima (e recupera essa vida).', '最大生命值 +{x}，并恢复等量生命值。', '最大生命值 +{x}，並恢復等量生命值。'],
+    [S.hp.t, '+{x} max HP (and heals that amount).', '+{x} PV max (et les récupère).', '+{x} PS massimi (e li ripristina).', '+{x} de vida máxima (e recupera essa vida).', '最大生命值 +{x}，并恢复等量生命值。', '最大生命值 +{x}，並恢復等量生命值。'],
     [S.atk.t, '+{x}% damage with every move.', '+{x} % de dégâts avec toutes les capacités.', '+{x}% di danno con ogni mossa.', '+{x}% de dano com todos os golpes.', '所有招式伤害 +{x}%。', '所有招式傷害 +{x}%。'],
     [S.spd.t, '+{x}% movement speed.', '+{x} % de vitesse de déplacement.', '+{x}% di velocità di movimento.', '+{x}% de velocidade de movimento.', '移动速度 +{x}%。', '移動速度 +{x}%。'],
     [S.cd.t, '-{x}% cooldown on every move.', '-{x} % de recharge sur toutes les capacités.', '-{x}% di ricarica su ogni mossa.', '-{x}% de recarga em todos os golpes.', '所有招式冷却时间 -{x}%。', '所有招式冷卻時間 -{x}%。'],
@@ -92,7 +92,7 @@ G.CardRarity = (() => {
     [S.rgn.t, '+{x} HP regenerated per second.', '+{x} PV régénéré par seconde.', '+{x} PS rigenerati al secondo.', '+{x} de vida regenerada por segundo.', '每秒恢复 {x} 生命值。', '每秒恢復 {x} 生命值。'],
     [S.mag.t, '+{x}% experience pickup radius.', '+{x} % de rayon de ramassage de l\'expérience.', '+{x}% di raggio di raccolta esperienza.', '+{x}% de raio de coleta de experiência.', '经验拾取半径 +{x}%。', '經驗拾取半徑 +{x}%。'],
     [S.xp.t, '+{x}% experience gained.', '+{x} % d\'expérience gagnée.', '+{x}% di esperienza guadagnata.', '+{x}% de experiência ganha.', '获得的经验 +{x}%。', '獲得的經驗 +{x}%。'],
-    [S.heal.t, 'Restores {x}% of your HP right now.', 'Restaure {x} % de tes PV tout de suite.', 'Ripristina il {x}% dei tuoi PS all\'istante.', 'Recupera {x}% da sua vida agora mesmo.', '立即恢复 {x}% 生命值。', '立即恢復 {x}% 生命值。']
+    [S.heal.t, 'Instantly restores {x}% of your HP.', 'Restaure {x} % de tes PV tout de suite.', 'Ripristina il {x}% dei tuoi PS all\'istante.', 'Recupera {x}% da sua vida agora mesmo.', '立即恢复 {x}% 生命值。', '立即恢復 {x}% 生命值。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 

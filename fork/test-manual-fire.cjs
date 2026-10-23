@@ -12,7 +12,7 @@
 //      holding Space fires it too. Meanwhile Swords Dance in another slot (evolved, m.passive) keeps
 //      going off on its own.
 //   4. Lab, Auto-shoot off: Protect in another slot still raises itself when the dummy comes close.
-//   5. "Mobility moves fire by hand" (plan A2.4, off by default, Manual aim off): a real click turns it
+//   5. "Fire mobility moves manually" (plan A2.4, off by default, Manual aim off): a real click turns it
 //      on; then Quick Attack waits until Space is held, while Ember in its own slot still fires alone.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
@@ -109,10 +109,10 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     });
     check(guard && await casts(1000, 'ember') === 0, 'Protect in another slot raises itself; Ember still waits', { guard });
 
-    console.log('5. Mobility moves fire by hand');
+    console.log('5. Fire mobility moves manually');
     await page.evaluate(() => { G.Settings.set('autoFire', true); G.Settings.set('aimManual', false); G.Settings.set('lab', false); G.Game.toUI(); G.UI.hideAll(); G.Flow.goMenu(); G.SettingsUI.open('a11y'); });
     const row = await page.evaluate(() => { const b = document.querySelector('.switch[data-k="mobileByHand"]'); return b && { on: b.textContent.trim(), label: b.closest('.set-row').querySelector('b').textContent, def: !!G.Settings.get('mobileByHand') }; });
-    check(row && row.on === 'No' && !row.def && row.label === 'Mobility moves fire by hand', 'Accessibility has "Mobility moves fire by hand", off by default', row);
+    check(row && row.on === 'No' && !row.def && row.label === 'Fire mobility moves manually', 'Accessibility has "Fire mobility moves manually", off by default', row);
     await page.click('.switch[data-k="mobileByHand"]');
     check(await page.evaluate(() => G.Settings.get('mobileByHand') === true), 'a real click turns it on');
     await page.evaluate(() => G.SettingsUI.close());

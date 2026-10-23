@@ -14,8 +14,8 @@
     if (!h || !G.DB.save || !G.DB.save.owned[dex] || h.querySelector('.cand-name')) return r;
     const earned = L.candies(dex), left = L.left(dex);
     if (!earned && !G.Settings.get('lab')) return r;
-    const tip = `${left} candies left for ${G.DEX_BY[dex].name}'s line (${earned} earned, ${earned - left} spent). `
-      + 'Gacha duplicates give them with Lab on; spend them on stats in Upgrades.';
+    const tip = `${left} candy left for ${G.DEX_BY[dex].name}'s line (${earned} earned, ${earned - left} spent). `
+      + 'Gacha duplicates give candy while Lab mode is on; spend it on stats in Upgrades.';
     h.insertAdjacentHTML('beforeend', ` <span class="cand-name" translate="no" title="${tip.replace(/"/g, '&quot;')}"
       style="font-size:13px;font-weight:600;color:#ffd23f;background:rgba(255,210,63,.12);border-radius:9px;padding:1px 7px;vertical-align:3px;white-space:nowrap">🍬 ${left}</span>`);
     return r;
