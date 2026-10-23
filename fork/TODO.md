@@ -22,7 +22,7 @@ How to use it:
 - [x] 52. [ui][infra] Admin Change Log: every change to the game by day (new / buff / nerf / changed / removed / fixed, Lab or everyone, was → now numbers), backfilled from the whole history, and a check that every game commit adds its lines · admin (47482d7)
 - [x] 53. [feat][lab] Lab leaderboard: the same boards as the regular one (solo/group; today, week, month, all-time, per Pokémon), counting only Lab runs (a0dc40b)
 - [x] 54. [ui] Boss health bars: one bar per boss alive (late runs have several), only for bosses within a wide radius of you so it stays uncluttered · everyone (b48d672)
-- [ ] 55. [infra][ui] Performance: FPS in late runs (many enemies, effects, bosses) and memory that grows over a long session in the Chrome tab · everyone (claimed: cc-oubt6 perf agent)
+- [x] 55. [infra][ui] Performance: FPS in late runs (many enemies, effects, bosses) and memory that grows over a long session in the Chrome tab · everyone (31db99f: the run's whole cast of sprite sheets stayed loaded, ~70 MB less now; FPS measured, not fixed: 1.5 ms of JS a frame at 1:00, 2.7-3.4 ms at 25:00 with 64 enemies here, 14.5 ms with the CPU slowed 4x, spread over every system with no single hot spot; no JS heap or DOM leak over 8 runs back to back; numbers in fork/test-perf.cjs)
 - [x] 56. [feat][ui] Move dex: a tab that lists every move and what it does · everyone (050245e)
 - [x] 57. [feat] Choice Band: picking it up asks which move to lock into (it locked to whatever slot was active) · everyone (15181d3)
 - [x] 58. [bug][lab][coop] Auto-pick EV cards: still opened the menu and didn't pick (co-op never auto-picked; ticking it left the open hand); co-op should skip the menu and wait for the others · Lab (e850c9d)
