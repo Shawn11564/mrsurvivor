@@ -3,8 +3,12 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus",
       "items": [
+        { "k": "nerf", "s": "lab", "a": "Eternatus", "t": "While any obelisk stands, a Dynamax barrier (a red dome) cuts the damage Eternatus takes by 80%: the obelisks have to be broken.", "n": "full damage -> 20% while an obelisk stands" },
+        { "k": "new", "s": "lab", "a": "Eternatus", "t": "The raid has three stages: at 60% HP three new obelisks rise (their healing stops at 60%) and the Dynamax Cannon fires warned beams at each player; at 25% Eternamax: faster, more beams, and 2 of the 6 crystals shatter.", "n": "Eternabeam every 15 s -> 15 / 12 / 9 s; cannon 20% of your HP a beam, every 7 s then 4.5 s" },
+        { "k": "nerf", "s": "lab", "a": "Eternatus", "t": "Eternatus's HP also follows the team's damage meter, and one hit takes at most 5% of it.", "n": "45 s of your single-target damage -> the most of that and 40 s of the team's power; no cap -> 5% a hit" },
+        { "k": "buff", "s": "lab", "a": "Eternatus", "t": "The raid lasts longer to fit its stages.", "n": "3:00 -> 3:30" },
         { "k": "nerf", "s": "lab", "a": "Bosses", "t": "From 15:00 bosses, wild legendaries and rift legendaries get HP from the team's own damage (a power meter of the best single-target damage per second), so a strong build can't one-shot them: they last at least that many seconds of your damage.", "n": "no floor -> boss 17 s / wild 11.5 s / rift 22 s of your damage at 30:00, 24 / 16 / 30 s at 45:00, 31 / 20.5 / 38 s at 60:00" },
         { "k": "nerf", "s": "lab", "a": "Bosses", "t": "From 20:00 one hit takes at most 10% of a boss's max HP.", "n": "no cap -> 10% of max HP per hit" },
         { "k": "nerf", "s": "lab", "a": "Bosses", "t": "Past 30:00 bosses grow like the horde: more HP and harder hits (they give more XP for it).", "n": "HP x1 -> x3.9 at 45:00, x15.4 at 60:00; damage x1 -> x2.1 at 45:00, x3.6 at 60:00; XP up to x3" },

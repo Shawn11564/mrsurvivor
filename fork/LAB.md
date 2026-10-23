@@ -645,23 +645,37 @@ None in a rift or during Arceus. The host decides; guests get it like any enemy
 In a Lab run, Arceus's Judgment never comes: at 30:00 everyone goes to a dark arena against **Eternatus**
 (`js/fork/lab/eternatus.js`).
 - 3 obelisks (still enemies that don't move or hit, drawn as stone pillars with HP bars) each heal it
-  1.5% of its HP a second until broken; red tethers show which still do.
+  1.5% of its HP a second until broken; red tethers show which still do. **Since 2026-10-23** (a strong
+  team beat it without touching them) they also hold up a **Dynamax barrier**: while any obelisk stands, a
+  red dome covers Eternatus and every hit does 20 % (applied to the hit as capped, so a huge burst still only
+  gets 20 % of the cap through). The HUD says so under the raid's clock.
+- **Three stages** (2026-10-23). At 60 % of its HP it draws on the Darkest Day: 3 new obelisks rise between the
+  old spots (the barrier is back; their healing can't take it over 60 %), the beam comes every 12 s, and between
+  beams the **Dynamax Cannon** fires 3 warned beams at each player (20 % of your HP each, dragon type). At 25 %,
+  **Eternamax**: it speeds up ×1.3, the beam comes every 9 s, the cannon every 4.5 s (7 s before), and 2 of the 6
+  crystals shatter.
 - Every 15 s (the first after 10) it stands still and charges the **Eternabeam** for 3 s, then hits the
   whole arena: 75% of your HP, pure, unless a crystal (solid, 6 of them) or one of the arena's stone
   pillars is between you and it. While it charges, the safe shadow behind each crystal shows in green.
-- 3 minutes. Beat it: a ×25 rainbow ticket each, back to the map, and the run goes on (Arceus never
+- 3:30 (3:00 until 2026-10-23). Beat it: a ×25 rainbow ticket each, back to the map, and the run goes on (Arceus never
   comes, rifts open again, `pl._labEternatus` so a resumed run doesn't fight it twice). Time runs out:
   the run ends (everyone knocked out by "Eternatus (time ran out)"). Falling in the arena is falling.
-- Its HP: 3× a rift legendary's, or 45 s of your best single-target damage (measured as the Judgment
-  does), whichever is more; each obelisk 8% of that floor or 5 s of your damage.
+- Its HP: the most of 3× a rift legendary's, 45 s of your best single-target damage (measured as the
+  Judgment does) and 40 s of the team's power meter (`js/fork/lab/boss-power.js`); each obelisk the most of
+  8% of that floor, 5 s of the first and 4 s of the second. One hit takes at most 5 % of its HP.
 - While it lasts `G.Judgment.active` is true, so waves, events, weather, biome changes and wild
   legendaries stop, and the Judgment's soft speed cap applies.
-- Co-op: the host runs it (`{ k:'labeter', a: start | ids | beam | win | lose | back }`); Eternatus
-  and the obelisks are ordinary enemies; each player checks the beam against their own Pokémon.
+- Co-op: the host runs it (`{ k:'labeter', a: start | ids | beam | stage | win | lose | back }`; `ids` lists every
+  obelisk so far, `stage` the crystals left); Eternatus and the obelisks are ordinary enemies, the cannon is
+  hazards; the barrier cuts damage on the host (where a guest's hit lands) and every screen draws it; each
+  player checks the beam against their own Pokémon.
 
 `node fork/test-eternatus.cjs` (server; co-op with the emulator): no raid at 29:50; at 30:00 the raid
-instead of Arceus; healing and broken obelisks; the beam in the open and behind a crystal; winning
-(ticket, back, no Arceus, rifts again); losing (the run ends); a normal run still gets Arceus; co-op.
+instead of Arceus, its HP from the power meter; the barrier and the 5 % cap; healing and broken obelisks; the
+second stage's obelisks and 60 % ceiling; Eternamax's shattered crystals; the beam in the open and behind a
+crystal (its own attacks held off for that check: they made it flaky); winning (ticket, back, no Arceus, rifts
+again); losing (the run ends); a normal run still gets Arceus; co-op (the barrier and the second stage on the
+guest too).
 
 ## Bosses after 15:00 (2026-10-22, plan C1.1)
 
