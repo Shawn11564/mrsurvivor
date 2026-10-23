@@ -131,7 +131,7 @@ const meta = (html, rx) => (rx.exec(html) || [])[1];
   (function walk(d) {
     for (const e of fs.readdirSync(path.join(ROOT, d), { withFileTypes: true })) {
       const r = d ? d + '/' + e.name : e.name;
-      if (e.isDirectory()) { if (!/^(\.git|assets|node_modules|tools|fork|docs|infra|tests|videos|js|css)$/.test(e.name)) walk(r); }
+      if (e.isDirectory()) { if (!/^(\.git|\.claude|assets|node_modules|tools|fork|docs|infra|tests|videos|js|css)$/.test(e.name)) walk(r); }
       else if (r.endsWith('.html') && r !== 'dev.html') html.push(r);
     }
   })('');
