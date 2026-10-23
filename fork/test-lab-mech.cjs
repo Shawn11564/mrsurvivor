@@ -124,7 +124,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       out.name = G.T(fs.name, 'move'); out.markField = fs.mark;
       out.evoText = G.Moves.evoInfo(Object.assign(G.Moves.instance('psybeam', 5), { evolved: false }), { cd: 1 }).text;
       out.tip = G.MoveText.tipNotes(fs, pl).map(n => n[0]).join(' | ');
-      const a = __dummy(...__at(70)), b = __dummy(pl.x + 105, pl.y + 52);      // b: 63 px from a, off the beam, farther from you than a
+      const a = __dummy(...__at(70)), b = __dummy(pl.x + 90, pl.y + 62);       // b: 65 px from a, 62 px off the beam line, farther from you than a
       pl.target = a; pl.aim = 0;
       await __fire(fs, 350);
       out.marked = !!a._labMark; out.stored = a._labMark ? Math.round(a._labMark.dmg) : 0;

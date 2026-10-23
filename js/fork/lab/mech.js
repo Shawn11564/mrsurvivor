@@ -87,8 +87,8 @@ G.LabMech = (() => {
       note: 'Lab: what it cuts takes 20% more from physical moves for 4 s.' },
     'extrasensory': { add: { flinch: 0.6 },
       note: 'Lab: the first wave on each enemy stuns it for 0.6 s.' },
-    'vacuum-wave': { add: { close: 1 },
-      note: 'Lab: the closer the enemy, the harder it hits: up to ×2 point-blank.' },
+    'vacuum-wave': { add: { close: 0.6 },
+      note: 'Lab: the closer the enemy, the harder it hits: up to ×1.6 point-blank.' },
     'disarming-voice': { add: { meekHit: 0.25 },
       note: 'Lab: the enemies it hits deal 25% less damage for 4 s.' },
     // The others.
@@ -115,8 +115,8 @@ G.LabMech = (() => {
     'psychic': { add: { mark: 0.35 },
       note: 'Lab: marks the enemies it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
     'psybeam': { add: { conf: 1 }, note: 'Lab: the beam confuses what it hits for 1 s.',
-      evo: { t: '×1.6 damage and a wider beam. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
-             m: { dmg: 1.6, width: 1.3 }, set: { mark: 1 } },
+      evo: { t: '×1.8 damage, a wider, longer beam and -15% recharge. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
+             m: { dmg: 1.8, width: 1.5, radius: 1.2, cd: 0.85 }, set: { mark: 1 } },
       evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
     // B3.2: hazards that stay.
     'spikes': { add: { persist: 60 },
@@ -147,7 +147,7 @@ G.LabMech = (() => {
       evoNote: 'Avalanche: twice the damage if an enemy hit you in the last 1.5 s.' },
     'whirlwind': { add: { gust: 1 },
       note: 'Lab: the gust also blows away the enemy shots around you.',
-      evo: { t: '×1.6 damage and a wider gust that pushes harder. Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.', m: { dmg: 1.6, radius: 1.2, knock: 1.3 }, set: { tailwind: 0.3 } },
+      evo: { t: '×1.8 damage and a wider gust that pushes harder. Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.', m: { dmg: 1.8, radius: 1.25, knock: 1.4 }, set: { tailwind: 0.3 } },
       evoNote: 'Tailwind: each gust also gives you +30% speed for 4 s, and the teammates near you.' },
     // B3.5: Substitute's doll draws the enemies near it.
     'substitute': { add: { decoy: true, decoyR: 180 },
@@ -513,7 +513,7 @@ G.LabMech = (() => {
     for (const e of charmed) {
       if (e.dead || !G.Camera.sees(e.x, e.y, 60)) continue;
       const y = e.y - e.bodyH - 14 + Math.sin(t * 5 + e.id) * 1.5;
-      if (e._labAttract > 0) G.VFX.draw(ctx, 'heart', 'fairy', e.x, y, { scale: 0.7 });
+      if (e._labAttract > 0) G.VFX.draw(ctx, 'ring', 'fairy', e.x, y, { scale: 0.6 });         // charmed (hearts mean healing here)
       else if (e._labTaunt > 0) {
         ctx.globalAlpha = 0.95; ctx.font = '800 12px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
         ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.lineWidth = 3; ctx.fillStyle = '#ff5050';

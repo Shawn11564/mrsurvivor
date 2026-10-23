@@ -568,14 +568,14 @@ G.LabMoves = [
   // ---- taunt and attract (shout family) ----
   { id: 'taunt', name: 'Taunt', type: 'dark', kind: 'shout', cat: null, taunt: true,
     desc: 'When enemies close in, taunt the ones around you for 5 s: the ones that shoot from afar stop shooting and charge at you instead (bosses ignore it). Works from any slot.',
-    cd: 8, dur: 5, radius: 220, look: { proj: 'crescent', pal: 'dark' }, evo: ['Quash', null] },
+    cd: 8, dur: 5, radius: 220, look: { proj: 'crescent', pal: 'dark' }, evo: ['Embargo', null] },
   { id: 'attract', name: 'Attract', type: 'normal', kind: 'shout', cat: null, attract: true, slow: 0.5,
     desc: 'When enemies close in, charm the ones around you for 3 s: they slow down and can\'t bring themselves to hit you (bosses for half as long). Works from any slot.',
-    cd: 7, dur: 3, radius: 110, look: { proj: 'heart', pal: 'fairy' }, evo: ['Sweet Scent', null] },
+    cd: 7, dur: 3, radius: 110, look: { proj: 'ring', pal: 'fairy' }, evo: ['Sweet Scent', null] },
   // ---- combos: stronger when the partner move was just used (by you or a teammate) ----
   { id: 'fusion-flare', name: 'Fusion Flare', type: 'fire', kind: 'meteor', cat: 'special', sig: { dex: [643, 646] }, combo: 'fusion-bolt',
     desc: 'Signature: a ball of white fire falls on the enemies. Twice the damage and a 40% bigger blast if Fusion Bolt was used (by you or a teammate) in the last 2 s.',
-    cd: 1.3, dmg: 40, count: 1, radius: 64, burn: 1, look: { proj: 'fire', pal: 'fire' }, anim: ['SpAttack', 'Shoot'] },
+    cd: 1.3, dmg: 22, count: 1, radius: 64, burn: 1, look: { proj: 'fire', pal: 'fire' }, anim: ['SpAttack', 'Shoot'] },
   { id: 'fusion-bolt', name: 'Fusion Bolt', type: 'electric', kind: 'chain', cat: 'physical', sig: { dex: [644, 646] }, combo: 'fusion-flare',
     desc: 'Signature: a bolt of lightning that jumps from enemy to enemy. Twice the damage and 40% longer jumps if Fusion Flare was used (by you or a teammate) in the last 2 s.',
     cd: 1.1, dmg: 30, count: 3, radius: 150, look: { beam: 'bolt' }, anim: ['SpAttack', 'Attack'] },

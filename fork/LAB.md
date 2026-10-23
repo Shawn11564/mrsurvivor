@@ -36,7 +36,7 @@ status table as work lands.
 | 7 | Shinies: move colours from the shiny sprite, +1 reroll (and +10% XP and coins until 2026-10-22) | **done** 2026-10-20 |
 | 8 | Balance script (`fork/balance-lab.cjs`) and the `promote` switch; nothing promoted yet | **done** 2026-10-20 (promotion: owner's call) |
 | 9 | Close range and sustain: 50 official moves, 7 new kinds (grab, bind, focus, heal, screen, shout, endure) and hit effects (drain, revenge, reversal, HP cut...), the survival bot | **done** 2026-10-21 (not play-tested yet) |
-| 10 | Move identity (plan B1, B3.1-B3.7): Lab fields and steps for the normal game's moves, honest evolutions, marks, hazard fields, converters, trade-off buffs, decoys, taunt/attract, combos | in progress 2026-10-22 |
+| 10 | Move identity (plan B1, B3.1-B3.7): Lab fields and steps for the normal game's moves, honest evolutions, marks, hazard fields, converters, trade-off buffs, decoys, taunt/attract, combos | **done** 2026-10-22 (not play-tested yet) |
 | 11 | Builds (plan B2, B4): branching upgrades, set bonuses, synergy cards, bond recipes | **done** 2026-10-22 (not play-tested yet) |
 | 12 | Co-op support moves (TODO 46): Heal Pulse, Aromatherapy, Wide Guard, Block, Helping Hand, on co-op cards only | **done** 2026-10-22 (not play-tested yet) |
 
@@ -408,7 +408,7 @@ Venoshock (Acid Spray) uses poison up, Belly Drum (Swords Dance) pays half your 
 - **Endeavor** (Flail, a Lab move; `labEvo` in lab-moves.js): ×1.6 damage, 360°, and each hit brings
   the enemy down to at least your share of HP left (B3.12 style; a boss loses at most 8% of what it
   has; kinds2.js's reversal still multiplies the hit, and the extra is sized for it).
-- **Tailwind** (Whirlwind): ×1.6 damage, a wider gust, and +30% speed for 4 s on each cast (wind
+- **Tailwind** (Whirlwind): ×1.8 damage, a wider gust, and +30% speed for 4 s on each cast (wind
   streaks behind you), for teammates within 160 px too (they get it from your ghost cast).
 
 **A field each for the moves that had none (B1).** The plan counted 26 of the normal game's moves
@@ -426,7 +426,7 @@ before, come first:
 | Night Slash | what it cuts takes +20% from physical moves for 4 s (`weakHit`) |
 | Extrasensory | the first wave on each enemy stuns it 0.6 s (`flinch`) |
 | Whirlwind | blows away the enemy shots around you (`gust`) |
-| Vacuum Wave | up to ×2 point-blank (`close`) |
+| Vacuum Wave | up to ×1.6 point-blank (`close: 0.6`; ×2 measured ×1.67 of its kind in balance-lab) |
 | Disarming Voice | the enemies it hits deal 25% less for 4 s (`meekHit`) |
 | Hydro Pump, Hyper Beam, Dazzling Gleam | knock enemies back (`labKnock` 180 / 220 / 70: their kinds pass none) |
 | Razor Leaf | +25% crit chance (`crit`) |
@@ -450,7 +450,7 @@ before, come first:
 | status converters (B3.3) | Venoshock (Acid Spray's evolution, `venoshock: 0.5`), Smelling Salts and Wake-Up Slap (new, `salts: 3`; Makuhita, Hariyama, Poliwrath... learn them) | Venoshock: against a poisoned enemy × (1 + 0.5 per poison stack), the poison used up (its own hit poisons again). Salts: ×3 against a stunned or sleeping enemy, which snaps out of it. On a co-op guest the enemy's state comes from the host: poison counts as 2 stacks and nothing is used up or woken. (Hex's × on any status is upstream's.) |
 | trade-off boosters (B3.4) | Belly Drum (Swords Dance's evolution, kinds2.js's `drum: 0.5`), Shell Smash (new, `frail: 0.35`), Curse (new, Ghost, `curse: 0.25`) | Belly Drum casts from any slot; when your Attack boost has run out and you're above half HP it costs half your HP and fills every stack. Shell Smash builds Attack, Sp. Atk and Speed in big steps (+12/+12/+8% a step) and you take 35% more while it lasts (a cracked red ring). Curse builds Attack and Defense; every 10 s it casts above 40% HP it costs a quarter of your HP and curses the nearest boss within 600 px (else the toughest enemy within 300): 0.4% of a boss's max HP (5% of another's) every 0.5 s for 10 s, purple wisps over it. Nothing to curse, no cost |
 | decoys (B3.5) | Follow Me (new, Normal), Rage Powder (new, Bug; `powder: 0.4`), Substitute (`decoy`) | Follow Me and Rage Powder are shouts: from any slot, when 2+ enemies close in, they leave a beacon (a light column with "!") where you stand for `dur` (4) s; enemies within `decoyR` (220 / 200) of it chase it instead of you; Rage Powder also slows those in its powder. Substitute's doll is a decoy (180) while it stands. Bosses, legendaries and treasure thieves ignore decoys; a confused enemy stays confused. Co-op: the AI runs on the host, which sees a guest's shout or doll as a ghost cast and makes it a decoy there; every screen draws it |
-| taunt / attract (B3.6) | Taunt (new, Dark), Attract (new, Normal) | shouts (from any slot when enemies close in). Taunt (220 px, 5 s): enemies that shoot from afar stop keeping their distance and shooting, and charge you (a red "!!"; bosses ignore it). Attract (110 px, 3 s): they're slowed by half and can't hit you by contact (a heart; bosses half as long). Each screen marks its own copies, so a teammate's cry (a ghost cast) protects you too; the shooters' AI runs on the host |
+| taunt / attract (B3.6) | Taunt (new, Dark), Attract (new, Normal) | shouts (from any slot when enemies close in). Taunt (220 px, 5 s): enemies that shoot from afar stop keeping their distance and shooting, and charge you (a red "!!"; bosses ignore it). Attract (110 px, 3 s): they're slowed by half and can't hit you by contact (pink rings, the fairy charm look: hearts mean healing; bosses half as long). Each screen marks its own copies, so a teammate's cry (a ghost cast) protects you too; the shooters' AI runs on the host |
 | combos (B3.7) | Fusion Flare (Reshiram, Kyurem; meteor) and Fusion Bolt (Zekrom, Kyurem; chain), signatures with `combo`; Grass, Fire and Water Pledge (new, `pledge`; the starters learn them) | a combo move cast within 2 s of its partner (by you, or a teammate's cast as it arrives) does ×2 damage with a ×1.4 radius ("Fusion ×2!"); in one bond the two always combo. A Pledge cast within 2 s of a different one makes a field (90 px, 6 s) where its line lands: Grass + Fire a sea of fire (burns and hurts every 0.5 s), Grass + Water a swamp (slows by half), Fire + Water a rainbow (heals whoever stands in it 1.5% HP a second). The per-cast × goes through `m._castK`, read in `Player.atkFor` |
 
 For other Lab files (stream B-builds' synergy cards...): `G.LabMech.mark(e, pl, m, amount)`,

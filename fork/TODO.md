@@ -56,7 +56,7 @@ How to use it:
 
 ### Move diversity (stream B)
 - [x] 25. [lab] B1: honest evolutions (Future Sight, Stealth Rock, Venoshock, Belly Drum, Avalanche, Endeavor, Tailwind) (009bec2)
-- [ ] 26. [lab] B1: the 26 field-less moves get one field each (spins and shoves first) (claimed: stream B-moves)
+- [x] 26. [lab] B1: the 26 field-less moves get one field each (spins and shoves first) (983bb1d)
 
 ## Phase 3: builds
 
