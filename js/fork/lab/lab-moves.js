@@ -30,13 +30,13 @@ G.LabMoves = [
   // ================= phase 4: new families =================
   // ---- leap: you leave (nothing can hit you meanwhile) and the blast lands on the target; `land`: where you come down (kinds.js) ----
   { id: 'fly', name: 'Fly', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly', land: 'stay',
-    desc: 'Fly up out of reach, then strike the enemy from above and hit everything around it. You come down where you took off.',
+    desc: 'Fly up out of reach, then strike the enemy from above and hit everything around it. You keep moving while in the air.',
     cd: 2.2, dmg: 34, radius: 70, dur: 0.7, knock: 120, look: { proj: 'wind' }, evo: ['Dual Wingbeat', 'spd'] },   // not Sky Attack: Moltres's signature
   { id: 'dig', name: 'Dig', type: 'ground', kind: 'leap', cat: 'physical', leap: 'dig', land: 'short',
     desc: 'Burrow underground where nothing can hit you, then burst out right in front of the enemy, hitting everything there.',
     cd: 2.3, dmg: 36, radius: 66, dur: 0.75, knock: 120, look: { proj: 'rock' }, evo: ['Stomping Tantrum', 'atk'] },
   { id: 'bounce', name: 'Bounce', type: 'flying', kind: 'leap', cat: 'physical', leap: 'fly', land: 'stay',
-    desc: 'Spring high into the air and stomp the enemy from above, briefly paralyzing the ones around it. You come down where you jumped.',
+    desc: 'Spring high into the air and stomp the enemy from above, briefly paralyzing the ones around it. You keep moving while in the air.',
     cd: 1.8, dmg: 33, radius: 64, dur: 0.6, stun: 0.6, look: { proj: 'wind' }, evo: ['Sky Drop', 'hp'] },
   { id: 'dive', name: 'Dive', type: 'water', kind: 'leap', cat: 'physical', leap: 'dive', land: 'short',
     desc: 'Dive out of sight, then surge up right in front of the enemy in a splash.',

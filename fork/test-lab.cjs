@@ -376,6 +376,11 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     await __until(() => !pl._labLeap, 2000);
     await new Promise(r => setTimeout(r, 60));
     out.leap = { inv, blocked, stayed: Math.round(G.U.dist(pl.x, pl.y, fx0, fy0)), hit: e.hp < e.maxHp };
+    // ... and doesn't hold you there: a step taken in the air stays taken (it used to snap back every frame).
+    await __until(() => pl._labLeap, 4000);
+    const wx = pl.x; pl.x += 60;
+    await new Promise(r => setTimeout(r, 150));
+    out.leap.walked = Math.round(pl.x - wx);
     // recoil: costs HP (never below 1); Rock Head doesn't pay it.
     m = __only('double-edge'); e = __dummy(...at(80));
     pl.hp = pl.maxHp;
@@ -503,6 +508,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     return out;
   });
   check(kinds.leap.inv && kinds.leap.blocked && kinds.leap.stayed < 4 && kinds.leap.hit, `Fly: can't be hit in the air, strikes the target and comes down where it took off (${JSON.stringify(kinds.leap)})`);
+  check(kinds.leap.walked > 50, `Fly: you can still move while in the air (${kinds.leap.walked} px of a 60 px step kept)`);
   check(kinds.recoil.lost > 0 && kinds.recoil.lost <= kinds.recoil.cap + 1 && kinds.rockHead, `Double-Edge costs HP (${kinds.recoil.lost}, at most ${kinds.recoil.cap}); with Rock Head it costs none`);
   check(kinds.ramp.top === kinds.ramp.stacks && kinds.ramp.after === kinds.ramp.stacks - 1, `Fury Cutter builds up to ×${kinds.ramp.stacks} hits in a row and loses one stack per 1.5 s of pause (${JSON.stringify(kinds.ramp)})`);
   check(kinds.protect, 'Protect raises itself from another slot when an enemy is close, and blocks the hit');

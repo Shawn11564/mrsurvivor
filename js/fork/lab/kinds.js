@@ -5,7 +5,7 @@
  *
  *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and the blast lands on the target; you
  *              stay untouchable LEAP_GRACE s after landing by the target (LEAP_UPTIME). Where you come down is the move's `land`: 'stay' (Fly,
- *              Bounce: you rise and come down where you were), 'short' (Dig, Dive: LAND_SHORT px short of
+ *              Bounce: you rise and keep walking in the air; the blast drops on the target), 'short' (Dig, Dive: LAND_SHORT px short of
  *              the target, on your side), 'back' (Phantom Force: LAND_BACK px behind where you were, away
  *              from the target), or on the target (the others, Shadow Force's chain)
  *   recoil     Double-Edge, Flare Blitz, Brave Bird: a very strong charge that costs you HP and leaves you
@@ -191,7 +191,9 @@ G.LabKinds = (() => {
   function tickLeap(f, dt) {
     const pl = f.owner, L = pl._labLeap;
     const px = f.px != null ? f.px : f.x, py = f.py != null ? f.py : f.y;
-    if (!f.ghost && L) {
+    // 'stay' (Fly, Bounce) doesn't hold you: you keep walking while in the air (the blast drops on its
+    // spot). Holding you at the take-off point froze you a third of the run with Fly auto-firing.
+    if (!f.ghost && L && f.land !== 'stay') {
       const k = Math.min(1, f.t / f.dur), e = k * k * (3 - 2 * k);
       pl.x = f.sx + (px - f.sx) * e; pl.y = f.sy + (py - f.sy) * e;
     }
