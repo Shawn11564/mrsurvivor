@@ -15,6 +15,10 @@ How to use it:
 - [x] 45. [feat][coop] Fairer rift boss rewards: not decided by who's closest to the drops when it dies; e.g. everyone gets their own roll for a held item instead of one item dropping · rift · co-op (f66160a)
 - [x] 46. [lab][coop] Co-op-only moves that help teammates (heal or shield an ally, draw enemies off them, team buffs), so a build can turn into a support or a tank; only offered in co-op level-up cards · Lab (e4e5368)
 - [x] 47. [feat][ui] The 3 s count-in interrupts less: after picking a reward (level-up card, held item), solo too, only when the pick took over 10 s; closing the pause menu within 10 s of opening it skips it · everyone (6ebf929)
+- [ ] 48. [bug] Sturdy can't trigger in a page's first ~90 s: upstream's `sturdyAt = -999` is compared with `performance.now()` · everyone (found by stream D)
+- [ ] 49. [bug][lab] Resuming a Lab run that evolved restarts as the evolved species, which rolls its own nature and ability; Sheer Force / Skill Link / Prankster move changes are lost on resume (`js/fork/lab/resume.js`) · Lab (found by stream D)
+- [ ] 50. [infra] Checks lose pages that stall on the boot screen when the machine is busy (test-gameplay once, survival-lab often; survival-lab now retries): find why boot waits, don't retry
+- [ ] 51. [?] G12 follow-up: close builds can't beat the 3:00 boss alone (they must stand next to it), so 24's survival targets aren't met even with a 45 % cut or +50 % damage. Owner: change the targets, or give melee a way past the boss?
 
 ## Phase 1: fixes and cheap tuning
 
@@ -42,7 +46,7 @@ How to use it:
 
 ### Run structure (stream C)
 - [x] 17. [feat] Legendary upgrade card ×3 → ×2 (`js/fork/card-rarity.js`, everyone) (d920725)
-- [ ] 18. [lab] C1.1: boss slots after 15:00 (18, 21, 24, 27, then every 3 min past 30 in endless) (38b813c)
+- [x] 18. [lab] C1.1: boss slots after 15:00 (18, 21, 24, 27, then every 3 min past 30 in endless) (38b813c)
 - [x] 19. [lab] C1.2: XP per kill keeps pace after 8:20 (a1051fe)
 
 ## Phase 2: control and identity (Lab)
@@ -74,8 +78,8 @@ How to use it:
 - [x] 37. [lab] B4: bond recipes (6567ff1)
 
 ### Run structure (stream C)
-- [ ] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (1490485)
-- [ ] 39. [lab] C1.4: late-hand decisions (Speed 9+ / Reflexes 11+ for max HP; post-cap EV card with auto-pick) (3e6818e)
+- [x] 38. [lab] C1.3: elite affixes (Shielded, Swift, Vampiric, Splitting, Explosive) (1490485)
+- [x] 39. [lab] C1.4: late-hand decisions (Speed 9+ / Reflexes 11+ for max HP; post-cap EV card with auto-pick) (3e6818e)
 - [x] 40. [lab] C1.5: per-Pokémon contracts (5e16f22)
 
 ### Kecleon (stream D)
