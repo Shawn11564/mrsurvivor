@@ -3,8 +3,14 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, trading with friends",
       "items": [
+        { "k": "new", "s": "all", "a": "Trading", "t": "Trade Pokémon with your friends: Trade in the main menu (or the Trade button next to a friend in Friends) sends a request, and your friend gets a popup like a party invite." },
+        { "k": "new", "s": "all", "a": "Trading", "t": "The trade window: search and filter your Pokémon (generation, type, normal / shiny / radiant, rarity, hide the ones they have, sort), put up to 20 up, and see each other's offer as it changes. Hovering a Pokémon (holding it on a phone) shows its stats at Lv. 1 and the nature and ability it would get with you." },
+        { "k": "new", "s": "all", "a": "Trading", "t": "You can trade a Pokémon's shiny or radiant form (you keep the Pokémon) or, once it has neither, the Pokémon itself; not your partner." },
+        { "k": "new", "s": "all", "a": "Trading", "t": "Both players confirm, then a 3 s countdown that either can stop by unconfirming; any change to either offer unconfirms both. A chat to talk while you trade." },
+        { "k": "new", "s": "all", "a": "Trading", "t": "Traded Pokémon arrive fresh: no upgrades, TMs, Mints or Capsules come with them, and the new owner gets their own nature and ability. The upgrades and TMs you bought stay on your account (they're back if you get that Pokémon again)." },
+        { "k": "new", "s": "all", "a": "Trading", "t": "Nothing leaves your collection until both of you confirm: leaving, closing the window or reloading mid-trade loses nothing (a reload puts you back in the trade), and a trade that finished while your tab was closed is in your save the next time you play." },
         { "k": "new", "s": "all", "a": "Menu", "t": "The coin bubble at the top of the main menu also shows your gems." },
         { "k": "new", "s": "lab", "a": "Contracts", "t": "Contracts also give 1 candy of their Pokémon when you claim them, on top of the contract coins.", "n": "contract coins -> contract coins + 1 candy" },
         { "k": "buff", "s": "lab", "a": "Contracts", "t": "The 15:00 own-type contract needs 3 moves of the Pokémon's type; other moves no longer spoil it, and a type its Lab evolution brings counts too.", "n": "3+ moves, every one its type -> 3 of its type, others allowed" },

@@ -735,6 +735,43 @@ G.DB = (() => {
     return { ok: false, why: syncState === 'offline' ? 'offline' : 'fail' };
   }
 
+  /**
+   * Fork (MrSurvivor): one transaction that reads the cloud save, merges it with this copy and
+   * hands the result to fn(tx, merged), which may read and write other documents and change
+   * `merged` (js/fork/trade.js). If fn returns true the merged save is written too (rev + 1, the
+   * same as pushNow); either way this copy takes it in. → what fn returned; throws what Firestore
+   * throws (permission-denied: the save went up less than 20 s ago, firestore.rules).
+   */
+  async function txWith(fn) {
+    if (mode !== 'cloud' || guest || !save || !uid) throw { code: 'offline' };
+    if (pushing) await pushing.catch(() => {});
+    const u = uid, had = pending;
+    let merged = null, out, r = 0;
+    pending = false;
+    try {
+      out = await fs.runTransaction(async tx => {
+        const ref = docRef(), snap = await tx.get(ref);
+        const remote = snap.exists ? migrate(snap.data().save) : null;
+        merged = remote ? merge(plain(fold(save)), remote) : plain(fold(save));
+        r = 0;
+        const res = await fn(tx, merged);
+        if (res === true) {
+          r = (snap.exists && Number.isInteger(snap.data().rev) ? snap.data().rev : 0) + 1;
+          tx.set(ref, { save: plain(merged), updatedAt: firebase.firestore.FieldValue.serverTimestamp(), v: VERSION, rev: r },
+            { mergeFields: ['save', 'updatedAt', 'v', 'rev'] });
+        }
+        return res;
+      });
+    } catch (e) { pending = pending || had; throw e; }
+    if (uid !== u || !save) return out;
+    if (r) { setRev(r); write(K_OK + uid, Date.now()); fails = 0; } else pending = pending || had;
+    applyInPlace(merge(plain(fold(save)), merged));
+    write(K_CLOUD + uid, save);
+    setSync(pending ? 'pending' : 'ok');
+    if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins();
+    return out;
+  }
+
   // Si ya había una subida programada antes, se respeta (una compra no espera a la siguiente partida).
   let pushDue = 0;
   function schedulePush(ms) {
@@ -1015,6 +1052,7 @@ G.DB = (() => {
     owns, grant, ownsShiny, grantShiny, merge, adopt, setName, upgradesOf, isFav, setFav,
     /** Fork: bring in the cloud copy now (an admin edit, js/fork/presence.js). A promise, or nothing if it has to wait. */
     pull() { lastPull = 0; return pullSoon(); },
+    txWith,                                      // fork: js/fork/trade.js
     onSync(fn) { listeners.add(fn); },
     onLeave(fn) { leaveHooks.push(fn); },
     /** Acceso de bajo nivel para los módulos de red (sólo en modo nube). */
