@@ -22,6 +22,9 @@ How to use it:
 - [x] 52. [ui][infra] Admin Change Log: every change to the game by day (new / buff / nerf / changed / removed / fixed, Lab or everyone, was → now numbers), backfilled from the whole history, and a check that every game commit adds its lines · admin (47482d7)
 - [x] 53. [feat][lab] Lab leaderboard: the same boards as the regular one (solo/group; today, week, month, all-time, per Pokémon), counting only Lab runs (a0dc40b)
 - [x] 54. [ui] Boss health bars: one bar per boss alive (late runs have several), only for bosses within a wide radius of you so it stays uncluttered · everyone (b48d672)
+- [ ] 55. [infra][ui] Performance: FPS in late runs (many enemies, effects, bosses) and memory that grows over a long session in the Chrome tab · everyone (claimed: cc-oubt6 perf agent)
+- [ ] 56. [feat][ui] Move dex: a tab that lists every move and what it does · everyone (claimed: cc-oubt6)
+- [ ] 57. [feat] Choice Band: picking it up asks which move to lock into (it locked to whatever slot was active) · everyone (claimed: cc-oubt6)
 
 ## Phase 1: fixes and cheap tuning
 
