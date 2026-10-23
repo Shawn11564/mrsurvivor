@@ -426,7 +426,7 @@ G.LabKinds = (() => {
 
   // ---------------- metronome ----------------
   const NO_CALL = new Set(['orbit', 'buff', 'trail', 'weather', 'terrain', 'guard', 'metronome', 'transform',
-                           'heal', 'screen', 'shout', 'endure', 'focus']);     // kinds2.js's support kinds too
+                           'heal', 'screen', 'shout', 'endure', 'focus', 'ally']);     // kinds2.js's support kinds too (and support.js's)
   let callable = null;
   function randomMove() {
     if (!callable) callable = Object.values(G.Moves.BY_ID).filter(d => !NO_CALL.has(d.kind)).map(d => d.id);

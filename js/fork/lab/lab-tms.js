@@ -13,7 +13,7 @@
 G.LabTms = (() => {
   const D = G.LabData;
   const on = () => !!(G.Settings.get('lab') || (G.Lab && G.Lab.active));
-  const isLab = id => !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].lab && !G.Moves.BY_ID[id].sig);
+  const isLab = id => !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].lab && !G.Moves.BY_ID[id].sig && !G.Moves.BY_ID[id].coop);   // (co-op moves: support.js's cards only)
 
   // LAB_TMS[id] = the species that learn it by TM in the games (Lab moves upstream doesn't sell).
   const LAB_TMS = {}, BY_DEX = {};

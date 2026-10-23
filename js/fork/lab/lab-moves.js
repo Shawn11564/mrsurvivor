@@ -441,7 +441,7 @@ G.LabMoves = [
   { id: 'soft-boiled', name: 'Soft-Boiled', type: 'normal', kind: 'heal', cat: null,
     desc: 'Restore 25% of your HP when you fall below half. Works from any slot.', cd: 20, amount: 0.25, evo: ['Milk Drink', null] },
   { id: 'roost', name: 'Roost', type: 'flying', kind: 'heal', cat: null,
-    desc: 'Restore 18% of your HP when you fall below half, more often than others. Works from any slot.', cd: 13, amount: 0.18, evo: ['Heal Pulse', null] },
+    desc: 'Restore 18% of your HP when you fall below half, more often than others. Works from any slot.', cd: 13, amount: 0.18, evo: ['Swallow', null] },
   { id: 'morning-sun', name: 'Morning Sun', type: 'fire', kind: 'heal', cat: null, wx: 'sun',
     desc: 'Restore 22% of your HP when you fall below half; 50% more in sunlight, half in other weather. Works from any slot.', cd: 18, amount: 0.22, evo: ['Jungle Healing', null] },
   { id: 'shore-up', name: 'Shore Up', type: 'ground', kind: 'heal', cat: null, wx: 'sand',
@@ -457,7 +457,7 @@ G.LabMoves = [
 
   // ---- screen: less damage for you and nearby teammates ----
   { id: 'reflect', name: 'Reflect', type: 'psychic', kind: 'screen', cat: null, screen: 'physical',
-    desc: 'A wall of light: you and teammates near you take 40% less from physical attacks for 7 s. Works from any slot.', cd: 18, dur: 7, amount: 0.4, radius: 150, evo: ['Wide Guard', null] },
+    desc: 'A wall of light: you and teammates near you take 40% less from physical attacks for 7 s. Works from any slot.', cd: 18, dur: 7, amount: 0.4, radius: 150, evo: ['Barrier', null] },
   { id: 'light-screen', name: 'Light Screen', type: 'psychic', kind: 'screen', cat: null, screen: 'special',
     desc: 'A wall of light: you and teammates near you take 40% less from special attacks for 7 s. Works from any slot.', cd: 18, dur: 7, amount: 0.4, radius: 150, evo: ['Quick Guard', null] },
   { id: 'aurora-veil', name: 'Aurora Veil', type: 'ice', kind: 'screen', cat: null, wx: 'snow',
@@ -588,6 +588,35 @@ G.LabMoves = [
   { id: 'water-pledge', name: 'Water Pledge', type: 'water', kind: 'quake', cat: 'special', pledge: 'water',
     desc: 'Pillars of water burst up in a line. With another Pledge used in the last 2 s (by you or a teammate), they make a field where they land: with Grass Pledge a swamp that slows, with Fire Pledge a rainbow that heals you.',
     cd: 1.4, dmg: 18, count: 5, radius: 30, look: { proj: 'drop' }, evo: ['Water Sport', 'atk'] },
+
+  // ================= co-op support (js/fork/lab/support.js) =================
+  // `coop`: never in a species' Lab list; only on the co-op cards of a co-op Lab run, for the species
+  // that learn them in the games. Kind 'ally': on their own from any slot; `ally` says what they do.
+  { id: 'heal-pulse', name: 'Heal Pulse', type: 'psychic', kind: 'ally', cat: null, coop: true, ally: 'heal', below: 0.6,
+    desc: 'Co-op: when a teammate within 300 px falls below 60% HP, a pulse restores 22% of the max HP of every teammate in reach (not you). Works from any slot.',
+    cd: 10, amount: 0.22, radius: 300, evo: ['Purify', null],
+    ups: [{ t: '+15% healing', m: { amount: 1.15 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% reach', m: { radius: 1.25 } }, { t: '-20% recharge and +15% healing', m: { cd: 0.8, amount: 1.15 } }],
+    evoMod: { t: '×1.3 healing and -20% recharge', m: { amount: 1.3, cd: 0.8 } } },
+  { id: 'aromatherapy', name: 'Aromatherapy', type: 'grass', kind: 'ally', cat: null, coop: true, ally: 'scent', below: 0.75,
+    desc: 'Co-op: when you or a teammate within 220 px falls below 75% HP, a soothing scent heals you and every teammate in reach 3% of max HP a second for 5 s. Works from any slot.',
+    cd: 12, amount: 0.03, dur: 5, radius: 220, evo: ['Teatime', null],
+    ups: [{ t: '+25% healing', m: { amount: 1.25 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% reach', m: { radius: 1.25 } }, { t: 'Lasts 30% longer and -15% recharge', m: { dur: 1.3, cd: 0.85 } }],
+    evoMod: { t: '×1.4 healing and -20% recharge', m: { amount: 1.4, cd: 0.8 } } },
+  { id: 'wide-guard', name: 'Wide Guard', type: 'rock', kind: 'ally', cat: null, coop: true, ally: 'guard',
+    desc: 'Co-op: when enemies are near your team, you and every teammate within 220 px get a guard that blocks the next 2 hits within 8 s. Works from any slot.',
+    cd: 14, count: 2, dur: 8, radius: 220, evo: ['Mat Block', null],
+    ups: [{ t: 'Blocks 1 more hit', m: { count: 1 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% reach', m: { radius: 1.25 } }, { t: 'Blocks 1 more hit and -15% recharge', m: { count: 1, cd: 0.85 } }],
+    evoMod: { t: '×1.5 hits blocked and -20% recharge', m: { count: 1.5, cd: 0.8 } } },
+  { id: 'block', name: 'Block', type: 'normal', kind: 'ally', cat: null, coop: true, ally: 'block',
+    desc: 'Co-op: when enemies close in on a teammate within 300 px, stand guard for 5 s: the enemies within 240 px of you come for you instead (bosses ignore it), and you take 35% less damage while you guard. Works from any slot.',
+    cd: 10, dur: 5, amount: 0.35, radius: 240, evo: ['Shelter', null],
+    ups: [{ t: 'Guards 30% longer', m: { dur: 1.3 } }, { t: '-20% recharge', m: { cd: 0.8 } }, { t: '+25% reach', m: { radius: 1.25 } }, { t: 'Takes 20% less still (up to 60%) and -15% recharge', m: { amount: 1.2, cd: 0.85 } }],
+    evoMod: { t: '×1.3 longer guard and a stronger one (up to 60% less)', m: { dur: 1.3, amount: 1.3 } } },
+  { id: 'helping-hand', name: 'Helping Hand', type: 'normal', kind: 'ally', cat: null, coop: true, ally: 'help',
+    desc: 'Co-op: when a teammate within 250 px is fighting, lend a hand: every teammate in reach deals 30% more damage for 6 s (not you). Works from any slot.',
+    cd: 8, amount: 0.3, dur: 6, radius: 250, evo: ['Coaching', null],
+    ups: [{ t: '+25% stronger', m: { amount: 1.25 } }, { t: 'Lasts 30% longer', m: { dur: 1.3 } }, { t: '+25% reach', m: { radius: 1.25 } }, { t: '+25% stronger and -15% recharge', m: { amount: 1.25, cd: 0.85 } }],
+    evoMod: { t: '×1.3 stronger (up to +60%) and longer', m: { amount: 1.3, dur: 1.3 } } },
 
   // ---- multi-stat boosters (`also`) ----
   { id: 'bulk-up', name: 'Bulk Up', type: 'fighting', kind: 'buff', cat: null, stat: 'patk', also: [{ stat: 'def', amount: 0.05 }],

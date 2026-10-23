@@ -80,7 +80,7 @@ G.Lab = (() => {
   // ---------------- each species' move list (phase 2) ----------------
   const MIN_OWN = 4, MIN_TOTAL = 6, MAX_COVER = 2;
   // Support: they don't count as coverage (they don't hit, or not as another type).
-  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'metronome', 'transform', 'heal', 'screen', 'shout', 'endure']);
+  const SUPPORT = new Set(['buff', 'guard', 'weather', 'terrain', 'metronome', 'transform', 'heal', 'screen', 'shout', 'endure', 'ally']);
   const HOW = ['lv', 'egg', 'tutor', 'tm'];
   const SCORE = { lv: 3, egg: 2, tutor: 2, tm: 1 };
   const learnCache = {}, poolCache = {};
@@ -104,9 +104,10 @@ G.Lab = (() => {
     return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
 
-  /** Moves of one type: the game's and the Lab's (without signatures, which belong to each line). */
+  /** Moves of one type: the game's and the Lab's (without signatures, which belong to each line, nor the
+   *  co-op support moves, which only come on support.js's co-op cards). */
   function ofType(t) {
-    return (G.Moves.POOL[t] || []).concat(G.LabMoves.filter(m => m.type === t && !m.sig && G.Moves.BY_ID[m.id]).map(m => m.id));
+    return (G.Moves.POOL[t] || []).concat(G.LabMoves.filter(m => m.type === t && !m.sig && !m.coop && G.Moves.BY_ID[m.id]).map(m => m.id));
   }
   const labOnly = id => !!G.Moves.BY_ID[id].lab;
 
