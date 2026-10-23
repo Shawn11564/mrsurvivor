@@ -69,6 +69,7 @@ G.Sprites = (() => {
   // más de una hora pasaban cientos de especies, se llenaba la memoria gráfica
   // y la pantalla se quedaba en negro hasta que el navegador recargaba la página.
   const MAX_SHEETS = 200, IDLE_MS = 20000;   // ~0,66 MB cada una ya dibujada: ~130 MB
+  let swept = 0;
   function evict(now) {
     const old = [...sheets].filter(([, s]) => now - s.at > IDLE_MS).sort((a, b) => a[1].at - b[1].at);
     const drop = old.slice(0, Math.max(sheets.size - Math.floor(MAX_SHEETS * 0.75), 0));
@@ -87,6 +88,8 @@ G.Sprites = (() => {
     const k = dex + '/' + name + (shiny ? '/s' : '');
     let s = sheets.get(k);
     const now = Date.now();
+    // MrSurvivor: also over the cap with nothing new asked for, the idle ones go (fork/test-perf.cjs).
+    if (sheets.size > MAX_SHEETS && now - swept > 2000) { swept = now; evict(now); }
     if (s) {
       s.at = now;
       // Si la descarga se cortó (red mala, servidor saturado), reintenta más tarde.
