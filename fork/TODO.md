@@ -34,7 +34,7 @@ How to use it:
 - [x] 64. [lab][bug] Contracts: reward coins and 1 candy of the Pokémon; check the progress tracking (e.g. 15:00 with 3+ moves of its own type); the Upgrades screen should make the contract coin balance clear · Lab (bda575b)
 - [x] 65. [ui] Main menu: a gem count in the same bubble as the coin balance · everyone (21de947)
 - [ ] 66. [bug][ui] Phone held upright (390 px and 360 px): the main menu top bar pushes the coin, ticket and user bubbles off the left edge of the screen (seen 2026-10-23, with or without the gem count) · everyone
-- [ ] 67. [feat][ui] Trading Pokémon between friends: a request from the main menu (popup like a party invite), a window to search, filter and pick, both offers shown, Lv. 1 stats on hover, both confirm + a 3 s countdown either can stop, a chat; traded Pokémon arrive without upgrades or TMs; no duplicates, nothing lost on reload or leaving · everyone (claimed: claude/relaxed-mccarthy-lpbogj)
+- [x] 67. [feat][ui] Trading Pokémon between friends: a request from the main menu (popup like a party invite), a window to search, filter and pick, both offers shown, Lv. 1 stats on hover, both confirm + a 3 s countdown either can stop, a chat; traded Pokémon arrive without upgrades or TMs; no duplicates, nothing lost on reload or leaving · everyone (dd0e39d; the firestore.rules "trading" part must be deployed before it works live)
 
 ## Phase 1: fixes and cheap tuning
 
