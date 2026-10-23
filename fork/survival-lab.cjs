@@ -40,18 +40,18 @@ const BUILDS = [
   { name: 'close: Fury Cutter (ramp)',   bot: 'close', slots: [['fury-cutter']] },
   { name: 'close: Rapid Spin (spin)',    bot: 'close', slots: [['rapid-spin']] },
   // stream A of fork/PLAN-2026-10-22.md (A4): movers and the upstream melee moves
-  { name: 'close: Quick Attack (dash)',  bot: 'close', slots: [['quick-attack']] },
-  { name: 'close: U-turn (dash)',        bot: 'close', slots: [['u-turn']] },
-  { name: 'close: Flame Charge (dash)',  bot: 'close', slots: [['flame-charge']] },
-  { name: 'close: Double-Edge (recoil)', bot: 'close', slots: [['double-edge']] },
+  // dashes and recoil go the way you walk in Lab (policy (a)): the "dash" bot plays them as meant
+  { name: 'close: Quick Attack (dash)',  bot: 'dash',  slots: [['quick-attack']] },
+  { name: 'close: U-turn (dash)',        bot: 'dash',  slots: [['u-turn']] },
+  { name: 'close: Flame Charge (dash)',  bot: 'dash',  slots: [['flame-charge']] },
+  { name: 'close: Double-Edge (recoil)', bot: 'dash',  slots: [['double-edge']] },
   { name: 'close: Fly (leap)',           bot: 'close', slots: [['fly']] },
   { name: 'close: Dig (leap)',           bot: 'close', slots: [['dig']] },
   { name: 'close: Rollout (ramp)',       bot: 'close', slots: [['rollout']] },
   { name: 'close: Body Slam',            bot: 'close', slots: [['body-slam']] },
   { name: 'close: Vine Whip',            bot: 'close', slots: [['vine-whip']] },
   { name: 'close: Bite, Counter',        bot: 'close', slots: [['bite'], ['counter']] },
-  { name: 'dash bot: Quick Attack',      bot: 'dash',  slots: [['quick-attack']] },
-  { name: 'dash bot: Double-Edge',       bot: 'dash',  slots: [['double-edge']] },
+  { name: 'close bot: Quick Attack',     bot: 'close', slots: [['quick-attack']] },
   { name: 'dash bot: U-turn, Karate Chop', bot: 'dash', slots: [['u-turn'], ['karate-chop']] },
   { name: 'close: Karate Chop, Counter', bot: 'close', slots: [['karate-chop'], ['counter']] },
   { name: 'close: Phantom Force (leap)', bot: 'close', slots: [['phantom-force']] },
@@ -177,14 +177,19 @@ async function oneRun(browser, b) {
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });
   const builds = BUILDS.filter(b => !ONLY.length || ONLY.some(o => o[0] === '=' ? b.name.toLowerCase() === o.slice(1).toLowerCase() : b.name.toLowerCase().includes(o.toLowerCase())));
-  const jobs = builds.flatMap(b => Array.from({ length: RUNS }, () => b));
+  const jobs = builds.flatMap(b => Array.from({ length: RUNS }, () => b)), retries = new Map();
   const res = new Map(builds.map(b => [b, []]));
   const t0 = Date.now();
   let next = 0;
   await Promise.all(Array.from({ length: PAR }, async () => {
     while (next < jobs.length) {
       const b = jobs[next++];
-      try { res.get(b).push(await oneRun(browser, b)); } catch (e) { console.log(`\n  run failed (${b.name}): ${e.message.split('\n')[0]}`); }
+      // A run that fails (nearly always a page that lost scripts while loading on a busy machine) is
+      // tried again, up to RUNS more times per build, so the build's median still has its runs.
+      try { res.get(b).push(await oneRun(browser, b)); } catch (e) {
+        console.log(`\n  run failed (${b.name}): ${e.message.split('\n')[0]}`);
+        if ((retries.get(b) || 0) < RUNS) { retries.set(b, (retries.get(b) || 0) + 1); jobs.push(b); }
+      }
       process.stdout.write('.');
     }
   }));

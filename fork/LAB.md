@@ -199,9 +199,9 @@ wrapped for them). The moves are in `lab-moves.js`, with their PokeAPI ids, so l
 
 | Kind | Moves | What it does |
 |---|---|---|
-| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then the blast lands on the target and you stay untouchable 0.6 s more; where you come down is the move's `land`: Fly and Bounce where you took off, Dig and Dive 70 px in front of the target, Phantom Force 60 px behind where you were; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
-| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard charge along the way you walk that leaves you where you were (policy (a), see "Close range and mobility"); it costs `recoil` × the damage done, at most 8% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
-| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll swings the way you walk and doesn't move you (policy (a)) |
+| leap | Fly, Dig, Bounce, Dive, Phantom Force | you're gone for `dur` s (can't be hit), then the blast lands on the target; a leap that comes down by the target (on it, or Dig/Dive's 70 px short) keeps you untouchable 0.6 s more, within 60% of its recharge in all; where you come down is the move's `land`: Fly and Bounce where you took off, Dig and Dive 70 px in front of the target, Phantom Force 60 px behind where you were; with `chain` (Shadow Force) it vanishes again and lands on the nearest enemy not hit yet, up to `chain` strikes (`chainLeap`) |
+| recoil | Double-Edge, Take Down, Flare Blitz, Brave Bird, Wild Charge, Wood Hammer, Head Smash, Submission | a hard charge along the way you walk that leaves you where you were (policy (a), see "Close range and mobility"); it costs `recoil` × the damage done, at most 3% of your max HP in any second, never KO; a cast that knocks an enemy out gives half its recoil back |
+| ramp | Rollout, Ice Ball, Fury Cutter, Fury Swipes | each hit in a row is stronger (`step`, up to `stacks`); without hits the stacks fade one per 1.5 s; a roll doesn't move you and swings at the target |
 | guard | Protect, Detect, Counter, Mirror Coat, Metal Burst | Protect: nothing hurts you for `dur` s. Counter, Mirror Coat, Metal Burst (the Aegis): hits of its category (Metal Burst: all) are blocked and stored, others halved; then a blast with `mult` × what it blocked |
 | sleep | Hypnosis, Sing, Sleep Powder, Spore, Yawn | a marked zone; enemies there sleep `stun` s; a hit wakes them (a burn or poison tick doesn't) |
 | (confusion) | Confuse Ray, Supersonic, Teeter Dance, Sweet Kiss | old kinds with `conf`: the enemy staggers, doesn't attack you and hits its neighbours |
@@ -469,18 +469,19 @@ reach, a boss only when it's in reach (#186, #208); a dash never fires at a rock
 
 Lab runs:
 - **Close-range cut** (A1.1): spin, dash and recoil join the 25% less damage taken (`kinds2.js` `CLOSE`;
-  spin and dash only in Lab until `G.LabKinds2.promoteCut`).
-- **Relocation grace** (A1.2, `js/fork/lab/mobility.js`): 0.5 s after a dash, recoil or roll (a leap: 0.5 s
-  after it lands) nothing hurts you, hazards and lava included (they set `invuln` to 0 before they hit). A
+  spin and dash only in Lab until `G.LabKinds2.promoteCut`). Since A4 the cut is 35% in Lab runs (every
+  close kind, melee too: `LAB_CLOSE`), and the move's box says so.
+- **Mover grace** (A1.2, `js/fork/lab/mobility.js`): 0.5 s after a dash or recoil (a leap that comes down by
+  the target: 0.5 s after it lands; since A4 not Fly/Bounce/Phantom Force, which land away from the crowd, nor a roll) nothing hurts you, hazards and lava included (they set `invuln` to 0 before they hit). A
   new grace starts at most once per 1.2 s, or a fast dash would make you untouchable.
 - **Leap** (A1.3): untouchable 0.6 s after landing (was 0.15 s).
-- **Recoil** (A1.4): at most 8% of max HP in any second (was 12% a cast: ~10% HP/s against a crowd); a KO
-  gives half that cast's recoil back.
+- **Recoil** (A1.4): at most 3% of max HP in any second (8% until A4; was 12% a cast: ~10% HP/s against a
+  crowd); a KO gives half that cast's recoil back.
 - **Ramp** (A1.5): stacks fade one per 1.5 s of game time instead of resetting on a miss or a pause;
   Rollout/Ice Ball close in 30 px at most (was 80) and not while you walk away (since A2 they don't move
   you at all).
-- **The way you walk, and back** (A2, policy (a), the owner's G1; `js/fork/lab/mobility.js`): a dash, recoil
-  charge or roll goes the way you're walking, or at your target when you stand still (with Manual aim: the
+- **The way you walk, and back** (A2, policy (a), the owner's G1; `js/fork/lab/mobility.js`): a dash or recoil
+  charge goes the way you're walking, or at your target when you stand still (with Manual aim: the
   aim). It hits everything on that line and you stay where you were (Vampire Survivors' whip): no move
   takes you somewhere you didn't choose. It only fires when an enemy is on that line (its clock waits), with
   no camera kick. The dash is Lab's own (`G.Combat.EXTRA.dash.over`, the one-line hook in `combat.js` `run`);
@@ -494,11 +495,50 @@ Lab runs:
   Claw, the first hit in the 0.3 s after a swing is blocked and the nearest enemy stunned) and none swings
   360° any more (4th step +50% damage and +20% reach, evolution ×1.9 damage, more reach, a wider arc).
   Pivots (U-turn, and the new Lab moves Volt Switch, Flip Turn, Parting Shot, in their learnsets) hit and
-  switch you to your next slot; Parting Shot also makes the enemies it passes deal 30% less for 4 s.
+  switch you to your next slot; Parting Shot also makes the enemies it passes deal 20% less for 4 s.
   Flame Charge stacks +8% speed (4 s, up to 3). Leaps come down per `land` (table above); Shadow Force
   keeps its chain. Counter, Mirror Coat and Metal Burst block instead of halving (the Aegis). The run's
   first moves are made before the run is Lab, so they're swapped for their Lab copies right after it
   starts (any `G.LabMech.ID` move). Quick Attack, Extreme Speed and Aqua Step stay plain dashes.
+
+- **Tuning** (A4): the 35% Lab cut; a leap's untouchable time capped at 60% of its recharge and its 0.6 s
+  after landing only by the target (an evolved Fly was never hit: 308-332 s); a roll swings at the target
+  (the way you walk it missed whoever you circled: Rollout 45 s); recoil 3%/s; ×kind back in range for
+  Bounce (28 -> 33 damage), Phantom Force (32 -> 33), Parting Shot (10 -> 21, its mark 30% -> 20%), and signatures that policy (a)
+  made stronger (Extreme Speed 22 -> 19, Spectral Thief 32 -> 27, Sunsteel Strike 44 -> 39).
+  `fork/survival-lab.cjs` plays dashes and recoil with the "dash" bot and retries a run whose page failed to
+  load.
+
+Survival (`fork/survival-lab.cjs`, median of 6; "before" is 2026-10-22 before stream A, "after" the A4
+state on the same day's main, with the other streams' Lab changes in, e.g. elite affixes; the first boss at
+3:00 is a wall for single builds, ±20-30 s noise):
+
+| Build | Before | After |
+|---|---|---|
+| far: Aura Sphere | 184 | 205 |
+| close: Karate Chop | 143 | 174 |
+| close: Karate Chop, Counter | | 326 |
+| close: Bite, Counter | 171 | 234 |
+| close: Play Rough | 148 | 174 |
+| close: Drain Punch | 173 | 155 |
+| close: Revenge | 150 | 163 |
+| close: Body Slam | 124 | 151 |
+| close: Vine Whip | 133 | 132 |
+| close: Rapid Spin (spin) | 119 | 139 |
+| close: Fury Cutter (ramp) | 105 | 140 |
+| close: Rollout (ramp) | 130 | 122 |
+| close: Quick Attack (dash; before with the "close" bot) | 121 | 148 |
+| close: U-turn (dash) | 130 | 147 |
+| close: Flame Charge (dash) | 137 | 125 |
+| close: Double-Edge (recoil) | 30 | 109 |
+| close: Fly / Dig / Phantom Force (leap) | 135 / 157 / | 133 / 179 / 171 |
+| close: Circle Throw / Bind / Focus Punch | 124 / 104 / 106 | 128 / 117 / 118 |
+
+The plan's targets (Karate Chop ≥ 200, Quick Attack ≥ 180, no close build under 150) are not met, so the
+close-range kit and the spin/dash cut are not promoted to normal runs (G12). Experiments on the same state
+(`EXTRA_JS`-style overrides, not committed): a 45% cut instead of 35% or +25%/+50% damage for every close
+kind left Karate Chop at 187-188 s: single close builds die at the 3:00 boss, which they must stand next
+to; Karate Chop beats it only with a support move (Counter 326, Recover 264, Bulk Up 303).
 
 `node fork/test-close-range.cjs` checks all of it in real runs.
 

@@ -11,243 +11,243 @@ Normal-game medians: crowd 768.5 DPS, single 255.6 DPS.
 
 | Move | Kind | Type | Lab | DPS crowd | ×crowd | DPS single | ×single | Score | ×kind | Flag |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Hyper Fang (super-fang) | melee | normal | yes | 2323574321.2 | 3023431.59 | 583294447.0 | 2282282.68 | 2626847.08 | 2635417.83 | HP cut |
-| Ruination ★ (ruination) | homing | dark | signature | 2883721702.2 | 3752294.57 | 2086638899.9 | 8164486.81 | 5534939.88 | 2406877.69 | HP cut |
-| Strange Steam (natures-madness) | homing | fairy | yes | 956758625.2 | 1244932.96 | 964698267.3 | 3774618.73 | 2167751.66 | 942650.37 | HP cut |
-| Spite (curse) | buff | ghost | yes | 91283276.9 | 118777.67 | 24895439.2 | 97409.52 | 107564.28 | 118040.83 | support |
-| Sticky Web (string-shot) | mine | bug |  | 322.6 | 0.42 | 89.5 | 0.35 | 0.38 | 3.89 | strong |
-| Secret Sword ★ (secret-sword) | melee | fighting | signature | 1961.9 | 2.55 | 459.2 | 1.80 | 2.14 | 2.15 | strong |
-| Plasma Fists ★ (plasma-fists) | melee | electric | signature | 1862.4 | 2.42 | 463.7 | 1.81 | 2.10 | 2.10 | strong |
-| Dynamax Cannon ★ (dynamax-cannon) | charge | dragon | signature | 1031.3 | 1.34 | 258.9 | 1.01 | 1.17 | 2.05 | strong |
-| Behemoth Blade ★ (behemoth-blade) | melee | steel | signature | 1788.0 | 2.33 | 445.1 | 1.74 | 2.01 | 2.02 | strong |
-| Moongeist Beam ★ (moongeist-beam) | beam | ghost | signature | 400.4 | 0.52 | 402.0 | 1.57 | 0.91 | 1.95 | strong |
-| Origin Pulse ★ (origin-pulse) | wave | water | signature | 1020.9 | 1.33 | 154.9 | 0.61 | 0.90 | 1.93 | strong |
-| Roar of Time ★ (roar-of-time) | charge | dragon | signature | 818.9 | 1.07 | 275.3 | 1.08 | 1.07 | 1.88 | strong |
-| Magma Storm ★ (magma-storm) | vortex | fire | signature | 2305.0 | 3.00 | 220.5 | 0.86 | 1.61 | 1.87 | strong |
-| Crush Grip ★ (crush-grip) | melee | normal | signature | 1655.7 | 2.15 | 412.1 | 1.61 | 1.86 | 1.87 | strong |
-| Bitter Blade ★ (bitter-blade) | melee | fire | signature | 1622.3 | 2.11 | 403.9 | 1.58 | 1.83 | 1.83 | strong |
-| Dragon Rush (dragon-claw) | melee | dragon |  | 1516.8 | 1.97 | 358.4 | 1.40 | 1.66 | 1.67 | strong |
-| Spectral Thief ★ (spectral-thief) | dash | ghost | signature | 457.3 | 0.59 | 459.1 | 1.80 | 1.03 | 1.63 | strong |
-| Doom Desire ★ (doom-desire) | meteor | steel | signature | 1572.4 | 2.05 | 382.3 | 1.50 | 1.75 | 1.62 | strong |
-| Seed Flare ★ (seed-flare) | nova | grass | signature | 1487.0 | 1.93 | 223.1 | 0.87 | 1.30 | 1.62 | strong |
-| Sky Uppercut (focus-punch) | focus | fighting | yes | 1230.1 | 1.60 | 411.7 | 1.61 | 1.61 | 1.61 | strong |
-| Spirit Break (play-rough) | melee | fairy |  | 1393.0 | 1.81 | 349.8 | 1.37 | 1.57 | 1.58 |  |
-| Jet Punch ★ (jet-punch) | homing | water | signature | 1585.3 | 2.06 | 1598.5 | 6.25 | 3.59 | 1.56 |  |
-| Extreme Speed ★ (extreme-speed) | dash | normal | signature | 435.3 | 0.57 | 438.9 | 1.72 | 0.99 | 1.56 |  |
-| Leaf Storm (razor-leaf) | boomerang | grass |  | 454.9 | 0.59 | 358.6 | 1.40 | 0.91 | 1.55 |  |
-| Judgment ★ (judgment) | meteor | normal | signature | 1610.5 | 2.10 | 338.9 | 1.33 | 1.67 | 1.55 |  |
-| Crabhammer ★ (crabhammer) | melee | water | signature | 1365.8 | 1.78 | 341.4 | 1.34 | 1.54 | 1.55 |  |
-| Psystrike ★ (psystrike) | beam | psychic | signature | 316.7 | 0.41 | 318.0 | 1.24 | 0.72 | 1.54 |  |
-| Sunsteel Strike ★ (sunsteel-strike) | leap | steel | signature | 2176.2 | 2.83 | 242.8 | 0.95 | 1.64 | 1.52 |  |
-| Photon Geyser ★ (photon-geyser) | stun | psychic | signature | 890.9 | 1.16 | 178.9 | 0.70 | 0.90 | 1.52 |  |
-| Aeroblast ★ (aeroblast) | beam | flying | signature | 310.7 | 0.40 | 309.4 | 1.21 | 0.70 | 1.51 |  |
-| Spacial Rend ★ (spacial-rend) | beam | dragon | signature | 310.7 | 0.40 | 309.4 | 1.21 | 0.70 | 1.51 |  |
-| Blue Flare ★ (blue-flare) | beam | fire | signature | 308.1 | 0.40 | 310.7 | 1.22 | 0.70 | 1.50 |  |
-| Rage Fist ★ (rage-fist) | ramp | ghost | signature | 662.9 | 0.86 | 663.0 | 2.59 | 1.50 | 1.50 |  |
-| Volt Tackle ★ (volt-tackle) | recoil | electric | signature | 418.3 | 0.54 | 418.2 | 1.64 | 0.94 | 1.49 |  |
-| Techno Blast ★ (techno-blast) | projectile | normal | signature | 1294.8 | 1.68 | 825.1 | 3.23 | 2.33 | 1.49 |  |
-| Snipe Shot ★ (snipe-shot) | beam | water | signature | 305.9 | 0.40 | 302.1 | 1.18 | 0.69 | 1.48 |  |
-| Mach Punch (drain-punch) | melee | fighting | yes | 1298.4 | 1.69 | 327.3 | 1.28 | 1.47 | 1.48 |  |
-| Magnet Bomb (meteor-mash) | meteor | steel |  | 1630.4 | 2.12 | 303.1 | 1.19 | 1.59 | 1.47 |  |
-| Fusion Flare ★ (fusion-flare) | meteor | fire | signature | 1503.5 | 1.96 | 322.1 | 1.26 | 1.57 | 1.46 |  |
-| Precipice Blades ★ (precipice-blades) | quake | ground | signature | 458.7 | 0.60 | 347.2 | 1.36 | 0.90 | 1.46 |  |
-| Steam Eruption ★ (steam-eruption) | cone | water | signature | 737.6 | 0.96 | 716.0 | 2.80 | 1.64 | 1.46 |  |
-| Behemoth Bash ★ (behemoth-bash) | shove | steel | signature | 1288.1 | 1.68 | 161.0 | 0.63 | 1.03 | 1.45 |  |
-| Power-Up Punch (vacuum-wave) | shove | fighting |  | 1191.5 | 1.55 | 172.4 | 0.67 | 1.02 | 1.45 |  |
-| Sacred Fire ★ (sacred-fire) | nova | fire | signature | 1350.0 | 1.76 | 193.6 | 0.76 | 1.15 | 1.44 |  |
-| Luster Purge ★ (luster-purge) | projectile | psychic | signature | 1271.9 | 1.66 | 783.0 | 3.06 | 2.25 | 1.44 |  |
-| Pyro Ball ★ (pyro-ball) | bounce | fire | signature | 2669.3 | 3.47 | 365.5 | 1.43 | 2.23 | 1.42 |  |
-| Bolt Strike ★ (bolt-strike) | dash | electric | signature | 395.7 | 0.51 | 397.3 | 1.55 | 0.89 | 1.41 |  |
+| Hyper Fang (super-fang) | melee | normal | yes | 2187636727.3 | 2846549.79 | 580855018.6 | 2272737.82 | 2543513.59 | 2541246.59 | HP cut |
+| Ruination ★ (ruination) | homing | dark | signature | 2904467901.5 | 3779289.49 | 2089713142.9 | 8176515.54 | 5558904.50 | 2412439.86 | HP cut |
+| Strange Steam (natures-madness) | homing | fairy | yes | 904641100.7 | 1177117.71 | 960680285.6 | 3758897.39 | 2103488.70 | 912866.91 | HP cut |
+| Spite (curse) | buff | ghost | yes | 90909090.9 | 118290.78 | 24892134.1 | 97396.58 | 107336.47 | 118811.23 | support |
+| Sticky Web (string-shot) | mine | bug |  | 367.6 | 0.48 | 122.0 | 0.48 | 0.48 | 4.87 | strong |
+| Secret Sword ★ (secret-sword) | melee | fighting | signature | 1970.2 | 2.56 | 490.5 | 1.92 | 2.22 | 2.22 | strong |
+| Dynamax Cannon ★ (dynamax-cannon) | charge | dragon | signature | 1039.9 | 1.35 | 260.0 | 1.02 | 1.17 | 2.14 | strong |
+| Plasma Fists ★ (plasma-fists) | melee | electric | signature | 1862.4 | 2.42 | 463.7 | 1.81 | 2.10 | 2.09 | strong |
+| Behemoth Blade ★ (behemoth-blade) | melee | steel | signature | 1780.5 | 2.32 | 447.0 | 1.75 | 2.01 | 2.01 | strong |
+| Moongeist Beam ★ (moongeist-beam) | beam | ghost | signature | 402.1 | 0.52 | 400.4 | 1.57 | 0.91 | 1.95 | strong |
+| Roar of Time ★ (roar-of-time) | charge | dragon | signature | 819.0 | 1.07 | 274.1 | 1.07 | 1.07 | 1.95 | strong |
+| Crush Grip ★ (crush-grip) | melee | normal | signature | 1648.8 | 2.15 | 413.9 | 1.62 | 1.86 | 1.86 | strong |
+| Origin Pulse ★ (origin-pulse) | wave | water | signature | 937.1 | 1.22 | 155.5 | 0.61 | 0.86 | 1.86 | strong |
+| Bitter Blade ★ (bitter-blade) | melee | fire | signature | 1615.7 | 2.10 | 405.6 | 1.59 | 1.83 | 1.82 | strong |
+| Magma Storm ★ (magma-storm) | vortex | fire | signature | 2224.1 | 2.89 | 221.4 | 0.87 | 1.58 | 1.80 | strong |
+| Leaf Storm (razor-leaf) | boomerang | grass |  | 461.5 | 0.60 | 357.1 | 1.40 | 0.92 | 1.76 | strong |
+| Dragon Rush (dragon-claw) | melee | dragon |  | 1516.6 | 1.97 | 380.8 | 1.49 | 1.71 | 1.71 | strong |
+| Judgment ★ (judgment) | meteor | normal | signature | 1525.0 | 1.98 | 434.2 | 1.70 | 1.84 | 1.67 | strong |
+| Magnet Bomb (meteor-mash) | meteor | steel |  | 1536.7 | 2.00 | 414.7 | 1.62 | 1.80 | 1.64 | strong |
+| Spirit Break (play-rough) | melee | fairy |  | 1404.7 | 1.83 | 375.0 | 1.47 | 1.64 | 1.64 | strong |
+| Seed Flare ★ (seed-flare) | nova | grass | signature | 1427.9 | 1.86 | 222.1 | 0.87 | 1.27 | 1.62 | strong |
+| Jet Punch ★ (jet-punch) | homing | water | signature | 1598.5 | 2.08 | 1592.0 | 6.23 | 3.60 | 1.56 |  |
+| Crabhammer ★ (crabhammer) | melee | water | signature | 1365.8 | 1.78 | 349.3 | 1.37 | 1.56 | 1.56 |  |
+| Sky Uppercut (focus-punch) | focus | fighting | yes | 1235.1 | 1.61 | 386.1 | 1.51 | 1.56 | 1.56 |  |
+| Aeroblast ★ (aeroblast) | beam | flying | signature | 325.0 | 0.42 | 312.0 | 1.22 | 0.72 | 1.55 |  |
+| Diamond Storm ★ (diamond-storm) | meteor | rock | signature | 1175.0 | 1.53 | 483.2 | 1.89 | 1.70 | 1.55 |  |
+| Psystrike ★ (psystrike) | beam | psychic | signature | 318.0 | 0.41 | 316.7 | 1.24 | 0.72 | 1.54 |  |
+| Precipice Blades ★ (precipice-blades) | quake | ground | signature | 473.2 | 0.62 | 367.0 | 1.44 | 0.94 | 1.53 |  |
+| Photon Geyser ★ (photon-geyser) | stun | psychic | signature | 898.3 | 1.17 | 178.9 | 0.70 | 0.90 | 1.53 |  |
+| Spacial Rend ★ (spacial-rend) | beam | dragon | signature | 312.0 | 0.41 | 309.4 | 1.21 | 0.70 | 1.51 |  |
+| Volt Tackle ★ (volt-tackle) | recoil | electric | signature | 418.2 | 0.54 | 418.2 | 1.64 | 0.94 | 1.49 |  |
+| Rage Fist ★ (rage-fist) | ramp | ghost | signature | 657.4 | 0.86 | 662.9 | 2.59 | 1.49 | 1.49 |  |
+| Snipe Shot ★ (snipe-shot) | beam | water | signature | 304.6 | 0.40 | 303.3 | 1.19 | 0.69 | 1.48 |  |
+| Fusion Flare ★ (fusion-flare) | meteor | fire | signature | 1412.1 | 1.84 | 365.6 | 1.43 | 1.62 | 1.48 |  |
+| Mach Punch (drain-punch) | melee | fighting | yes | 1303.7 | 1.70 | 325.9 | 1.28 | 1.47 | 1.47 |  |
+| Sacred Fire ★ (sacred-fire) | nova | fire | signature | 1325.6 | 1.72 | 194.4 | 0.76 | 1.15 | 1.46 |  |
+| Blue Flare ★ (blue-flare) | beam | fire | signature | 291.3 | 0.38 | 309.4 | 1.21 | 0.68 | 1.46 |  |
+| Steam Eruption ★ (steam-eruption) | cone | water | signature | 759.1 | 0.99 | 706.9 | 2.77 | 1.65 | 1.44 |  |
+| Techno Blast ★ (techno-blast) | projectile | normal | signature | 1334.6 | 1.74 | 759.5 | 2.97 | 2.27 | 1.43 |  |
+| Bolt Strike ★ (bolt-strike) | dash | electric | signature | 397.3 | 0.52 | 397.3 | 1.55 | 0.90 | 1.41 |  |
+| Power-Up Punch (vacuum-wave) | shove | fighting |  | 1201.4 | 1.56 | 172.4 | 0.67 | 1.03 | 1.41 |  |
+| Behemoth Bash ★ (behemoth-bash) | shove | steel | signature | 1288.2 | 1.68 | 160.4 | 0.63 | 1.03 | 1.41 |  |
 | Flower Trick ★ (flower-trick) | homing | grass | signature | 1432.6 | 1.86 | 1421.6 | 5.56 | 3.22 | 1.40 |  |
-| Sparkling Aria ★ (sparkling-aria) | nova | water | signature | 1333.2 | 1.73 | 182.2 | 0.71 | 1.11 | 1.39 |  |
-| Glaciate ★ (glaciate) | cone | ice | signature | 765.4 | 1.00 | 611.0 | 2.39 | 1.54 | 1.37 |  |
-| Water Pulse (surf) | wave | water | yes | 666.1 | 0.87 | 118.0 | 0.46 | 0.63 | 1.36 |  |
-| V-create ★ (v-create) | recoil | fire | signature | 382.2 | 0.50 | 380.6 | 1.49 | 0.86 | 1.36 |  |
-| Dragon Darts ★ (dragon-darts) | homing | dragon | signature | 1366.4 | 1.78 | 1374.0 | 5.38 | 3.09 | 1.34 |  |
-| Hyperspace Hole ★ (hyperspace-hole) | chain | psychic | signature | 1210.9 | 1.58 | 225.2 | 0.88 | 1.18 | 1.34 |  |
-| Oblivion Wing ★ (oblivion-wing) | homing | flying | signature | 1364.5 | 1.78 | 1358.9 | 5.32 | 3.07 | 1.34 |  |
-| Kowtow Cleave ★ (kowtow-cleave) | homing | dark | signature | 1355.0 | 1.76 | 1355.0 | 5.30 | 3.06 | 1.33 |  |
-| Darkest Lariat ★ (darkest-lariat) | spin | dark | signature | 2067.7 | 2.69 | 519.1 | 2.03 | 2.34 | 1.33 |  |
-| Giga Impact (body-slam) | melee | normal |  | 1001.6 | 1.30 | 335.3 | 1.31 | 1.31 | 1.31 |  |
-| Last Resort (double-edge) | recoil | normal | yes | 365.0 | 0.47 | 369.6 | 1.45 | 0.83 | 1.31 |  |
-| Aqua Step ★ (aqua-step) | dash | water | signature | 365.7 | 0.48 | 362.7 | 1.42 | 0.82 | 1.30 |  |
-| Diamond Storm ★ (diamond-storm) | meteor | rock | signature | 1096.9 | 1.43 | 350.5 | 1.37 | 1.40 | 1.30 |  |
-| Fusion Bolt ★ (fusion-bolt) | chain | electric | signature | 1149.9 | 1.50 | 214.8 | 0.84 | 1.12 | 1.28 |  |
-| Drum Beating ★ (drum-beating) | shove | grass | signature | 1127.1 | 1.47 | 140.9 | 0.55 | 0.90 | 1.27 |  |
-| Gigaton Hammer ★ (gigaton-hammer) | stun | steel | signature | 747.6 | 0.97 | 148.9 | 0.58 | 0.75 | 1.27 |  |
-| Trailblaze (horn-leech) | melee | grass | yes | 1086.8 | 1.41 | 288.5 | 1.13 | 1.26 | 1.27 |  |
-| Relic Song ★ (relic-song) | nova | normal | signature | 1105.9 | 1.44 | 183.0 | 0.72 | 1.02 | 1.27 |  |
-| Mountain Gale (head-smash) | recoil | rock | yes | 352.8 | 0.46 | 352.8 | 1.38 | 0.80 | 1.26 |  |
-| Meteor Assault ★ (meteor-assault) | dash | fighting | signature | 351.7 | 0.46 | 353.2 | 1.38 | 0.80 | 1.26 |  |
+| Sparkling Aria ★ (sparkling-aria) | nova | water | signature | 1280.9 | 1.67 | 182.2 | 0.71 | 1.09 | 1.39 |  |
+| Doom Desire ★ (doom-desire) | meteor | steel | signature | 1470.8 | 1.91 | 311.7 | 1.22 | 1.53 | 1.39 |  |
+| Luster Purge ★ (luster-purge) | projectile | psychic | signature | 1271.9 | 1.66 | 742.6 | 2.91 | 2.19 | 1.38 |  |
+| Spectral Thief ★ (spectral-thief) | dash | ghost | signature | 384.2 | 0.50 | 387.4 | 1.52 | 0.87 | 1.37 |  |
+| Water Pulse (surf) | wave | water | yes | 666.1 | 0.87 | 118.9 | 0.47 | 0.64 | 1.37 |  |
+| Pyro Ball ★ (pyro-ball) | bounce | fire | signature | 2658.2 | 3.46 | 335.1 | 1.31 | 2.13 | 1.36 |  |
+| V-create ★ (v-create) | recoil | fire | signature | 379.0 | 0.49 | 380.6 | 1.49 | 0.86 | 1.35 |  |
+| Extreme Speed ★ (extreme-speed) | dash | normal | signature | 375.9 | 0.49 | 379.0 | 1.48 | 0.85 | 1.34 |  |
+| Hyperspace Hole ★ (hyperspace-hole) | chain | psychic | signature | 1216.0 | 1.58 | 226.2 | 0.89 | 1.18 | 1.34 |  |
+| Dragon Darts ★ (dragon-darts) | homing | dragon | signature | 1358.7 | 1.77 | 1368.3 | 5.35 | 3.08 | 1.34 |  |
+| Oblivion Wing ★ (oblivion-wing) | homing | flying | signature | 1364.5 | 1.78 | 1359.0 | 5.32 | 3.07 | 1.33 |  |
+| Darkest Lariat ★ (darkest-lariat) | spin | dark | signature | 2067.7 | 2.69 | 521.2 | 2.04 | 2.34 | 1.33 |  |
+| Sunsteel Strike ★ (sunsteel-strike) | leap | steel | signature | 1928.9 | 2.51 | 215.2 | 0.84 | 1.45 | 1.32 |  |
+| Kowtow Cleave ★ (kowtow-cleave) | homing | dark | signature | 1355.0 | 1.76 | 1343.9 | 5.26 | 3.04 | 1.32 |  |
+| Last Resort (double-edge) | recoil | normal | yes | 366.5 | 0.48 | 368.1 | 1.44 | 0.83 | 1.31 |  |
+| Giga Impact (body-slam) | melee | normal |  | 1001.6 | 1.30 | 335.2 | 1.31 | 1.31 | 1.31 |  |
+| Glaciate ★ (glaciate) | cone | ice | signature | 746.8 | 0.97 | 590.0 | 2.31 | 1.50 | 1.30 |  |
+| Aqua Step ★ (aqua-step) | dash | water | signature | 364.2 | 0.47 | 362.7 | 1.42 | 0.82 | 1.29 |  |
+| Snarl (dark-pulse) | nova | dark |  | 1166.1 | 1.52 | 170.8 | 0.67 | 1.01 | 1.28 |  |
+| Fusion Bolt ★ (fusion-bolt) | chain | electric | signature | 1150.0 | 1.50 | 214.8 | 0.84 | 1.12 | 1.27 |  |
+| Gigaton Hammer ★ (gigaton-hammer) | stun | steel | signature | 750.6 | 0.98 | 148.3 | 0.58 | 0.75 | 1.27 |  |
+| Relic Song ★ (relic-song) | nova | normal | signature | 1155.0 | 1.50 | 168.0 | 0.66 | 0.99 | 1.27 |  |
+| Meteor Assault ★ (meteor-assault) | dash | fighting | signature | 351.7 | 0.46 | 354.6 | 1.39 | 0.80 | 1.26 |  |
+| Trailblaze (horn-leech) | melee | grass | yes | 1154.1 | 1.50 | 269.0 | 1.05 | 1.26 | 1.26 |  |
+| Mountain Gale (head-smash) | recoil | rock | yes | 348.4 | 0.45 | 351.3 | 1.37 | 0.79 | 1.25 |  |
+| Aura Wheel ★ (aura-wheel) | spin | electric | signature | 1935.7 | 2.52 | 486.0 | 1.90 | 2.19 | 1.24 |  |
 | Iron Tail (snap-trap) | bind | steel | yes | 1093.3 | 1.42 | 275.6 | 1.08 | 1.24 | 1.24 |  |
-| Raging Fury (flare-blitz) | recoil | fire | yes | 360.9 | 0.47 | 335.3 | 1.31 | 0.78 | 1.24 |  |
-| Aura Wheel ★ (aura-wheel) | spin | electric | signature | 1927.7 | 2.51 | 486.0 | 1.90 | 2.18 | 1.24 |  |
-| Snarl (dark-pulse) | nova | dark |  | 1130.4 | 1.47 | 170.8 | 0.67 | 0.99 | 1.24 |  |
-| First Impression (fury-cutter) | ramp | bug | yes | 543.1 | 0.71 | 540.9 | 2.12 | 1.22 | 1.23 |  |
-| Steel Roller (rollout) | ramp | rock | yes | 538.5 | 0.70 | 538.5 | 2.11 | 1.22 | 1.22 |  |
-| Ice Spinner (ice-ball) | ramp | ice | yes | 536.3 | 0.70 | 538.5 | 2.11 | 1.21 | 1.22 |  |
-| Foul Play (sucker-punch) | homing | dark |  | 1204.1 | 1.57 | 1250.7 | 4.89 | 2.77 | 1.20 |  |
-| Beak Blast (brave-bird) | recoil | flying | yes | 336.7 | 0.44 | 336.7 | 1.32 | 0.76 | 1.20 |  |
-| Collision Course (submission) | recoil | fighting | yes | 317.9 | 0.41 | 356.1 | 1.39 | 0.76 | 1.20 |  |
-| Ivy Cudgel (wood-hammer) | recoil | grass | yes | 336.7 | 0.44 | 335.3 | 1.31 | 0.76 | 1.20 |  |
-| Mystical Fire ★ (mystical-fire) | homing | fire | signature | 1223.0 | 1.59 | 1210.9 | 4.74 | 2.75 | 1.19 |  |
-| Overdrive ★ (overdrive) | shove | electric | signature | 1054.0 | 1.37 | 132.3 | 0.52 | 0.84 | 1.19 |  |
-| Supercell Slam (wild-charge) | recoil | electric | yes | 333.2 | 0.43 | 334.6 | 1.31 | 0.75 | 1.19 |  |
-| Constrict (bind) | bind | normal | yes | 1010.6 | 1.31 | 272.2 | 1.07 | 1.18 | 1.19 |  |
-| Metronome (metronome) | metronome | normal | yes | 671.9 | 0.87 | 340.0 | 1.33 | 1.08 | 1.18 |  |
-| Draco Meteor (dragon-rage) | beam | dragon |  | 244.7 | 0.32 | 241.7 | 0.95 | 0.55 | 1.18 |  |
-| Dragon Ascent ★ (dragon-ascent) | leap | flying | signature | 1733.9 | 2.26 | 182.1 | 0.71 | 1.27 | 1.18 |  |
-| Sheer Cold ★ (sheer-cold) | stun | ice | signature | 774.7 | 1.01 | 121.1 | 0.47 | 0.69 | 1.17 |  |
-| Close Combat (karate-chop) | melee | fighting |  | 725.5 | 0.94 | 364.2 | 1.43 | 1.16 | 1.16 |  |
-| Poltergeist (shadow-ball) | projectile | ghost |  | 848.8 | 1.10 | 768.4 | 3.01 | 1.82 | 1.16 |  |
-| Zap Cannon ★ (zap-cannon) | stun | electric | signature | 679.6 | 0.88 | 135.4 | 0.53 | 0.68 | 1.16 |  |
-| Hydro Steam (muddy-water) | wave | water | yes | 563.6 | 0.73 | 100.2 | 0.39 | 0.54 | 1.16 |  |
-| Magical Leaf (energy-ball) | homing | grass |  | 1165.4 | 1.52 | 1175.1 | 4.60 | 2.64 | 1.15 |  |
-| Breaking Swipe (outrage) | spin | dragon |  | 1801.8 | 2.34 | 446.7 | 1.75 | 2.02 | 1.15 |  |
-| Frenzy Plant ★ (frenzy-plant) | quake | grass | signature | 304.6 | 0.40 | 323.6 | 1.27 | 0.71 | 1.15 |  |
-| Swarm (bug-buzz) | aura | bug |  | 1410.1 | 1.83 | 176.2 | 0.69 | 1.12 | 1.14 |  |
-| Brutal Swing (night-slash) | spin | dark |  | 1779.6 | 2.32 | 448.6 | 1.76 | 2.02 | 1.14 |  |
-| Wring Out (wrap) | bind | normal | yes | 1001.7 | 1.30 | 252.5 | 0.99 | 1.13 | 1.14 |  |
-| Electro Drift (thunder-cage) | bind | electric | yes | 999.1 | 1.30 | 249.8 | 0.98 | 1.13 | 1.13 |  |
-| Cross Chop (revenge) | melee | fighting | yes | 993.4 | 1.29 | 249.4 | 0.98 | 1.12 | 1.13 |  |
-| Hydro Cannon ★ (hydro-cannon) | charge | water | signature | 284.3 | 0.37 | 284.3 | 1.11 | 0.64 | 1.13 |  |
-| Torch Song ★ (torch-song) | cone | fire | signature | 614.7 | 0.80 | 513.5 | 2.01 | 1.27 | 1.13 |  |
-| Sky Attack ★ (sky-attack) | charge | flying | signature | 283.1 | 0.37 | 284.3 | 1.11 | 0.64 | 1.12 |  |
-| Throat Chop (payback) | melee | dark | yes | 989.1 | 1.29 | 248.3 | 0.97 | 1.12 | 1.12 |  |
-| Blast Burn ★ (blast-burn) | shove | fire | signature | 988.0 | 1.29 | 123.0 | 0.48 | 0.79 | 1.11 |  |
-| Shadow Claw (shadow-sneak) | homing | ghost |  | 1136.1 | 1.48 | 1132.4 | 4.43 | 2.56 | 1.11 |  |
-| Veevee Volley ★ (veevee-volley) | leap | normal | signature | 1297.9 | 1.69 | 215.4 | 0.84 | 1.19 | 1.11 |  |
-| Eruption (heat-wave) | nova | fire |  | 970.6 | 1.26 | 157.9 | 0.62 | 0.88 | 1.10 |  |
-| Dragon Pulse (dragon-breath) | cone | dragon |  | 563.6 | 0.73 | 531.4 | 2.08 | 1.23 | 1.10 |  |
-| Pin Missile (infestation) | bind | bug | yes | 966.1 | 1.26 | 241.5 | 0.95 | 1.09 | 1.09 |  |
-| Shadow Force ★ (shadow-force) | leap | ghost | signature | 1808.7 | 2.35 | 150.1 | 0.59 | 1.18 | 1.09 |  |
-| Liquidation (dive) | leap | water | yes | 1462.9 | 1.90 | 182.9 | 0.72 | 1.17 | 1.08 |  |
-| Head Charge (take-down) | recoil | normal | yes | 302.4 | 0.39 | 301.1 | 1.18 | 0.68 | 1.08 |  |
-| Infernal Parade (ominous-wind) | vortex | ghost |  | 1206.2 | 1.57 | 138.1 | 0.54 | 0.92 | 1.07 |  |
-| Focus Blast (aura-sphere) | projectile | fighting |  | 741.8 | 0.97 | 747.9 | 2.93 | 1.68 | 1.07 |  |
-| Mega Punch (dynamic-punch) | stun | fighting |  | 556.1 | 0.72 | 140.2 | 0.55 | 0.63 | 1.06 |  |
-| Thunder (thunder-shock) | projectile | electric |  | 677.5 | 0.88 | 774.3 | 3.03 | 1.63 | 1.04 |  |
-| Psycho Boost ★ (psycho-boost) | charge | psychic | signature | 262.1 | 0.34 | 263.2 | 1.03 | 0.59 | 1.04 |  |
-| Thrash (fury-swipes) | ramp | normal | yes | 458.0 | 0.60 | 456.1 | 1.78 | 1.03 | 1.03 |  |
-| Drill Peck (wing-attack) | melee | flying |  | 791.6 | 1.03 | 263.9 | 1.03 | 1.03 | 1.03 |  |
-| Uproar (hyper-voice) | nova | normal |  | 857.2 | 1.12 | 156.9 | 0.61 | 0.83 | 1.03 |  |
-| Steel Beam (flash-cannon) | beam | steel |  | 209.3 | 0.27 | 211.0 | 0.83 | 0.47 | 1.02 |  |
-| Feint (quick-attack) | dash | normal |  | 285.8 | 0.37 | 287.0 | 1.12 | 0.65 | 1.02 |  |
-| Megahorn (signal-beam) | bounce | bug |  | 1915.3 | 2.49 | 261.8 | 1.02 | 1.60 | 1.02 |  |
-| Nightmare (night-shade) | aura | dark |  | 1248.8 | 1.62 | 156.7 | 0.61 | 1.00 | 1.02 |  |
-| Meteor Beam (power-gem) | bounce | rock |  | 1839.2 | 2.39 | 268.0 | 1.05 | 1.58 | 1.01 |  |
-| Misty Explosion (dazzling-gleam) | aura | fairy |  | 1247.8 | 1.62 | 155.3 | 0.61 | 0.99 | 1.01 |  |
-| Fire Blast (ember) | projectile | fire |  | 901.6 | 1.17 | 546.0 | 2.14 | 1.58 | 1.01 |  |
-| Storm Throw (circle-throw) | grab | fighting | yes | 448.8 | 0.58 | 443.3 | 1.73 | 1.01 | 1.01 |  |
-| Upper Hand (fake-out) | melee | normal | yes | 884.9 | 1.15 | 222.6 | 0.87 | 1.00 | 1.00 |  |
-| Overheat (flamethrower) | cone | fire |  | 509.8 | 0.66 | 488.1 | 1.91 | 1.13 | 1.00 |  |
-| Aqua Cutter (hydro-pump) | beam | water |  | 206.1 | 0.27 | 205.3 | 0.80 | 0.46 | 1.00 |  |
-| Power Whip (vine-whip) | melee | grass |  | 763.5 | 0.99 | 255.6 | 1.00 | 1.00 | 1.00 |  |
-| Shock Wave (discharge) | aura | electric |  | 1229.5 | 1.60 | 154.3 | 0.60 | 0.98 | 1.00 |  |
-| Rising Voltage (thunderbolt) | chain | electric |  | 898.2 | 1.17 | 169.1 | 0.66 | 0.88 | 1.00 |  |
-| Stone Edge (rock-throw) | projectile | rock |  | 873.5 | 1.14 | 552.3 | 2.16 | 1.57 | 1.00 |  |
-| Stealth Rock (rock-slide) | meteor | rock |  | 815.3 | 1.06 | 279.5 | 1.09 | 1.08 | 1.00 |  |
-| Moonblast (fairy-wind) | nova | fairy |  | 862.6 | 1.12 | 146.3 | 0.57 | 0.80 | 1.00 |  |
-| Bone Rush (bonemerang) | boomerang | ground |  | 409.4 | 0.53 | 166.1 | 0.65 | 0.59 | 1.00 |  |
-| Fissure (spikes) | mine | ground |  | 25.2 | 0.03 | 75.6 | 0.30 | 0.10 | 1.00 |  |
-| Double Team (substitute) | turret | normal |  | 410.0 | 0.53 | 411.7 | 1.61 | 0.93 | 1.00 |  |
-| Fire Lash (flame-wheel) | trail | fire |  | 1378.0 | 1.79 | 359.7 | 1.41 | 1.59 | 1.00 |  |
-| Bullet Seed (seed-bomb) | bounce | grass |  | 1827.4 | 2.38 | 264.0 | 1.03 | 1.57 | 1.00 |  |
-| Solar Blade (solar-beam) | charge | grass |  | 252.8 | 0.33 | 251.8 | 0.99 | 0.57 | 1.00 |  |
-| Psywave (extrasensory) | shove | psychic |  | 881.7 | 1.15 | 111.1 | 0.43 | 0.71 | 1.00 |  |
-| High Horsepower (sand-tomb) | vortex | ground |  | 1103.4 | 1.44 | 131.2 | 0.51 | 0.86 | 1.00 |  |
-| Drill Run (magnitude) | quake | ground |  | 230.2 | 0.30 | 325.6 | 1.27 | 0.62 | 1.00 |  |
-| Lunge (u-turn) | dash | bug |  | 281.4 | 0.37 | 279.1 | 1.09 | 0.63 | 1.00 |  |
-| Smack Down (rock-tomb) | stun | rock |  | 526.7 | 0.69 | 130.6 | 0.51 | 0.59 | 1.00 |  |
-| Icicle Spear (ice-shard) | homing | ice |  | 1015.0 | 1.32 | 1023.4 | 4.00 | 2.30 | 1.00 |  |
-| High Jump Kick (rolling-kick) | spin | fighting |  | 1557.1 | 2.03 | 392.5 | 1.54 | 1.76 | 1.00 |  |
-| Spark (electro-ball) | bounce | electric |  | 1827.5 | 2.38 | 264.0 | 1.03 | 1.57 | 1.00 |  |
-| Heavy Slam (gyro-ball) | spin | steel |  | 1543.2 | 2.01 | 387.4 | 1.52 | 1.74 | 0.99 |  |
-| Low Kick (reversal) | melee | fighting | yes | 865.6 | 1.13 | 217.3 | 0.85 | 0.98 | 0.98 |  |
-| Venoshock (acid-spray) | bounce | poison |  | 1749.4 | 2.28 | 261.8 | 1.02 | 1.53 | 0.97 |  |
-| Heat Crash (flame-charge) | dash | fire |  | 270.4 | 0.35 | 272.6 | 1.07 | 0.61 | 0.97 |  |
-| Dual Wingbeat (fly) | leap | flying | yes | 1130.5 | 1.47 | 188.4 | 0.74 | 1.04 | 0.97 |  |
-| Malignant Chain (sludge-wave) | wave | poison | yes | 485.1 | 0.63 | 80.2 | 0.31 | 0.44 | 0.96 |  |
-| Spirit Shackle ★ (spirit-shackle) | projectile | ghost | signature | 822.3 | 1.07 | 536.1 | 2.10 | 1.50 | 0.96 |  |
-| Iron Head (metal-claw) | melee | steel |  | 593.5 | 0.77 | 298.0 | 1.17 | 0.95 | 0.95 |  |
-| Psyshock (confusion) | projectile | psychic |  | 650.6 | 0.85 | 662.4 | 2.59 | 1.48 | 0.95 |  |
-| Stomping Tantrum (dig) | leap | ground | yes | 1266.2 | 1.65 | 159.6 | 0.62 | 1.01 | 0.94 |  |
-| Bolt Beak (volt-switch) | dash | electric | yes | 272.6 | 0.35 | 252.7 | 0.99 | 0.59 | 0.94 |  |
-| Wave Crash (flip-turn) | dash | water | yes | 270.4 | 0.35 | 252.7 | 0.99 | 0.59 | 0.93 |  |
-| Prismatic Laser (hyper-beam) | charge | normal |  | 235.5 | 0.31 | 234.6 | 0.92 | 0.53 | 0.93 |  |
-| Dragon Hammer (dragon-tail) | grab | dragon | yes | 423.5 | 0.55 | 398.7 | 1.56 | 0.93 | 0.93 |  |
-| Anchor Shot (mirror-shot) | bounce | steel |  | 1712.7 | 2.23 | 243.7 | 0.95 | 1.46 | 0.93 |  |
-| Brine (whirlpool) | vortex | water |  | 1070.7 | 1.39 | 116.6 | 0.46 | 0.80 | 0.93 |  |
-| Acrobatics (aerial-ace) | dash | flying |  | 259.3 | 0.34 | 257.2 | 1.01 | 0.58 | 0.92 |  |
-| Leaf Tornado (giga-drain) | aura | grass |  | 1164.6 | 1.52 | 137.6 | 0.54 | 0.90 | 0.92 |  |
-| Synchronoise (mist-ball) | homing | psychic |  | 931.3 | 1.21 | 931.3 | 3.64 | 2.10 | 0.91 |  |
-| Facade (smelling-salts) | melee | normal | yes | 807.1 | 1.05 | 201.8 | 0.79 | 0.91 | 0.91 |  |
-| Arm Thrust (wake-up-slap) | melee | fighting | yes | 803.7 | 1.05 | 201.8 | 0.79 | 0.91 | 0.91 |  |
-| Lash Out (power-trip) | melee | dark | yes | 803.7 | 1.05 | 201.8 | 0.79 | 0.91 | 0.91 |  |
-| Astral Barrage (phantom-force) | leap | ghost | yes | 1055.1 | 1.37 | 177.3 | 0.69 | 0.98 | 0.91 |  |
-| Earth Power (mud-shot) | nova | ground |  | 769.9 | 1.00 | 134.2 | 0.53 | 0.73 | 0.90 |  |
-| Earthquake (bulldoze) | aura | ground |  | 1076.6 | 1.40 | 144.0 | 0.56 | 0.89 | 0.90 |  |
-| Thousand Arrows ★ (thousand-arrows) | meteor | ground | signature | 715.9 | 0.93 | 255.7 | 1.00 | 0.97 | 0.90 |  |
-| Blizzard (ice-beam) | beam | ice |  | 181.2 | 0.24 | 182.7 | 0.72 | 0.41 | 0.88 |  |
-| Sludge Bomb (sludge) | projectile | poison |  | 770.9 | 1.00 | 481.3 | 1.88 | 1.37 | 0.88 |  |
-| Charm (disarming-voice) | shove | fairy |  | 768.5 | 1.00 | 95.7 | 0.37 | 0.61 | 0.87 |  |
-| Water Spout (bubble) | nova | water |  | 744.5 | 0.97 | 125.5 | 0.49 | 0.69 | 0.86 |  |
-| Moonlight (draining-kiss) | homing | fairy |  | 865.9 | 1.13 | 862.3 | 3.37 | 1.95 | 0.85 |  |
-| Slam (tackle) | melee | normal |  | 524.7 | 0.68 | 264.9 | 1.04 | 0.84 | 0.84 |  |
-| Icy Wind (powder-snow) | aura | ice |  | 1035.3 | 1.35 | 130.0 | 0.51 | 0.83 | 0.84 |  |
-| Aqua Tail (bubble-beam) | cone | water |  | 433.3 | 0.56 | 388.8 | 1.52 | 0.93 | 0.82 |  |
-| Inferno (will-o-wisp) | turret | fire |  | 352.8 | 0.46 | 323.5 | 1.27 | 0.76 | 0.82 |  |
-| Tailwind (whirlwind) | shove | flying |  | 725.6 | 0.94 | 91.1 | 0.36 | 0.58 | 0.82 |  |
-| Endeavor (flail) | melee | normal | yes | 722.3 | 0.94 | 180.5 | 0.71 | 0.81 | 0.82 |  |
-| Expanding Force (psychic) | nova | psychic |  | 668.5 | 0.87 | 125.5 | 0.49 | 0.65 | 0.82 |  |
-| Last Respects (hex) | chain | ghost |  | 730.1 | 0.95 | 136.9 | 0.54 | 0.71 | 0.81 |  |
-| Water Sport (water-pledge) | quake | water | yes | 219.3 | 0.29 | 219.3 | 0.86 | 0.49 | 0.80 |  |
-| Leafage (grass-pledge) | quake | grass | yes | 218.4 | 0.28 | 219.3 | 0.86 | 0.49 | 0.80 |  |
-| Incinerate (fire-pledge) | quake | fire | yes | 219.3 | 0.29 | 218.4 | 0.85 | 0.49 | 0.80 |  |
-| Sky Drop (bounce) | leap | flying | yes | 931.0 | 1.21 | 153.9 | 0.60 | 0.85 | 0.79 |  |
-| Matcha Gotcha (mega-drain) | homing | grass | yes | 800.7 | 1.04 | 804.0 | 3.15 | 1.81 | 0.79 |  |
-| Shadow Punch (lick) | melee | ghost |  | 490.5 | 0.64 | 245.5 | 0.96 | 0.78 | 0.79 |  |
-| Tri Attack (rapid-spin) | spin | normal |  | 1223.4 | 1.59 | 307.1 | 1.20 | 1.38 | 0.78 |  |
-| Frost Breath (freeze-dry) | stun | ice |  | 404.4 | 0.53 | 101.9 | 0.40 | 0.46 | 0.77 |  |
-| Scald (water-gun) | projectile | water |  | 597.0 | 0.78 | 483.3 | 1.89 | 1.21 | 0.77 |  |
-| Avalanche (hail) | meteor | ice |  | 571.6 | 0.74 | 238.3 | 0.93 | 0.83 | 0.77 |  |
-| Esper Wing (stored-power) | homing | psychic | yes | 731.7 | 0.95 | 731.7 | 2.86 | 1.65 | 0.72 |  |
-| Crunch (bite) | melee | dark |  | 317.9 | 0.41 | 315.3 | 1.23 | 0.71 | 0.72 |  |
-| Electroweb (thunder-wave) | stun | electric |  | 372.2 | 0.48 | 93.8 | 0.37 | 0.42 | 0.71 |  |
-| Psychic Fangs (psycho-cut) | boomerang | psychic |  | 248.7 | 0.32 | 128.4 | 0.50 | 0.40 | 0.69 |  |
-| Water Shuriken ★ (water-shuriken) | projectile | water | signature | 701.4 | 0.91 | 306.1 | 1.20 | 1.05 | 0.67 |  |
-| Air Cutter (air-slash) | homing | flying |  | 707.8 | 0.92 | 603.0 | 2.36 | 1.47 | 0.64 |  |
-| Poison Jab (poison-sting) | projectile | poison |  | 422.3 | 0.55 | 447.6 | 1.75 | 0.98 | 0.63 |  |
-| Boomburst (supersonic) | cone | normal | yes | 275.5 | 0.36 | 307.3 | 1.20 | 0.66 | 0.58 | weak |
-| X-Scissor (bug-bite) | melee | bug |  | 256.6 | 0.33 | 255.6 | 1.00 | 0.58 | 0.58 | weak |
-| Future Sight (psybeam) | beam | psychic |  | 116.0 | 0.15 | 116.0 | 0.45 | 0.26 | 0.56 | weak |
-| Revelation Dance (teeter-dance) | nova | normal | yes | 420.6 | 0.55 | 87.5 | 0.34 | 0.43 | 0.54 | weak |
-| Alluring Voice (sweet-kiss) | homing | fairy | yes | 532.8 | 0.69 | 526.3 | 2.06 | 1.19 | 0.52 | weak |
-| Population Bomb (swift) | homing | normal | yes | 639.6 | 0.83 | 433.2 | 1.69 | 1.19 | 0.52 | weak |
-| Dark Void ★ (dark-void) | sleep | dark | signature | 373.3 | 0.49 | 41.8 | 0.16 | 0.28 | 0.48 | weak |
-| Grassy Glide (leech-seed) | homing | grass | yes | 569.6 | 0.74 | 407.5 | 1.59 | 1.09 | 0.47 | weak |
-| Vital Throw (seismic-toss) | grab | fighting | yes | 214.2 | 0.28 | 201.8 | 0.79 | 0.47 | 0.47 | weak |
-| Night Daze (confuse-ray) | homing | ghost | yes | 488.7 | 0.64 | 431.2 | 1.69 | 1.04 | 0.45 | weak |
-| Quash (parting-shot) | dash | dark | yes | 121.4 | 0.16 | 120.9 | 0.47 | 0.27 | 0.43 | weak |
-| Poison Gas (toxic) | trail | poison |  | 435.2 | 0.57 | 210.0 | 0.82 | 0.68 | 0.43 | weak |
-| Transform (transform) | transform | normal | yes | 156.2 | 0.20 | 157.5 | 0.62 | 0.35 | 0.39 | weak |
-| Psychic Noise (hypnosis) | sleep | psychic | yes | 237.1 | 0.31 | 39.7 | 0.16 | 0.22 | 0.37 | weak |
-| Gunk Shot (toxic-spikes) | mine | poison |  | 7.7 | 0.01 | 30.8 | 0.12 | 0.03 | 0.35 | weak |
-| Spore Storm (sleep-powder) | sleep | grass | yes | 219.6 | 0.29 | 36.4 | 0.14 | 0.20 | 0.34 | weak |
-| Round (sing) | sleep | normal | yes | 217.8 | 0.28 | 31.4 | 0.12 | 0.19 | 0.32 | weak |
-| Bitter Malice (spore) | sleep | grass | yes | 156.8 | 0.20 | 31.1 | 0.12 | 0.16 | 0.27 | weak |
-| Snore (yawn) | sleep | normal | yes | 168.0 | 0.22 | 21.0 | 0.08 | 0.13 | 0.23 | weak |
-| Sandstorm (sandstorm) | weather | rock | yes | 119.5 | 0.16 | 14.8 | 0.06 | 0.09 | 0.10 | support |
+| Constrict (bind) | bind | normal | yes | 1098.0 | 1.43 | 273.3 | 1.07 | 1.24 | 1.23 |  |
+| Drum Beating ★ (drum-beating) | shove | grass | signature | 1127.2 | 1.47 | 141.5 | 0.55 | 0.90 | 1.23 |  |
+| First Impression (fury-cutter) | ramp | bug | yes | 538.7 | 0.70 | 545.4 | 2.13 | 1.22 | 1.22 |  |
+| Ice Spinner (ice-ball) | ramp | ice | yes | 538.5 | 0.70 | 540.7 | 2.12 | 1.22 | 1.22 |  |
+| Psycho Boost ★ (psycho-boost) | charge | psychic | signature | 330.3 | 0.43 | 263.2 | 1.03 | 0.67 | 1.21 |  |
+| Steel Roller (rollout) | ramp | rock | yes | 538.5 | 0.70 | 536.3 | 2.10 | 1.21 | 1.21 |  |
+| Foul Play (sucker-punch) | homing | dark |  | 1250.8 | 1.63 | 1214.1 | 4.75 | 2.78 | 1.21 |  |
+| Ivy Cudgel (wood-hammer) | recoil | grass | yes | 336.7 | 0.44 | 338.1 | 1.32 | 0.76 | 1.20 |  |
+| Mystical Fire ★ (mystical-fire) | homing | fire | signature | 1233.1 | 1.60 | 1215.9 | 4.76 | 2.76 | 1.20 |  |
+| Raging Fury (flare-blitz) | recoil | fire | yes | 336.7 | 0.44 | 336.7 | 1.32 | 0.76 | 1.20 |  |
+| Sheer Cold ★ (sheer-cold) | stun | ice | signature | 774.8 | 1.01 | 128.1 | 0.50 | 0.71 | 1.20 |  |
+| Beak Blast (brave-bird) | recoil | flying | yes | 335.3 | 0.44 | 336.7 | 1.32 | 0.76 | 1.20 |  |
+| Supercell Slam (wild-charge) | recoil | electric | yes | 334.6 | 0.44 | 333.2 | 1.30 | 0.75 | 1.19 |  |
+| Draco Meteor (dragon-rage) | beam | dragon |  | 244.7 | 0.32 | 243.7 | 0.95 | 0.55 | 1.19 |  |
+| Sky Attack ★ (sky-attack) | charge | flying | signature | 284.3 | 0.37 | 284.3 | 1.11 | 0.64 | 1.17 |  |
+| Brutal Swing (night-slash) | spin | dark |  | 1824.0 | 2.37 | 457.9 | 1.79 | 2.06 | 1.17 |  |
+| Hydro Cannon ★ (hydro-cannon) | charge | water | signature | 283.1 | 0.37 | 284.3 | 1.11 | 0.64 | 1.17 |  |
+| Close Combat (karate-chop) | melee | fighting |  | 728.5 | 0.95 | 362.7 | 1.42 | 1.16 | 1.16 |  |
+| Hydro Steam (muddy-water) | wave | water | yes | 561.3 | 0.73 | 100.6 | 0.39 | 0.54 | 1.16 |  |
+| Overdrive ★ (overdrive) | shove | electric | signature | 1058.3 | 1.38 | 131.8 | 0.52 | 0.84 | 1.15 |  |
+| Zap Cannon ★ (zap-cannon) | stun | electric | signature | 679.6 | 0.88 | 134.8 | 0.53 | 0.68 | 1.15 |  |
+| Poltergeist (shadow-ball) | projectile | ghost |  | 848.8 | 1.10 | 768.2 | 3.01 | 1.82 | 1.15 |  |
+| Magical Leaf (energy-ball) | homing | grass |  | 1165.5 | 1.52 | 1170.2 | 4.58 | 2.64 | 1.14 |  |
+| Swarm (bug-buzz) | aura | bug |  | 1409.9 | 1.83 | 176.3 | 0.69 | 1.12 | 1.14 |  |
+| Wring Out (wrap) | bind | normal | yes | 1014.2 | 1.32 | 252.5 | 0.99 | 1.14 | 1.14 |  |
+| Breaking Swipe (outrage) | spin | dragon |  | 1801.7 | 2.34 | 438.4 | 1.72 | 2.01 | 1.13 |  |
+| Collision Course (submission) | recoil | fighting | yes | 317.9 | 0.41 | 316.5 | 1.24 | 0.72 | 1.13 |  |
+| Throat Chop (payback) | melee | dark | yes | 993.3 | 1.29 | 249.4 | 0.98 | 1.12 | 1.12 |  |
+| Shadow Claw (shadow-sneak) | homing | ghost |  | 1127.8 | 1.47 | 1162.6 | 4.55 | 2.58 | 1.12 |  |
+| Dragon Ascent ★ (dragon-ascent) | leap | flying | signature | 1639.4 | 2.13 | 181.4 | 0.71 | 1.23 | 1.12 |  |
+| Frenzy Plant ★ (frenzy-plant) | quake | grass | signature | 304.6 | 0.40 | 303.3 | 1.19 | 0.69 | 1.12 |  |
+| Cross Chop (revenge) | melee | fighting | yes | 993.4 | 1.29 | 247.3 | 0.97 | 1.12 | 1.12 |  |
+| Eruption (heat-wave) | nova | fire |  | 940.0 | 1.22 | 158.6 | 0.62 | 0.87 | 1.11 |  |
+| Pin Missile (infestation) | bind | bug | yes | 966.2 | 1.26 | 241.5 | 0.95 | 1.09 | 1.09 |  |
+| Veevee Volley ★ (veevee-volley) | leap | normal | signature | 1303.4 | 1.70 | 215.4 | 0.84 | 1.20 | 1.09 |  |
+| Torch Song ★ (torch-song) | cone | fire | signature | 563.2 | 0.73 | 540.4 | 2.11 | 1.24 | 1.08 |  |
+| Electro Drift (thunder-cage) | bind | electric | yes | 922.2 | 1.20 | 249.8 | 0.98 | 1.08 | 1.08 |  |
+| Shadow Force ★ (shadow-force) | leap | ghost | signature | 1837.2 | 2.39 | 150.7 | 0.59 | 1.19 | 1.08 |  |
+| Blast Burn ★ (blast-burn) | shove | fire | signature | 988.1 | 1.29 | 123.5 | 0.48 | 0.79 | 1.08 |  |
+| Head Charge (take-down) | recoil | normal | yes | 301.1 | 0.39 | 299.9 | 1.17 | 0.68 | 1.07 |  |
+| Mega Punch (dynamic-punch) | stun | fighting |  | 558.4 | 0.73 | 140.2 | 0.55 | 0.63 | 1.06 |  |
+| Focus Blast (aura-sphere) | projectile | fighting |  | 751.0 | 0.98 | 747.9 | 2.93 | 1.69 | 1.06 |  |
+| Liquidation (dive) | leap | water | yes | 1456.9 | 1.90 | 181.4 | 0.71 | 1.16 | 1.06 |  |
+| Thunder (thunder-shock) | projectile | electric |  | 695.1 | 0.90 | 795.2 | 3.11 | 1.68 | 1.06 |  |
+| Steel Beam (flash-cannon) | beam | steel |  | 219.8 | 0.29 | 209.3 | 0.82 | 0.48 | 1.04 |  |
+| Dragon Pulse (dragon-breath) | cone | dragon |  | 537.9 | 0.70 | 522.8 | 2.05 | 1.20 | 1.04 |  |
+| Infernal Parade (ominous-wind) | vortex | ghost |  | 1192.4 | 1.55 | 136.9 | 0.54 | 0.91 | 1.04 |  |
+| Thrash (fury-swipes) | ramp | normal | yes | 456.1 | 0.59 | 458.0 | 1.79 | 1.03 | 1.03 |  |
+| Drill Peck (wing-attack) | melee | flying |  | 788.3 | 1.03 | 263.9 | 1.03 | 1.03 | 1.03 |  |
+| Feint (quick-attack) | dash | normal |  | 287.0 | 0.37 | 285.8 | 1.12 | 0.65 | 1.02 |  |
+| Nightmare (night-shade) | aura | dark |  | 1253.9 | 1.63 | 156.1 | 0.61 | 1.00 | 1.01 |  |
+| Meteor Beam (power-gem) | bounce | rock |  | 1839.1 | 2.39 | 268.0 | 1.05 | 1.58 | 1.01 |  |
+| Stone Edge (rock-throw) | projectile | rock |  | 922.1 | 1.20 | 550.5 | 2.15 | 1.61 | 1.01 |  |
+| Upper Hand (fake-out) | melee | normal | yes | 894.1 | 1.16 | 224.4 | 0.88 | 1.01 | 1.01 |  |
+| Misty Explosion (dazzling-gleam) | aura | fairy |  | 1242.6 | 1.62 | 155.3 | 0.61 | 0.99 | 1.01 |  |
+| Storm Throw (circle-throw) | grab | fighting | yes | 445.1 | 0.58 | 447.0 | 1.75 | 1.01 | 1.01 |  |
+| Uproar (hyper-voice) | nova | normal |  | 826.1 | 1.07 | 147.0 | 0.58 | 0.79 | 1.00 |  |
+| Bullet Seed (seed-bomb) | bounce | grass |  | 1827.5 | 2.38 | 264.0 | 1.03 | 1.57 | 1.00 |  |
+| Fire Blast (ember) | projectile | fire |  | 905.3 | 1.18 | 548.2 | 2.15 | 1.59 | 1.00 |  |
+| Overheat (flamethrower) | cone | fire |  | 516.3 | 0.67 | 502.4 | 1.97 | 1.15 | 1.00 |  |
+| Aqua Cutter (hydro-pump) | beam | water |  | 205.2 | 0.27 | 206.1 | 0.81 | 0.46 | 1.00 |  |
+| Power Whip (vine-whip) | melee | grass |  | 769.9 | 1.00 | 255.6 | 1.00 | 1.00 | 1.00 |  |
+| Shock Wave (discharge) | aura | electric |  | 1229.4 | 1.60 | 155.0 | 0.61 | 0.98 | 1.00 |  |
+| Rising Voltage (thunderbolt) | chain | electric |  | 909.4 | 1.18 | 167.8 | 0.66 | 0.88 | 1.00 |  |
+| Poison Gas (toxic) | trail | poison |  | 411.7 | 0.54 | 210.9 | 0.83 | 0.66 | 1.00 |  |
+| Stealth Rock (rock-slide) | meteor | rock |  | 830.2 | 1.08 | 285.4 | 1.12 | 1.10 | 1.00 |  |
+| Moonblast (fairy-wind) | nova | fairy |  | 824.3 | 1.07 | 146.4 | 0.57 | 0.78 | 1.00 |  |
+| Bone Rush (bonemerang) | boomerang | ground |  | 318.4 | 0.41 | 166.8 | 0.65 | 0.52 | 1.00 |  |
+| Fissure (spikes) | mine | ground |  | 37.5 | 0.05 | 50.4 | 0.20 | 0.10 | 1.00 |  |
+| Double Team (substitute) | turret | normal |  | 411.7 | 0.54 | 411.7 | 1.61 | 0.93 | 1.00 |  |
+| Solar Blade (solar-beam) | charge | grass |  | 237.0 | 0.31 | 249.7 | 0.98 | 0.55 | 1.00 |  |
+| Spark (electro-ball) | bounce | electric |  | 1820.0 | 2.37 | 264.0 | 1.03 | 1.56 | 1.00 |  |
+| Psywave (extrasensory) | shove | psychic |  | 948.8 | 1.23 | 110.2 | 0.43 | 0.73 | 1.00 |  |
+| High Horsepower (sand-tomb) | vortex | ground |  | 1151.5 | 1.50 | 131.8 | 0.52 | 0.88 | 1.00 |  |
+| Drill Run (magnitude) | quake | ground |  | 273.0 | 0.36 | 270.5 | 1.06 | 0.61 | 1.00 |  |
+| Lunge (u-turn) | dash | bug |  | 280.3 | 0.36 | 281.5 | 1.10 | 0.63 | 1.00 |  |
+| Smack Down (rock-tomb) | stun | rock |  | 522.4 | 0.68 | 132.2 | 0.52 | 0.59 | 1.00 |  |
+| Icicle Spear (ice-shard) | homing | ice |  | 1019.1 | 1.33 | 1023.3 | 4.00 | 2.30 | 1.00 |  |
+| High Jump Kick (rolling-kick) | spin | fighting |  | 1569.9 | 2.04 | 390.9 | 1.53 | 1.77 | 1.00 |  |
+| Megahorn (signal-beam) | bounce | bug |  | 1812.6 | 2.36 | 264.0 | 1.03 | 1.56 | 1.00 |  |
+| Heavy Slam (gyro-ball) | spin | steel |  | 1556.0 | 2.02 | 385.8 | 1.51 | 1.75 | 0.99 |  |
+| Low Kick (reversal) | melee | fighting | yes | 861.8 | 1.12 | 217.3 | 0.85 | 0.98 | 0.98 |  |
+| Wave Crash (flip-turn) | dash | water | yes | 272.6 | 0.35 | 272.6 | 1.07 | 0.62 | 0.97 |  |
+| Heat Crash (flame-charge) | dash | fire |  | 272.6 | 0.35 | 272.6 | 1.07 | 0.62 | 0.97 |  |
+| Venoshock (acid-spray) | bounce | poison |  | 1756.6 | 2.29 | 257.5 | 1.01 | 1.52 | 0.97 |  |
+| Spirit Shackle ★ (spirit-shackle) | projectile | ghost | signature | 863.7 | 1.12 | 536.1 | 2.10 | 1.54 | 0.97 |  |
+| Earth Power (mud-shot) | nova | ground |  | 734.8 | 0.96 | 152.7 | 0.60 | 0.76 | 0.96 |  |
+| Malignant Chain (sludge-wave) | wave | poison | yes | 483.1 | 0.63 | 80.2 | 0.31 | 0.44 | 0.96 |  |
+| Dragon Hammer (dragon-tail) | grab | dragon | yes | 425.2 | 0.55 | 420.0 | 1.64 | 0.95 | 0.95 |  |
+| Iron Head (metal-claw) | melee | steel |  | 593.6 | 0.77 | 298.0 | 1.17 | 0.95 | 0.95 |  |
+| Psyshock (confusion) | projectile | psychic |  | 668.0 | 0.87 | 665.2 | 2.60 | 1.50 | 0.95 |  |
+| Dual Wingbeat (fly) | leap | flying | yes | 1130.5 | 1.47 | 186.9 | 0.73 | 1.04 | 0.94 |  |
+| Prismatic Laser (hyper-beam) | charge | normal |  | 221.7 | 0.29 | 235.5 | 0.92 | 0.52 | 0.94 |  |
+| Anchor Shot (mirror-shot) | bounce | steel |  | 1725.6 | 2.25 | 243.7 | 0.95 | 1.46 | 0.94 |  |
+| Stomping Tantrum (dig) | leap | ground | yes | 1271.5 | 1.65 | 158.9 | 0.62 | 1.01 | 0.92 |  |
+| Acrobatics (aerial-ace) | dash | flying |  | 257.2 | 0.33 | 259.3 | 1.01 | 0.58 | 0.92 |  |
+| Leaf Tornado (giga-drain) | aura | grass |  | 1164.7 | 1.52 | 137.6 | 0.54 | 0.90 | 0.92 |  |
+| Synchronoise (mist-ball) | homing | psychic |  | 935.1 | 1.22 | 935.1 | 3.66 | 2.11 | 0.92 |  |
+| Earthquake (bulldoze) | aura | ground |  | 1093.5 | 1.42 | 145.2 | 0.57 | 0.90 | 0.91 |  |
+| Brine (whirlpool) | vortex | water |  | 1013.2 | 1.32 | 124.0 | 0.49 | 0.80 | 0.91 |  |
+| Expanding Force (psychic) | nova | psychic |  | 686.7 | 0.89 | 144.9 | 0.57 | 0.71 | 0.91 |  |
+| Arm Thrust (wake-up-slap) | melee | fighting | yes | 807.1 | 1.05 | 200.9 | 0.79 | 0.91 | 0.91 |  |
+| Lash Out (power-trip) | melee | dark | yes | 807.1 | 1.05 | 200.9 | 0.79 | 0.91 | 0.91 |  |
+| Facade (smelling-salts) | melee | normal | yes | 800.5 | 1.04 | 201.7 | 0.79 | 0.91 | 0.91 |  |
+| Bolt Beak (volt-switch) | dash | electric | yes | 252.7 | 0.33 | 252.7 | 0.99 | 0.57 | 0.90 |  |
+| Tailwind (whirlwind) | shove | flying |  | 816.5 | 1.06 | 102.5 | 0.40 | 0.65 | 0.89 |  |
+| Blizzard (ice-beam) | beam | ice |  | 183.5 | 0.24 | 182.8 | 0.72 | 0.41 | 0.89 |  |
+| Astral Barrage (phantom-force) | leap | ghost | yes | 1059.5 | 1.38 | 176.6 | 0.69 | 0.98 | 0.89 |  |
+| Water Spout (bubble) | nova | water |  | 745.5 | 0.97 | 125.5 | 0.49 | 0.69 | 0.88 |  |
+| Quash (parting-shot) | dash | dark | yes | 241.8 | 0.31 | 242.8 | 0.95 | 0.55 | 0.86 |  |
+| Sky Drop (bounce) | leap | flying | yes | 1022.2 | 1.33 | 171.1 | 0.67 | 0.94 | 0.86 |  |
+| Moonlight (draining-kiss) | homing | fairy |  | 858.7 | 1.12 | 862.3 | 3.37 | 1.94 | 0.84 |  |
+| Slam (tackle) | melee | normal |  | 527.6 | 0.69 | 263.8 | 1.03 | 0.84 | 0.84 |  |
+| Icy Wind (powder-snow) | aura | ice |  | 1035.2 | 1.35 | 130.0 | 0.51 | 0.83 | 0.84 |  |
+| Charm (disarming-voice) | shove | fairy |  | 768.5 | 1.00 | 96.1 | 0.38 | 0.61 | 0.84 |  |
+| Last Respects (hex) | chain | ghost |  | 763.9 | 0.99 | 136.4 | 0.53 | 0.73 | 0.83 |  |
+| Inferno (will-o-wisp) | turret | fire |  | 352.9 | 0.46 | 322.2 | 1.26 | 0.76 | 0.82 |  |
+| Matcha Gotcha (mega-drain) | homing | grass | yes | 808.6 | 1.05 | 858.7 | 3.36 | 1.88 | 0.82 |  |
+| Aqua Tail (bubble-beam) | cone | water |  | 431.5 | 0.56 | 399.9 | 1.56 | 0.94 | 0.82 |  |
+| Endeavor (flail) | melee | normal | yes | 725.0 | 0.94 | 180.5 | 0.71 | 0.82 | 0.82 |  |
+| Future Sight (psybeam) | beam | psychic |  | 167.8 | 0.22 | 167.1 | 0.65 | 0.38 | 0.81 |  |
+| Sludge Bomb (sludge) | projectile | poison |  | 730.3 | 0.95 | 448.7 | 1.76 | 1.29 | 0.81 |  |
+| Leafage (grass-pledge) | quake | grass | yes | 219.3 | 0.29 | 219.3 | 0.86 | 0.49 | 0.81 |  |
+| Incinerate (fire-pledge) | quake | fire | yes | 218.4 | 0.28 | 219.3 | 0.86 | 0.49 | 0.81 |  |
+| Water Sport (water-pledge) | quake | water | yes | 217.5 | 0.28 | 219.3 | 0.86 | 0.49 | 0.80 |  |
+| Metronome (metronome) | metronome | normal | yes | 488.8 | 0.64 | 210.9 | 0.83 | 0.72 | 0.80 |  |
+| Scald (water-gun) | projectile | water |  | 615.9 | 0.80 | 509.6 | 1.99 | 1.26 | 0.80 |  |
+| Psychic Fangs (psycho-cut) | boomerang | psychic |  | 256.8 | 0.33 | 128.9 | 0.50 | 0.41 | 0.79 |  |
+| Shadow Punch (lick) | melee | ghost |  | 490.4 | 0.64 | 246.3 | 0.96 | 0.78 | 0.78 |  |
+| Tri Attack (rapid-spin) | spin | normal |  | 1223.4 | 1.59 | 304.6 | 1.19 | 1.38 | 0.78 |  |
+| Frost Breath (freeze-dry) | stun | ice |  | 406.1 | 0.53 | 102.4 | 0.40 | 0.46 | 0.78 |  |
+| Thousand Arrows ★ (thousand-arrows) | meteor | ground | signature | 777.3 | 1.01 | 173.9 | 0.68 | 0.83 | 0.76 |  |
+| Esper Wing (stored-power) | homing | psychic | yes | 736.9 | 0.96 | 734.7 | 2.87 | 1.66 | 0.72 |  |
+| Electroweb (thunder-wave) | stun | electric |  | 375.3 | 0.49 | 93.4 | 0.37 | 0.42 | 0.71 |  |
+| Crunch (bite) | melee | dark |  | 316.6 | 0.41 | 313.4 | 1.23 | 0.71 | 0.71 |  |
+| Water Shuriken ★ (water-shuriken) | projectile | water | signature | 682.3 | 0.89 | 307.4 | 1.20 | 1.03 | 0.65 |  |
+| Avalanche (hail) | meteor | ice |  | 574.0 | 0.75 | 174.0 | 0.68 | 0.71 | 0.65 |  |
+| Air Cutter (air-slash) | homing | flying |  | 713.4 | 0.93 | 588.4 | 2.30 | 1.46 | 0.63 |  |
+| Poison Jab (poison-sting) | projectile | poison |  | 427.7 | 0.56 | 431.4 | 1.69 | 0.97 | 0.61 |  |
+| Boomburst (supersonic) | cone | normal | yes | 285.1 | 0.37 | 306.1 | 1.20 | 0.67 | 0.58 | weak |
+| X-Scissor (bug-bite) | melee | bug |  | 254.5 | 0.33 | 256.6 | 1.00 | 0.58 | 0.58 | weak |
+| Revelation Dance (teeter-dance) | nova | normal | yes | 379.1 | 0.49 | 87.1 | 0.34 | 0.41 | 0.52 | weak |
+| Alluring Voice (sweet-kiss) | homing | fairy | yes | 528.4 | 0.69 | 530.6 | 2.08 | 1.19 | 0.52 | weak |
+| Population Bomb (swift) | homing | normal | yes | 631.1 | 0.82 | 433.1 | 1.69 | 1.18 | 0.51 | weak |
+| Vital Throw (seismic-toss) | grab | fighting | yes | 215.2 | 0.28 | 215.2 | 0.84 | 0.49 | 0.49 | weak |
+| Dark Void ★ (dark-void) | sleep | dark | signature | 374.9 | 0.49 | 41.8 | 0.16 | 0.28 | 0.48 | weak |
+| Grassy Glide (leech-seed) | homing | grass | yes | 572.0 | 0.74 | 407.4 | 1.59 | 1.09 | 0.47 | weak |
+| Gunk Shot (toxic-spikes) | mine | poison |  | 7.2 | 0.01 | 53.7 | 0.21 | 0.04 | 0.45 | weak |
+| Night Daze (confuse-ray) | homing | ghost | yes | 431.1 | 0.56 | 490.7 | 1.92 | 1.04 | 0.45 | weak |
+| Transform (transform) | transform | normal | yes | 156.2 | 0.20 | 156.8 | 0.61 | 0.35 | 0.39 | weak |
+| Psychic Noise (hypnosis) | sleep | psychic | yes | 237.1 | 0.31 | 39.5 | 0.15 | 0.22 | 0.37 | weak |
+| Spore Storm (sleep-powder) | sleep | grass | yes | 220.5 | 0.29 | 36.7 | 0.14 | 0.20 | 0.34 | weak |
+| Round (sing) | sleep | normal | yes | 217.8 | 0.28 | 31.5 | 0.12 | 0.19 | 0.32 | weak |
+| Bitter Malice (spore) | sleep | grass | yes | 156.2 | 0.20 | 31.4 | 0.12 | 0.16 | 0.27 | weak |
+| Snore (yawn) | sleep | normal | yes | 166.6 | 0.22 | 21.0 | 0.08 | 0.13 | 0.23 | weak |
+| Sandstorm (sandstorm) | weather | rock | yes | 120.0 | 0.16 | 14.9 | 0.06 | 0.10 | 0.11 | support |
 | Belly Drum (swords-dance) | buff | normal |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Quiver Dance (nasty-plot) | buff | normal |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Rock Polish (agility) | buff | normal |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Iron Defense (harden) | buff | normal |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Fiery Dance (fire-spin) | orbit | fire |  | 1314.1 | 1.71 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Fiery Dance (fire-spin) | orbit | fire |  | 1325.2 | 1.72 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
 | Ingrain (aqua-ring) | buff | water |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Petal Dance (leaf-storm) | orbit | grass |  | 800.7 | 1.04 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
-| Hurricane (gust) | orbit | flying |  | 696.4 | 0.91 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Petal Dance (leaf-storm) | orbit | grass |  | 800.8 | 1.04 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Hurricane (gust) | orbit | flying |  | 702.2 | 0.91 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
 | Clangorous Soul (dragon-dance) | buff | dragon |  | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Rock Blast (ancient-power) | orbit | rock |  | 703.6 | 0.92 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Fire Lash (flame-wheel) | trail | fire |  | 1402.6 | 1.83 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Rock Blast (ancient-power) | orbit | rock |  | 721.5 | 0.94 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
 | Obstruct (protect) | guard | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Silk Trap (detect) | guard | fighting | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Comeuppance (counter) | guard | fighting | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
@@ -267,14 +267,14 @@ Normal-game medians: crowd 768.5 DPS, single 255.6 DPS.
 | Mind Blown (shell-trap) | focus | fire | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
 | Lunar Blessing (recover) | heal | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Milk Drink (soft-boiled) | heal | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Heal Pulse (roost) | heal | flying | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
+| Swallow (roost) | heal | flying | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Jungle Healing (morning-sun) | heal | fire | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Life Dew (shore-up) | heal | ground | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Slack Off (rest) | heal | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Heal Bell (wish) | heal | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Floral Healing (strength-sap) | heal | grass | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Pollen Puff (heal-order) | heal | bug | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Wide Guard (reflect) | screen | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
+| Barrier (reflect) | screen | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Quick Guard (light-screen) | screen | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Crafty Shield (aurora-veil) | screen | ice | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Play Nice (growl) | shout | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
@@ -290,8 +290,13 @@ Normal-game medians: crowd 768.5 DPS, single 255.6 DPS.
 | No Retreat (shell-smash) | buff | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Spotlight (follow-me) | shout | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Ally Switch (rage-powder) | shout | bug | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
-| Quash (taunt) | shout | dark | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
+| Embargo (taunt) | shout | dark | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Sweet Scent (attract) | shout | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
+| Purify (heal-pulse) | ally | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Teatime (aromatherapy) | ally | grass | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Mat Block (wide-guard) | ally | rock | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Shelter (block) | ally | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
+| Coaching (helping-hand) | ally | normal | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | weak |
 | Victory Dance (bulk-up) | buff | fighting | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Take Heart (calm-mind) | buff | psychic | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |
 | Acid Armor (coil) | buff | poison | yes | 0.0 | 0.00 | 0.0 | 0.00 | 0.00 | 0.00 | support |

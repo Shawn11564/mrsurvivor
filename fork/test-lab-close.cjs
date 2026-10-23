@@ -176,7 +176,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   });
   check(focus.landed > 0, `Focus Punch lands when you're not hit (${focus.landed} damage)`);
   check(focus.lost > 0 && Math.abs(focus.lost / focus.landed - 0.65) < 0.03, `a hit while focusing weakens it by 35% (${focus.lost} of ${focus.landed})`);
-  check(focus.brace === 0.53, `and while focusing you take 30% less, on top of the close-range 25% (×${focus.brace} = 0.7 × 0.75)`);
+  check(Math.abs(focus.brace - 0.455) < 0.011, `and while focusing you take 30% less, on top of Lab's close-range 35% (×${focus.brace} = 0.7 × 0.65)`);
   check(focus.trap === 3, `Shell Trap explodes around you when you're hit (${focus.trap} of 3 hit)`);
 
   // ---------------- 5. heal ----------------
@@ -377,7 +377,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     for (const id of ['bind', 'seismic-toss', 'focus-punch', 'fury-cutter', 'karate-chop']) { __only(id); k[id] = +(take() / far).toFixed(2); }
     return k;
   });
-  check(Object.values(close).every(v => v === 0.75), 'with a grab, bind, focus, ramp or melee move active you take 25% less', close);
+  check(Object.values(close).every(v => v === 0.65), 'in Lab, with a grab, bind, focus, ramp or melee move active you take 35% less (stream A, A4)', close);
 
   // ---------------- 12. odds and ends ----------------
   console.log('Metronome, evolution, Iron Fist');

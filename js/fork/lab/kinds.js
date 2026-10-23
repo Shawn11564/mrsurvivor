@@ -4,7 +4,7 @@
  * are in js/fork/lab/lab-moves.js and only show up in a Lab run (G.Lab).
  *
  *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and the blast lands on the target; you
- *              stay untouchable LEAP_GRACE s after. Where you come down is the move's `land`: 'stay' (Fly,
+ *              stay untouchable LEAP_GRACE s after landing by the target (LEAP_UPTIME). Where you come down is the move's `land`: 'stay' (Fly,
  *              Bounce: you rise and come down where you were), 'short' (Dig, Dive: LAND_SHORT px short of
  *              the target, on your side), 'back' (Phantom Force: LAND_BACK px behind where you were, away
  *              from the target), or on the target (the others, Shadow Force's chain)
@@ -13,8 +13,7 @@
  *              (`recoil` × the damage dealt, at most RECOIL_PER_S of your max HP in any second, and it
  *              never KOs you); a cast that knocks an enemy out gives half its recoil back
  *   ramp       Rollout, Fury Cutter, Ice Ball: each hit that lands hits harder (`step` per hit, up to
- *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) swings the
- *              way you walk and doesn't move you (js/fork/lab/mobility.js)
+ *              `stacks`); the stacks fade one per RAMP_FADE s without a hit. A roll (`roll`) doesn't move you
  *   guard      Protect, Detect (protect: nothing hurts you for `dur` s), Counter, Mirror
  *              Coat, Metal Burst (counter, the "Aegis": hits of its category (`cat`; Metal Burst: all,
  *              `storeAll`) are blocked and stored, others halved; at the end a blast returns `mult` × the stored)
@@ -46,8 +45,9 @@ G.LabKinds = (() => {
   const now = () => performance.now();
   const boss = e => e.boss || e.judge;
   const authority = () => !G.Coop.active || G.Coop.isHost;
-  const RECOIL_PER_S = 0.08;             // recoil: at most this share of your max HP in any 1 s (it was 12 % a cast)
-  const LEAP_GRACE = 0.6;                // a leap: untouchable this long after landing (it was 0.15 s)
+  const RECOIL_PER_S = 0.03;             // recoil: at most this share of your max HP in any 1 s (it was 12 % a cast)
+  const LEAP_GRACE = 0.6;                // a leap that lands by the target: untouchable this long after landing (it was 0.15 s)
+  const LEAP_UPTIME = 0.6;               // ...but a leap's untouchable time (beyond its time in the air) is at most this share of its recharge
   const LAND_SHORT = 70, LAND_BACK = 60;  // a leap's `land`: 'short' stops this far before the target, 'back' this far behind you
   const RAMP_FADE = 1.5;                 // ramp: one stack fades per RAMP_FADE game s without a hit
   const gtime = () => G.Game.st.time;   // game time (a pause or the game's speed doesn't change it)
@@ -178,7 +178,10 @@ G.LabKinds = (() => {
       else if (land === 'back') [tx, ty] = freeTo(pl, pl.x, pl.y, pl.x - (x - pl.x) / d * LAND_BACK, pl.y - (y - pl.y) / d * LAND_BACK, 8, true);
       const dur = m.dur || 0.65;
       pl._labLeap = { t: 0, dur, sx: pl.x, sy: pl.y, tx, ty, style: m.leap || 'fly' };
-      if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur + LEAP_GRACE);
+      // Untouchable in the air, and after landing by the target (on it, or 'short'), within LEAP_UPTIME of the
+      // recharge: with 0.6 s after every landing an evolved Fly was never hit at all (fork/survival-lab.cjs).
+      const after = land === 'on' || land === 'short' ? LEAP_GRACE : 0.15;
+      if (!ghost) pl.invuln = Math.max(pl.invuln || 0, dur, Math.min(dur + after, LEAP_UPTIME * m.cd * pl.cdMul));
       fields.push({ kind: 'leap', owner: pl, ghost, m, t: 0, dur, x: bx, y: by, px: tx, py: ty, land, sx: pl.x, sy: pl.y, left: (m.chain || 1) - 1 });
       const v = G.VFX.forMove(m);
       G.FX.burst(pl.x, pl.y - 4, m.leap === 'dig' ? '#aa7c3c' : m.leap === 'dive' ? '#8ccaff' : col(m), 12, 140);
@@ -273,8 +276,8 @@ G.LabKinds = (() => {
     target: true, reach: m => m.radius + 30,
     run(pl, m, ghost) {
       const v = G.VFX.forMove(m), c = col(m);
-      // A roll (Rollout, Ice Ball) no longer moves you: it swings the way you walk (policy (a),
-      // js/fork/lab/mobility.js). It closed in up to 80 px a cast, into the crowd you were kiting.
+      // A roll (Rollout, Ice Ball) no longer moves you (it closed in up to 80 px a cast, into the crowd
+      // you were kiting): it swings at the target like melee.
       // A pause in the hits (kiting, a slot switch, a miss) takes one stack per RAMP_FADE s, not all of them.
       if (!ghost && m._ramp > 0) {
         const steps = Math.floor((gtime() - (m._rampAt || 0)) / RAMP_FADE);

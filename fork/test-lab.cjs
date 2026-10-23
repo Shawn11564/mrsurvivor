@@ -381,7 +381,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     pl.hp = pl.maxHp;
     await __until(() => m.dealt > 0, 3000);
     await new Promise(r => setTimeout(r, 60));
-    out.recoil = { lost: Math.round(pl.maxHp - pl.hp), cap: Math.round(pl.maxHp * 0.08) };
+    out.recoil = { lost: Math.round(pl.maxHp - pl.hp), cap: Math.round(pl.maxHp * 0.03) };
     pl.hp = pl.maxHp; pl.labAbility = 'rock-head'; m.dealt = 0;
     await __until(() => m.dealt > 0, 3000);
     await new Promise(r => setTimeout(r, 60));

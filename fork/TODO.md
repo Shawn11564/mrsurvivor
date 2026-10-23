@@ -48,11 +48,11 @@ How to use it:
 ## Phase 2: control and identity (Lab)
 
 ### Close range (stream A)
-- [ ] 20. [lab] A2 policy (a): mobility moves go the way you walk (else the aim), hit along the line, return you to the start (claimed: stream A)
-- [ ] 21. [ui] A2.4: "Mobility moves fire by hand" setting (Accessibility, off by default) (claimed: stream A)
-- [ ] 22. [lab] A3: pivots (U-turn, Volt Switch, Flip Turn, Parting Shot), Flame Charge, leaps (Fly/Bounce, Dig/Dive, Phantom Force), melee traits, Counter/Mirror Coat/Metal Burst as Aegis (claimed: stream A)
+- [x] 20. [lab] A2 policy (a): mobility moves go the way you walk (else the aim), hit along the line, return you to the start (878f68c)
+- [x] 21. [ui] A2.4: "Mobility moves fire by hand" setting (Accessibility, off by default) (293c9d2)
+- [x] 22. [lab] A3: pivots (U-turn, Volt Switch, Flip Turn, Parting Shot), Flame Charge, leaps (Fly/Bounce, Dig/Dive, Phantom Force), melee traits, Counter/Mirror Coat/Metal Burst as Aegis (290c83a)
 - [ ] 23. [lab] A4: survival-lab rows for every change; targets Karate Chop ≥ 200 s, Quick Attack ≥ 180 s, no close build < 150 s (claimed: stream A)
-- [ ] 24. [feat] G12: once 23's targets are met, promote the Phase 9 close-range kit and the spin/dash/recoil cut to normal runs (claimed: stream A)
+- [ ] 24. [feat] G12: once 23's targets are met, promote the Phase 9 close-range kit and the spin/dash/recoil cut to normal runs (stream A: not promoted, 23's targets not met after tuning: Karate Chop 174 s, Quick Attack 148 s, 12 close builds under 150; numbers in fork/LAB.md "Close range and mobility")
 
 ### Move diversity (stream B)
 - [x] 25. [lab] B1: honest evolutions (Future Sight, Stealth Rock, Venoshock, Belly Drum, Avalanche, Endeavor, Tailwind) (009bec2)

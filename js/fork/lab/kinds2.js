@@ -52,6 +52,9 @@ G.LabKinds2 = (() => {
   // A1.1) until G.LabKinds2.promoteCut is set (G12). CLOSE.has(kind) is what everything reads.
   const CLOSE_ALL = new Set(['ramp', 'grab', 'bind', 'focus', 'recoil']), CLOSE_LAB = new Set(['spin', 'dash']);
   let promoteCut = false;
+  // In Lab runs the close-range cut is 35 %, not 25 % (stream A's A4 tuning: close builds lasted 95-140 s
+  // in fork/survival-lab.cjs against ~190 for the best ranged move): this on top of the 25 %.
+  let LAB_CLOSE = 0.65 / 0.75;
   const CLOSE = { has: k => CLOSE_ALL.has(k) || (CLOSE_LAB.has(k) && (promoteCut || !!(G.Lab && G.Lab.active))) };
   const LEECH_CAP = 0.05, CUT_BOSS = 0.08, REVENGE_MS = 1500;
   const FOCUS_HIT = 0.35, FOCUS_MIN = 0.3, FOCUS_BRACE = 0.7;      // Focus Punch: per hit, minimum, damage taken while charging
@@ -415,6 +418,7 @@ G.LabKinds2 = (() => {
       if (k) amount *= 1 - k;
       const g = this.activeGroup();
       if (!g.some(m => m.kind === 'melee') && g.some(m => CLOSE.has(m.kind))) amount *= 0.75;
+      if (G.Lab && G.Lab.active && g.some(m => m.kind === 'melee' || CLOSE.has(m.kind))) amount *= LAB_CLOSE;
     }
     const f = this._labFocus;
     if (f && !f.ghost && f.t < f.dur) {
@@ -592,5 +596,6 @@ G.LabKinds2 = (() => {
 
   return { PASSIVE, CLOSE, EVO, mark, screenK, boost, LEECH_CAP, CUT_BOSS,
            get promoteCut() { return promoteCut; }, set promoteCut(v) { promoteCut = !!v; },
+           get labClose() { return LAB_CLOSE; }, set labClose(v) { LAB_CLOSE = +v; },
            counts: () => ({ thrown: thrown.length, binds: binds.length, screens: screens.length, marked: marked.size, seeded: seeded.size }) };
 })();

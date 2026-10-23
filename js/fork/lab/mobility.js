@@ -1,7 +1,7 @@
 /* ============ mobility.js — moves that move you, in Lab runs (MrSurvivor fork) ============
  * fork/PLAN-2026-10-22.md section A (stream A); fork/LAB.md "Close range and mobility".
  *
- * The way you walk, and back (A2, policy (a), the owner's choice G1): a dash, a recoil charge or a roll
+ * The way you walk, and back (A2, policy (a), the owner's choice G1): a dash or a recoil charge
  * goes the way you're walking (pl.moveAngle), or towards your aim when you stand still (with Manual aim:
  * always the aim). It hits everything along that line and leaves you where you started, like the whip
  * of Vampire Survivors: the move is directional, you're never displaced. It only fires when an enemy
@@ -13,7 +13,7 @@
  * next slot (pl.cycle(1)); `rush` (Flame Charge): each cast stacks a speed boost; `meek` on a dash
  * (Parting Shot) marks the enemies it hits so they deal less (G.LabKinds2.mark).
  *
- * Mover grace (A1.2): for RELOC s after a dash, recoil, leap or roll, nothing hurts you (Player.hurt does
+ * Mover grace (A1.2): for RELOC s after a dash or recoil, or a leap that lands by the target, nothing hurts you (Player.hurt does
  * nothing, like js/fork/revive-grace.js). Their own invulnerability didn't cover what kills close
  * players: hazards and lava set invuln to 0 before they hit (hazards.js, player.js). A leap's grace runs
  * to RELOC s after it lands. Game time (Player.update), so a pause doesn't use it up. A new grace starts
@@ -30,8 +30,10 @@ G.LabMobility = (() => {
   const col = m => G.U.TYPE_COLOR[m.type];
 
   // ---------------- policy (a) ----------------
-  /** Moves that go along a line from you (dash, recoil) or swing an arc (roll). */
-  const lined = m => m.kind === 'dash' || m.kind === 'recoil' || (m.kind === 'ramp' && !!m.roll);
+  /** Moves that go along a line from you (dash, recoil). A roll (Rollout, Ice Ball) doesn't move you any
+   *  more (kinds.js) and swings at the target like melee: the way you walk, it missed whoever you were
+   *  circling (Rollout lasted 45 s in fork/survival-lab.cjs instead of 143). */
+  const lined = m => m.kind === 'dash' || m.kind === 'recoil';
   /** Where a mover goes: the way you walk, else your aim (with Manual aim, always the aim). */
   const dirFor = pl => pl.walking && !pl.manualAim ? pl.moveAngle : pl.aim;
   /** How far a line move goes from (x, y) along a before a wall (8 px steps, like combat.js dash). */
@@ -111,7 +113,8 @@ G.LabMobility = (() => {
   function graceFor(m) {
     if (!m) return 0;
     if (lined(m)) return RELOC;
-    if (m.kind === 'leap') return (m.dur || 0.65) + Math.max(0, (m.chain || 1) - 1) * (m.chainDur || 0.32) + RELOC;
+    // A leap that comes down by the target ('stay' and 'back' keep you out of the crowd: no grace).
+    if (m.kind === 'leap' && m.land !== 'stay' && m.land !== 'back') return (m.dur || 0.65) + Math.max(0, (m.chain || 1) - 1) * (m.chainDur || 0.32) + RELOC;
     return 0;
   }
   const P = G.Player.prototype, cast = P.cast, hurt = P.hurt, update = P.update;

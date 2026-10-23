@@ -55,7 +55,10 @@ G.LabTraits = (() => {
   const M = G.LabMech;
   for (const id in TRAITS) M.ID[id] = TRAITS[id](G.Moves.BY_ID[id]);
   const MOVER = 'Lab: it goes the way you walk (at your target when you stand still), hits everything on the way, and you stay where you were.';
-  M.keep(...Object.values(TEXT), STEP4.t, EVO.t, MOVER);
+  // In Lab the close-range cut is 35 % (js/fork/lab/kinds2.js LAB_CLOSE): the box says so.
+  const CLOSE_ES = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
+  const CLOSE_LAB = 'Close range (Lab): you take 35% less damage while it’s active.';
+  M.keep(...Object.values(TEXT), STEP4.t, EVO.t, MOVER, CLOSE_LAB);
 
   /** The run's first moves were made before G.Lab.active: swap them for their Lab copies. */
   function retrofit(pl) {
@@ -84,7 +87,9 @@ G.LabTraits = (() => {
   const tipNotes = G.MoveText.tipNotes;
   G.MoveText.tipNotes = function (m) {
     const out = tipNotes.apply(this, arguments);
-    if (m && lab() && G.LabMobility && G.LabMobility.lined(m)) out.push([MOVER, '#7fe0d0']);
+    if (!m || !lab()) return out;
+    for (const n of out) if (n[0] === CLOSE_ES) n[0] = CLOSE_LAB;
+    if (G.LabMobility && G.LabMobility.lined(m)) out.push([MOVER, '#7fe0d0']);
     return out;
   };
 

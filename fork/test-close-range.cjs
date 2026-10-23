@@ -155,17 +155,21 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   const cut = await page.evaluate(() => {
     __only('ember'); const far = __take(), k = {};
     for (const id of ['quick-attack', 'rapid-spin', 'double-edge', 'karate-chop', 'fury-cutter']) { __only(id); k[id] = +(__take() / far).toFixed(2); }
+    const [kc] = __only('karate-chop');
+    k.tip = G.MoveText.tipNotes(kc, G.Game.player).map(n => n[0]).filter(t => /25 %|35%/.test(t));
     return k;
   });
-  check(Object.values(cut).every(v => v === 0.75), 'A1.1: with a dash, spin, recoil (and melee, ramp) move active you take 25% less', cut);
+  const tip = cut.tip; delete cut.tip;
+  check(tip.length === 1 && /35% less/.test(tip[0]), "A4: the move's box says 35% in Lab", tip);
+  check(Object.values(cut).every(v => v === 0.65), 'A1.1, A4: in Lab, with a dash, spin, recoil, melee or ramp move active you take 35% less', cut);
 
   console.log('Lab run: relocation grace (A1.2)');
   const grace = await page.evaluate(async () => {
     const pl = G.Game.player, out = {};
-    for (const id of ['quick-attack', 'double-edge', 'fly', 'rollout']) {
+    for (const id of ['quick-attack', 'double-edge', 'dig']) {
       const [m] = __only(id);
       pl.hp = pl.maxHp;
-      const e = __dummy(...__at(id === 'rollout' ? 45 : 110));
+      const e = __dummy(...__at(110));
       m.castAt = 0;
       await __until(() => m.castAt, 3000);
       if (pl._labLeap) await __until(() => !pl._labLeap, 2000);
@@ -189,25 +193,30 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     out.after = Math.round(pl.maxHp - pl.hp);
     return out;
   });
-  check(['quick-attack', 'double-edge', 'fly', 'rollout'].every(id => grace[id] === 0), 'A1.2: a hazard right after a dash, recoil, leap or roll does nothing', grace);
+  check(['quick-attack', 'double-edge', 'dig'].every(id => grace[id] === 0), 'A1.2: a hazard right after a dash, a recoil charge or a leap that lands by the enemy does nothing', grace);
   check(grace.after > 0, `A1.2: 0.7 s later it hurts again (${grace.after})`);
 
   console.log('Lab run: leap (A1.3)');
   const leap = await page.evaluate(async () => {
     const pl = G.Game.player;
-    const [m] = __only('fly');
-    const e = __dummy(...__at(150));
-    await __until(() => pl._labLeap, 3000);
-    await __until(() => !pl._labLeap, 3000);
-    return { inv: +pl.invuln.toFixed(2), hit: e.hp < e.maxHp };
+    const out = {};
+    for (const id of ['dig', 'fly']) {
+      __only(id);
+      const e = __dummy(...__at(150));
+      await __until(() => pl._labLeap, 3000);
+      await __until(() => !pl._labLeap, 3000);
+      out[id] = { inv: +pl.invuln.toFixed(2), hit: e.hp < e.maxHp };
+    }
+    return out;
   });
-  check(leap.inv >= 0.45, `A1.3: after landing you stay untouchable ~0.6 s (${leap.inv} s left)`);
-  check(leap.hit, 'A1.3: the landing blast hits the enemy');
+  check(leap.dig.inv >= 0.45, `A1.3: after Dig comes up by the enemy you stay untouchable ~0.6 s (${leap.dig.inv} s left)`);
+  check(leap.dig.hit && leap.fly.hit, 'A1.3: the landing blast hits the enemy');
+  check(leap.fly.inv <= 0.2, `A4: Fly comes down where it took off, away from the crowd: no long grace after it (${leap.fly.inv} s), or it was never hit at all`);
 
   console.log('Lab run: recoil (A1.4)');
   const rec = await page.evaluate(async () => {
     const pl = G.Game.player, out = {};
-    // Into a crowd of sturdy dummies, 3 s: at most 8% of max HP a second.
+    // Into a crowd of sturdy dummies, 3 s: at most 3% of max HP a second.
     const [m] = __only('double-edge');
     m.cd = 0.3;
     for (let i = 0; i < 8; i++) __dummy(...__at(30 + i * 12, (i % 2 ? 0.1 : -0.1)));
@@ -226,12 +235,12 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     await __wait(50);
     out.ko = weak.dead;
     out.dealt = Math.round(m2.dealt);
-    out.lost = Math.round(pl.maxHp - pl.hp);
-    out.cap = Math.round(pl.maxHp * 0.08);
+    out.lost = +(pl.maxHp - pl.hp).toFixed(2);
+    out.cap = +(pl.maxHp * 0.03).toFixed(2);
     return out;
   });
-  check(rec.lostPerSec > 0 && rec.lostPerSec <= 0.085, `A1.4: recoil costs at most 8% of max HP a second (${(rec.lostPerSec * 100).toFixed(1)}%/s)`);
-  check(rec.ko && rec.lost > 0 && rec.lost <= Math.ceil(rec.cap / 2) + 1, `A1.4: a KO gives half the recoil back (lost ${rec.lost}, at most half of ${rec.cap})`, rec);
+  check(rec.lostPerSec > 0 && rec.lostPerSec <= 0.032, `A1.4, A4: recoil costs at most 3% of max HP a second (${(rec.lostPerSec * 100).toFixed(1)}%/s)`);
+  check(rec.ko && rec.lost > 0 && rec.lost <= rec.cap / 2 + 0.01, `A1.4: a KO gives half the recoil back (lost ${rec.lost}, at most half of ${rec.cap})`, rec);
 
   console.log('Lab run: ramp and roll (A1.5)');
   const ramp = await page.evaluate(async () => {
