@@ -122,6 +122,9 @@ G.LabLateHand = (() => {
     if (wait) wait.classList.add('hidden');
     return closeLevelUp.apply(this, arguments);
   };
+  // A run that ends while the others choose (js/fork/end-run.js's vote, a disconnect): no banner left over.
+  const showOver = G.RunUI.showOver;
+  G.RunUI.showOver = function () { if (wait) wait.classList.add('hidden'); return showOver.apply(this, arguments); };
 
   /** Ticked with a hand open: take its EV card now (after the screen's 1 s guard against stray clicks). */
   function pickOpen(tries = 0) {

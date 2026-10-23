@@ -320,7 +320,8 @@ G.Game = (() => {
       if (d) Object.assign(pl, { kills: d.ki, bosses: d.bo, coins: d.co, level: Math.max(pl.level, d.lv || 1), t1: d.t1 || pl.t1, t10: d.t10 || pl.t10 });
       if (d && d.t) time = d.t;
       if (d && d.why === 'host') G.UI.toast('El anfitrión ha terminado la partida', 3200);
-      endRun(!(d && d.why === 'host'));
+      if (d && d.why === 'vote') G.UI.toast('Everyone voted to end the run', 3200);   // fork: js/fork/end-run.js
+      endRun(!(d && (d.why === 'host' || d.why === 'vote')));
     },
     lost(msg) { G.UI.toast(msg, 3600); endRun(false); },
     item(id) { offerItem(id); },
