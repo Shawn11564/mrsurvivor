@@ -68,6 +68,7 @@ status table as work lands.
 | `js/fork/lab/late-hand.js` | `G.LabLateHand`: Carrera/Reflejos past their cap for max HP, EV cards and auto-pick in endless (plan C1.4) |
 | `js/fork/lab/contracts.js` | `G.LabContracts`: per-Pokémon contracts paid in coins for that Pokémon's upgrades (plan C1.5) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
+| `js/fork/lab/endgame.js` | `G.LabEndgame`: the horde's late-game curve (HP, damage, speed, elites and affixes from 20:00, exponential past 30:00) and the THREAT label (plan C2.6, part) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
 | `js/fork/lab/synergy.js` | `G.LabSynergy`: synergy cards (phase 11) |
@@ -972,6 +973,31 @@ host and not itself, the host's heals the guest, not from 600 px; the guest's He
 the host's Wide Guard blocks the guest's next 2 hits; the guest's Block pulls the host's walkers to the guest
 (the host stands still) and the guest takes ×0.65; the host's Aromatherapy heals both 50% → 65%.
 
+## The endgame wall (2026-10-23, plan C2.6 in part)
+
+The horde's numbers grow linearly (`G.Enemies.scale(t)`) while a strong build's damage grows far faster,
+so after Eternatus a good run could go on for ever. In a Lab run every regular enemy that joins the fight
+from 20:00 on gets, on top of the spawner's numbers (`js/fork/lab/endgame.js`, a `G.EnemyMgr.add` wrapper on
+the machine that runs the enemies, loaded after `affixes.js` so a Shielded shield is 60 % of the new HP):
+
+| | 25:00 | 30:00 | 35:00 | 40:00 | 45:00 | 50:00 | 60:00 |
+|---|---|---|---|---|---|---|---|
+| HP × (1 + (t − 20:00)/10 min) × 1.2^((t − 30:00)/2 min) | 1.5 | 2 | 3.9 | 7.5 | 13.7 | 24.8 | 77 |
+| damage × (1 + (t − 20:00)/30 min) × 1.12^((t − 30:00)/2 min) | 1.17 | 1.33 | 2.0 | 2.9 | 4.3 | 6.2 | 12.8 |
+| speed × (1 + 0.3 (t − 20:00)/30 min + 0.3 (t − 30:00)/30 min), at most 1.6 | 1.05 | 1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 1.6 |
+| extra elites (×1.6 HP, ×1.25 damage) / extra affixes | 0 / 0 | 0 / 0 | 8 / 5 % | 17 / 10 % | 25 / 15 % | 33 / 20 % | 50 / 30 % |
+
+XP is × √(the HP factor), so levels keep coming but fall behind the horde. The exponential terms only start
+at 30:00, the regime change: like Megabonk or Vampire Survivors' late game, it doesn't stop until you do.
+Measured on the real spawner (Charizard, 2026-10-23): a regular enemy averages 17 900 HP and 270 contact
+damage at 45:00 before this, so ~245 000 HP and ~1 160 damage after. The HUD shows the HP factor next to the
+clock from 20:00 (`THREAT ×4.1`, red and pulsing past 30:00), read from the shared clock, so guests see it
+too. Regular enemies only: bosses, legendaries, obelisks, split copies, thieves and anything marked
+`_noScale` keep their numbers (late bosses: `js/fork/lab/boss-power.js`).
+`node fork/test-endgame.cjs` (server): the same enemy joining a Lab and a normal run at 15, 25, 30, 45 and
+60 minutes; the curve's values; what keeps its own numbers; extra elites and affixes from real spawns only
+past 30:00; the THREAT label. `test-xp-pace.cjs` counts the √ factor at 25:00.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -1057,6 +1083,7 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   Firebase emulator): phase 11, see its section.
 - `node fork/test-gameplay.cjs` checks Mega Evolution in a normal run; `test-admin.cjs` that an
   admin's Mega Stone Mega Evolves a friend in a normal co-op run, seen by everyone.
+- `node fork/test-endgame.cjs` (server): the endgame wall, see its section.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):
