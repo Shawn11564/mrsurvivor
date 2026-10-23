@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble",
       "items": [
+        { "k": "new", "s": "all", "a": "Menu", "t": "The coin bubble at the top of the main menu also shows your gems." },
         { "k": "new", "s": "lab", "a": "Contracts", "t": "Contracts also give 1 candy of their Pokémon when you claim them, on top of the contract coins.", "n": "contract coins -> contract coins + 1 candy" },
         { "k": "buff", "s": "lab", "a": "Contracts", "t": "The 15:00 own-type contract needs 3 moves of the Pokémon's type; other moves no longer spoil it, and a type its Lab evolution brings counts too.", "n": "3+ moves, every one its type -> 3 of its type, others allowed" },
         { "k": "change", "s": "lab", "a": "Contracts", "t": "Contract progress shows: the bar is the furthest you got with the moves (\"Best: 9:12 of 20:00\"), and the pause menu says where each contract stands. The Upgrades screen shows your coins and the Pokémon's contract coins side by side (a teal coin), and each button says how much contract coins pay." },

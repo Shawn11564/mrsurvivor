@@ -6,6 +6,7 @@
  *     (save.ureset[dex] counts the resets: merging two copies keeps the upgrades of the one
  *     with more, as with prestige; js/fork/prestige.js);
  *   - 100 gems: go up a prestige level (js/fork/prestige.js charges it).
+ * The top bar's coin bubble also shows your gems (pill, below), for everyone.
  * Texts in English, like the Lab. Test: fork/test-gems.cjs.
  */
 G.Gems = (() => {
@@ -98,6 +99,33 @@ G.Gems = (() => {
     });
     return r;
   };
+
+  // ---------------- the gem count, in the top bar's coin bubble ----------------
+  // ui.js refreshCoins rewrites #coins (its own calls don't go through G.UI, so it's watched instead), and a
+  // gem won or spent anywhere is caught within a second.
+  function pill() {
+    const coins = $('coins');
+    if (!coins) return;
+    let n = $('gems-n');
+    if (!n) {
+      coins.insertAdjacentHTML('afterend', '<span class="gem-sep"></span><span class="gem-ico" title="Gems"></span><span id="gems-n" translate="no"></span>');
+      n = $('gems-n');
+    }
+    const v = have().toLocaleString(G.I18n.locale);
+    if (n.textContent !== v) n.textContent = v;
+  }
+  const css = document.createElement('style');
+  css.textContent = `.gem-sep { display: inline-block; width: 1px; height: 14px; margin: 0 8px; background: rgba(244,248,255,.25); vertical-align: middle; }
+    .gem-ico { display: inline-block; width: 10px; height: 10px; margin: 0 6px 0 2px; transform: rotate(45deg); vertical-align: 0;
+      background: linear-gradient(135deg, #e6fffa, #7fffd4 45%, #2ec4aa); box-shadow: 0 0 0 1.5px #0d5f51; }`;
+  document.head.appendChild(css);
+  function watchPill() {
+    const coins = $('coins');
+    if (coins) new MutationObserver(pill).observe(coins, { childList: true, characterData: true, subtree: true });
+    pill();
+    setInterval(pill, 1000);
+  }
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', watchPill); else watchPill();
 
   return { RATE, RESET, give, have, spent, reset };
 })();
