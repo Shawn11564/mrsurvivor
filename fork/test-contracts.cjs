@@ -5,11 +5,14 @@
 //   node fork/test-contracts.cjs [base-url]
 //
 //   1. Missions shows a "Contracts" block for the partner (Charmander) only with the Lab on.
-//   2. Real Lab runs: 3 special moves at 20:00 completes "side20"; only Fire moves at 15:00 completes
-//      "mono15"; a normal run completes nothing.
+//   2. Real Lab runs: 3 special moves at 20:00 completes "side20"; 3 Fire moves at 15:00 completes
+//      "mono15", also with a Normal move beside them (until 2026-10-23 every move had to be Fire), and
+//      2 Fire moves don't; a normal run completes nothing. Progress: 3 Fire moves at 10:00 leave the
+//      bar at 67 % ("Best: 10:00 of 15:00"), and the pause menu says where each contract stands.
 //   3. A real rift won without switching completes "rift"; a switch during the fight doesn't.
-//   4. Claim in Missions: 1500 contract coins for Charmander. Upgrades with no coins of your own: the buy
-//      button works, the level is bought with contract coins, your coins stay at 0.
+//   4. Claim in Missions: 1500 contract coins and 1 candy for Charmander. Upgrades with no coins of your own:
+//      a banner over the list shows your coins and Charmander's contract coins apart, the buy button says
+//      the contract coins pay it all, works, and your coins stay at 0.
 //   5. G.DB.merge of two copies (both orders): every contract's done/claimed and the larger cspent kept.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
@@ -83,10 +86,34 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       out.fireMoves = pl.moves.map(m => m.type + ':' + m.cat);
       G.Game.debugTime(901); await __wait(() => __st('mono15'), 3000);
       out.mono15 = __st('mono15');
+      // Again from scratch: 2 Fire moves + Tackle at 15:00 (not enough), then 3 Fire + Tackle at 10:00 (progress),
+      // then at 15:00 (done).
+      G.DB.save.contracts[4].mono15 = { prog: 0, done: false, claimed: false };
+      pl = await __run(true, [__fire[0], __fire[1], 'tackle']);
+      G.Game.debugTime(905); await new Promise(r => setTimeout(r, 1600));
+      out.two = __st('mono15');
+      pl = await __run(true, [__fire[0], __fire[1], __fire[2], 'tackle']);
+      G.Game.debugTime(600); await new Promise(r => setTimeout(r, 1600));
+      out.prog = +G.DB.save.contracts[4].mono15.prog.toFixed(2);
+      G.Game.togglePause();
+      out.pause = (document.querySelector('#pause-sum .lab-pause') || {}).textContent || '';
+      G.Game.togglePause();
+      await __toMenu();
+      G.GoalsUI.open('missions');
+      await new Promise(r => setTimeout(r, 200));
+      const row = document.querySelector('#lab-contracts [data-contract=mono15]');
+      out.bar = row.querySelector('.bar i').style.width; out.how = row.querySelector('.cc-how').textContent; out.text = row.querySelector('b').textContent;
+      pl = await __run(true, [__fire[0], __fire[1], __fire[2], 'tackle']);
+      G.Game.debugTime(901); await __wait(() => __st('mono15'), 3000);
+      out.withTackle = __st('mono15');
       return out;
     });
     check(!runs.normal && !runs.before && runs.side20, 'side20: done at 20:00 with 3 special moves in a Lab run (not at 19:55, not in a normal run)', runs);
     check(!runs.mono15early && runs.mono15, 'mono15: done at 15:00 with only Fire moves', runs);
+    check(!runs.two && runs.withTackle, 'mono15: 2 Fire moves aren\'t enough; 3 Fire moves with Tackle beside them are', runs);
+    check(runs.prog === 0.67 && runs.bar === '67%' && /Best: 10:0\d of 15:00/.test(runs.how) && runs.text === 'Reach 15:00 with 3 Fire moves',
+      'progress: 3 Fire moves at 10:00 leave the bar at 67 %, "Best: 10:00 of 15:00"', runs);
+    check(/Contracts/.test(runs.pause) && /3 Fire moves: 3\/3 moves ✓, 10:0\d of 15:00/.test(runs.pause), 'the pause menu says where each contract stands', runs.pause);
 
     console.log('3. Rift without switching');
     const rift = await page.evaluate(async () => {
@@ -113,7 +140,9 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       G.GoalsUI.open('missions');
       await new Promise(r => setTimeout(r, 200));
       const btn = document.querySelector('#lab-contracts [data-contract=side20] button');
+      const candy0 = G.LabGrowth.candies(4);
       btn.click();
+      const candy = G.LabGrowth.candies(4) - candy0;
       await new Promise(r => setTimeout(r, 200));
       const bal = G.LabContracts.balance(4), sub = document.querySelector('#lab-contracts .sub').textContent;
       const s = G.DB.save; s.coins = 0; s.pupg = s.pupg || {}; s.pupg[4] = {}; G.DB.commit();
@@ -122,12 +151,15 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       await new Promise(r => setTimeout(r, 300));
       const line = document.getElementById('lab-ccoins'), b = document.querySelector('#upg-list .upg-item [data-buy]');
       const price = G.Upgrades.cost(G.Upgrades.LIST[0].id, 0), enabled = !b.disabled;
+      const lineText = line && line.textContent.replace(/\s+/g, ' ').trim(), outside = !!line && !document.getElementById('upg-list').contains(line), use = (b.querySelector('.cc-use') || {}).textContent || '';
       b.click();
       await new Promise(r => setTimeout(r, 300));
-      return { bal, sub, line: line && line.textContent.replace(/\s+/g, ' ').trim(), enabled, price, lvl: G.DB.upgradesOf(4)[G.Upgrades.LIST[0].id] || 0,
+      return { bal, sub, candy, outside, use, line: lineText, lineAfter: line && line.textContent.replace(/\s+/g, ' ').trim(), enabled, price, lvl: G.DB.upgradesOf(4)[G.Upgrades.LIST[0].id] || 0,
         coins: s.coins, spent: s.cspent[4], left: G.LabContracts.balance(4), again: !!document.getElementById('lab-ccoins') };
     });
-    check(spend.bal === 1500 && /1500 left/.test(spend.sub), 'Claim: 1500 contract coins for Charmander', spend);
+    check(spend.bal === 1500 && /1500 unspent/.test(spend.sub) && spend.candy === 1, 'Claim: 1500 contract coins and 1 candy for Charmander', spend);
+    check(spend.outside && /Your coins: 0/.test(spend.line) && /Charmander's contract coins: 1500/.test(spend.line) && spend.use === 'contract',
+      'Upgrades: a banner over the list, your coins and the contract coins apart; the button says contract coins pay it all', spend);
     check(spend.line && /1500/.test(spend.line) && spend.enabled && spend.lvl === 1 && spend.coins === 0 && spend.spent === spend.price && spend.left === 1500 - spend.price && spend.again,
       'Upgrades: bought with contract coins, your own coins untouched', spend);
 

@@ -750,25 +750,35 @@ three real level-ups auto-picked with no menu, and the menu still there before E
 
 ## Per-Pokémon contracts (2026-10-22, plan C1.5)
 
-Goals for one Pokémon, paid in **coins for that Pokémon's upgrades** (`js/fork/lab/contracts.js`):
+Goals for one Pokémon, paid in **coins for that Pokémon's upgrades** and, since 2026-10-23, **1 candy** of
+it (`save.lab.candy`, the same candies as gacha duplicates) (`js/fork/lab/contracts.js`):
 
-| Contract | Goal | Coins |
-|---|---|---|
-| side20 | Reach 20:00 with 3 physical (or special: its strong side) moves | 1500 |
-| mono15 | Reach 15:00 with 3+ moves, every one of your own type | 1200 |
-| rift | Win a rift fight without switching your active move | 1000 |
+| Contract | Goal | Contract coins | Candy |
+|---|---|---|---|
+| side20 | Reach 20:00 with 3 physical (or special: its strong side) moves | 1500 | 1 |
+| mono15 | Reach 15:00 with 3 moves of its own type (other moves may come too) | 1200 | 1 |
+| rift | Win a rift fight without switching your active move | 1000 | 1 |
+
+mono15 until 2026-10-23: 3+ moves and *every* one of its type, so a single Normal move (Tackle) or a TM
+blocked it for the run; and only the first species' types counted. Now 3 of its type are enough, and a type
+its Lab evolution brings counts too. Progress: for the two timed ones `prog` is the furthest the clock got
+(÷ its time) while you had the 3 moves; Missions shows the bar and "Best: 9:12 of 20:00 with the 3 moves",
+and the Lab pause menu says where each stands ("3/3 moves ✓, 10:00 of 15:00").
 
 Lab first: they show (Missions, a "Contracts" block for your partner) and progress only with the Lab on,
 for the Pokémon the run started with (a Lab evolution keeps its contracts). Claim in Missions; the
-Upgrades screen with that Pokémon selected says "Contract coins: N" and its buy buttons spend them first
+Upgrades screen with that Pokémon selected has a banner over the list with **your coins and its contract
+coins side by side** (a teal coin, never the gold one; with Lab on also at 0, saying where they come from),
+and its buy buttons spend them first and say so ("contract", or "1200 contract" when they pay part)
 (menu.js's own buy does the purchase; the coins are added just for it and taken back if it fails). The
 save: `save.contracts[dex][id] = { prog, done, claimed }` and `save.cspent[dex]`; the balance is what the
 claimed ones paid minus `cspent`, so `G.forkMerge` keeps either copy's done/claimed and the larger
 `cspent`. The defs are also in `G.MissionDefs` (`contracts`, `BY`), never drawn as daily or weekly missions.
 `node fork/test-contracts.cjs` (server): the block with the Lab on and not off; side20 and mono15 in real
-Lab runs (not a second early, not in a normal run); a real rift won without switching (not with one, not
-in a normal run); Claim, then an upgrade bought with contract coins and none of yours; `G.DB.merge` of
-two copies both ways.
+Lab runs (not a second early, not in a normal run), mono15 with Tackle beside 3 Fire moves and not with 2,
+the 67 % bar and "Best: 10:00 of 15:00", the pause line; a real rift won without switching (not with one,
+not in a normal run); Claim (1500 contract coins and 1 candy), the Upgrades banner, then an upgrade bought
+with contract coins and none of yours; `G.DB.merge` of two copies both ways.
 
 ## Starting move in Lab runs (2026-10-22)
 

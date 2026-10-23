@@ -3,8 +3,11 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress",
       "items": [
+        { "k": "new", "s": "lab", "a": "Contracts", "t": "Contracts also give 1 candy of their Pokémon when you claim them, on top of the contract coins.", "n": "contract coins -> contract coins + 1 candy" },
+        { "k": "buff", "s": "lab", "a": "Contracts", "t": "The 15:00 own-type contract needs 3 moves of the Pokémon's type; other moves no longer spoil it, and a type its Lab evolution brings counts too.", "n": "3+ moves, every one its type -> 3 of its type, others allowed" },
+        { "k": "change", "s": "lab", "a": "Contracts", "t": "Contract progress shows: the bar is the furthest you got with the moves (\"Best: 9:12 of 20:00\"), and the pause menu says where each contract stands. The Upgrades screen shows your coins and the Pokémon's contract coins side by side (a teal coin), and each button says how much contract coins pay." },
         { "k": "change", "s": "all", "a": "Shop", "t": "Kecleon shop: every TM shows its move's description; when your partner can learn it (or already knows it), that line comes under the description instead of replacing it." },
         { "k": "change", "s": "all", "a": "Gacha", "t": "The slot machine's Skip button is under the machine, centred, instead of next to its lever (the gacha and the Radiant Ritual)." },
         { "k": "fix", "s": "all", "a": "Performance", "t": "Long runs use less memory: the game kept every Pokémon sprite of the whole run loaded (every enemy wave and boss so far), above its own limit. Now only the ones in play or about to come stay; the others load again if they come back.", "n": "late run: 337 -> ~240 sprite sheets, ~85 -> ~68 Mpx of images (about 70 MB less)" },
