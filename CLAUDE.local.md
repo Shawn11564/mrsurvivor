@@ -21,6 +21,14 @@ into `index.html`. Before you push, `git pull --rebase origin main`; if generate
 - **Shipping:** each item is its own commit. Build, run the item's own check plus
   `fork/test-gameplay.cjs`, commit, and **push without asking**. Ask only when
   `firestore.rules` or `database.rules.json` changed: the owner deploys the rules.
+- **Change log:** the owner reads every change in the admin menu > Change Log, because the
+  sessions add their own ideas. A commit that changes the game adds its lines to
+  `js/fork/changes.json` in that same commit, under today's date: one line per thing a player
+  would notice, with `k` (new, buff, nerf, change, fix, removed), `s` (all, lab, admin), `a`
+  (area), `t` (plain English) and `n` (the old -> new numbers for anything tuned). Be honest:
+  lower odds, damage or rewards is a nerf, even inside a bigger feature. Run
+  `node fork/test-changes.cjs --no-page` with the item's check: it fails on a game commit
+  without lines. `--add-art` writes the lines for the artist's Asset Admin publishes.
 - **Never end a session with commits that aren't pushed.**
 - **Scope:** new gameplay systems go into Lab first; settings, UI and display go to everyone.
 - **Questions:** one batch at the start of a list, never about shipping or scope. A cut-off or
