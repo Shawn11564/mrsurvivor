@@ -38,7 +38,7 @@ How to use it:
 - [x] 68. [lab][bug] Late bosses (boss slots, rift and wild legendaries) were one-shot at 45:00: HP that keeps up with the team's damage, a per-hit cap, harder hits · Lab (f782e412)
 - [x] 69. [lab] Eternatus raid harder: someone beat it without breaking the obelisks; obelisks must matter, phases · Lab (900fd198)
 - [ ] 70. [lab][coop] A second raid at 45:00, like Eternatus's but with its own mechanic, solo and co-op · Lab (claimed: endgame session)
-- [ ] 71. [lab][coop] Rare map sites from 20:00 (temples, dungeons): travel there and fight a strong guardian with a mechanic; rewards that help the run; solo and co-op · Lab (claimed: endgame session)
+- [x] 71. [lab][coop] Rare map sites from 20:00 (temples, dungeons): travel there and fight a strong guardian with a mechanic; rewards that help the run; solo and co-op · Lab (23c531f0)
 
 ## Phase 1: fixes and cheap tuning
 
