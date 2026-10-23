@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op",
       "items": [
+        { "k": "fix", "s": "lab", "a": "Level-up", "t": "Auto-pick EV cards works in co-op too: your cards don't open, the EV card is taken and a small banner says who you're waiting for. Ticking the box with a hand open now takes that hand's EV card at once (it used to leave the menu open)." },
         { "k": "new", "s": "all", "a": "Collection", "t": "Move dex: the Pokémon screen has a Pokémon / Moves switch. Moves lists every move (Lab-only ones with the LAB chip), searchable and filtered by type and category; each one shows how it works, its numbers at Lv.1 and max level, its upgrades, its evolution and who learns it." },
         { "k": "change", "s": "all", "a": "Items", "t": "Choice Band: picking it up (with two or more moves) stops the game and asks which move to lock into; before, it locked whichever move was active when you touched it." },
         { "k": "change", "s": "all", "a": "HUD", "t": "Boss health bars: every boss near you gets its own bar under the clock, nearest first (up to 4, then \"+N MORE\"); bosses far away don't show, and one off screen has a dimmer bar. Before, only one boss had a bar, wherever it was.", "n": "1 bar -> up to 4, within ~1.4 screen widths" },

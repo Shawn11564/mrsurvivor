@@ -738,12 +738,15 @@ Late in a run the hand collapses to the same few cards (`js/fork/lab/late-hand.j
 - **EV cards in endless.** Once Eternatus is beaten every hand has one "+1 EV" card: +2 % max HP, +2 %
   damage, +2 % damage reduction (toughness), −1.5 % cooldown or +0.3 HP/s (`pl._labEV` counts them).
   Under the cards, **"Auto-pick EV cards in endless (no menu)"** (`G.Settings` `labEvAuto`, this device):
-  ticked, a solo endless run's level-ups take the EV card by themselves (its name pops over you) and the
-  menu never opens. Not in co-op, where everyone picks together.
+  ticked, an endless run's level-ups take the EV card by themselves (its name pops over you) and the
+  menu never opens. Ticking it with a hand open takes that hand's EV card at once. In co-op too
+  (2026-10-23): your cards don't open, the EV card is your pick, and a small banner says which and who
+  you're waiting for until everyone has picked (`fork/test-ev-auto-coop.cjs`, emulator). A Lab evolution's
+  hand has no EV card and still opens: that one is a real choice.
 `node fork/test-late-hand.cjs` (server): Carrera past 8 and Reflejos past 10 (offered, the cost said and
 paid, the stat given), never past cap + 4, an Epic one, none in a normal run; EV cards in every endless
-hand and none before; the toggle on the real level-up screen, three real level-ups auto-picked with no
-menu, and the menu still there before Eternatus falls.
+hand and none before; the toggle on the real level-up screen (ticking it takes the open hand's EV card),
+three real level-ups auto-picked with no menu, and the menu still there before Eternatus falls.
 
 ## Per-Pokémon contracts (2026-10-22, plan C1.5)
 

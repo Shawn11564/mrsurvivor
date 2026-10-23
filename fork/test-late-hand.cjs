@@ -9,8 +9,9 @@
 //   2. With an Epic roll (js/fork/card-rarity.js) it is painted Epic, gives ×2 and still costs the HP.
 //   3. A normal run: never past the cap.
 //   4. Endless (Eternatus beaten): every hand has a "+1 EV" card; taking it gives its bonus. Not before.
-//   5. The real level-up screen shows "Auto-pick EV cards"; ticked, a real level-up in endless takes the
-//      EV card with no menu, and the run keeps going.
+//   5. The real level-up screen shows "Auto-pick EV cards"; ticking it takes the open hand's EV card
+//      at once (the screen closes); then a real level-up in endless takes the EV card with no menu, and
+//      the run keeps going. Co-op: fork/test-ev-auto-coop.cjs.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -107,18 +108,20 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       await __wait(() => G.UI.isOpen('scr-levelup'), 5000);
       const row = document.getElementById('lab-ev-auto'), box = row && row.querySelector('input');
       const shown = !!row && !row.classList.contains('hidden') && [...document.querySelectorAll('#cards .card')].some(el => /\+1 EV/.test(el.textContent));
+      const evs = () => Object.values(pl._labEV || {}).reduce((a, b) => a + b, 0), before = evs();
       box.click();
       const set = G.Settings.get('labEvAuto');
-      await new Promise(r => setTimeout(r, 1200));          // past the screen's guard against stray clicks
-      document.querySelector('#cards .card').click();
+      // Ticking takes this hand's EV card (once the screen's 1 s guard against stray clicks is over).
       await __wait(() => G.Game.state === 'playing', 5000);
-      const n0 = Object.values(pl._labEV || {}).reduce((a, b) => a + b, 0), lvl = pl.level;
+      const tick = { took: evs() - before, open: G.UI.isOpen('scr-levelup') };
+      const n0 = evs(), lvl = pl.level;
       for (let i = 0; i < 3; i++) G.Game.debugLevelUp();
       await new Promise(r => setTimeout(r, 600));
       const n1 = Object.values(pl._labEV || {}).reduce((a, b) => a + b, 0);
-      return { shown, set, n0, n1, open: G.UI.isOpen('scr-levelup'), state: G.Game.state, levels: pl.level - lvl };
+      return { shown, set, tick, n0, n1, open: G.UI.isOpen('scr-levelup'), state: G.Game.state, levels: pl.level - lvl };
     });
     check(ui.shown && ui.set === true, 'the level-up screen shows "Auto-pick EV cards" with an EV card; ticking it sets it', ui);
+    check(ui.tick.took === 1 && !ui.tick.open, 'ticking it takes the open hand\'s EV card and closes the screen', ui.tick);
     check(ui.n1 - ui.n0 === 3 && !ui.open && ui.state === 'playing', 'ticked: three level-ups in endless take three EV cards with no menu', ui);
     const off = await page.evaluate(async () => {
       G.Settings.set('labEvAuto', true);
