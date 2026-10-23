@@ -27,6 +27,7 @@ How to use it:
 - [x] 57. [feat] Choice Band: picking it up asks which move to lock into (it locked to whatever slot was active) · everyone (15181d3)
 - [x] 58. [bug][lab][coop] Auto-pick EV cards: still opened the menu and didn't pick (co-op never auto-picked; ticking it left the open hand); co-op should skip the menu and wait for the others · Lab (e850c9d)
 - [x] 59. [feat][coop] End run: a button in the pause menu from 20:00 that ends the run with the usual screens; in co-op everyone votes and all must say yes · everyone (0a261a9)
+- [ ] 60. [feat] Bond "Keep them apart": +2.5% damage (was +10%), and the bonus only the first 5 times · everyone (claimed: cc-oubt6)
 
 ## Phase 1: fixes and cheap tuning
 
