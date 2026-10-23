@@ -94,3 +94,9 @@ p.fork-credit { font-size: 0.9em; }
 #rk-mode .rk-lab:not(.on) .lab-badge { opacity: .55; }
 #rk-mode .rk-lab.on { border-color: #2ec4aa; background: rgba(46,196,170,.14); }
 #rk-labnote { margin: 0 0 6px; }
+
+/* The gacha machine's Skip (#pull-skip, js/ui/gacha-ui.js; the Radiant Ritual uses the same machine): under
+   the machine, centred, instead of next to its lever (style.css). The cards only come once the machine's box
+   (and Skip with it) is hidden, so nothing goes under it. fork/test-gacha-skip.cjs. */
+#slot-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#pull-skip { position: static; transform: none; }
