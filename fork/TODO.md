@@ -25,7 +25,7 @@ How to use it:
 - [ ] 55. [infra][ui] Performance: FPS in late runs (many enemies, effects, bosses) and memory that grows over a long session in the Chrome tab · everyone (claimed: cc-oubt6 perf agent)
 - [x] 56. [feat][ui] Move dex: a tab that lists every move and what it does · everyone (050245e)
 - [x] 57. [feat] Choice Band: picking it up asks which move to lock into (it locked to whatever slot was active) · everyone (15181d3)
-- [ ] 58. [bug][lab][coop] Auto-pick EV cards: still opened the menu and didn't pick (co-op never auto-picked; ticking it left the open hand); co-op should skip the menu and wait for the others · Lab (claimed: cc-oubt6)
+- [x] 58. [bug][lab][coop] Auto-pick EV cards: still opened the menu and didn't pick (co-op never auto-picked; ticking it left the open hand); co-op should skip the menu and wait for the others · Lab (e850c9d)
 
 ## Phase 1: fixes and cheap tuning
 
