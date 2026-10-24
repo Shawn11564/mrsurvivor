@@ -45,8 +45,9 @@ How to use it:
 - [x] 75. [bug][ui] Tall menus overlap the main menu's top bar (coins, tickets, user): a screen taller than the space below the bar must sit under it or scroll, never cover it · everyone (094b9e9)
 - [x] 76. [lab] Flying types fly over water without the movement speed penalty · Lab (a2d8c7c)
 - [x] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone (e2575a2)
-- [ ] 78. [lab] A berry from the level-up rewards that would heal past max HP gives the rest as Overhealth, which can't be regenerated once lost · Lab
+- [x] 78. [lab] A berry from the level-up rewards that would heal past max HP gives the rest as Overhealth, which can't be regenerated once lost · Lab (18a70ea)
 - [x] 79. [ui] The player's health bar in the top left of the HUD, next to their Pokémon's name · everyone (b7e7c26)
+- [ ] 80. [ui] A level-up reward popup soon after another one opens without the delay before you can pick · everyone
 
 ## Phase 1: fixes and cheap tuning
 
