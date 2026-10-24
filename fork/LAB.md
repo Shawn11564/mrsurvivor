@@ -1064,7 +1064,7 @@ leaves (`js/fork/lab/sites.js`). Its **guardian** fights you on the spot:
 
 | Site | Guardian | Mechanic | Fight |
 |---|---|---|---|
-| Ancient Temple | a Regi (Regigigas 15 %) | its stone seal takes 90 % off every hit; four rune plates (braille dots) ring the temple: stand on one 1.3 s to light it (1.8 s below half HP), it stays lit 16 s (15 s); all four lit: the seal shatters, the guardian is stunned 3 s and for 10 s takes ×1.25 | 2:30 |
+| Ancient Temple | a Regi (Regigigas 15 %) | its stone seal takes 90 % off every hit; four rune plates (braille dots) ring the temple: stand on one 3 s to light it, like a revive (4 s below half HP; 1.3 / 1.8 s until 2026-10-24), it stays lit 24 s (25 s; was 16 / 15), so one player alone still fits all four; all four lit: the seal shatters, the guardian is stunned 3 s and for 10 s takes ×1.25 | 2:30 |
 | Mystery Dungeon | a pseudo-legendary Dungeon Lord | a Monster House: 10 of the run's own enemies (×1.5 HP), then 14 more each with an elite affix (4 more each per extra player), then the Lord, who calls 3 allies every 12 s and takes 15 % less damage per ally standing (at most 60 %) | 3:00 |
 | Ultra Wormhole | an Ultra Beast | every 9 s (6.5 s below half HP) it dives into Ultra Space (out of reach, hits do nothing) and bursts out of another of the three wormholes in a warned charge; where it dived it leaves an **Ultra Core** (two below half): break it within 7 s or it bursts and gives the beast a Beast Boost (×1.12 damage, ×1.05 speed, heals 6 %, up to 8) | 2:30 |
 

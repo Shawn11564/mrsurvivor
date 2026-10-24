@@ -5,7 +5,7 @@
  * radius R: the horde is driven off (G.EnemyMgr.stash, as in the rift), nothing else spawns, everyone is pulled in,
  * nobody leaves, and its GUARDIAN fights you there, with a mechanic of its own:
  *   ANCIENT TEMPLE   a Regi (Regigigas, rarely). Its stone seal takes 90 % off every hit. Four rune plates ring the
- *                    temple: stand on one for STAND s to light it; it stays lit LIT s. All four lit: the seal shatters,
+ *                    temple: stand on one for STAND s (3, like a revive) to light it; it stays lit LIT s. All four lit: the seal shatters,
  *                    the guardian is stunned and for EXPOSE s takes ×1.25. Below half HP it takes longer to light them.
  *   MYSTERY DUNGEON  a Monster House: two waves of the run's own enemies (the second all with elite affixes), then the
  *                    DUNGEON LORD, a pseudo-legendary that calls 3 allies every SUMMON s and takes 15 % less damage for
@@ -33,7 +33,9 @@ G.LabSites = (() => {
   const FIGHT = { temple: 150, dungeon: 180, wormhole: 150 };
   const HP_K = { temple: 1.0, dungeon: 1.0, wormhole: 1.1 }, SECS = { temple: 22, dungeon: 18, wormhole: 20 };
   const HIT_CAP = 0.08;
-  const STAND = [1.3, 1.8], LIT = [16, 15], EXPOSE = 10, SEALED = 0.1, EXPOSED = 1.25, PLATE_R = 38;
+  // STAND: 3 s on a plate to light it, like a revive (was 1.3 / 1.8 s; 2026-10-24). LIT grew with it, so one
+  // player can still light all four alone: 4 x 3 s plus ~5 s walking between them fits 24 s (4 x 4 s in 25 s).
+  const STAND = [3, 4], LIT = [24, 25], EXPOSE = 10, SEALED = 0.1, EXPOSED = 1.25, PLATE_R = 38;
   const WAVES = [10, 14], WAVE_T = 32, LORD_CUT = 0.15, LORD_MAX = 0.6, SUMMON = 12;
   const DIVE = [9, 6.5], DIVE_LEN = 1.6, FUSE = 7, BOOST_MAX = 8;
   const KINDS = ['temple', 'dungeon', 'wormhole'];
@@ -791,7 +793,7 @@ G.LabSites = (() => {
   }
 
   return {
-    FROM, TTL, R, FIGHT, KINDS, INFO, guardHp,
+    FROM, TTL, R, FIGHT, KINDS, INFO, guardHp, STAND, LIT, PLATE_R,
     get site() { return site; },
     /** A fight (or its reward) is on: the raids, the wild legendaries and the rifts wait. */
     get busy() { return !!site && site.phase !== 'open'; },

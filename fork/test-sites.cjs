@@ -10,7 +10,7 @@
 //      1100-1500 px from you with 2:30 to reach it, and sinks if nobody comes.
 //   2. The seal (a temple, the real spawner on): walking in closes it, the horde is driven off and nothing else
 //      spawns, you can't leave; the guardian is a Regi. Its seal takes 90 % off a hit; the four plates light one by
-//      one while you stand on them, all four expose it (×1.25, stunned), one hit takes at most 8 % (the final number).
+//      one while you stand on them (3 s each, dark at 2 s), all four expose it (×1.25, stunned), one hit takes at most 8 % (the final number).
 //   3. Beating it: a relic pick (the level-up hand that opens is 3 relics, one from the temple's pool; taking one
 //      applies it and counts it), +2 gems, then the seal opens and the horde comes back.
 //   4. A dungeon: wave 1 (10), wave 2 (14, every one with an affix), then the Dungeon Lord, whose allies cut the damage
@@ -112,8 +112,18 @@ async function solo(browser) {
     g.stunT = 1e9;
     out.sealed = __lost(0.02);
     out.lit = [];
-    for (const p of s.ks.plates) { pl.x = p.x; pl.y = p.y; await __sleep(1700); out.lit.push(s.ks.plates.filter(q => q.lit > 0).length + (s.ks.ex > 0 ? 10 : 0)); }
+    // A plate takes 3 s to light, like a revive (2026-10-24; it was 1.3 s): dark at 2 s, lit by 3.3 s.
+    out.at2 = [];
+    for (const p of s.ks.plates) {
+      pl.x = p.x; pl.y = p.y;
+      await __sleep(2000); out.at2.push(p.lit > 0);
+      await __sleep(1300); out.lit.push(s.ks.plates.filter(q => q.lit > 0).length + (s.ks.ex > 0 ? 10 : 0));
+    }
     out.ex = +s.ks.ex.toFixed(1);
+    // Alone, at your own speed: standing 3 s (4 s below half HP) on each and walking plate to plate, the
+    // first is still lit when the fourth lights (the real plates; the walk is from one plate's edge to the next).
+    const S = G.LabSites, ps = s.ks.plates, walk = [0, 1, 2].reduce((a, i) => a + Math.max(0, Math.hypot(ps[i + 1].x - ps[i].x, ps[i + 1].y - ps[i].y) - 2 * S.PLATE_R), 0) / pl.spd;
+    out.solo = [0, 1].map(i => ({ need: +(4 * S.STAND[i] + walk).toFixed(1), lit: S.LIT[i] }));
     out.stun = g.stunT > 0;
     out.exposed = __lost(0.02);
     out.cap = __lost(1e9);
@@ -123,7 +133,9 @@ async function solo(browser) {
   check(t2.inside, 'nobody leaves the seal', t2.inside);
   check(t2.guard && [377, 378, 379, 486, 894, 895].includes(t2.guard.dex) && t2.guard.boss && t2.guard.cap === 0.08, 'the guardian is a Regi (a boss, at most 8 % a hit)', t2.guard);
   check(Math.abs(t2.sealed - 0.002) < 0.0003, 'its seal takes 90 % off a hit (2 % → 0.2 %)', t2.sealed);
-  check(t2.lit.join() === '1,2,3,10' && t2.ex > 8, 'standing on the plates lights them one by one; all four expose it', t2);
+  check(t2.solo && t2.solo.every(x => x.need < x.lit - 1.5), 'one player alone can light all four in time (both stages, at its speed)', t2.solo);
+  check(t2.at2.length === 4 && t2.at2.every(l => !l), 'a plate is still dark after 2 s on it (it takes 3 s, like a revive)', t2.at2);
+  check(t2.lit.join() === '1,2,3,10' && t2.ex > 8, 'standing on the plates lights them one by one (3 s each, the first still lit at the fourth); all four expose it', t2);
   check(Math.abs(t2.exposed - 0.025) < 0.0005 && Math.abs(t2.cap - 0.08) < 0.0005, 'exposed it takes ×1.25 (2 % → 2.5 %), and one hit at most 8 % of it', t2);
 
   console.log('3. Beating it');
