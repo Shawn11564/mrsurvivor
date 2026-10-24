@@ -44,7 +44,7 @@ How to use it:
 - [x] 74. [bug][ui] Collection: every Pokémon's cell shows the form you use (shiny or radiant), not only the partner's; you had to click it to see its shiny · everyone (ccbd25d)
 - [ ] 75. [bug][ui] Tall menus overlap the main menu's top bar (coins, tickets, user): a screen taller than the space below the bar must sit under it or scroll, never cover it · everyone
 - [ ] 76. [lab] Flying types fly over water without the movement speed penalty · Lab
-- [ ] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone
+- [x] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone (e2575a2)
 
 ## Phase 1: fixes and cheap tuning
 
