@@ -85,7 +85,7 @@
   // ---------------- texts ----------------
   // (beam and raid: the Lab, English only.)
   const HOW = { touch: 'contacto', shot: 'disparo', area: 'ataque en área', trap: 'trampa', judgment: 'Juicio de Arceus',
-                beam: 'Eternabeam', raid: 'time ran out' };
+                beam: 'Eternabeam', raid: 'time ran out', dark: 'darkness' };
   const name = s => s.how === 'trap' ? G.T('Una trampa') : s.how === 'judgment' ? G.T('Arceus') : s.name ? G.T(s.name) : G.T('Un enemigo');
   function announce(s) {
     G.UI.toast(G.I18n.f('Te ha debilitado {x} ({x}).', name(s), G.T(HOW[s.how])), 4200);

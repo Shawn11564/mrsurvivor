@@ -5,7 +5,8 @@
 //   node fork/test-xp-pace.cjs [base-url]
 //
 //   1. Enemies the real spawner sends in a Lab run carry their XP × (1 + max(0, t − 500)/600):
-//      ×1 at 5:00, ×1.67 at 15:00, ×2.67 at 25:00 (the spawner's ×5.6, and ×1.6 for elites, under it).
+//      ×1 at 5:00, ×1.67 at 15:00, ×2.67 at 25:00 (the spawner's ×5.6, and ×1.6 for elites, under it). From 20:00
+//      js/fork/lab/endgame.js adds ×√(its HP factor) on top: ×2.67 × √1.5 at 25:00.
 //   2. A normal run at 25:00: no change.
 //   3. Bosses and wild legendaries keep their own XP.
 //   4. One kill at 25:00 with Charmander (Underdog +39 %): the orb is worth the paced XP, and picking
@@ -57,7 +58,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const fits = (r, want) => r.list.length >= 4 && r.list.every(x => Math.abs(x.k - want) <= 0.02 * want + 1 / x.base || Math.abs(x.kElite - want) <= 0.02 * want + 1 / x.base);
 
     console.log('1-2. Real spawns');
-    for (const [lab, t, want] of [[true, 300, 1], [true, 900, 1 + 400 / 600], [true, 1500, 1 + 1000 / 600], [false, 1500, 1]]) {
+    for (const [lab, t, want] of [[true, 300, 1], [true, 900, 1 + 400 / 600], [true, 1500, (1 + 1000 / 600) * Math.sqrt(1.5)], [false, 1500, 1]]) {
       const r = await page.evaluate(async ([lab, t]) => { await __run(lab, t); return __seen(); }, [lab, t]);
       check(fits(r, want), `${lab ? 'Lab' : 'normal'} run at ${Math.round(t / 60)}:00: XP ×${want.toFixed(2)} on every regular enemy (${r.list.length} seen)`, r.list.slice(0, 6));
     }

@@ -6,14 +6,17 @@
 //   (co-op part: npx firebase-tools emulators:start --project demo-ps --only auth,firestore,database)
 //
 //   1. Lab run: nothing at 29:50; at 30:00 the raid instead of Arceus (the run paused), Eternatus and 3
-//      obelisks, you in the arena.
-//   2. The obelisks heal it and don't move; all broken, no more healing.
+//      obelisks, you in the arena; its HP is at least the power meter (js/fork/lab/boss-power.js) × 40 s.
+//   2. The obelisks heal it and don't move, and while one stands the Dynamax barrier takes 80 % off every hit;
+//      all broken, no barrier and no more healing. At 60 % 3 new obelisks rise (the barrier is back, their
+//      healing stops at 60 %); at 25 % Eternamax: 2 of the 6 crystals shatter. One hit takes at most 5 %.
 //   3. The Eternabeam takes 75% of your HP in the open (death cause: Eternabeam); behind a crystal, nothing.
-//   4. Beating it: a ×25 rainbow ticket, back to the map, the run goes on, no Arceus, rifts again.
+//   4. Beating it: a ×25 rainbow ticket, back to the map, the run goes on, no Arceus, rifts again (the next raid: 45:00).
 //   5. Time runs out: the run ends (knocked out by Eternatus, time ran out).
 //   6. A normal run: Arceus at 30:00 as always.
-//   7. Co-op: the raid for both (the guest sees Eternatus and the obelisks), the beam warns the guest,
-//      a ticket each when it falls, both back on the map together (no obelisks left behind).
+//   7. Co-op: the raid for both (the guest sees Eternatus and the obelisks, and the barrier), the beam warns the
+//      guest, the second stage's obelisks reach the guest, a ticket each when it falls, both back on the map
+//      together (no obelisks left behind).
 //   3. Co-op: the host's wild legendary is on the guest's screen; the guest never spawns its own.
 const http = require('http');
 const up = url => new Promise(r => http.get(url, res => { res.resume(); r(true); }).on('error', () => r(false)));
@@ -70,6 +73,8 @@ const boss = page => page.evaluate(() => { const e = G.EnemyMgr.get(G.Eternatus.
 async function beam(page, hide) {
   await page.evaluate(hide => {
     const r = G.Eternatus.raid, e = G.EnemyMgr.get(r.bossId), pl = G.Game.player;
+    // Only the beam: its own attacks and the Dynamax Cannon held off (they killed the open-field check before).
+    e.stunT = 8; if (e.ai) e.ai.cast = null; r.cannonT = 99; G.Hazards.clear(); G.Projectiles.clear();
     pl.god = false; pl.hp = pl.maxHp; pl.invuln = 0; pl.deathLog = [];
     if (hide) {
       const c = r.crystals.slice().sort((a, b) => Math.hypot(a.x - e.x, a.y - e.y) - Math.hypot(b.x - e.x, b.y - e.y))[0];
@@ -108,6 +113,14 @@ async function beam(page, hide) {
 
     console.log('1. A Lab run at 30:00');
     await run(true);
+    // The team's damage meter: 4 hits of 25 000 a second on an enemy that won't fall.
+    const power = await page.evaluate(async () => {
+      const pl = G.Game.player, d = new G.Enemy({ dex: 143, name: 'Snorlax', hp: 1e12, spd: 0, dmg: 0, xp: 0, behavior: 'tank' }, pl.x + 200, pl.y, { hp: 1, spd: 1, dmg: 1 });
+      d._noScale = true; d.stunT = 1e9; G.EnemyMgr.add(d); G.LabPower.reset();
+      for (let i = 0; i < 24; i++) { d.hurt(25000); await new Promise(r => setTimeout(r, 250)); }
+      d.hp = 0; d.die();
+      return G.LabPower.power();
+    });
     await page.evaluate(() => G.Game.debugTime(1790));
     await page.waitForTimeout(1500);
     check(!(await st(page)).on, 'at 29:50: no raid yet');
@@ -117,19 +130,35 @@ async function beam(page, hide) {
     const s1 = await st(page);
     check(s1.on && !s1.arceus && s1.jActive, 'at 30:00 the Eternatus raid starts instead of Arceus (and the run pauses: waves, events, weather)', s1);
     check(s1.boss && s1.obs === 3 && s1.inside, 'Eternatus (a boss) and 3 obelisks, with you in the arena', s1);
+    const b1 = await boss(page);
+    check(power > 80000 && b1.max >= power * 40 * 0.98, 'its HP is at least the power meter × 40 s', { power: Math.round(power), max: b1.max });
 
-    console.log('2. Obelisks');
+    console.log('2. Obelisks, the barrier and the stages');
+    const lost = (k) => page.evaluate(k => { const e = G.EnemyMgr.get(G.Eternatus.raid.bossId); const h = e.hp; e.hurt(e.maxHp * k); return +((h - e.hp) / e.maxHp).toFixed(4); }, k);
+    const bar1 = await page.evaluate(() => G.Eternatus.barrier);
+    const l1 = await lost(0.04);
+    check(bar1 && Math.abs(l1 - 0.008) < 0.0005, 'with the obelisks standing, the barrier takes 80 % off a hit (4 % → 0.8 %)', { bar1, l1 });
+    const lc = await lost(0.5);
+    check(Math.abs(lc - 0.01) < 0.0005, 'one hit takes at most 5 % (before the barrier: 50 % → 5 % → 1 %)', lc);
     const o0 = await page.evaluate(() => G.EnemyMgr.all().filter(e => e.obelisk).map(e => [Math.round(e.x), Math.round(e.y)]).join());
-    await page.evaluate(() => { const e = G.EnemyMgr.get(G.Eternatus.raid.bossId); e.hp = e.maxHp * 0.5; });
+    await page.evaluate(() => { const e = G.EnemyMgr.get(G.Eternatus.raid.bossId); e.hp = e.maxHp * 0.8; });
     await page.waitForTimeout(1000);
     const h1 = await boss(page);
     const o1 = await page.evaluate(() => G.EnemyMgr.all().filter(e => e.obelisk).map(e => [Math.round(e.x), Math.round(e.y)]).join());
-    check(h1.hp / h1.max > 0.53, 'they heal Eternatus (3 × 1.5% a second)', +(h1.hp / h1.max).toFixed(3));
+    check(h1.hp / h1.max > 0.83, 'they heal Eternatus (3 × 1.5% a second)', +(h1.hp / h1.max).toFixed(3));
     check(o0 === o1, 'and stay where they are', { o0, o1 });
-    await page.evaluate(() => { for (const e of G.EnemyMgr.all()) if (e.obelisk) e.hurt(1e9); const b = G.EnemyMgr.get(G.Eternatus.raid.bossId); b.hp = b.maxHp * 0.5; });
+    await page.evaluate(() => { for (const e of G.EnemyMgr.all()) if (e.obelisk) e.hurt(1e9); const b = G.EnemyMgr.get(G.Eternatus.raid.bossId); b.hp = b.maxHp * 0.8; });
     await page.waitForTimeout(1000);
-    const h2 = await boss(page);
-    check(h2.hp / h2.max <= 0.501 && (await st(page)).obs === 0, 'all three broken: no more healing', +(h2.hp / h2.max).toFixed(3));
+    const h2 = await boss(page), bar2 = await page.evaluate(() => G.Eternatus.barrier), l2 = await lost(0.04);
+    check(h2.hp / h2.max <= 0.801 && (await st(page)).obs === 0 && !bar2 && Math.abs(l2 - 0.04) < 0.0005, 'all three broken: no barrier (a 4 % hit takes 4 %) and no more healing', { h: +(h2.hp / h2.max).toFixed(3), bar2, l2 });
+    await page.evaluate(() => { const b = G.EnemyMgr.get(G.Eternatus.raid.bossId); b.hp = b.maxHp * 0.59; });
+    await page.waitForTimeout(2500);
+    const g2 = await page.evaluate(() => { const r = G.Eternatus.raid, b = G.EnemyMgr.get(r.bossId); return { stage: r.stage, obs: G.EnemyMgr.all().filter(e => e.obelisk && !e.dead).length, barrier: G.Eternatus.barrier, hp: +(b.hp / b.maxHp).toFixed(3) }; });
+    check(g2.stage === 2 && g2.obs === 3 && g2.barrier && g2.hp > 0.59 && g2.hp <= 0.6001, 'at 60 %: 3 new obelisks, the barrier is back, and their healing stops at 60 %', g2);
+    await page.evaluate(() => { for (const e of G.EnemyMgr.all()) if (e.obelisk) e.hurt(1e9); const b = G.EnemyMgr.get(G.Eternatus.raid.bossId); b.hp = b.maxHp * 0.24; });
+    await page.waitForTimeout(800);
+    const g3 = await page.evaluate(() => { const r = G.Eternatus.raid; return { stage: r.stage, crystals: r.crystals.length }; });
+    check(g3.stage === 3 && g3.crystals === 4, 'at 25 %: Eternamax, 2 of the 6 crystals shatter', g3);
 
     console.log('3. Eternabeam');
     const open = await beam(page, false);
@@ -139,14 +168,15 @@ async function beam(page, hide) {
 
     console.log('4. Winning');
     const t0 = (await st(page)).t25;
-    await page.evaluate(() => G.EnemyMgr.get(G.Eternatus.raid.bossId).hurt(1e9));
+    await page.evaluate(() => { const e = G.EnemyMgr.get(G.Eternatus.raid.bossId); e.hp = 1; e.hurt(1e9); });
     await page.waitForTimeout(1500);
     const w1 = await st(page);
     check(w1.phase === 'won' && w1.t25 === t0 + 1 && w1.done, 'beating Eternatus gives a ×25 rainbow ticket', { t0, w1 });
     await page.waitForFunction(() => !G.Eternatus.active, null, { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(2500);
     const w2 = await st(page);
-    check(!w2.on && !w2.arceus && !w2.jActive && w2.state === 'playing' && w2.at === 'never', 'then back to the map, the run goes on, Arceus never comes and rifts open again', w2);
+    check(!w2.on && !w2.arceus && !w2.jActive && w2.state === 'playing' && w2.at === 2700,
+      'then back to the map, the run goes on, Arceus never comes and rifts open again (until 2 min before the 45:00 raid, js/fork/lab/necrozma.js)', w2);
 
     console.log('5. Losing');
     await run(true);
@@ -189,11 +219,16 @@ async function beam(page, hide) {
       const marked = await settle(guest, () => { const r = G.Eternatus.raid; return r && G.EnemyMgr.get(r.bossId) && G.EnemyMgr.all().filter(e => e.obelisk).length === 3; }, null, 8000);
       const gs = await st(guest);
       check(inRaid.every(Boolean) && marked && gs.inside && !gs.arceus, 'the raid starts for both; the guest is in the arena and sees Eternatus and its 3 obelisks', { inRaid, marked, gs });
+      check(await settle(guest, () => G.Eternatus.barrier, null, 3000), 'the guest sees the barrier while the obelisks stand');
       await host.evaluate(() => G.Eternatus.debugBeam());
       check(await settle(guest, () => !!G.Eternatus.raid.beam, null, 3000), 'the host\'s Eternabeam warns the guest too');
       await host.waitForTimeout(4000);
+      await host.evaluate(() => { const b = G.EnemyMgr.get(G.Eternatus.raid.bossId); b.hp = b.maxHp * 0.59; });
+      const st2 = await settle(guest, () => { const r = G.Eternatus.raid; return r && r.stage === 2 && r.obs.length === 6 && r.obs.every(id => !G.EnemyMgr.get(id) || G.EnemyMgr.get(id).obelisk)
+        && G.EnemyMgr.all().filter(e => e.obelisk && !e.dead).length === 6; }, null, 8000);
+      check(st2, 'the second stage reaches the guest: its 3 new obelisks marked (6 standing)');
       const g0 = (await st(guest)).t25, h0 = (await st(host)).t25;
-      await host.evaluate(() => G.EnemyMgr.get(G.Eternatus.raid.bossId).hurt(1e9));
+      await host.evaluate(() => { const e = G.EnemyMgr.get(G.Eternatus.raid.bossId); e.hp = 1; e.hurt(1e9); });
       const won = await Promise.all([host, guest].map(p => settle(p, () => G.Eternatus.raid && G.Eternatus.raid.phase === 'won', null, 5000)));
       const back = await Promise.all([host, guest].map(p => settle(p, () => !G.Eternatus.active, null, 10000)));
       const [h1s, g1s] = [await st(host), await st(guest)];

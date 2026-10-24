@@ -68,6 +68,11 @@ status table as work lands.
 | `js/fork/lab/late-hand.js` | `G.LabLateHand`: Carrera/Reflejos past their cap for max HP, EV cards and auto-pick in endless (plan C1.4) |
 | `js/fork/lab/contracts.js` | `G.LabContracts`: per-Pokémon contracts paid in coins for that Pokémon's upgrades (plan C1.5) |
 | `js/fork/lab/affixes.js` | `G.LabAffixes`: elite affixes, Shielded, Swift, Vampiric, Splitting, Explosive (plan C1.3) |
+| `js/fork/lab/boss-power.js` | `G.LabPower`: the team's damage meter, late bosses' HP floors, the per-hit cap and their clock past 30:00 |
+| `js/fork/lab/relics.js` | `G.LabRelics`: relics, run-long bonuses picked from a level-up hand of three after beating a map site or a late raid |
+| `js/fork/lab/sites.js` | `G.LabSites`: temples, dungeons and wormholes that rise on the map from 20:00, their seal, guardians and mechanics |
+| `js/fork/lab/necrozma.js` | `G.Necrozma`: the Necrozma raid at 45:00 (light and darkness, prisms, Prism Armor, Ultra Burst) |
+| `js/fork/lab/endgame.js` | `G.LabEndgame`: the horde's late-game curve (HP, damage, speed, elites and affixes from 20:00, exponential past 30:00) and the THREAT label (plan C2.6, part) |
 | `js/fork/lab/hits.js` | `G.LabHits`: after each of your hits in a Lab run (phase 11's sets, synergies, recipes) |
 | `js/fork/lab/sets.js` | `G.LabSets`: set bonuses from what your slots hold (phase 11) |
 | `js/fork/lab/synergy.js` | `G.LabSynergy`: synergy cards (phase 11) |
@@ -643,23 +648,37 @@ None in a rift or during Arceus. The host decides; guests get it like any enemy
 In a Lab run, Arceus's Judgment never comes: at 30:00 everyone goes to a dark arena against **Eternatus**
 (`js/fork/lab/eternatus.js`).
 - 3 obelisks (still enemies that don't move or hit, drawn as stone pillars with HP bars) each heal it
-  1.5% of its HP a second until broken; red tethers show which still do.
+  1.5% of its HP a second until broken; red tethers show which still do. **Since 2026-10-23** (a strong
+  team beat it without touching them) they also hold up a **Dynamax barrier**: while any obelisk stands, a
+  red dome covers Eternatus and every hit does 20 % (applied to the hit as capped, so a huge burst still only
+  gets 20 % of the cap through). The HUD says so under the raid's clock.
+- **Three stages** (2026-10-23). At 60 % of its HP it draws on the Darkest Day: 3 new obelisks rise between the
+  old spots (the barrier is back; their healing can't take it over 60 %), the beam comes every 12 s, and between
+  beams the **Dynamax Cannon** fires 3 warned beams at each player (20 % of your HP each, dragon type). At 25 %,
+  **Eternamax**: it speeds up ×1.3, the beam comes every 9 s, the cannon every 4.5 s (7 s before), and 2 of the 6
+  crystals shatter.
 - Every 15 s (the first after 10) it stands still and charges the **Eternabeam** for 3 s, then hits the
   whole arena: 75% of your HP, pure, unless a crystal (solid, 6 of them) or one of the arena's stone
   pillars is between you and it. While it charges, the safe shadow behind each crystal shows in green.
-- 3 minutes. Beat it: a ×25 rainbow ticket each, back to the map, and the run goes on (Arceus never
+- 3:30 (3:00 until 2026-10-23). Beat it: a ×25 rainbow ticket each, back to the map, and the run goes on (Arceus never
   comes, rifts open again, `pl._labEternatus` so a resumed run doesn't fight it twice). Time runs out:
   the run ends (everyone knocked out by "Eternatus (time ran out)"). Falling in the arena is falling.
-- Its HP: 3× a rift legendary's, or 45 s of your best single-target damage (measured as the Judgment
-  does), whichever is more; each obelisk 8% of that floor or 5 s of your damage.
+- Its HP: the most of 3× a rift legendary's, 45 s of your best single-target damage (measured as the
+  Judgment does) and 40 s of the team's power meter (`js/fork/lab/boss-power.js`); each obelisk the most of
+  8% of that floor, 5 s of the first and 4 s of the second. One hit takes at most 5 % of its HP.
 - While it lasts `G.Judgment.active` is true, so waves, events, weather, biome changes and wild
   legendaries stop, and the Judgment's soft speed cap applies.
-- Co-op: the host runs it (`{ k:'labeter', a: start | ids | beam | win | lose | back }`); Eternatus
-  and the obelisks are ordinary enemies; each player checks the beam against their own Pokémon.
+- Co-op: the host runs it (`{ k:'labeter', a: start | ids | beam | stage | win | lose | back }`; `ids` lists every
+  obelisk so far, `stage` the crystals left); Eternatus and the obelisks are ordinary enemies, the cannon is
+  hazards; the barrier cuts damage on the host (where a guest's hit lands) and every screen draws it; each
+  player checks the beam against their own Pokémon.
 
 `node fork/test-eternatus.cjs` (server; co-op with the emulator): no raid at 29:50; at 30:00 the raid
-instead of Arceus; healing and broken obelisks; the beam in the open and behind a crystal; winning
-(ticket, back, no Arceus, rifts again); losing (the run ends); a normal run still gets Arceus; co-op.
+instead of Arceus, its HP from the power meter; the barrier and the 5 % cap; healing and broken obelisks; the
+second stage's obelisks and 60 % ceiling; Eternamax's shattered crystals; the beam in the open and behind a
+crystal (its own attacks held off for that check: they made it flaky); winning (ticket, back, no Arceus, rifts
+again); losing (the run ends); a normal run still gets Arceus; co-op (the barrier and the second stage on the
+guest too).
 
 ## Bosses after 15:00 (2026-10-22, plan C1.1)
 
@@ -972,6 +991,148 @@ host and not itself, the host's heals the guest, not from 600 px; the guest's He
 the host's Wide Guard blocks the guest's next 2 hits; the guest's Block pulls the host's walkers to the guest
 (the host stands still) and the guest takes ×0.65; the host's Aromatherapy heals both 50% → 65%.
 
+## The endgame wall (2026-10-23, plan C2.6 in part)
+
+The horde's numbers grow linearly (`G.Enemies.scale(t)`) while a strong build's damage grows far faster,
+so after Eternatus a good run could go on for ever. In a Lab run every regular enemy that joins the fight
+from 20:00 on gets, on top of the spawner's numbers (`js/fork/lab/endgame.js`, a `G.EnemyMgr.add` wrapper on
+the machine that runs the enemies, loaded after `affixes.js` so a Shielded shield is 60 % of the new HP):
+
+| | 25:00 | 30:00 | 35:00 | 40:00 | 45:00 | 50:00 | 60:00 |
+|---|---|---|---|---|---|---|---|
+| HP × (1 + (t − 20:00)/10 min) × 1.2^((t − 30:00)/2 min) | 1.5 | 2 | 3.9 | 7.5 | 13.7 | 24.8 | 77 |
+| damage × (1 + (t − 20:00)/30 min) × 1.12^((t − 30:00)/2 min) | 1.17 | 1.33 | 2.0 | 2.9 | 4.3 | 6.2 | 12.8 |
+| speed × (1 + 0.3 (t − 20:00)/30 min + 0.3 (t − 30:00)/30 min), at most 1.6 | 1.05 | 1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 1.6 |
+| extra elites (×1.6 HP, ×1.25 damage) / extra affixes | 0 / 0 | 0 / 0 | 8 / 5 % | 17 / 10 % | 25 / 15 % | 33 / 20 % | 50 / 30 % |
+
+XP is × √(the HP factor), so levels keep coming but fall behind the horde. The exponential terms only start
+at 30:00, the regime change: like Megabonk or Vampire Survivors' late game, it doesn't stop until you do.
+Measured on the real spawner (Charizard, 2026-10-23): a regular enemy averages 17 900 HP and 270 contact
+damage at 45:00 before this, so ~245 000 HP and ~1 160 damage after. The HUD shows the HP factor next to the
+clock from 20:00 (`THREAT ×4.1`, red and pulsing past 30:00), read from the shared clock, so guests see it
+too. Regular enemies only: bosses, legendaries, obelisks, split copies, thieves and anything marked
+`_noScale` keep their numbers (late bosses: `js/fork/lab/boss-power.js`).
+`node fork/test-endgame.cjs` (server): the same enemy joining a Lab and a normal run at 15, 25, 30, 45 and
+60 minutes; the curve's values; what keeps its own numbers; extra elites and affixes from real spawns only
+past 30:00; the THREAT label. `test-xp-pace.cjs` counts the √ factor at 25:00.
+
+## Late bosses keep up (2026-10-23)
+
+A strong build one-shot rift and wild legendaries at 45:00: their HP grows with the clock (the rift's
+3200 + 9 HP a second, a wild one's 2600 + 6) while a build's damage grows far faster. In a Lab run, on the
+machine that runs the enemies (`js/fork/lab/boss-power.js`):
+
+- **The power meter.** Every hit already lands in `G.Judgment.noteDmg` (Enemy.hurt calls it where the enemies
+  run, the guests' hits included), so each second keeps the most damage one enemy took and the biggest single
+  hit. `G.LabPower.power()` is the mean of the 5 best seconds of the last 60 (the team's single-target damage
+  per second, overkill included), `maxHit()` the biggest hit of the last 60 s.
+- **HP floors from 15:00.** A boss that joins the fight gets at least `power() × S` seconds of HP, and never
+  less than 8 of your biggest hits. S grows with the clock, u = (t − 15:00)/30 min, at most 1.5:
+
+| | S | 30:00 | 45:00 | 60:00 |
+|---|---|---|---|---|
+| boss slot | 10 + 14u | 17 s | 24 s | 31 s |
+| wild legendary | 7 + 9u | 11.5 s | 16 s | 20.5 s |
+| rift legendary | 14 + 16u | 22 s | 30 s | 38 s |
+
+- **No bursting from 20:00.** One hit takes at most 10 % of a boss's max HP. The file loads before every Lab
+  file that multiplies a hit (`kinds.js`, `kinds2.js`, `mech.js`), so the cap is on the final number.
+- **The clock past 30:00**, like the horde (`endgame.js`): HP × 1.2^((t − 30:00)/2 min) (×3.9 at 45:00,
+  ×15.4 at 60:00), damage × √(the horde's damage factor) (×2.1 at 45:00, ×3.6 at 60:00), XP × √(the HP gained),
+  at most ×3. Wild legendaries also get the bosses' own clock they lacked: HP × (1 + t/10 min), damage ×
+  (1 + t/30 min) (rift-scaling.js's for the rift): at 45:00 a wild one has 406 000 HP and 715 damage with an
+  empty meter (was 18 800 and 138).
+
+Not for Arceus's Judgment, Eternatus and its obelisks, or a raid's or site's guardian (`_noPower`): those set
+their own HP from `power()`. Load order: before `rift-scaling.js` (its `G.EnemyMgr.add` wrapper is inner, so
+the floor sees what rift-scaling and a Mega made of the legendary). Co-op: the host's meter counts the whole
+team; the HP travels in `'ne'`, and a guest's hit reaches the host's copy, where the cap applies.
+`node fork/test-boss-power.cjs [--solo]` (server; co-op part with the emulator): the meter; the three floors at
+45:00 with a huge meter; the clock with an empty one; the cap at 25:00 and none at 18:00; nothing before 15:00
+or in a normal run; in co-op the guest sees the full max HP and its one-shot takes 10 % on the host.
+`test-wild-legends.cjs` and `test-boss-slots.cjs` count the new clock.
+
+## Map sites: temples, dungeons and wormholes (2026-10-23)
+
+From 20:00 in a Lab run a **site** now and then rises on the map, 1100-1500 px from one of you (a gold arrow with
+the distance points to it, and a banner says what it is): a check every 30 s, 14 % more likely after each miss,
+at least 200 s after the last one ended, never in the 190 s before a raid (`G.Judgment.AT`) or during one. You have
+2:30 to get there; nobody comes and it sinks back. Walk into it and a **seal** (radius 300 px, standing stones round
+it) closes: the horde is driven off (`G.EnemyMgr.stash`, as in the rift), nothing else spawns (the spawner, the
+game's events, wild legendaries and rifts wait; a raid due meanwhile starts after), everyone is pulled in and nobody
+leaves (`js/fork/lab/sites.js`). Its **guardian** fights you on the spot:
+
+| Site | Guardian | Mechanic | Fight |
+|---|---|---|---|
+| Ancient Temple | a Regi (Regigigas 15 %) | its stone seal takes 90 % off every hit; four rune plates (braille dots) ring the temple: stand on one 1.3 s to light it (1.8 s below half HP), it stays lit 16 s (15 s); all four lit: the seal shatters, the guardian is stunned 3 s and for 10 s takes ×1.25 | 2:30 |
+| Mystery Dungeon | a pseudo-legendary Dungeon Lord | a Monster House: 10 of the run's own enemies (×1.5 HP), then 14 more each with an elite affix (4 more each per extra player), then the Lord, who calls 3 allies every 12 s and takes 15 % less damage per ally standing (at most 60 %) | 3:00 |
+| Ultra Wormhole | an Ultra Beast | every 9 s (6.5 s below half HP) it dives into Ultra Space (out of reach, hits do nothing) and bursts out of another of the three wormholes in a warned charge; where it dived it leaves an **Ultra Core** (two below half): break it within 7 s or it bursts and gives the beast a Beast Boost (×1.12 damage, ×1.05 speed, heals 6 %, up to 8) | 2:30 |
+
+The guardian is strong: HP from the clock (a boss slot's at that minute, `boss-slots.js`, with the bosses' clock,
+more in co-op) or the team's power meter × 22 s (temple), 18 s (dungeon), 20 s (wormhole), ×1.5 by 45:00, whichever is
+more; one hit takes at most 8 % of it; damage like a boss slot's ×1.1. Beat it: its boss drops plus 14 × 8 coins,
+2 tickets, a ×10 ticket half the time, 2 gems each, half your HP back, downed teammates up, XP for at least one level
+and a **relic pick** each: that level's hand is three **relics** (`js/fork/lab/relics.js`), one from the site's own
+pool, and they last the whole run and stack:
+
+| Relic | Pool | Bonus |
+|---|---|---|
+| Titan's Heart | temple | +25 % max HP, heals you fully |
+| Stone Ward | temple | +15 % damage reduction (toughness in Lab) |
+| Life Seed | temple | regenerate 0.5 % of your max HP (as it is then) a second |
+| Phoenix Ash | temple | get up once when knocked out (solo, while you have none) |
+| Fortune Stone | dungeon | +25 % coins, +15 % XP |
+| Training Scroll | dungeon | every move +1 level (if it has one left) |
+| Keen Eye | dungeon | +6 % critical-hit chance |
+| Ancient Might | wormhole | +12 % damage |
+| Swift Feather | wormhole | +10 % speed |
+| Wind Rune | wormhole | −8 % cooldowns |
+
+A reroll draws three others. Relics change the player's own numbers, so a resumed run keeps them; `pl._labRelics`
+counts them (the pause menu lists them), `pl._labRelicPick` holds the picks to make. Time running out: the guardian
+withdraws, no reward. Going down inside is going down (the run ends solo; in co-op the usual revive).
+Co-op: the host decides and runs the guardian (`{ k:'labsite', a: open | close | fight | ids | st | say | dive |
+emerge | won | lost | end }`; a guest's `enter` asks the host to start it; the plates and wormholes come from the
+host in `fight`); each computer keeps its own Pokémon inside the seal; the host lights a plate for whoever stands on
+it; every computer gives its own player the relic pick and the team's level-up opens everyone's hand.
+`node fork/test-sites.cjs [--solo]` (server; co-op with the emulator): when they rise and sink; the seal (the horde
+driven off, no leaving); the temple's seal, plates, exposure and cap; beating it (relic hand, applied, gems, the
+horde back); the dungeon's waves and the Lord's allies; the wormhole's dive, emergence and Beast Boost; time
+running out; the Eternatus raid waiting for a site fight; in co-op the site on both maps, the guest starting it,
+the guest lighting a plate, the relic hands, a dive hidden on the guest's screen.
+
+## The Necrozma raid at 45:00 (2026-10-23)
+
+Once Eternatus is beaten, Lab's endless had no second milestone. Now at **45:00** everyone travels to a psychic
+arena ("Ultra Space") against **Necrozma** (`js/fork/lab/necrozma.js`, the `eternatus.js` pattern), and the fight is
+about light:
+- **The light** starts full and Necrozma drinks it, 4 % a second; the screen darkens as it falls (each player sees
+  a shrinking circle around their own Pokémon, the prisms glimmer through it). At 0 the **darkness** takes 8 % of
+  your max HP a second (pure; death cause "darkness") and heals Necrozma 1.5 % a second.
+- **4 prisms** stand round the arena (still enemies, no hits). Breaking one floods it with light (back to 100 %),
+  stuns Necrozma 2.5 s and **exposes** it for 7 s; a broken prism re-forms 25 s later.
+- **Prism Armor**: Necrozma takes half of every hit, ×1.25 while exposed (on the hit as capped; one hit takes at
+  most 5 %). So the choice is when to break a prism: now, for a damage window, or later, when the dark comes.
+- Its own boss attacks, **Photon Geyser** every 7 s (a warned pillar of light under each of you, 25 % of your HP) and
+  the **Prismatic Laser** every 12 s (9 warned beams sweeping the arena, 30 % of your HP each).
+- At half HP, **Ultra Burst**: ×1.25 speed, the light drains 6 % a second, geysers every 5 s, prisms re-form in 18 s.
+- Its HP: the most of 3× a rift legendary's, 45 s of your single-target damage and 45 s of the team's power meter;
+  damage with the late bosses' factor (`boss-power.js`).
+- 3:30. Beat it: a ×25 rainbow ticket and 3 gems each, half your HP, **two relic picks** each (`relics.js`), XP for at
+  least a level, back to the map and the run goes on (`pl._labNecrozma`, kept by `resume.js`; rifts open again).
+  Time runs out: the run ends.
+- `G.Judgment.AT` is 45:00 between the two raids (rifts stop at 43:00, map sites 190 s before); a site fight under
+  way finishes first. While it lasts `G.Judgment.active` is true, as for Eternatus.
+- Co-op: the host runs it (`{ k:'labnecro', a: start | ids | st | shatter | stage | win | lose | back }`; `st` carries
+  the light 4 times a second); Necrozma and the prisms are ordinary enemies, its attacks hazards; each computer
+  hurts its own Pokémon in the dark.
+
+`node fork/test-necrozma.cjs [--solo]` (server; co-op with the emulator): nothing at 44:50 and AT 45:00; at 45:00
+the raid (4 prisms, power-based HP); no Necrozma without Eternatus beaten; Prism Armor, the drain, a prism breaking
+(light, stun, exposure, the 5 % cap) and re-forming; the dark's damage and healing; Ultra Burst's faster drain;
+winning (ticket, gems, two picks, back, rifts again); losing; co-op (prisms on the guest, the shared light, a
+ticket each, back together).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since
@@ -1057,6 +1218,10 @@ arrows, not upgrade cards. The existing "Your type" chip and the text notes are 
   Firebase emulator): phase 11, see its section.
 - `node fork/test-gameplay.cjs` checks Mega Evolution in a normal run; `test-admin.cjs` that an
   admin's Mega Stone Mega Evolves a friend in a normal co-op run, seen by everyone.
+- `node fork/test-endgame.cjs` (server): the endgame wall, see its section.
+- `node fork/test-boss-power.cjs [--solo]` (server + Firebase emulator): late bosses, see their section.
+- `node fork/test-sites.cjs [--solo]` (server + Firebase emulator): map sites and relics, see their section.
+- `node fork/test-necrozma.cjs [--solo]` (server + Firebase emulator): the 45:00 raid, see its section.
 - `node fork/test-moves.cjs`, `test-coop.cjs` and `test-sync.cjs` still pass with Lab loaded.
 
 Known flakiness, not caused by Lab (seen 2026-10-20):

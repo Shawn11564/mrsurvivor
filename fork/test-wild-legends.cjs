@@ -77,7 +77,8 @@ const wild = page => page.evaluate(() => G.EnemyMgr.all().filter(e => e.wildLege
     check((await wild(page)).length === 0, 'before 15:00: none');
     await page.evaluate(() => G.Game.debugTime(901));
     await page.waitForTimeout(2200);
-    const w1 = await wild(page), want = await page.evaluate(() => G.WildLegends.stats(G.Game.st.time, 1).hp);
+    const w1 = await wild(page), want = await page.evaluate(() => { const t = G.Game.st.time;
+      return G.WildLegends.stats(t, 1).hp * (G.LabPower ? (1 + t / 600) * G.LabPower.hpK(t) : 1); });   // (boss-power.js: the bosses' clock)
     check(w1.length === 1 && w1[0].boss && !w1[0].legend && w1[0].rar === 5 && w1[0].d >= 650 && w1[0].d <= 850 && Math.abs(w1[0].hp - want) / want < 0.05,
       'at 15:00 one appears: a legendary, as a boss (not a rift legend), 650-850 px away, with its own HP', { w1, want });
     await page.evaluate(() => G.Game.debugTime(G.Game.st.time + 80));

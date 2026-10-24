@@ -5,7 +5,7 @@
  * bosses). It acts as a boss (HP bar, boss reward), but doesn't count as beating that
  * legendary in a rift (it has no `legend`). Nor does it count as a boss fight (G.EnemyMgr.bossAlive):
  * if it did, with one almost always alive from minute 15 there would be no rifts, events or surges.
- * Whoever is in charge decides (solo, or the host): guests get it like any other enemy ('ne').
+ * None during a map site's fight (js/fork/lab/sites.js). Whoever is in charge decides (solo, or the host): guests get it like any other enemy ('ne').
  * Test: fork/test-wild-legends.cjs.
  */
 G.WildLegends = (() => {
@@ -52,7 +52,7 @@ G.WildLegends = (() => {
   setInterval(() => {
     if (!G.Game) return;                           // dev.html may still be loading js/game.js
     const pl = G.Game.player, st = G.Game.st;
-    if (!pl || G.Game.state !== 'playing' || !(G.Lab && G.Lab.active) || !authority() || G.Rift.inArena || (G.Judgment && G.Judgment.active)) return;
+    if (!pl || G.Game.state !== 'playing' || !(G.Lab && G.Lab.active) || !authority() || G.Rift.inArena || (G.Judgment && G.Judgment.active) || (G.LabSites && G.LabSites.busy)) return;
     if (st.time < FROM || st.time - last < GAP || alive().length >= MAX) return;
     spawn();
   }, 1000);

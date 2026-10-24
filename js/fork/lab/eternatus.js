@@ -2,7 +2,15 @@
  * In a Lab run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS
  * does. Everyone travels to a dark arena (like the rift's) to fight it:
  *   - 3 OBELISKS (still enemies: endless stunT, they neither move nor hit) heal it while they're
- *     standing, each HEAL of its HP per second. You have to break them to beat it.
+ *     standing, each HEAL of its HP per second, and while any stands a DYNAMAX BARRIER (a dome over it)
+ *     cuts the damage it takes to BARRIER (80 % less). You have to break them to beat it: since
+ *     2026-10-23, when a strong team beat it without touching them.
+ *   - Its HP: the most of the old floor, your single-target damage × 45 s (G.Judgment's) and the team's power
+ *     meter × POWER_S s (js/fork/lab/boss-power.js); one hit takes at most HIT_CAP of it.
+ *   - THREE STAGES. At PHASE2 of its HP it draws on the Darkest Day: 3 new obelisks rise (the barrier is back,
+ *     and their healing can't take it over PHASE2), the beam comes every 12 s instead of 15, and between beams
+ *     the DYNAMAX CANNON: 3 warned beams at each of you (CANNON_PCT of your HP each). At PHASE3, ETERNAMAX: it
+ *     speeds up, the beam comes every 9 s, the cannon more often, and 2 of the 6 crystals shatter.
  *   - The ETERNABEAM: every BEAM_EVERY s it stands still, warns for BEAM_WARN s and fires at the whole arena.
  *     You're safe if there's a CRYSTAL (or an arena pillar) between it and you; if not, BEAM_PCT of your
  *     HP, pure. While it warns, the safe shadow behind each crystal shows.
@@ -11,22 +19,25 @@
  *     out, the run ends (it faints all of you). Going down in the arena is going down, as always.
  * While it lasts, G.Judgment.active is true: nothing else spawns (waves, events, weather, biome
  * change, wild legendaries) and speed has the Judgment's soft cap.
+ * A map site's fight (js/fork/lab/sites.js) that runs into 30:00 finishes first.
  * Hooks: G.Judgment.update (in Lab it doesn't let Arceus start; it does measure your damage, for
  * Eternatus's HP), .active, .AT (rifts look at AT − 2 min), .reset, .drawAir and .drawOverlay;
  * G.Events.drawables (the crystals, sorted by Y); G.World.biomeName. pl._labEternatus: already won (comes back with
  * js/fork/lab/resume.js).
- * Co-op: the host decides. { k:'labeter', a } with a = start (cfg), ids, beam, win, lose,
- * back. Eternatus and the obelisks travel like any other enemy ('ne').
+ * Co-op: the host decides. { k:'labeter', a } with a = start (cfg), ids (every obelisk so far), beam, stage (n and
+ * the crystals left), win, lose, back. Eternatus and the obelisks travel like any other enemy ('ne'), the cannon as
+ * hazards ('hz'); the barrier cuts damage on the host (a guest's hit reaches the host's copy), every screen draws it.
  * Texts in English, like the Lab. Test: fork/test-eternatus.cjs.
  */
 G.Eternatus = (() => {
-  const AT = 1800, DEX = 890, R = 15, TIME = 180;
-  const HEAL = 0.015, BEAM_EVERY = 15, BEAM_FIRST = 10, BEAM_WARN = 3, BEAM_PCT = 0.75, CR = 18;
+  const AT = 1800, DEX = 890, R = 15, TIME = 210;
+  const HEAL = 0.015, BEAM_EVERY = [15, 12, 9], BEAM_FIRST = 10, BEAM_WARN = 3, BEAM_PCT = 0.75, CR = 18;
+  const BARRIER = 0.2, PHASE2 = 0.6, PHASE3 = 0.25, HIT_CAP = 0.05, POWER_S = 40, CANNON_EVERY = [0, 7, 4.5], CANNON_PCT = 0.2;
   const RED = '#ff3a6a', SAFE = 'rgba(120,255,200,0.2)';
   const lab = () => !!(G.Lab && G.Lab.active);
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
-  let raid = null;   // { x, y, back, biome, crystals, t, phase, endT, bossId, obs, beamT, beam, fired }
+  let raid = null;   // { x, y, back, biome, crystals, t, phase, endT, bossId, obs, beamT, beam, fired, stage, ceil, cannonT }
 
   function send(msg) {
     if (!G.Coop.active || !G.Coop.isHost) return;
@@ -59,7 +70,7 @@ G.Eternatus = (() => {
     const ts = TS(), pl = G.Game.player;
     raid = { x: cfg.tx * ts + ts / 2, y: cfg.ty * ts + ts / 2, back: { x: cfg.back[0], y: cfg.back[1] }, biome: G.World.biome,
       crystals: cfg.crystals.map(([x, y]) => ({ x, y })), t: 0, phase: 'fight', endT: 0, bossId: 0, obs: [],
-      beamT: BEAM_FIRST, beam: null, fired: 0 };
+      beamT: BEAM_FIRST, beam: null, fired: 0, stage: 1, ceil: 1, cannonT: 5 };
     if (authority()) G.EnemyMgr.stash(); else G.EnemyMgr.clearRemote();
     G.Projectiles.clear();
     G.Combat.clearFields();
@@ -82,25 +93,37 @@ G.Eternatus = (() => {
   function spawn() {
     const ts = TS(), t = G.Game.st.time, n = G.Game.everyone().length;
     const floor = (3200 + t * 9) * G.Coop.scaleHp(n) * (n > 1 ? 1.4 : 1) * 3;
-    const single = (G.Judgment.debug && G.Judgment.debug.single) || 0;
-    const hp = Math.round(Math.max(floor, single * 45));
+    const single = (G.Judgment.debug && G.Judgment.debug.single) || 0, power = G.LabPower ? G.LabPower.power() : 0;
+    const hp = Math.round(Math.max(floor, single * 45, power * POWER_S));
     const def = { dex: DEX, name: 'Eternatus', hp, spd: 38, dmg: Math.round(40 + t / 20), xp: Math.round(1500 + t * 2),
       behavior: 'ranged', shotDmg: Math.round(20 + t / 40), shotCd: 1.1, range: 320 };
     const e = new G.Enemy(def, raid.x, raid.y - ts * 3, { hp: 1, spd: 1, dmg: 1 }, true);
     e.eternatus = true;
     e.flying = false;
+    e._hitCap = HIT_CAP;
     G.EnemyMgr.add(e);
     raid.bossId = e.id;
+    raid.obHp = Math.round(Math.max(floor * 0.08, single * 5, power * 4));
+    raid.obXp = Math.round(200 + t / 4);
+    obelisks(-Math.PI / 2, ts * 10);
+    G.Audio.sfx('boss');
+  }
+
+  /** Authority: 3 obelisks around the arena (from angle a0, d from the middle), and tells the guests. */
+  function obelisks(a0, d) {
     for (let i = 0; i < 3; i++) {
-      const a = -Math.PI / 2 + i * 6.2832 / 3, d = ts * 10;
-      const o = new G.Enemy({ dex: DEX, name: 'Obelisk', hp: Math.round(Math.max(floor * 0.08, single * 5)), spd: 0, dmg: 0,
-        xp: Math.round(200 + t / 4), behavior: 'charger' }, raid.x + Math.cos(a) * d, raid.y + Math.sin(a) * d * 0.85, { hp: 1, spd: 1, dmg: 1 }, false);
+      const a = a0 + i * 6.2832 / 3;
+      const o = new G.Enemy({ dex: DEX, name: 'Obelisk', hp: raid.obHp, spd: 0, dmg: 0, xp: raid.obXp, behavior: 'charger' },
+        raid.x + Math.cos(a) * d, raid.y + Math.sin(a) * d * 0.85, { hp: 1, spd: 1, dmg: 1 }, false);
       obelisk(o);
       G.EnemyMgr.add(o);
       raid.obs.push(o.id);
     }
-    send({ a: 'ids', boss: e.id, obs: raid.obs });
-    G.Audio.sfx('boss');
+    send({ a: 'ids', boss: raid.bossId, obs: raid.obs });
+  }
+  /** Is any obelisk standing (the barrier is up)? */
+  function shieldUp() {
+    return !!raid && raid.obs.some(id => { const o = G.EnemyMgr.get(id); return o && !o.dead; });
   }
 
   /** An obelisk: still, no hits, with its own drawing (a guest's copy too). */
@@ -118,7 +141,7 @@ G.Eternatus = (() => {
 
   function tick(dt, pl, time) {
     if (!raid) {
-      if (authority() && lab() && !done() && time >= AT && !G.Rift.inArena && G.Game.state === 'playing') start();
+      if (authority() && lab() && !done() && time >= AT && !G.Rift.inArena && !(G.LabSites && G.LabSites.busy) && G.Game.state === 'playing') start();
       return;
     }
     raid.t += dt;
@@ -134,14 +157,59 @@ G.Eternatus = (() => {
     const obs = raid.obs.map(id => G.EnemyMgr.get(id)).filter(o => o && !o.dead);
     for (const o of obs) { o.x = o.ax; o.y = o.ay; o.lagT = 0; o.stunT = 1e9; }
     if (boss && !boss.dead) {
-      boss.hp = Math.min(boss.maxHp, boss.hp + boss.maxHp * HEAL * obs.length * dt);
+      const top = boss.maxHp * raid.ceil;
+      if (obs.length && boss.hp < top) boss.hp = Math.min(top, boss.hp + boss.maxHp * HEAL * obs.length * dt);
+      if (raid.stage === 1 && boss.hp <= boss.maxHp * PHASE2) stage(2);
+      else if (raid.stage === 2 && boss.hp <= boss.maxHp * PHASE3) stage(3);
       keepInside(boss);
       raid.beamT -= dt;
-      if (raid.beamT <= 0 && !raid.beam) { raid.beamT = BEAM_EVERY; charge(boss.x, boss.y); }
+      if (raid.beamT <= 0 && !raid.beam) { raid.beamT = BEAM_EVERY[raid.stage - 1]; charge(boss.x, boss.y); }
       if (raid.beam) boss.stunT = Math.max(boss.stunT || 0, 0.2);
+      else if (raid.stage > 1 && !(boss.stunT > 0.3) && (raid.cannonT -= dt) <= 0) { raid.cannonT = CANNON_EVERY[raid.stage - 1]; cannon(boss); }
     }
     if (!boss || boss.dead) { send({ a: 'win' }); won(); return; }
     if (raid.t >= TIME) { send({ a: 'lose' }); lost(); }
+  }
+
+  /** Authority: the next stage (2: new obelisks; 3: Eternamax, 2 crystals shatter), and tells the guests. */
+  function stage(n) {
+    const boss = G.EnemyMgr.get(raid.bossId), keep = raid.crystals.map(c => [Math.round(c.x), Math.round(c.y)]);
+    if (n === 3) {
+      for (let i = 0; i < 2 && keep.length > 4; i++) keep.splice(Math.floor(Math.random() * keep.length), 1);
+      if (boss) boss.spd *= 1.3;
+    }
+    send({ a: 'stage', n, crystals: keep });
+    staged(n, keep);
+    if (n === 2) { obelisks(-Math.PI / 2 + Math.PI / 3, TS() * 7.5); raid.cannonT = 4; }
+    raid.beamT = Math.min(raid.beamT, BEAM_EVERY[n - 1]);
+  }
+  /** On every computer: the new stage's look and words. */
+  function staged(n, crystals) {
+    if (!raid || raid.stage >= n) return;
+    raid.stage = n;
+    raid.ceil = n === 2 ? PHASE2 : PHASE3;
+    const gone = raid.crystals.filter(c => !crystals.some(k => Math.abs(k[0] - c.x) < 2 && Math.abs(k[1] - c.y) < 2));
+    for (const c of gone) { G.FX.burst(c.x, c.y - 30, '#cdb6f5', 26, 220); G.FX.ring(c.x, c.y, 6, 70, '#8a5ad0', 0.5, 4); }
+    raid.crystals = crystals.map(k => ({ x: k[0], y: k[1] }));
+    G.Game.flash(RED, 0.6);
+    G.Camera.kick(1.1);
+    G.Audio.sfx(n === 3 ? 'boss' : 'quake');
+    G.Spawner.say(n === 2 ? 'Eternatus draws on the Darkest Day: the obelisks rise again!' : 'ETERNAMAX! Two crystals shatter, the beam comes faster', 3.6, true);
+  }
+
+  /** Authority: the Dynamax Cannon, 3 warned beams at each of you. */
+  function cannon(boss) {
+    const len = R * TS() * 2;
+    for (const p of G.Game.everyone()) {
+      if (p.dead) continue;
+      const a = Math.atan2(p.y - boss.y, p.x - boss.x);
+      for (const k of [-0.32, 0, 0.32]) {
+        boss.hazard({ kind: 'beam', x: boss.x, y: boss.y, angle: a + k, len, w: 30, delay: 1.15, dmg: Math.round(boss.shotDmg()),
+          pct: CANNON_PCT, type: 'dragon', color: RED });
+      }
+    }
+    boss.anim.play('Charge', { speed: 1.1 });
+    G.Audio.sfx('quake');
   }
 
   /** The crystals are solid (each computer pushes its own Pokémon). */
@@ -292,6 +360,18 @@ G.Eternatus = (() => {
   /** What goes on top (in the world): the obelisks' links and the safe shadow. */
   function drawWorld(ctx) {
     const boss = G.EnemyMgr.get(raid.bossId), now = performance.now() / 1000;
+    if (boss && !boss.dead && shieldUp()) {
+      // The Dynamax barrier: a dome over it while an obelisk stands.
+      const rx = boss.r * 2.1 + 10, ry = boss.bodyH * 0.75 + 10, cy = boss.y - boss.bodyH * 0.45;
+      ctx.save();
+      ctx.globalAlpha = 0.16 + Math.sin(now * 3) * 0.05;
+      ctx.fillStyle = RED;
+      ctx.beginPath(); ctx.ellipse(boss.x, cy, rx, ry, 0, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 0.65; ctx.strokeStyle = '#ff9ab4'; ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]); ctx.lineDashOffset = now * 30;
+      ctx.beginPath(); ctx.ellipse(boss.x, cy, rx, ry, 0, 0, 6.2832); ctx.stroke();
+      ctx.restore();
+    }
     if (boss && !boss.dead) {
       ctx.save();
       ctx.lineWidth = 3;
@@ -336,10 +416,17 @@ G.Eternatus = (() => {
     ctx.textAlign = 'center';
     ctx.font = '700 14px Pixelify, monospace';
     ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)';
-    const line = raid.phase === 'won' ? 'ETERNATUS BEATEN' : 'ETERNATUS RAID · ' + G.U.mmss(left) + (obs ? ' · ' + obs + ' obelisk' + (obs > 1 ? 's heal' : ' heals') + ' it' : '');
+    const line = raid.phase === 'won' ? 'ETERNATUS BEATEN' : (raid.stage === 3 ? 'ETERNAMAX · ' : 'ETERNATUS RAID · ') + G.U.mmss(left)
+      + (obs ? ' · ' + obs + ' obelisk' + (obs > 1 ? 's shield and heal' : ' shields and heals') + ' it' : '');
     ctx.strokeText(line, w / 2, 118);
     ctx.fillStyle = left < 30 && raid.phase === 'fight' ? RED : '#ffd0dc';
     ctx.fillText(line, w / 2, 118);
+    if (obs && raid.phase === 'fight') {
+      ctx.font = '700 11px Pixelify, monospace';
+      const s2 = 'Break the obelisks: while one stands, Eternatus takes 80% less damage';
+      ctx.strokeText(s2, w / 2, 134); ctx.fillStyle = '#ff9ab4'; ctx.fillText(s2, w / 2, 134);
+      ctx.font = '700 14px Pixelify, monospace';
+    }
     const b = raid.beam;
     if (b && !b.hit) {
       const k = Math.min(1, b.t / BEAM_WARN);
@@ -355,6 +442,18 @@ G.Eternatus = (() => {
   }
 
   // ---------------- hooks ----------------
+
+  // The Dynamax barrier, where the enemies run (a guest's hit reaches the host's copy). On the hit as capped
+  // (boss-power.js caps the final number, after this): a huge burst still only gets BARRIER of the cap through.
+  const E = G.Enemy.prototype, hurt = E.hurt;
+  E.hurt = function (amount) {
+    if (this.eternatus && !this.remote && raid && raid.phase === 'fight' && shieldUp()) {
+      const a = [...arguments];
+      a[0] = Math.min(amount, this.maxHp * (this._hitCap || 1)) * BARRIER;
+      return hurt.apply(this, a);
+    }
+    return hurt.apply(this, arguments);
+  };
 
   const J = G.Judgment, jActive = Object.getOwnPropertyDescriptor(J, 'active').get;
   Object.defineProperty(J, 'active', { configurable: true, get() { return jActive.call(J) || !!raid; } });
@@ -388,7 +487,7 @@ G.Eternatus = (() => {
       case 'start': if (msg.cfg) begin(msg.cfg); break;
       case 'ids': {
         if (!raid) break;
-        raid.bossId = msg.boss; raid.obs = (msg.obs || []).slice(0, 3);
+        raid.bossId = msg.boss; raid.obs = (msg.obs || []).slice(0, 6);
         const mark = (n = 0) => {
           let left = 0;
           for (const id of raid ? raid.obs : []) { const o = G.EnemyMgr.get(id); if (o) obelisk(o); else left++; }
@@ -398,6 +497,7 @@ G.Eternatus = (() => {
         break;
       }
       case 'beam': if (raid && raid.phase === 'fight') charge(msg.x, msg.y); break;
+      case 'stage': if (raid && Array.isArray(msg.crystals)) staged(msg.n | 0, msg.crystals.slice(0, 6).filter(k => Array.isArray(k) && Number.isFinite(k[0]) && Number.isFinite(k[1]))); break;
       case 'win': won(); break;
       case 'lose': lost(); break;
       case 'back': finish(); break;
@@ -405,7 +505,8 @@ G.Eternatus = (() => {
   });
 
   return {
-    AT, TIME, BEAM_WARN, BEAM_PCT, DEX, shielded: (...a) => !!raid && shielded(...a),
+    AT, TIME, BEAM_WARN, BEAM_PCT, DEX, BARRIER, PHASE2, PHASE3, POWER_S, shielded: (...a) => !!raid && shielded(...a),
+    get barrier() { return shieldUp(); },
     get active() { return !!raid; }, get raid() { return raid; },
     /** For tests: the Eternabeam right now, or the time left. */
     debugBeam() { const b = raid && G.EnemyMgr.get(raid.bossId); if (b && authority()) { raid.beamT = BEAM_EVERY; charge(b.x, b.y); } },
