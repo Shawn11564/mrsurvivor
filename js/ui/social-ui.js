@@ -126,6 +126,7 @@
               if (r.ok) G.LobbyUI.open();
             });
           }
+          if (G.TradeUI) G.TradeUI.friendButton(el, f);                // fork: trade (js/fork/trade-ui.js)
           btn('Quitar', 'ghost', () => { if (confirm('¿Quitar a ' + f.name + ' de tus amigos?')) G.Social.remove(f.uid); });
         }
         box.appendChild(el);

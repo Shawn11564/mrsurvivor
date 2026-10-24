@@ -297,6 +297,114 @@ service cloud.firestore {
       allow delete: if signedIn() && (me() == uid || admin());
     }
 
+    // ---------- Fork (MrSurvivor): trading Pokémon between friends (js/fork/trade.js) ----------
+    // Each save is written only by its owner, so these rules are what makes a trade fair: only your
+    // own offer and confirmation are yours to write; a confirmation names the offer version (rv) it
+    // saw and counts only for that one (any change unconfirms both); 'done' needs both confirmations
+    // of the current offers, 3-60 s after the later one, both players heard from in the last minute,
+    // and both players' locks (tl) on this trade. Each game then applies it to its own save and takes
+    // itself off `pend` in the same write as that save (which must record the trade).
+    function tLock(u) { return /databases/$(database)/documents/tl/$(u); }
+    function tDoc(id) { return /databases/$(database)/documents/trades/$(id); }
+    function tFriends(x, y) {
+      return get(/databases/$(database)/documents/friendships/$(x < y ? x + '_' + y : y + '_' + x)).data.status == 'ok';
+    }
+    function tIn() { return resource.data.a == me() || resource.data.b == me(); }
+    function tSide() { return me() == resource.data.a ? 'a' : 'b'; }
+    function tOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+    match /trades/{id} {
+      allow read: if signedIn() && tIn();
+      allow create: if signedIn() && tNew(id);
+      allow update: if signedIn() && tIn() && request.resource.data.at == request.time
+        && (tJoin(id) || tLeave() || tBeat() || tOffer() || tConfirm() || tUnconfirm() || tDone(id) || tApplied(id));
+    }
+    function tNew(id) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['a', 'b', 'users', 'na', 'st', 'oa', 'ob', 'rv', 'ka', 'kb', 'ta', 'tb', 'ha', 'hb', 'pend', 'at'])
+        && d.a == me() && d.b is string && d.b != me() && d.users == [d.a, d.b]
+        && d.na == get(/databases/$(database)/documents/profiles/$(me())).data.name
+        && d.st == 'ask' && d.oa == [] && d.ob == [] && d.rv == 0 && d.ka == 0 && d.kb == 0
+        && d.ta == null && d.tb == null && d.ha == request.time && d.hb == null && d.pend == [] && d.at == request.time
+        && tFriends(d.a, d.b)
+        && getAfter(tLock(me())).data.t == id;
+    }
+    // The friend who was asked comes in (within 10 min) with their lock on it.
+    function tJoin(id) {
+      return resource.data.st == 'ask' && me() == resource.data.b
+        && tOnly(['st', 'hb', 'at']) && request.resource.data.st == 'open' && request.resource.data.hb == request.time
+        && request.time < resource.data.at + duration.value(10, 'm')
+        && getAfter(tLock(me())).data.t == id;
+    }
+    function tLeave() {
+      return resource.data.st in ['ask', 'open'] && tOnly(['st', 'by', 'at'])
+        && request.resource.data.st == 'off' && request.resource.data.by == me();
+    }
+    function tBeat() {
+      return resource.data.st == 'open' && tOnly(['h' + tSide(), 'at']) && request.resource.data['h' + tSide()] == request.time;
+    }
+    function tOffer() {
+      let o = request.resource.data['o' + tSide()];
+      return resource.data.st == 'open' && tOnly(['o' + tSide(), 'rv', 'at'])
+        && o is list && o.size() <= 20 && request.resource.data.rv == resource.data.rv + 1;
+    }
+    function tConfirm() {
+      let d = request.resource.data;
+      return resource.data.st == 'open' && tOnly(['k' + tSide(), 't' + tSide(), 'at'])
+        && resource.data.rv > 0 && resource.data.oa.size() + resource.data.ob.size() > 0
+        && d['k' + tSide()] == resource.data.rv && d['t' + tSide()] == request.time;
+    }
+    function tUnconfirm() {
+      let d = request.resource.data;
+      return resource.data.st == 'open' && tOnly(['k' + tSide(), 't' + tSide(), 'at'])
+        && d['k' + tSide()] == 0 && d['t' + tSide()] == null;
+    }
+    function tDone(id) {
+      let t = resource.data;
+      let d = request.resource.data;
+      return t.st == 'open' && tOnly(['st', 'pend', 'done', 'at'])
+        && d.st == 'done' && d.pend == t.users && d.done == request.time
+        && t.rv > 0 && t.ka == t.rv && t.kb == t.rv && t.oa.size() + t.ob.size() > 0
+        && tCounted(t.ta > t.tb ? t.ta : t.tb)
+        && request.time < t.ha + duration.value(60, 's') && request.time < t.hb + duration.value(60, 's')
+        && get(tLock(t.a)).data.t == id && get(tLock(t.b)).data.t == id;
+    }
+    function tCounted(last) {
+      return request.time > last + duration.value(3, 's') && request.time < last + duration.value(60, 's');
+    }
+    function tApplied(id) {
+      return resource.data.st == 'done' && me() in resource.data.pend && tOnly(['pend', 'at'])
+        && request.resource.data.pend == resource.data.pend.removeAll([me()])
+        && getAfter(/databases/$(database)/documents/saves/$(me())).data.save.get('trd', {}).get(id, null) != null;
+    }
+    // What each player has (for the other's "has it" marks) and the chat.
+    match /trades/{id}/h/{u} {
+      allow read: if signedIn() && me() in get(tDoc(id)).data.users;
+      allow create, update: if signedIn() && me() == u && me() in get(tDoc(id)).data.users
+        && request.resource.data.keys().hasOnly(['o', 's', 'r'])
+        && request.resource.data.o is list && request.resource.data.o.size() <= 3000
+        && request.resource.data.s is list && request.resource.data.s.size() <= 3000
+        && request.resource.data.r is list && request.resource.data.r.size() <= 3000;
+    }
+    match /trades/{id}/m/{mid} {
+      allow read: if signedIn() && me() in get(tDoc(id)).data.users;
+      allow create: if signedIn() && me() in get(tDoc(id)).data.users && get(tDoc(id)).data.st == 'open'
+        && request.resource.data.keys().hasOnly(['u', 't', 'at'])
+        && request.resource.data.u == me()
+        && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 200
+        && request.resource.data.at == request.time;
+    }
+    // tl/{uid}: the one trade a player is in. It can't leave a finished trade its player hasn't applied.
+    match /tl/{u} {
+      allow read: if signedIn() && me() == u;
+      allow create, update: if signedIn() && me() == u
+        && request.resource.data.keys().hasOnly(['t', 'at'])
+        && request.resource.data.t is string && request.resource.data.at == request.time
+        && me() in getAfter(tDoc(request.resource.data.t)).data.users
+        && (resource == null || resource.data.t == request.resource.data.t || !exists(tDoc(resource.data.t))
+            || !(me() in getAfter(tDoc(resource.data.t)).data.get('pend', [])));
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

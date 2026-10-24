@@ -40,6 +40,7 @@ How to use it:
 - [x] 70. [lab][coop] A second raid at 45:00, like Eternatus's but with its own mechanic, solo and co-op · Lab (944646e8, Necrozma)
 - [x] 71. [lab][coop] Rare map sites from 20:00 (temples, dungeons): travel there and fight a strong guardian with a mechanic; rewards that help the run; solo and co-op · Lab (23c531f0)
 - [x] 72. [ui] English review: every text in menus, runs, moves, items and Pokémon names in correct, natural English ("Choose de Partner", Spanish names like Bramaluna for Roaring Moon, "Fill with the commonest") · everyone (7056b24, d7afdd2, d0fe4b3)
+- [x] 73. [feat][ui] Trading Pokémon between friends: a request from the main menu (popup like a party invite), a window to search, filter and pick, both offers shown, Lv. 1 stats on hover, both confirm + a 3 s countdown either can stop, a chat; traded Pokémon arrive without upgrades or TMs; no duplicates, nothing lost on reload or leaving · everyone (dd0e39d; the firestore.rules "trading" part must be deployed before it works live)
 
 ## Phase 1: fixes and cheap tuning
 
