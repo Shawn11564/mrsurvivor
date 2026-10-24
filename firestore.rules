@@ -298,6 +298,53 @@ service cloud.firestore {
       allow delete: if signedIn() && (me() == uid || admin());
     }
 
+    // ---------- Fork (MrSurvivor): Requests, the artist's line to Claude (js/fork/requests.js) ----------
+    // req/{id}: a request or question from a staff account (the admin and the artist; the watcher,
+    // fork/requests.cjs, writes as a service account and skips these rules). Staff read every thread,
+    // create their own, post messages as themselves, may set an 'ask' back to 'new' (they answered) and
+    // close their own open request. Status otherwise is the admin's (and the watcher's). Pictures are
+    // data URLs, up to 3 of 300 KB, so a thread stays inside one document.
+    // The owner; Mello (the artist). js/fork/requests.js STAFF lists the same uids.
+    function staff() { return signedIn() && me() in ['TMD8t0i6jic7a1sg824ZP55TqOG3', 'WjnOOXwYUhcbpvMYj2XUN3dUE5P2']; }
+    function rqText(t) { return t is string && t.size() <= 4000; }
+    function rqPics(d) {
+      return !('pics' in d) || (d.pics is list && d.pics.size() <= 3
+        && (d.pics.size() < 1 || (d.pics[0] is string && d.pics[0].size() <= 300000))
+        && (d.pics.size() < 2 || (d.pics[1] is string && d.pics[1].size() <= 300000))
+        && (d.pics.size() < 3 || (d.pics[2] is string && d.pics[2].size() <= 300000)));
+    }
+    match /req/{id} {
+      allow read: if staff();
+      allow create: if staff()
+        && request.resource.data.keys().hasOnly(['by', 'n', 'k', 't', 'pics', 'st', 'at', 'up', 'lb'])
+        && request.resource.data.by == me() && request.resource.data.lb == me()
+        && request.resource.data.n is string && request.resource.data.n.size() <= 24
+        && request.resource.data.k in ['q', 'c']
+        && rqText(request.resource.data.t) && request.resource.data.t.size() > 0
+        && request.resource.data.st == 'new'
+        && request.resource.data.at == request.time && request.resource.data.up == request.time
+        && rqPics(request.resource.data);
+      allow update: if admin() || (staff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'up', 'lb'])
+        && request.resource.data.up == request.time && request.resource.data.lb == me()
+        && (request.resource.data.st == resource.data.st
+          || (resource.data.st == 'ask' && request.resource.data.st == 'new')
+          || (resource.data.by == me() && resource.data.st in ['new', 'ask'] && request.resource.data.st == 'closed')));
+      allow delete: if admin();
+      match /m/{mid} {
+        allow read: if staff();
+        allow create: if staff()
+          && request.resource.data.keys().hasOnly(['by', 'n', 't', 'at', 'pics'])
+          && request.resource.data.by == me()
+          && request.resource.data.n is string && request.resource.data.n.size() <= 24
+          && rqText(request.resource.data.t)
+          && (request.resource.data.t.size() > 0 || ('pics' in request.resource.data && request.resource.data.pics.size() > 0))
+          && request.resource.data.at == request.time
+          && rqPics(request.resource.data);
+        allow update, delete: if admin();
+      }
+    }
+
     // ---------- Fork (MrSurvivor): trading Pokémon between friends (js/fork/trade.js) ----------
     // Each save is written only by its owner, so these rules are what makes a trade fair: only your
     // own offer and confirmation are yours to write; a confirmation names the offer version (rv) it

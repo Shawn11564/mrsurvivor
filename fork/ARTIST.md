@@ -88,6 +88,23 @@ imports the finished zips and sets each radiant's rarity. Publish from the bar a
 same as the gallery. Radiant zips go in the Radiants tab, not the gallery: the gallery refuses
 them, so a radiant can't replace a normal sprite by mistake.
 
+## Requests: ask Claude, or ask for a change
+
+Inside the game itself (not the Asset Admin) there's a **Requests** board just for you and Shawn.
+Sign in to the game with your Mello account and press **REQUESTS** at the bottom left.
+
+- **+ New request**: pick **Change request** or **Question**, write what you need, and send.
+  Say where it is in the game and what you expect to see. Pictures help: paste a screenshot
+  straight into the text box, drop one on it, or use **Add picture** (up to 3; they're shrunk to fit).
+- **Claude answers in the thread.** Shawn's PC runs a Claude session that checks the board every
+  few minutes while it's on, so replies can take a while when it's off.
+- **Status**: *New* (waiting for Claude), *Working on it*, *Waiting on you* (Claude asked
+  something: just reply, and it goes back to New), *Done*, *Closed*.
+- **A change** is made, tested and published by Claude, and the reply links the commit. Players
+  (you too) get it by themselves a few minutes later, the next time the game is in a menu.
+- A pink dot and the number on the button mean a thread has a new reply. **Close request** closes
+  one of yours that you no longer need. Ctrl+Enter sends.
+
 ## If something goes wrong
 
 - **"These files were changed here AND on GitHub"**: someone published a new version of a file

@@ -43,6 +43,7 @@ G.Updater = (() => {
   function safe() {
     if (!G.Game || G.Game.state !== 'ui') return false;                   // en partida o en el resumen
     if (G.GuestSave && !G.GuestSave.safe()) return false;                 // fork: invitado sin copia guardada (js/fork/guest-save.js)
+    if (G.Requests && G.Requests.isOpen()) return false;                 // fork: reading or writing a request (js/fork/requests.js)
     if (['scr-gacha', 'scr-upgrades', 'scr-settings', 'scr-radiant', 'scr-trade'].some(id => document.getElementById(id) && G.UI.isOpen(id))) return false;
     const fx = document.getElementById('pull-fx');
     if (fx && !fx.classList.contains('hidden')) return false;             // tirada del gacha en marcha
