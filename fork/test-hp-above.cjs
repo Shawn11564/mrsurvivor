@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-// Your HP bar above your Pokémon instead of the top left (js/fork/hp-above.js), in headless Edge
-// on dev.html, reading the real canvas:
+// Your HP bar above your Pokémon, and in the top left next to your name (js/fork/hp-above.js), in headless
+// Edge on dev.html, reading the real canvas:
 //
 //   python -m http.server 8123          (in the repo root)
 //   node fork/test-hp-above.cjs [base-url]
 //   (with the Firebase emulator running, also a host and a guest: see fork/test-coop.cjs)
 //
-//   1. Solo: nothing of your HP in the top left (no bar, no "88 / 88"); your name and level stay.
+//   1. Solo: the top left has your name and level and, beside them, the HP bar with "HP / max" (it was taken
+//      away on 2026-10-22 and is back since 2026-10-24, TODO 79): full at full HP, a third red at a third.
 //   2. A green bar just above your Pokémon, full at full HP; hurt to a third, only a third of it is green.
 //      It follows you, and it's gone while you're down.
-//   3. Co-op: the top left still lists your teammate with their HP; your own bar is above you.
+//   3. Co-op: the top left still lists your teammate with their HP, and has your own bar; one is above you too.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const EMU = `G.FIREBASE_CONFIG = { apiKey: 'demo', projectId: 'demo-ps', authDomain: 'demo-ps.firebaseapp.com', appId: 'demo',
@@ -35,7 +36,13 @@ const probe = page => page.evaluate(() => new Promise(res => {
     const green = c => Math.abs(c[0] - 0x5f) + Math.abs(c[1] - 0xe0) + Math.abs(c[2] - 0x8a) < 45;   // the bar's #5fe08a (not the grass)
     // Along the bar's middle row, in 20 steps: which are green.
     const row = b ? Array.from({ length: 20 }, (_, i) => green(px(b.x + b.w * (i + 0.5) / 20, b.y + b.h / 2))) : [];
+    // The top left's bar (hud.js: x 16 + 48, y 20 + 17, 168 x 11, #ff5f6d), in screen pixels.
+    const sa = G.Touch.safeArea(), d = cam.dpr || 1, red = c => Math.abs(c[0] - 0xff) + Math.abs(c[1] - 0x5f) + Math.abs(c[2] - 0x6d) < 45;
+    const scr = (x, y) => { const q = cx.getImageData(Math.round(x * d), Math.round(y * d), 1, 1).data; return [q[0], q[1], q[2]]; };
+    // (Steps 8-11 are under the "HP / max" text, centred on the bar: left out, '-'.)
+    const top = Array.from({ length: 20 }, (_, i) => i >= 8 && i <= 11 ? null : red(scr(16 + sa.left + 48 + 168 * (i + 0.5) / 20, 20 + sa.top + 17 + 3)));
     res({ texts, box: b, greens: row.filter(Boolean).length, row: row.map(g => g ? 'G' : '.').join(''),
+      reds: top.filter(Boolean).length, topRow: top.map(g => g === null ? '-' : g ? 'R' : '.').join(''),
       body: [pl.x, pl.y - pl.bodyH], hp: [pl.hp, pl.maxHp] });
   } catch (e) { P.fillText = ft; G.I18n.rawCanvas = raw; res({ error: String(e), texts, row: '', greens: -1 }); } }));
 }));
@@ -60,8 +67,9 @@ async function solo(browser) {
   console.log('1. The top left');
   const full = await probe(page);
   const hpText = full.texts.find(t => /^\d+ \/ \d+$/.test(t));
-  check(!hpText, 'no "HP / max" in the top left', full.texts);
+  check(hpText === `${Math.ceil(full.hp[0])} / ${Math.round(full.hp[1])}`, '"HP / max" in the top left', full.texts);
   check(full.texts.includes('Charmander') && full.texts.some(t => /^(Lv|Nv)\. \d+$/.test(t)), 'your name and level stay', full.texts);
+  check(full.reds === 16, "full HP: the top left's bar is all red", full.topRow);
 
   console.log('2. Above your Pokémon');
   const b = full.box;
@@ -70,6 +78,7 @@ async function solo(browser) {
   await page.evaluate(() => { const p = G.Game.player; p.hp = p.maxHp / 3; });
   const third = await probe(page);
   check(third.greens >= 5 && third.greens <= 8, 'at a third of its HP: a third green', third.row);
+  check(third.reds >= 5 && third.reds <= 8 && third.texts.includes(`${Math.ceil(third.hp[0])} / ${Math.round(third.hp[1])}`), "and the top left's bar a third red, with its numbers", { row: third.topRow, texts: third.texts });
   await page.evaluate(() => { G.Game.player.x += 200; });
   await page.waitForTimeout(500);
   const moved = await probe(page);
@@ -127,7 +136,7 @@ async function coop(browser) {
   for (const [p, mate] of [[host, guest.name], [guest, host.name]]) {
     const r = await probe(p);
     check(r.texts.includes(mate), `${p === host ? 'host' : 'guest'}: the top left still lists the teammate (${mate})`, r.texts);
-    check(!r.texts.some(t => /^\d+ \/ \d+$/.test(t)) && r.greens === 20, `${p === host ? 'host' : 'guest'}: its own HP is the bar above it`, { texts: r.texts, row: r.row });
+    check(r.texts.some(t => /^\d+ \/ \d+$/.test(t)) && r.reds === 16 && r.greens === 20, `${p === host ? 'host' : 'guest'}: its own HP is in the top left and the bar above it`, { texts: r.texts, row: r.row, top: r.topRow });
   }
   for (const p of [host, guest]) check(p.errs.length === 0, `no page errors (${p.name})`, p.errs.slice(0, 3));
 }

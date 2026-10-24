@@ -2,6 +2,13 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-10-24",
+      "title": "Your HP bar back in the top left",
+      "items": [
+        { "k": "change", "s": "all", "a": "HUD", "t": "Your HP bar and its numbers are back in the top left, next to your Pokémon's name and level; the bar above your Pokémon stays too." }
+      ]
+    },
+    {
       "d": "2026-10-23",
       "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus, temples, dungeons and wormholes, relics, the Necrozma raid at 45:00, English review, trading, the collection shows shinies and radiants, sound only in a focused tab, Flying types over water, screens below the top bar",
       "items": [
