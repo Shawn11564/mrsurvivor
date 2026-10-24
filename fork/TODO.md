@@ -47,7 +47,7 @@ How to use it:
 - [x] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone (e2575a2)
 - [x] 78. [lab] A berry from the level-up rewards that would heal past max HP gives the rest as Overhealth, which can't be regenerated once lost · Lab (18a70ea)
 - [x] 79. [ui] The player's health bar in the top left of the HUD, next to their Pokémon's name · everyone (b7e7c26)
-- [ ] 80. [ui] A level-up reward popup soon after another one opens without the delay before you can pick · everyone
+- [x] 80. [ui] A level-up reward popup soon after another one opens without the delay before you can pick · everyone (d172b67)
 
 ## Phase 1: fixes and cheap tuning
 
