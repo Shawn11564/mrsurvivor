@@ -56,7 +56,7 @@ How to use it:
 - [x] 86. [ui] Bond picker: the "Keep them apart" button gets a hotkey (the next free number) and the same shape and size as the other buttons, keeping its colour · everyone (2e0ea8f)
 - [ ] 87. [infra] fork/test-evo-hud.cjs fails 3 checks on main ("→ Charmeleon"/"Lv 7", Charmeleon "→ Charizard"/"Lv 16", Eevee "→ Vaporeon +7 more"/"Lv 10"): the HUD text it looks for isn't drawn any more (found 2026-10-24, b31c215)
 - [ ] 88. [infra] fork/test-moves.cjs fails 3 tooltip checks on main (shadow-ball and lick tooltip lines, "English descriptions come from move-text.js") (found 2026-10-24, b31c215)
-- [ ] 89. [lab] Spikes and Toxic Spikes go back to bursting when stepped on in Lab runs (B3.2 had made them stay 60 s) · lab (owner, 2026-10-24)
+- [x] 89. [lab] Spikes and Toxic Spikes go back to bursting when stepped on in Lab runs (B3.2 had made them stay 60 s) · lab (owner, 2026-10-24) (fa19ec6)
 
 ## Phase 1: fixes and cheap tuning
 
