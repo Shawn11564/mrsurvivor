@@ -57,6 +57,7 @@ How to use it:
 - [ ] 87. [infra] fork/test-evo-hud.cjs fails 3 checks on main ("→ Charmeleon"/"Lv 7", Charmeleon "→ Charizard"/"Lv 16", Eevee "→ Vaporeon +7 more"/"Lv 10"): the HUD text it looks for isn't drawn any more (found 2026-10-24, b31c215)
 - [ ] 88. [infra] fork/test-moves.cjs fails 3 tooltip checks on main (shadow-ball and lick tooltip lines, "English descriptions come from move-text.js") (found 2026-10-24, b31c215)
 - [x] 89. [lab] Spikes and Toxic Spikes go back to bursting when stepped on in Lab runs (B3.2 had made them stay 60 s) · lab (owner, 2026-10-24) (fa19ec6)
+- [ ] 90. [feat][infra] Requests: a private panel for the artist (Mello) to send Claude change requests or questions and have changes made, with a watcher on the owner's PC (/requests) · admin (owner, 2026-10-24) (claimed: cc-jw03i)
 
 ## Phase 1: fixes and cheap tuning
 
