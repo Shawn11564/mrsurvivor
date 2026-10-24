@@ -49,7 +49,7 @@ How to use it:
 - [x] 79. [ui] The player's health bar in the top left of the HUD, next to their Pokémon's name · everyone (b7e7c26)
 - [x] 80. [ui] A level-up reward popup soon after another one opens without the delay before you can pick · everyone (d172b67)
 - [x] 81. [lab] Ancient Temple (Regigigas and the other Regis): the rune plates take about as long to light as a revive · Lab (9f7199f)
-- [x] 82. [bug] Leaderboards track every run however it ends: dying, Quit run, the End run button (pause menu and in-run), closing the tab, and the rest · everyone (90080b2; firestore.rules to deploy)
+- [x] 82. [bug] Leaderboards track every run however it ends: dying, Quit run, the End run button (pause menu and in-run), closing the tab, and the rest · everyone (90080b2; rules deployed 2026-10-24)
 - [x] 83. [ui] The Moves list (Pokémon screen → Moves) shows what each move evolves into on its row (the owner picked the list rows) · everyone (827ac14)
 
 ## Phase 1: fixes and cheap tuning
