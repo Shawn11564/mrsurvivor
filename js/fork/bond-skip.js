@@ -5,13 +5,28 @@
  * them; was +10 % with no limit until 2026-10-23). After that the button still keeps them apart, with no
  * bonus, and says so. Per player, so co-op needs nothing more: the
  * screen closes as after a pick and game.js offerBond's callback, given null, just carries on.
- * The button waits out the cards' 1 s guard like they do. Test: fork/test-bond-skip.cjs.
+ * The button waits out the cards' 1 s guard like they do. It's a card the shape and size of the move
+ * cards, under them (in its own .cards box, since renderBond empties #bond-cards on every step), in the
+ * blue of a button, with a hotkey: the number after the last move card (it follows the step's cards).
+ * Test: fork/test-bond-skip.cjs.
  */
 G.BondSkip = (() => {
   const K = 1.025, MAX = 5;
   const left = pl => Math.max(0, MAX - ((pl && pl.bondsKept) || 0));
-  const label = pl => left(pl) ? `Keep them apart (+2.5% damage, ${left(pl)} of ${MAX} left)` : 'Keep them apart (no bonus left)';
+  const detail = pl => left(pl) ? `+2.5% damage, ${left(pl)} of ${MAX} left` : 'no bonus left';
   const showBond = G.RunUI.showBond;
+  const $ = id => document.getElementById(id);
+  /** Its hotkey: the next number after the move cards. */
+  const hotkey = () => $('bond-cards').querySelectorAll('.card').length + 1;
+  /** As tall as the shortest move card on screen (theirs vary with their text). */
+  function fit() {
+    const b = $('bond-skip');
+    if (!b) return;
+    b.style.minHeight = '';
+    // (offsetHeight: the layout's, without the screen's opening zoom.)
+    const hs = [...$('bond-cards').querySelectorAll('.card')].map(c => c.offsetHeight).filter(h => h > 0);
+    if (hs.length) b.style.minHeight = Math.min(...hs) + 'px';
+  }
 
   function skip(cb) {
     const pl = G.Game.player, cards = document.getElementById('bond-cards');
@@ -29,16 +44,36 @@ G.BondSkip = (() => {
 
   G.RunUI.showBond = function (opt, cb) {
     const r = showBond.apply(this, arguments);
-    let b = document.getElementById('bond-skip');
+    let b = $('bond-skip');
     if (!b) {
-      const row = document.getElementById('bond-back').parentElement;
-      b = document.createElement('button');
-      b.id = 'bond-skip'; b.className = 'btn'; b.type = 'button';
+      const cards = $('bond-cards'), box = document.createElement('div');
+      box.id = 'bond-skip-box'; box.className = 'cards';
+      b = document.createElement('div');
+      b.id = 'bond-skip'; b.className = 'card bond-skip';
+      b.setAttribute('role', 'button');
       b.setAttribute('translate', 'no');
       b.dataset.sfx = 'none';
-      row.appendChild(b);
+      box.appendChild(b);
+      cards.after(box);
+      // The number and the guard's dimming follow the move cards (a pair's second step has one fewer).
+      new MutationObserver(() => {
+        const k = b.querySelector('.key');
+        if (k) k.textContent = hotkey();
+        box.classList.toggle('guard', cards.classList.contains('guard'));
+        fit();
+      }).observe(cards, { childList: true, attributes: true, attributeFilter: ['class'] });
+      addEventListener('resize', () => { if (G.UI.isOpen('scr-bond')) fit(); });
+      addEventListener('keydown', e => {
+        if (e.repeat || !G.UI.isOpen('scr-bond')) return;
+        const n = hotkey();
+        if (e.code === 'Digit' + n || e.code === 'Numpad' + n) b.click();
+      });
     }
-    b.textContent = label(G.Game.player);
+    b.innerHTML = `<div class="ico">${G.Icons.html('fist', 32)}</div>
+      <div class="txt"><div class="nm">Keep them apart</div><div class="ds">${detail(G.Game.player)}</div></div>
+      <div class="key">${hotkey()}</div>`;
+    $('bond-skip-box').classList.toggle('guard', $('bond-cards').classList.contains('guard'));
+    fit();
     b.onclick = () => skip(cb);
     return r;
   };

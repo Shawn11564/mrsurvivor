@@ -88,6 +88,12 @@ p.fork-credit { font-size: 0.9em; }
 
 /* Bond screen: the note under a move's description (js/ui/run-ui.js renderBond). */
 .card .ds.bond-note { color: #ffb3e6; margin-top: 2px; }
+/* Bond screen: "Keep them apart" (js/fork/bond-skip.js), a card like the moves' in a button's blue. */
+#bond-skip-box { margin-top: 10px; }
+#scr-bond .card.bond-skip, #scr-bond .card.bond-skip:hover { background: linear-gradient(180deg, #3d67c0, #26468f); border-color: var(--edge); }
+#scr-bond .card.bond-skip:hover { filter: brightness(1.15); }
+#scr-bond .card.bond-skip .ico { background: rgba(255,255,255,.12); }
+#scr-bond .card.bond-skip .ds, #scr-bond .card.bond-skip .key { color: rgba(244,248,255,.85); }
 
 /* Leaderboard: the LAB switch next to Solo / Group (js/ui/ranking-ui.js). */
 #rk-mode .rk-lab { margin-left: auto; }
