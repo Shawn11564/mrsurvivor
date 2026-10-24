@@ -1133,6 +1133,15 @@ the raid (4 prisms, power-based HP); no Necrozma without Eternatus beaten; Prism
 winning (ticket, gems, two picks, back, rifts again); losing; co-op (prisms on the guest, the shared light, a
 ticket each, back together).
 
+## Flying types over water (2026-10-23, TODO 76)
+
+`js/fork/lab/fly-water.js`: in a Lab run a Flying-type partner flies over water and swamp, with no slowdown
+(was x0.6 in water, x0.45 in swamp) and no splashing. A biome has one liquid kind, so while the run's liquid only
+slows (`G.World.liquidEffect(types).slow`), the player's update runs with Levitate on top of its ability (an
+`Object.create` over `pl.abil`, which Lab often leaves null; the ability itself is untouched), and player.js keeps
+`inLiquid` false. Lava, poison, sparks and ice work as before. Enemies already skip the terrain when their sprite
+hovers (enemy.js `flying`). Check: `fork/test-fly-water.cjs` (the real walk with the arrow key, water vs land).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since

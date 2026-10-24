@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus, temples, dungeons and wormholes, relics, the Necrozma raid at 45:00, English review, trading, the collection shows shinies and radiants, sound only in a focused tab",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus, temples, dungeons and wormholes, relics, the Necrozma raid at 45:00, English review, trading, the collection shows shinies and radiants, sound only in a focused tab, Flying types over water",
       "items": [
+        { "k": "buff", "s": "lab", "a": "Movement", "t": "Flying-type Pokémon fly over water and swamp at full speed (no splashing). Lava, poison, sparks and ice still affect them.", "n": "water x0.6 -> x1, swamp x0.45 -> x1 for Flying types" },
         { "k": "new", "s": "all", "a": "Radiants", "t": "New radiants: Charcadet, Armarouge, Ceruledge.", "c": "c527749" },
         { "k": "change", "s": "all", "a": "Sound", "t": "The game is silent while its tab is in the background or another window has the focus, and the sound comes back by itself when you return (the music goes on where it stopped)." },
         { "k": "fix", "s": "all", "a": "Collection", "t": "The Pokémon screen shows each Pokémon as the shiny or radiant you use; only your partner did, and the others showed it only once you clicked them. Changing it in the detail card changes its picture in the grid too." },
