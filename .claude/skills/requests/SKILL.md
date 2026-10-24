@@ -17,7 +17,8 @@ Firestore as a service account and prints what's waiting as JSON:
 `kind` is `question` or `change`. `pics` are JPEG files: open each with Read, a screenshot often
 is the request. The key the script needs is the owner's (`%APPDATA%\mrsurvivor\firebase-admin.json`);
 exit 4 means it's missing: tell the owner where to put it (Firebase console > Project settings >
-Service accounts > Generate new private key) and stop.
+Service accounts > Generate new private key) and stop. Exit 6 means the service account has no
+Firestore role: pass on the message (it names the account and the role to grant) and stop.
 
 ## /requests (once)
 

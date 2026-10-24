@@ -20,17 +20,17 @@
  * private key) at %APPDATA%\mrsurvivor\firebase-admin.json, or MRS_FIREBASE_ADMIN=<path>. Never in the repo.
  * With FIRESTORE_EMULATOR_HOST set (fork/test-requests.cjs) it talks to the emulator as its owner; the
  * project is then --project or MRS_PROJECT (default mrsurvivor).
- * State (the token, the watch) is in the main checkout's .claude/req-state.json; pictures land in
- * .claude/req-pics/<id>-<n>.jpg. Neither is committed; every worktree shares them.
+ * State (the access token, the watch) is in %APPDATA%\mrsurvivor\req-state.json (req-state-emu.json for the
+ * emulator, so a check never touches a real watch); pictures land in %APPDATA%\mrsurvivor\req-pics\<id>-<n>.jpg.
+ * Outside the repo on purpose: nothing here can be committed by mistake; every worktree shares them.
+ * A 403 with a real key means the service account has no Firestore role: the error says how to grant one.
  */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
-const { execFileSync } = require('child_process');
 
-const common = execFileSync('git', ['rev-parse', '--git-common-dir'], { cwd: __dirname, encoding: 'utf8' }).trim();
-const MAIN = path.dirname(path.resolve(__dirname, common));
-const STATE = path.join(MAIN, '.claude', 'req-state.json'), PICS = path.join(MAIN, '.claude', 'req-pics');
-const KEY = process.env.MRS_FIREBASE_ADMIN || path.join(process.env.APPDATA || path.join(require('os').homedir(), 'AppData', 'Roaming'), 'mrsurvivor', 'firebase-admin.json');
 const EMU = process.env.FIRESTORE_EMULATOR_HOST;
+const HOME = path.join(process.env.APPDATA || path.join(require('os').homedir(), 'AppData', 'Roaming'), 'mrsurvivor');
+const STATE = path.join(HOME, EMU ? 'req-state-emu.json' : 'req-state.json'), PICS = path.join(HOME, EMU ? 'req-pics-emu' : 'req-pics');
+const KEY = process.env.MRS_FIREBASE_ADMIN || path.join(HOME, 'firebase-admin.json');
 const MAX_EMPTY = 12, MAX_MS = 4 * 3600e3;
 
 const args = process.argv.slice(2), flag = f => args.indexOf(f), val = f => flag(f) >= 0 ? args[flag(f) + 1] : null;
@@ -68,6 +68,9 @@ async function token() {
 async function call(method, url, body) {
   const r = await fetch(url, { method, headers: { Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   const text = await r.text();
+  if (r.status === 403 && !EMU) die(`Firestore refused the service account ${key.client_email} (403): it has no Firestore role. ` +
+    `Google Cloud console > IAM & Admin > IAM (project ${project}) > Grant access: principal ${key.client_email}, role "Cloud Datastore User". ` +
+    `It's free and takes a minute or two to apply; then run node fork/requests.cjs --ping again.`, 6);
   if (!r.ok) throw new Error(method + ' ' + url.replace(BASE, '') + ': ' + r.status + ' ' + text.slice(0, 300));
   return text ? JSON.parse(text) : null;
 }
