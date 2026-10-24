@@ -1142,6 +1142,15 @@ slows (`G.World.liquidEffect(types).slow`), the player's update runs with Levita
 `inLiquid` false. Lava, poison, sparks and ice work as before. Enemies already skip the terrain when their sprite
 hovers (enemy.js `flying`). Check: `fork/test-fly-water.cjs` (the real walk with the arrow key, water vs land).
 
+## Overhealth from the Sitrus Berry (2026-10-24, TODO 78)
+
+`js/fork/lab/overhealth.js`: in a Lab run the level-up's Sitrus Berry (45%, more with card-rarity.js's tiers)
+heals as before, and what it would heal past max HP becomes Overhealth (`pl._oh`): hits take it first (a
+one-line hook in `Player.hurt`: `G.Overhealth.absorb`, before Focus Sash, Sturdy and fainting), and once lost it
+doesn't come back (regeneration and heals fill HP only). Berries add up, to max HP at most (the owner gave no cap;
+without one, a berry every level at full HP would stack without end). The card says so. HUD: a gold strip under the
+top left's HP bar and over the bar above your Pokémon. Not kept by resume.js. Check: `fork/test-overhealth.cjs`.
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since

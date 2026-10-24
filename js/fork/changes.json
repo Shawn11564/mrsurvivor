@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-24",
-      "title": "Your HP bar back in the top left",
+      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry",
       "items": [
+        { "k": "buff", "s": "lab", "a": "Level-up", "t": "The Sitrus Berry card's healing past your max HP becomes Overhealth (a gold strip under your HP bar): hits take it first, and once lost it doesn't come back. Berries add up, to your max HP at most.", "n": "heal past max HP: lost -> Overhealth, up to 100% of max HP" },
         { "k": "change", "s": "all", "a": "HUD", "t": "Your HP bar and its numbers are back in the top left, next to your Pokémon's name and level; the bar above your Pokémon stays too." }
       ]
     },
