@@ -42,7 +42,7 @@ How to use it:
 - [x] 72. [ui] English review: every text in menus, runs, moves, items and Pokémon names in correct, natural English ("Choose de Partner", Spanish names like Bramaluna for Roaring Moon, "Fill with the commonest") · everyone (7056b24, d7afdd2, d0fe4b3)
 - [x] 73. [feat][ui] Trading Pokémon between friends: a request from the main menu (popup like a party invite), a window to search, filter and pick, both offers shown, Lv. 1 stats on hover, both confirm + a 3 s countdown either can stop, a chat; traded Pokémon arrive without upgrades or TMs; no duplicates, nothing lost on reload or leaving · everyone (dd0e39d; the firestore.rules "trading" part must be deployed before it works live)
 - [x] 74. [bug][ui] Collection: every Pokémon's cell shows the form you use (shiny or radiant), not only the partner's; you had to click it to see its shiny · everyone (ccbd25d)
-- [ ] 75. [bug][ui] Tall menus overlap the main menu's top bar (coins, tickets, user): a screen taller than the space below the bar must sit under it or scroll, never cover it · everyone
+- [x] 75. [bug][ui] Tall menus overlap the main menu's top bar (coins, tickets, user): a screen taller than the space below the bar must sit under it or scroll, never cover it · everyone (094b9e9)
 - [x] 76. [lab] Flying types fly over water without the movement speed penalty · Lab (a2d8c7c)
 - [x] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone (e2575a2)
 - [ ] 78. [lab] A berry from the level-up rewards that would heal past max HP gives the rest as Overhealth, which can't be regenerated once lost · Lab
