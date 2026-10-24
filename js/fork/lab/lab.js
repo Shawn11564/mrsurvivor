@@ -281,10 +281,11 @@ G.Lab = (() => {
 
   // A Lab run's time goes on the Lab boards (js/net/ranking.js), the regular ones never see it.
   // game.js calls these at the end of the run, before the next begin(), so `run` is still this run's.
-  // (The anti-cheat clean() still applies; a resumed run is tainted by debugTime and doesn't go on.)
+  // (The anti-cheat clean() still applies.) A run sent later (js/fork/run-record.js: the tab closed mid-run)
+  // says which it was itself: r.lab is kept.
   for (const k of ['submitSolo', 'submitGroup']) {
     const f = G.Ranking[k];
-    G.Ranking[k] = function (r) { return f.call(this, Object.assign({}, r, { lab: run })); };
+    G.Ranking[k] = function (r) { return f.call(this, Object.assign({}, r, { lab: r && typeof r.lab === 'boolean' ? r.lab : run })); };
   }
 
   // ---------------- co-op ----------------

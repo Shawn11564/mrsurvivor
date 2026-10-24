@@ -1060,6 +1060,10 @@ G.Game = (() => {
     debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
     /** Menú de admin del fork (js/fork/admin.js): esta partida no sube al ranking. */
     taint() { tampered = true; },
+    /** Fork: is this run clean so far (the leaderboard's anti-cheat; js/fork/run-record.js)? */
+    isClean() { return !!pl && clean(); },
+    /** Fork: carry on a saved run at t without tainting it; real time counts from t (js/fork/lab/resume.js). */
+    resumeAt(t) { time = t; runReal = performance.now() - t * 1000; },
     toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; },
     /** Fork: what co-op needs from the game, to turn a solo run into a group one (js/fork/drop-in.js). */

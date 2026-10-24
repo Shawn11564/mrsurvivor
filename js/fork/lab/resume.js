@@ -10,7 +10,8 @@
  * and no end-of-run coins; tickets were banked when picked up, so those stay).
  * Tickets were already saved when picked up: they don't count again. The save is deleted when the run ends:
  * the moment you fall and when the summary shows (see below), so a reload after that offers nothing.
- * The clock is set with G.Game.debugTime (the time doesn't count for the ranking; Lab never counts).
+ * The clock is set with G.Game.resumeAt (since 2026-10-24: a resumed run counts on the Lab leaderboard like any
+ * other; it used to be G.Game.debugTime, which tainted it). A run already tainted when saved (s.ok false) stays so.
  * Not in co-op: the run belongs to the host. Texts in English. Test: fork/test-resume.cjs.
  */
 G.Resume = (() => {
@@ -33,7 +34,7 @@ G.Resume = (() => {
     for (const k of Object.keys(pl)) if (k.startsWith('_lab')) { try { p[k] = JSON.parse(JSON.stringify(pl[k])); } catch (e) { /* nothing */ } }
     // br: its branch (js/fork/lab/branches.js), rebuilt by G.Moves.instance's third argument.
     const moves = pl.moves.map(m => ({ id: m.id, lvl: m.lvl, evolved: !!m.evolved, br: m.branch || undefined }));
-    return { v: 1, who: who(), at: Date.now(), dex: pl.mon.dex, shiny: !!pl.shiny, seed, time: st.time, p,
+    return { v: 1, who: who(), at: Date.now(), dex: pl.mon.dex, shiny: !!pl.shiny, seed, time: st.time, p, ok: !G.Game.isClean || G.Game.isClean(),
       statsTaken: Object.assign({}, pl.statsTaken), item: pl.item || null, banned: [...(pl.banned || [])],
       moves, slots: pl.slots.map(g => g.map(m => pl.moves.indexOf(m))), active: pl.active };
   }
@@ -71,7 +72,8 @@ G.Resume = (() => {
     G.Game.startRun(null, { dex: s.dex, shiny: s.shiny });
     const pl = G.Game.player;
     G.World.reset(s.seed);
-    G.Game.debugTime(s.time);
+    if (G.Game.resumeAt) G.Game.resumeAt(s.time); else G.Game.debugTime(s.time);
+    if (s.ok === false) G.Game.taint();
     Object.assign(pl, s.p);
     pl.statsTaken = Object.assign({}, s.statsTaken);
     pl.banned = new Set(s.banned || []);

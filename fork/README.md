@@ -257,6 +257,14 @@ menu and its top bar at 1280x720, 1366x600, 1024x500, on 860x412 and 740x360 tou
 the window and stays put scrolled (`js/fork/topbar-room.js`: while the bar shows, every screen but the main menu gets the
 bar's measured bottom, in its own zoomed pixels, as its top padding, and its box the room left); also on `index.html`.
 
+`node fork/test-run-record.cjs` (server + Firebase emulator) checks that every run reaches the leaderboard however
+it ends: a run whose tab closed mid-run goes up on the next visit (`js/fork/run-record.js` keeps a clean run's
+record in localStorage every 5 s and on close; a group run from its host), a Lab run resumed after a reload counts
+when it ends (`js/fork/lab/resume.js` sets the clock with `G.Game.resumeAt`, no longer the tainting `debugTime`), a
+tainted run doesn't, a submission cut off by closing the tab is sent on the next visit, and the Lab boards take runs
+over 45:00 (`firestore.rules`: up to 4 h on `s_L`/`g_L`; the regular boards keep 45 min). Falling, Quit run and End
+run end through `game.js` `endRun` (`test-lab-ranking`, `test-end-run`).
+
 `node fork/test-pick-guard.cjs` (server) checks the reward cards' 1 s pick guard (`GUARD` in `js/ui/run-ui.js`: a key
 pressed mid-fight doesn't pick a card) and its exception (`js/fork/pick-chain.js`, a one-line hook in `guard()`): a
 popup opening less than 3 s of play after the last reward closed (several levels at once, the level queued behind a

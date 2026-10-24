@@ -150,6 +150,7 @@ service cloud.firestore {
     // Una entrada sólo se puede mejorar, nunca empeorar. Anti-trampas:
     //   - no más de 45 min (desde el 18-10-2026 la Sentencia de Arceus deja KO
     //     de un toque hacia el minuto 40; antes era 1 h y se llegaba huyendo)
+    //     MrSurvivor: the Lab boards (s_L..., g_L...) take up to 4 h; Lab runs go on past 45:00 (2026-10-24)
     //   - nivel y derrotados con margen de sobra (un grupo de 4 muy bueno)
     //   - la cuenta no puede estar baneada por el admin (saves/{uid}.ban; si aún
     //     no ha guardado nunca en la nube, no tiene documento y no está baneada)
@@ -157,7 +158,7 @@ service cloud.firestore {
       let d = request.resource.data;
       let sv = /databases/$(database)/documents/saves/$(me());
       return d.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'lv', 'kills', 'at'])
-        && d.t is int && d.t > 0 && d.t <= 2700
+        && d.t is int && d.t > 0 && d.t <= (board.matches('[sg]_L.*') ? 14400 : 2700)
         && d.lv is int && d.lv >= 1 && d.lv <= 10 + d.t / 4
         && d.kills is int && d.kills >= 0 && d.kills <= 100 + d.t * 12
         && (!exists(sv) || get(sv).data.get('ban', false) == false)
