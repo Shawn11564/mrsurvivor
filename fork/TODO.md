@@ -53,7 +53,7 @@ How to use it:
 - [x] 83. [ui] The Moves list (Pokémon screen → Moves) shows what each move evolves into on its row (the owner picked the list rows) · everyone (827ac14)
 - [x] 84. [feat] Stat-boosting moves on the same stat stack, each with its own timer: Swords Dance + Dragon Dance (or Bulk Up) past ×5 ATK, one running out doesn't end the other · everyone, Lab boosters in Lab (c65071d)
 - [x] 85. [feat] A "Rat" player title for reaching 15:00 in a run as Rattata · everyone (7c6118d)
-- [ ] 86. [ui] Bond picker: the "Keep them apart" button gets a hotkey (the next free number) and the same shape and size as the other buttons, keeping its colour · everyone (claimed: cc-ywzgs)
+- [x] 86. [ui] Bond picker: the "Keep them apart" button gets a hotkey (the next free number) and the same shape and size as the other buttons, keeping its colour · everyone (2e0ea8f)
 - [ ] 87. [infra] fork/test-evo-hud.cjs fails 3 checks on main ("→ Charmeleon"/"Lv 7", Charmeleon "→ Charizard"/"Lv 16", Eevee "→ Vaporeon +7 more"/"Lv 10"): the HUD text it looks for isn't drawn any more (found 2026-10-24, b31c215)
 - [ ] 88. [infra] fork/test-moves.cjs fails 3 tooltip checks on main (shadow-ball and lick tooltip lines, "English descriptions come from move-text.js") (found 2026-10-24, b31c215)
 
