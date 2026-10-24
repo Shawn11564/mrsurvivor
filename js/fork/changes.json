@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-24",
-      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list, every run on the leaderboard, stat boosts that stack, the Rat title, a hotkey for Keep them apart",
+      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list, every run on the leaderboard, stat boosts that stack, the Rat title, a hotkey for Keep them apart, Spikes burst again",
       "items": [
+        { "k": "nerf", "s": "lab", "a": "Moves", "t": "Spikes and Toxic Spikes burst when an enemy steps on them again, as in a normal run. They used to stay on the ground and hurt everything that walked over them. Toxic Spikes still poison.", "n": "each spike stayed 60 s and hit every second an enemy stood on it -> bursts once on the first step" },
         { "k": "change", "s": "all", "a": "Bonds", "t": "On the bond screen, \"Keep them apart\" is now a card like the moves' (same shape and size, still blue) with its own number key, the one after the last move (4 with three moves)." },
         { "k": "new", "s": "all", "a": "Titles", "t": "A new title, \"Rat\": reach 15:00 in a run as Rattata. It unlocks the moment the clock gets there (an achievement under Survival), and you can pick it in Goals → Profile." },
         { "k": "buff", "s": "all", "a": "Moves", "t": "Two stat-boosting moves on the same stat now stack: Swords Dance and Dragon Dance together give ATK ×10 instead of stopping at ×5, and each move keeps its own timer (its slot shows its own time and stacks), so one running out no longer ends the other.", "n": "Swords Dance + Dragon Dance at 5 stacks each: ×1.65 -> ×2.20 physical damage" },

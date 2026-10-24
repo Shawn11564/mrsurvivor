@@ -14,8 +14,8 @@
  *                    Psychic); the next hit on it from ANOTHER move sets the stored damage off
  *                    around it (MARK_R px). Marks are per player (each player's copies).
  *    persist   B3.2  mines that stay `persist` s and hurt each enemy that steps on them (the 14 px
- *                    step of combat.js's mines), again each HZ_REHIT s it stays (Spikes, Toxic
- *                    Spikes); `web`: they slow what's in them instead of bursting (String Shot,
+ *                    step of combat.js's mines), again each HZ_REHIT s it stays; `web`: they
+ *                    slow what's in them instead of bursting (String Shot,
  *                    Sticky Web). `rocks`: each meteor that lands leaves a pointed stone for
  *                    `rocks` s (Stealth Rock). Hazards are the owner's; a teammate's are drawn only.
  *    venoshock B3.3  against a poisoned enemy: × (1 + venoshock × its poison stacks), and the
@@ -118,11 +118,8 @@ G.LabMech = (() => {
       evo: { t: '×1.8 damage, a wider, longer beam and -15% cooldown. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
              m: { dmg: 1.8, width: 1.5, radius: 1.2, cd: 0.85 }, set: { mark: 1 } },
       evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
-    // B3.2: hazards that stay.
-    'spikes': { add: { persist: 60 },
-      note: 'Lab: the spikes stay for 60 s instead of bursting: they hurt every enemy that steps on them, and again every second it stays on them.' },
-    'toxic-spikes': { add: { persist: 60 },
-      note: 'Lab: the spikes stay for 60 s instead of bursting: they hurt and poison every enemy that steps on them, and again every second it stays on them.' },
+    // B3.2: hazards that stay. (Spikes and Toxic Spikes burst on the first step again, as in a
+    // normal run: their 60 s stay was taken out on 2026-10-24.)
     'string-shot': { add: { persist: 60, web: 1 },
       note: 'Lab: the webs stay for 60 s instead of bursting: every enemy in a web is slowed, and hurt when it first walks in.',
       evo: { t: '×1.5 damage, +1 web, bigger webs that slow more. Sticky Web: they stay for 60 s.', m: { dmg: 1.5, radius: 1.3 }, add: { count: 1 }, set: { slow: 0.75 } },

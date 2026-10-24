@@ -10,9 +10,10 @@
 //          everything it touches; another move's hit sets the mark off around the enemy (an enemy
 //          the beam missed is hurt too); the same move never sets its own mark off; Doom Desire
 //          marks; the texts say so; a normal run's Psybeam/Psychic don't mark.
-// hazards  B3.2: Spikes stay instead of bursting, hurt what steps on them and again a second later,
-//          still there after a mine's 8 s; Toxic Spikes poison; String Shot's webs slow; Rock
-//          Slide evolves into Stealth Rock, whose rocks stay and hurt; a normal run's Spikes burst.
+// hazards  B3.2: Spikes and Toxic Spikes burst on the first step, as in a normal run (their 60 s
+//          stay was taken out 2026-10-24): two mines, no lasting spikes, gone once stepped on, the
+//          enemy hurt, Toxic Spikes poison; String Shot's webs slow; Rock Slide evolves into
+//          Stealth Rock, whose rocks stay and hurt; a normal run's Spikes burst.
 // convert  B3.3: Smelling Salts and Wake-Up Slap (in real pools) ×3 on stunned or sleeping enemies and
 //          snap them out of it; Acid Spray evolves into Venoshock: ×3 on 4 poison stacks, poison used up.
 // tradeoff B3.4: Swords Dance evolves into Belly Drum (half your HP for every stack, from any slot);
@@ -185,27 +186,29 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     const r = await page.evaluate(async () => {
       const pl = G.Game.player, M = G.LabMech, out = {};
       const mineFields = () => G.Combat.fields.filter(f => f.kind === 'mine').length;
-      // Spikes: they don't burst, they stay.
+      // Spikes: the usual mines, which burst on the first step.
       let [sp] = __only(['spikes']);
       out.tip = G.MoveText.tipNotes(sp, pl).map(n => n[0]).join(' | ');
       await __fire(sp, 250);
-      const spikes = M.hazards().filter(h => h.kind === 'spike');
-      out.spikes = spikes.length; out.mines = mineFields();
-      const h = spikes[0], a = __dummy(h.x, h.y);
-      await __wait(300);
-      out.hit1 = Math.round(a.maxHp - a.hp);
-      await __wait(1200);
-      out.hit2 = Math.round(a.maxHp - a.hp);
-      a.hp = 0; a.die();
-      // Still there after the 8 s a mine lasts (the game at 8× speed for 1.5 s).
-      G.Game.debugSpeed(8); await __wait(1500); G.Game.debugSpeed(1);
-      out.later = M.hazards().filter(x => x.kind === 'spike').length; out.age = Math.round(h.t);
-      // Toxic Spikes poison.
+      out.spikes = M.hazards().filter(h => h.kind === 'spike').length; out.mines = mineFields();
+      const h = G.Combat.fields.find(f => f.kind === 'mine');
+      if (h) {
+        const a = __dummy(h.x, h.y);
+        await __wait(300);
+        out.hit1 = Math.round(a.maxHp - a.hp);
+        out.burst = !G.Combat.fields.includes(h);
+        a.hp = 0; a.die();
+      }
+      // Toxic Spikes: mines too, and the burst poisons.
       let [ts] = __only(['toxic-spikes']);
       await __fire(ts, 250);
-      const t0 = M.hazards()[0], b = __dummy(t0.x, t0.y);
-      await __wait(300);
-      out.poison = b.poison;
+      out.tsHz = M.hazards().filter(x => x.kind === 'spike').length;
+      const t0 = G.Combat.fields.find(f => f.kind === 'mine');
+      if (t0) {
+        const b = __dummy(t0.x, t0.y);
+        await __wait(300);
+        out.poison = b.poison; out.tsBurst = !G.Combat.fields.includes(t0);
+      }
       // String Shot: a web that slows.
       let [ss] = __only(['string-shot']);
       await __fire(ss, 250);
@@ -226,11 +229,10 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       out.rockHit = e ? Math.round(e.maxHp - e.hp) : 0;
       return out;
     });
-    check(/stay for 60 s/.test(r.tip), 'the move box says the spikes stay', r.tip);
-    check(r.spikes === 2 && r.mines === 0, `Spikes leave 2 lasting spikes, no bursting mines (${r.spikes} spikes, ${r.mines} mines)`, r);
-    check(r.hit1 > 0 && r.hit2 >= r.hit1 * 1.8, `an enemy standing on one is hurt when it steps on it and again a second later (${r.hit1}, then ${r.hit2})`, r);
-    check(r.later === 2 && r.age >= 10, `the spikes are still there ${r.age} s later (a mine lasts 8 s)`, r);
-    check(r.poison > 0, `Toxic Spikes poison what steps on them (poison ${r.poison})`, r);
+    check(!/stay/.test(r.tip), "the move box doesn't say the spikes stay", r.tip);
+    check(r.spikes === 0 && r.mines === 2, `Spikes leave 2 bursting mines, no lasting spikes (${r.spikes} spikes, ${r.mines} mines)`, r);
+    check(r.hit1 > 0 && r.burst, `a spike bursts when an enemy steps on it and hurts it (${r.hit1}, burst ${r.burst})`, r);
+    check(r.tsHz === 0 && r.tsBurst && r.poison > 0, `Toxic Spikes burst too and poison what steps on them (poison ${r.poison})`, r);
     check(r.web && r.slow >= 0.55 && r.webHit, `String Shot's web slows (${r.slow}) and hurts what walks in`, r);
     check(r.rsName === 'Stealth Rock' && r.rocks >= 3, `Rock Slide evolves into Stealth Rock and its rocks stay where they land (${r.rocks})`, r);
     check(r.rockHit > 0, `a stone hurts an enemy that walks into it (${r.rockHit})`, r);
@@ -508,7 +510,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
     const r = await page.evaluate(async () => {
       const pl = G.Game.player, M = G.LabMech, out = {};
       const NONE = ['hydro-pump', 'razor-leaf', 'leaf-storm', 'giga-drain', 'discharge', 'psybeam', 'bug-buzz', 'dragon-rage', 'fairy-wind',
-        'dazzling-gleam', 'flash-cannon', 'night-shade', 'psycho-cut', 'spikes', 'substitute', 'hyper-beam', 'rapid-spin', 'whirlpool',
+        'dazzling-gleam', 'flash-cannon', 'night-shade', 'psycho-cut', 'substitute', 'hyper-beam', 'rapid-spin', 'whirlpool',
         'solar-beam', 'sand-tomb', 'magnitude', 'ancient-power', 'rolling-kick', 'ominous-wind', 'outrage', 'gyro-ball', 'night-slash'];
       const SHOVES = ['extrasensory', 'whirlwind', 'vacuum-wave', 'disarming-voice'];
       const sig = id => { const m = G.Moves.instance(id, 1), d = G.Moves.BY_ID[id]; return Object.keys(m).filter(k => !(k in d) && !['def', 'lvl', 't', 'labId'].includes(k)).sort().join(','); };
@@ -546,7 +548,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       out.mag = ds;
       return out;
     });
-    check(!r.missing.length, 'all 27 field-less moves and the 4 shoves have a Lab field and a note in their box', r.missing);
+    check(!r.missing.length, 'all 26 field-less moves and the 4 shoves have a Lab field and a note in their box', r.missing);
     check(new Set(r.spins).size === 5 && new Set(r.shoves).size === 4, `the five spins (${r.spins.join(' / ')}) and the four shoves (${r.shoves.join(' / ')}) are no longer interchangeable`);
     check(r.rapid, 'Rapid Spin gives you +20% speed');
     check(r.vacuum > 1.25, `Vacuum Wave hits harder point-blank (×${r.vacuum} at 30 px against 85 px)`);
