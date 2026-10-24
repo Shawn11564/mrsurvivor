@@ -13,6 +13,7 @@ G.RunUI = (() => {
   const GUARD = 1;   // MrSurvivor: 1 s (upstream 0.6); fork/test-pick-guard.cjs
   let guardUntil = 0, guardT = 0;
   function guard(box) {
+    if (G.PickChain && G.PickChain.skip()) return;     // fork: right after another pick, none (js/fork/pick-chain.js)
     guardUntil = performance.now() + GUARD * 1000;
     box.classList.add('guard');
     clearTimeout(guardT);

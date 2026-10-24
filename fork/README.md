@@ -257,6 +257,11 @@ menu and its top bar at 1280x720, 1366x600, 1024x500, on 860x412 and 740x360 tou
 the window and stays put scrolled (`js/fork/topbar-room.js`: while the bar shows, every screen but the main menu gets the
 bar's measured bottom, in its own zoomed pixels, as its top padding, and its box the room left); also on `index.html`.
 
+`node fork/test-pick-guard.cjs` (server) checks the reward cards' 1 s pick guard (`GUARD` in `js/ui/run-ui.js`: a key
+pressed mid-fight doesn't pick a card) and its exception (`js/fork/pick-chain.js`, a one-line hook in `guard()`): a
+popup opening less than 3 s of play after the last reward closed (several levels at once, the level queued behind a
+slow pick and its count-in) can be picked at once; 3.5 s of play later, or in a new run, the guard is back.
+
 `node fork/test-focus-audio.cjs` (server) checks that the game is silent while its tab is hidden or another window
 or tab has the focus (`js/fork/focus-audio.js` suspends `js/core/audio.js`'s AudioContext, caught when it's made), on
 `dev.html` and the built `index.html`: it stops within half a second, nothing plays while away, and it comes back by
