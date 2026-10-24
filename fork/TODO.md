@@ -43,8 +43,10 @@ How to use it:
 - [x] 73. [feat][ui] Trading Pokémon between friends: a request from the main menu (popup like a party invite), a window to search, filter and pick, both offers shown, Lv. 1 stats on hover, both confirm + a 3 s countdown either can stop, a chat; traded Pokémon arrive without upgrades or TMs; no duplicates, nothing lost on reload or leaving · everyone (dd0e39d; the firestore.rules "trading" part must be deployed before it works live)
 - [x] 74. [bug][ui] Collection: every Pokémon's cell shows the form you use (shiny or radiant), not only the partner's; you had to click it to see its shiny · everyone (ccbd25d)
 - [ ] 75. [bug][ui] Tall menus overlap the main menu's top bar (coins, tickets, user): a screen taller than the space below the bar must sit under it or scroll, never cover it · everyone
-- [ ] 76. [lab] Flying types fly over water without the movement speed penalty · Lab
+- [x] 76. [lab] Flying types fly over water without the movement speed penalty · Lab (a2d8c7c)
 - [x] 77. [ui] Audio plays only while the tab is open and focused (silent in a background tab or another window) · everyone (e2575a2)
+- [ ] 78. [lab] A berry from the level-up rewards that would heal past max HP gives the rest as Overhealth, which can't be regenerated once lost · Lab
+- [ ] 79. [ui] The player's health bar in the top left of the HUD, next to their Pokémon's name · everyone
 
 ## Phase 1: fixes and cheap tuning
 
