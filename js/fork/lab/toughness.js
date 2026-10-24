@@ -37,7 +37,7 @@ G.Toughness = (() => {
     if (spdMul(pl) >= CAP_SPD) out = out.filter(c => c.key !== 'stat:spd');
     for (const c of out) if (c.key === 'stat:def' && typeof c.desc === 'string') {
       const n = (c.desc.match(/[\d.]+/) || ['6'])[0];
-      c.desc = `+${n}% toughness: you take 1 / (1 + toughness) of the damage (+100% is half), up to +${CAP_T * 100}%.`;
+      c.desc = `+${n}% toughness: you take 1 / (1 + toughness) of the damage (+100% halves it), up to +${CAP_T * 100}%.`;
     }
     return out;
   };

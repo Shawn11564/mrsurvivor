@@ -534,7 +534,7 @@ G.PlayerManager = (() => {
       bits.push('Playing ' + monName(st.dex) + (st.rad ? ' (radiant)' : st.sh ? ' (shiny)' : ''));
       if (st.lab) bits.push('Lab mode');
     }
-    if (st && st.rm) bits.push((st.rh ? 'Hosting' : 'In') + ' a room with ' + (st.rp || '…'));
+    if (st && st.rm) bits.push((st.rh ? 'Hosting' : 'In') + ' a lobby with ' + (st.rp || '…'));
     if (st && st.scr && st.s === 'run') bits.push('Screen: ' + st.scr);
     if (st && st.hid) bits.push('Tab in the background');
     if (st && st.mob) bits.push('Touch device');
@@ -631,13 +631,13 @@ G.PlayerManager = (() => {
         <section class="pm-card wide">
           <h4>Stats</h4>
           <div class="pm-stats">${stat('Runs', fmt(st.runs))}${stat('Best time', G.U.mmss(st.bestTime | 0))}${stat('Best level', fmt(st.bestLevel))}
-            ${stat('Best group time', G.U.mmss(st.bestGroupTime | 0))}${stat('Group runs', fmt(st.groupRuns))}${stat('Defeated', fmt(st.totalKills))}
+            ${stat('Best co-op time', G.U.mmss(st.bestGroupTime | 0))}${stat('Co-op runs', fmt(st.groupRuns))}${stat('Defeated', fmt(st.totalKills))}
             ${stat('Bosses', fmt(st.bossesTotal))}${stat('Rifts won', fmt(st.riftWins))}${stat('Gacha pulls', fmt(st.pulls))}
-            ${stat('Coins earned', fmt(st.coinsEarned))}${stat('Achievements', fmt(Object.keys(s.ach || {}).length))}${stat('Legends beaten', fmt(Object.keys(s.legends || {}).length))}</div>
+            ${stat('Coins earned', fmt(st.coinsEarned))}${stat('Achievements', fmt(Object.keys(s.ach || {}).length))}${stat('Legendaries defeated', fmt(Object.keys(s.legends || {}).length))}</div>
         </section>
         <section class="pm-card wide danger">
           <h4>Danger zone</h4>
-          <div class="pm-danger"><div><b>Reset Pokémon</b><small>Every Pokémon, shiny and radiant, with their upgrades and candies. They take the personality test again for a new starter. Profile favourites are cleared.</small></div>
+          <div class="pm-danger"><div><b>Reset Pokémon</b><small>Every Pokémon, shiny and radiant, with their upgrades and candy. They take the personality test again for a new starter. Profile favourites are cleared.</small></div>
             <button class="pm-btn warn" data-a="reset" data-k="mons">Reset Pokémon</button></div>
           <div class="pm-danger"><div><b>Reset Pokémon, coins and tickets</b><small>As above, and coins go back to ${fmt(G.DB.START_COINS)}, tickets and gems to 0.</small></div>
             <button class="pm-btn warn" data-a="reset" data-k="monscur">Reset all three</button></div>
@@ -737,7 +737,7 @@ G.PlayerManager = (() => {
     const v = choice.slice(3);
     const what = v === 'all' ? name + (has.shiny || has.radiant ? ', with its shiny and radiant' : '') : 'the ' + v + ' ' + name;
     if (!await ask({ title: 'Delete ' + (v === 'all' ? name : 'the ' + v) + '?', ok: 'Delete',
-      body: `${esc(p.name)} loses ${esc(what)}. This can't be undone (you can give it back later).` })) return;
+      body: `${esc(p.name)} loses ${esc(what)}. This can't be undone, but you can give it back later.` })) return;
     act(s2 => PE().remove(s2, dex, v), () => `Removed ${what}`);
   }
 
@@ -783,7 +783,7 @@ G.PlayerManager = (() => {
         const v = b.dataset.v, list = allOf(v);
         if (!await ask({ title: 'Give every ' + (v === 'normal' ? 'Pokémon' : v) + '?', danger: false, ok: 'Give ' + list.length,
           body: `${esc(p.name)} gets all ${list.length} ${v === 'normal' ? 'Pokémon' : v + ' forms'} they don't have yet.` })) return;
-        act(s => list.filter(d => PE().give(s, d, v)).length, n => `Gave ${n} ${v === 'normal' ? 'Pokémon' : v + 's'}`);
+        act(s => list.filter(d => PE().give(s, d, v)).length, n => `Gave ${n} ${v === 'normal' ? 'Pokémon' : v === 'shiny' ? 'shinies' : v + 's'}`);
         break;
       }
       case 'reset': {

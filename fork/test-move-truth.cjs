@@ -141,9 +141,9 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(/physical hits are blocked/.test(lab.texts.counter) && !/ may /.test(lab.texts.bounce + lab.texts.flare) && /2\.2 seconds/.test(lab.texts.rest) &&
       /first enemy/.test(lab.texts.techno) && !/never miss/.test(lab.texts.swift), 'Lab texts say what the code does', lab.texts);
     check(lab.cat.every(c => c === null), 'King\'s Shield and Baneful Bunker deal no damage: no Attack category', lab.cat);
-    check(!lab.protect.ups.some(t => /damage/.test(t)) && lab.protect.dur4 > 0.9 * 1.4 && lab.protect.evo === 'Lasts longer and recharges faster',
+    check(!lab.protect.ups.some(t => /damage/.test(t)) && lab.protect.dur4 > 0.9 * 1.4 && lab.protect.evo === 'Lasts longer and cools down faster',
       'Protect\'s upgrades and evolution do what they say (no "+damage" on a move that deals none)', lab.protect);
-    check(lab.rest.r2 === 1.7 && lab.rest.below4 === 0.45 && lab.rest.evo === 'Half the recharge', 'Rest\'s own upgrades (shorter sleep, earlier) and evolution', lab.rest);
+    check(lab.rest.r2 === 1.7 && lab.rest.below4 === 0.45 && lab.rest.evo === 'Half the cooldown', 'Rest\'s own upgrades (shorter sleep, earlier) and evolution', lab.rest);
     check(lab.trap === 1.3, 'Shell Trap\'s upgrade keeps the trap set longer (it used to shorten it)', lab.trap);
     check(lab.sky === 'star', 'Sky Attack: a line of light, not fire (it doesn\'t burn)', lab.sky);
     check(lab.tipWorkUp.some(s => /physical and special/.test(s)), 'Work Up\'s tooltip says it boosts both sides', lab.tipWorkUp);

@@ -16,7 +16,7 @@ if (G.PityBar) {
     const r = draw.apply(this, arguments);
     Promise.resolve().then(() => {
       const note = document.getElementById('gacha-rates') && document.getElementById('gacha-rates').querySelector('.note');
-      if (note && G.Settings.get('lab') && !note.querySelector('.nhalf')) note.insertAdjacentHTML('beforeend', '<br><span class="nhalf" translate="no">· Lab: half of the Legendaries you pull are ones you don\'t have yet (while the banner has any).</span>');
+      if (note && G.Settings.get('lab') && !note.querySelector('.nhalf')) note.insertAdjacentHTML('beforeend', '<br><span class="nhalf" translate="no">· Lab: half of the Legendaries you pull are ones you don\'t have yet (while the banner still has some).</span>');
     });
     return r;
   };

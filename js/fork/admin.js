@@ -459,7 +459,7 @@ G.Admin = (() => {
   <h3>Control chaos</h3>
   <div class="row"><button data-do="rev">Reverse controls</button><button data-do="ice">Ice skates</button><button data-do="slow">Slow-mo</button>
     <button data-do="fast">Zoomies</button><button data-do="drunk">Drunk</button></div>
-  <h3>Screen and place</h3>
+  <h3>Screen and position</h3>
   <div class="row"><button data-do="flip">Upside down</button><button data-do="mirror">Mirror</button><button data-do="tpme">Bring to me</button><button data-do="yeet">Yeet</button></div>
   <h3>Whole run (everyone)</h3>
   <div class="row"><button data-do="freeze">Freeze all Pokémon</button><button data-do="disco">Disco</button><button data-do="dark">Lights out</button>
@@ -474,11 +474,11 @@ G.Admin = (() => {
     <button data-do="rare">Rare card next</button></div>
   <div class="row"><select id="adm-drop" style="flex:1"></select><button data-do="drop">Drop at target</button></div>
 </div>
-<p class="sub" id="adm-norun">Start a run for trolls and powers (co-op for your friends).</p>
+<p class="sub" id="adm-norun">Start a run to use trolls and powers (co-op to use them on friends).</p>
 <h3>My save</h3>
 <div class="row"><input id="adm-amt" type="number" min="1" value="1000"><button data-do="coins">+ coins</button><button data-do="t1">+ tickets</button><button data-do="t10">+ ×10 tickets</button></div>
 <div class="row"><button data-do="own">Unlock Pokémon</button><button data-do="ownshiny">Unlock shiny</button></div>
-<div class="row"><button data-do="ownall">Unlock all</button><button data-do="shinyall">All shinies</button></div>
+<div class="row"><button data-do="ownall">Unlock all</button><button data-do="shinyall">Unlock all shinies</button></div>
 <h3>Tools</h3>
 <div class="row"><a href="/radiant-kit/" target="_blank" rel="noopener" style="color:#79b8ff">Radiant sprite kit</a><span class="sub">default sheets to recolour, named for the radiant form</span></div>`;
 
@@ -522,7 +522,7 @@ G.Admin = (() => {
     const dl = panel.querySelector('#adm-dex');
     dl.innerHTML = G.DEX.filter(p => G.SPRITE_META[p.dex]).map(p => `<option value="${esc(monName(p))} #${p.dex}">`).join('');
     const kinds = [['heal', 'Heal'], ['magnet', 'Magnet'], ['bomb', 'Bomb'], ['xpBig', 'Big XP', 60], ['coin', 'Coins ×25', 25],
-                   ['ticket', 'Ticket'], ['ticket10', 'Ticket ×10'], ['item', 'Item: Mega Stone', 'megastone']]
+                   ['ticket', 'Ticket'], ['ticket10', '×10 ticket'], ['item', 'Item: Mega Stone', 'megastone']]
       .concat(G.Items.LIST.map(i => ['item', 'Item: ' + G.T(i.name), i.id]));
     panel.querySelector('#adm-drop').innerHTML = kinds.map((k, i) => `<option value="${i}">${esc(k[1])}</option>`).join('');
     panel.dropKinds = kinds;

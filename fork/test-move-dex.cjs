@@ -94,7 +94,7 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     check(JSON.stringify(card.dmg) === JSON.stringify(card.want), 'Lv.1 and max-level damage are the game\'s', card.dmg);
     check(card.ups === card.wantUps, 'one line per upgrade', card.ups);
     check(card.text.includes(card.evo) && /Evolves/.test(card.text), 'its evolution: ' + card.evo);
-    check(/Pokémon of the Fire type, in normal runs/.test(card.text), 'who learns it: Fire Pokémon (and "normal runs" as written)', card.text.slice(-160));
+    check(/Fire-type Pokémon, in normal runs/.test(card.text), 'who learns it: Fire-type Pokémon (and "normal runs" as written)', card.text.slice(-160));
     await page.fill('#mdex-q', 'swift'); await page.waitForTimeout(300);
     await page.click('#mdex-list .mdex-row[data-move=swift]');
     const sw = await page.textContent('#mdex-detail');

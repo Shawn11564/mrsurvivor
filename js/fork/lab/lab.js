@@ -327,7 +327,7 @@ G.Lab = (() => {
     el.classList.toggle('hidden', !on);
     el.innerHTML = '<span class="lab-badge">LAB</span> ' + esc(other
       ? 'The host has a different version of Lab mode. Reload the page so you both see the same moves.'
-      : (room && room.isHost ? 'Your setting: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It goes on the Lab leaderboard, not the regular one, and won\'t count for achievements or records.');
+      : (room && room.isHost ? 'Your Lab setting is on: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It goes on the Lab leaderboard, not the regular one, and won\'t count for achievements or records.');
   }
 
   /** The Settings → Experimental tab (settings-ui.js draws it with its own pieces). */
@@ -350,7 +350,7 @@ G.Lab = (() => {
     const more = pauseExtra.map(f => f(pl)).filter(Boolean).map(t => `<div class="lab-more"><small>${t}</small></div>`).join('');
     return `<div class="lab-pause"><div><span class="lab-badge">LAB</span> ${info
         ? `Ability: <b>${esc(info.name)}</b> <small>${esc(info.desc)}</small>` : ''}</div>
-      <div class="lab-pool"><small>${esc(pl.mon.name)} can learn here:</small> ${icons}</div>${more}</div>`;
+      <div class="lab-pool"><small>${esc(pl.mon.name)} can learn in Lab mode:</small> ${icons}</div>${more}</div>`;
   }
   const pauseExtra = [];
 

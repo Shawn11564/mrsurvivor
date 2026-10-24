@@ -9,8 +9,8 @@
 //      (one more ticket spent, new cards, the gacha screen never left). With 0 tickets left: no button.
 //   2. ×10 with a ×10 ticket: the button repeats a ×10 paid with a ×10 ticket (not 10 normal tickets).
 //   3. Rainbow ×25: the same with a rainbow ticket.
-//   4. Radiant Ritual: with 15 spare shinies after a sacrifice, "Open Another" fills the next 10 like "Fill with the
-//      commonest" (no legendaries, not your partner) and sacrifices them; with fewer than 10 left: no button.
+//   4. Radiant Ritual: with 15 spare shinies after a sacrifice, "Open Another" fills the next 10 like "Fill with
+//      Most Common" (no legendaries, not your partner) and sacrifices them; with fewer than 10 left: no button.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 const LIST = { 150: { rarity: 5 } };
@@ -90,7 +90,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.click('#rad-go'); await skip();
     a = await done();
     const left1 = await page.evaluate(() => Object.keys(G.DB.save.shiny).length);
-    check(a.again && /10 commonest shinies/i.test(a.again) && left1 === pool - 10, `after a sacrifice (${left1} shinies left, 15 spare): the button, naming what it takes`, { a, left1 });
+    check(a.again && /10 most common shinies/i.test(a.again) && left1 === pool - 10, `after a sacrifice (${left1} shinies left, 15 spare): the button, naming what it takes`, { a, left1 });
     await page.click('#pull-another'); await page.waitForTimeout(100); await skip();
     b = await done();
     const after = await page.evaluate(() => ({ left: Object.keys(G.DB.save.shiny).length, legKept: !!G.DB.save.shiny[144] && !!G.DB.save.shiny[145], partner: !!G.DB.save.shiny[4] }));

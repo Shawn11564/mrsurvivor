@@ -25,10 +25,10 @@ G.LabSets = (() => {
     { id: 'fire', type: 'fire', need: 3, n: 'Fire set', t: 'every Fire hit adds one more burn stack' },
     { id: 'water', type: 'water', need: 3, n: 'Water set', t: 'Water hits slow enemies' },
     { id: 'electric', type: 'electric', need: 3, n: 'Electric set', t: 'Electric hits jump to one more enemy nearby' },
-    { id: 'grass', type: 'grass', need: 3, n: 'Grass set', t: 'Grass moves heal you 12% of their damage' },
+    { id: 'grass', type: 'grass', need: 3, n: 'Grass set', t: 'Grass moves heal you for 12% of their damage' },
     { id: 'fighting', type: 'fighting', need: 3, n: 'Fighting set', t: '+20% physical damage, and 25% less damage taken whatever move is active' },
     { id: 'physical', cat: 'physical', need: 3, n: 'Physical set', t: 'lifesteal: 8% of your physical damage heals you' },
-    { id: 'priority', prio: true, need: 2, n: 'Priority set', t: 'switching moves leaves at most 10% of the cooldown' }
+    { id: 'priority', prio: true, need: 2, n: 'Priority set', t: 'after switching moves, the new move has at most 10% of its cooldown left' }
   ];
   const BY = Object.fromEntries(SETS.map(s => [s.id, s]));
   const lab = () => !!(G.Lab && G.Lab.active);

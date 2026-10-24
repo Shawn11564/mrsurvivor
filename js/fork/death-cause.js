@@ -116,7 +116,7 @@
   const ROWS = [
     ['Te ha debilitado {x} ({x}).', 'Knocked out by {x} ({x}).', 'Mis K.O. par {x} ({x}).', 'Messo KO da {x} ({x}).', 'Nocauteado por {x} ({x}).', '被{x}击倒（{x}）。', '被{x}擊倒（{x}）。'],
     ['Lo que te debilitó', 'What knocked you out', 'Ce qui vous a mis K.O.', 'Cosa ti ha messo KO', 'O que te nocauteou', '击倒你的是', '擊倒你的是'],
-    ['Últimos golpes', 'Last hits', 'Derniers coups', 'Ultimi colpi', 'Últimos golpes', '最后的攻击', '最後的攻擊'],
+    ['Últimos golpes', 'Last hits taken', 'Derniers coups', 'Ultimi colpi', 'Últimos golpes', '最后的攻击', '最後的攻擊'],
     ['contacto', 'contact', 'contact', 'contatto', 'contato', '接触', '接觸'],
     ['disparo', 'shot', 'tir', 'colpo', 'disparo', '射击', '射擊'],
     ['ataque en área', 'area attack', 'attaque de zone', 'attacco ad area', 'ataque em área', '范围攻击', '範圍攻擊'],

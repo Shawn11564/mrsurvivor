@@ -40,8 +40,8 @@ G.UpgradeAll = (() => {
     }
     const q = quote(dex), coins = G.DB.save.coins, ok = q.steps > 0 && coins >= q.total;
     const what = !q.steps ? 'Every upgrade is already maxed.'
-      : ok ? `${q.steps} levels left, ${q.total.toLocaleString()} coins in all.`
-      : `${q.steps} levels left, ${q.total.toLocaleString()} coins in all: ${(q.total - coins).toLocaleString()} more needed.`;
+      : ok ? `${q.steps} ${q.steps === 1 ? 'level' : 'levels'} left, ${q.total.toLocaleString()} coins in total.`
+      : `${q.steps} ${q.steps === 1 ? 'level' : 'levels'} left, ${q.total.toLocaleString()} coins in total: ${(q.total - coins).toLocaleString()} more needed.`;
     box.innerHTML = `<div><b translate="no">Upgrade all (Lab)</b><div class="upgall-what" translate="no" style="font-size:13px;color:var(--muted)">${what}</div></div>
       ${q.steps ? `<button class="btn small ${ok ? 'gold' : ''}" data-all translate="no" ${ok ? '' : 'disabled'}>${sure && ok ? `Confirm: spend <span class="coin"></span> ${q.total.toLocaleString()}` : 'Upgrade all'}</button>` : ''}`;
     const btn = box.querySelector('[data-all]');

@@ -33,12 +33,12 @@ G.LabBranches = (() => {
     flamethrower: {
       a: { n: 'Fire Spin', like: 'wrap', t: 'Becomes a bind: rings of fire hold the nearest enemies in place and burn them the whole time.' },
       b: { n: 'Heat Wave', k: 1.25, mul: { arc: 2 }, add: { count: 4 }, t: 'A much wider fan: twice the spread and 4 more flames.' },
-      c: { n: 'Fire Blast', set: { burn: 3 }, add: { pierce: 1 }, t: 'Each flame burns 3 stacks at once and goes through one more enemy.' }
+      c: { n: 'Fire Blast', set: { burn: 3 }, add: { pierce: 1 }, t: 'Each flame adds 3 burn stacks at once and goes through one more enemy.' }
     },
     thunderbolt: {
       a: { n: 'Discharge', k: 0.8, like: 'discharge', t: 'Becomes an aura: electricity shocks everything around you, all the time.' },
       b: { n: 'Volt Switch', set: { pivot: 1.6 }, t: 'Switching to this move casts it at once, and that cast hits 60% harder.' },
-      c: { n: 'Thunder', add: { count: 2 }, set: { hex: 1.6 }, t: '+2 hops, and 60% more damage to enemies that are burned, poisoned, slowed or stunned.' }
+      c: { n: 'Thunder', add: { count: 2 }, set: { hex: 1.6 }, t: '+2 jumps, and 60% more damage to enemies that are burned, poisoned, slowed or stunned.' }
     },
     ember: {
       a: { n: 'Flame Burst', add: { pierce: 2 }, mul: { size: 1.5 }, t: 'Bigger fireballs that go through 2 more enemies.' },
@@ -48,10 +48,10 @@ G.LabBranches = (() => {
     'water-gun': {
       a: { n: 'Hydro Pump', k: 1.8, like: 'hydro-pump', t: 'Becomes a beam: a powerful jet of water through everything in a line.' },
       b: { n: 'Bubble Beam', add: { count: 1 }, set: { slow: 0.4 }, t: 'One more shot, and its hits slow enemies.' },
-      c: { n: 'Scald', set: { burn: 1 }, mul: { dmg: 1.15 }, t: 'Boiling water: its hits burn, and 15% more damage.' }
+      c: { n: 'Scald', set: { burn: 1 }, mul: { dmg: 1.15 }, t: 'Boiling water: its hits burn and deal 15% more damage.' }
     },
     'vine-whip': {
-      a: { n: 'Power Whip', mul: { radius: 1.5 }, t: '50% more reach: the whips lash much further out.' },
+      a: { n: 'Power Whip', mul: { radius: 1.5 }, t: '50% more range: the whips lash much further out.' },
       b: { n: 'Horn Leech', set: { leech: 0.4 }, t: 'You heal 40% of the damage it does (up to 5% of your HP a second).' },
       c: { n: 'Bullet Seed', k: 1.15, like: 'seed-bomb', t: 'Becomes a ranged attack: seeds that bounce from enemy to enemy.' }
     },
@@ -81,13 +81,13 @@ G.LabBranches = (() => {
       c: { n: 'Blizzard', k: 0.7, like: 'hail', set: { slow: 0.5 }, t: 'Becomes a hailstorm: ice falls on the enemies around you and slows them.' }
     },
     'shadow-ball': {
-      a: { n: 'Shadow Vortex', k: 1.7, like: 'ominous-wind', t: 'Becomes a vortex: a ghostly whirl pulls enemies in and hurts them.' },
+      a: { n: 'Ominous Wind', k: 1.7, like: 'ominous-wind', t: 'Becomes a vortex: a ghostly whirl pulls enemies in and hurts them.' },
       b: { n: 'Astral Barrage', set: { homing: 5 }, add: { count: 1 }, t: 'One more orb, and the orbs chase enemies.' },
-      c: { n: 'Shadow Shackle', set: { slow: 0.5 }, t: 'Pins their shadows: its hits slow enemies by half.' }
+      c: { n: 'Spirit Shackle', set: { slow: 0.5 }, t: 'Pins their shadows: its hits slow enemies by half.' }
     },
     sludge: {
-      a: { n: 'Sludge Bomb', add: { poison: 2 }, mul: { size: 1.3 }, t: 'Bigger blobs that poison 3 stacks at once.' },
-      b: { n: 'Toxic Trap', like: 'toxic-spikes', t: 'Becomes mines: poison traps on the ground that burst when stepped on.' },
+      a: { n: 'Sludge Bomb', add: { poison: 2 }, mul: { size: 1.3 }, t: 'Bigger blobs that add 3 poison stacks at once.' },
+      b: { n: 'Toxic Spikes', like: 'toxic-spikes', t: 'Becomes mines: poison traps on the ground that burst when stepped on.' },
       c: { n: 'Gunk Shot', k: 1.1, like: 'acid-spray', t: 'Bouncing gunk: the blob bounces from enemy to enemy, poisoning each one.' }
     }
   };
@@ -174,7 +174,7 @@ G.LabBranches = (() => {
       tag: 'Branch · Lv.' + (BR_LVL + 1),
       title: esc(G.T(m.name, 'move')) + ' → ' + esc(b.n),
       desc: esc(b.t) + (b.like || !m.def.ups[BR_LVL - 1] ? '' : ' Plus its level 4 upgrade: ' + esc(G.T(m.def.ups[BR_LVL - 1].t)) + '.')
-        + ' <span class="fit-low">The other branch closes for this run.</span>',
+        + ' <span class="fit-low">The other branch will be locked for this run.</span>',
       apply: p => choose(p, m, key) };
   }
   /** Taking a branch card. */

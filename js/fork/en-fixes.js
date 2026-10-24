@@ -20,14 +20,14 @@ G.I18n.add({
   // The Pokédex entry's number (js/ui/menu.js).
   'Nº {x}': 'No. {x}',
   // The HUD's buff chips (js/ui/hud.js): Sp. Atk and Speed.
-  'AT.E ×{x}': 'SP.ATK ×{x}',
+  'AT.E ×{x}': 'SP. ATK ×{x}',
   'VEL ×{x}': 'SPD ×{x}',
   // Forgotten password and "link your Gmail" (dev.html #forgot-note, #scr-recover).
   'Si vinculaste tu Gmail, pulsa': 'If you linked your Gmail, press',
   'con ese Gmail: es tu misma cuenta. Si no lo vinculaste, no se puede recuperar: crea una cuenta nueva (y esta vez vincula tu Gmail desde el aviso que sale al entrar).':
-    "with that Gmail: it's the same account. If you didn't link it, it can't be recovered: create a new account (and this time link your Gmail from the notice you get when you sign in).",
+    "and choose that Gmail: you're back in the same account. If you didn't link it, the account can't be recovered: create a new one (and this time link your Gmail from the notice you get when you log in).",
   'Vincula tu Gmail: si un día olvidas la contraseña, pulsas': 'Link your Gmail: if you ever forget your password, press',
-  'y es tu misma cuenta, con todo lo tuyo.': "and it's the same account, with everything in it.",
+  'y es tu misma cuenta, con todo lo tuyo.': "and you're back in the same account, with everything in it.",
   // Life Orb stops at 30 % HP in the fork (js/entities/player.js cast).
   '+30% de daño, pero cada ataque te quita un poco de vida.': '+30% damage, but each attack costs a little HP (never below 30%).'
 }, 'en');

@@ -59,7 +59,7 @@ G.LabGrowth = (() => {
       const a = pl.mon, b = G.DEX_BY[to];
       return { w: 50, type: 'evo', key: 'grow:' + to, icon: 'up', color: '#ffd23f', tag: 'EVOLUTION',
         title: 'Evolve into ' + b.name,
-        desc: `HP ${a.hp} → ${b.hp}, speed ${a.spd} → ${b.spd}, damage ×${(b.atk / a.atk).toFixed(2)}. It learns ${b.name}'s moves and gets its ability.`,
+        desc: `HP ${a.hp} → ${b.hp}, Speed ${a.spd} → ${b.spd}, damage ×${(b.atk / a.atk).toFixed(2)}. It learns ${b.name}'s moves and gets its ability.`,
         apply: p => evolveTo(p, to) };
     });
     out.push({ w: 20, type: 'stat', key: 'grow:stay', icon: 'shield', color: '#9fb1c9', tag: 'Everstone',
@@ -297,7 +297,7 @@ G.LabGrowth = (() => {
     if (pl._labStay) out.push('Everstone: not evolving this run.');
     else if (t.length) out.push('Evolves at level ' + Math.min(...t.map(x => x[1])) + ' into ' + t.map(x => esc(G.DEX_BY[x[0]].name)).join(' / ') + '.');
     if (pl._labUnder > 0) out.push('Underdog: +' + Math.round(pl._labUnder * 100) + '% XP.');
-    if (pl._labCandy) out.push('Candies: ' + Object.keys(CSTAT).filter(k => pl._labCandy[k]).map(k => CSTAT[k].text(CSTAT[k].per * pl._labCandy[k])).join(', ') + '.');
+    if (pl._labCandy) out.push('Candy: ' + Object.keys(CSTAT).filter(k => pl._labCandy[k]).map(k => CSTAT[k].text(CSTAT[k].per * pl._labCandy[k])).join(', ') + '.');
     return out.join(' ');
   });
 

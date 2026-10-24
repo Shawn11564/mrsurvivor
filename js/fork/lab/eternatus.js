@@ -86,7 +86,7 @@ G.Eternatus = (() => {
     G.Game.flash('#ff3a6a', 0.9);
     G.Camera.kick(1.2);
     G.Audio.sfx('rift');
-    G.Spawner.say('Eternatus raid! Break the obelisks, hide from the Eternabeam', 4, true);
+    G.Spawner.say('Eternatus raid! Break the obelisks and hide from the Eternabeam!', 4, true);
   }
 
   /** Authority: Eternatus and its obelisks (with HP based on your damage). */

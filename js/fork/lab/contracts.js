@@ -68,7 +68,7 @@ G.LabContracts = (() => {
     st.done = true; st.prog = 1;
     G.DB.commit();
     const mon = G.DEX_BY[dex];
-    G.Spawner.say('Contract done: ' + BY[id].text(mon) + ' (' + mon.name + ')', 3.4, true);
+    G.Spawner.say('Contract complete: ' + BY[id].text(mon) + ' (' + mon.name + ')', 3.4, true);
     G.Audio.sfx('confirm');
     return true;
   }
@@ -156,7 +156,7 @@ G.LabContracts = (() => {
       m.dataset.contract = d.id;
       const pct = st.done ? 100 : Math.round((st.prog || 0) * 100);
       const how = st.done ? '' : !d.T ? 'Not yet'
-        : st.prog ? `Best: ${mmss(st.prog * d.T)} of ${mmss(d.T)} with the 3 moves` : `Get 3 of those moves, then last to ${mmss(d.T)}`;
+        : st.prog ? `Best: ${mmss(st.prog * d.T)} of ${mmss(d.T)} with the 3 moves` : `Get 3 of those moves, then survive until ${mmss(d.T)}`;
       m.innerHTML = `<div class="m-txt"><b>${G.Lab.esc(d.text(mon))}</b><div class="bar"><i style="width:${pct}%"></i></div>${how ? `<small class="sub cc-how">${how}</small>` : ''}</div>
         <div class="m-rw"><span class="ccoin" title="Contract coins: only for ${G.Lab.esc(mon.name)}'s upgrades"></span> ${d.coins} · 🍬 ${CANDY}</div>`;
       const btn = document.createElement('button');
@@ -183,7 +183,7 @@ G.LabContracts = (() => {
     const name = G.Lab.esc(G.DEX_BY[dex].name);
     el.innerHTML = `<span class="ud-tag">LAB</span> <span>Your coins: <span class="coin"></span> <b>${s.coins}</b></span>
       <span>${name}'s contract coins: <span class="ccoin"></span> <b class="cc-n">${left}</b></span>
-      <small class="sub">${left ? `Spent first on ${name}'s upgrades, then your coins.` : `Earn them with ${name}'s contracts (Missions).`}</small>`;
+      <small class="sub">${left ? `Used first for ${name}'s upgrades, before your own coins.` : `Earn them with ${name}'s contracts (Missions).`}</small>`;
   }
   function onUpgrades() {
     const box = $('upg-list'), sel = $('upg-mon'), s = save();

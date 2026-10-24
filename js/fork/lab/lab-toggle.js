@@ -15,9 +15,10 @@
 (() => {
   const $ = id => document.getElementById(id);
   const TIP = `<b>Lab mode</b> (experimental): each Pokémon gets the moves it learns in the games, one of its
-    abilities, signature moves, evolving during the run, items and extra XP for weak Pokémon, and candies.
-    <span class="lab-tip-r"><b>Lab runs</b> give coins, tickets and shinies and count for missions, and go on
-    the <b>Lab leaderboard</b>, but <b>not the regular leaderboard, achievements or records</b>.</span>
+    abilities and its signature moves, and can evolve during the run; there are also items, extra XP for weak
+    Pokémon, and candy.
+    <span class="lab-tip-r"><b>Lab runs</b> give coins, tickets and shinies and count for missions. They go on
+    the <b>Lab leaderboard</b>, but <b>don't count for the regular leaderboard, achievements or records</b>.</span>
     <span class="lab-tip-r">In co-op, the host's setting decides for everyone.</span>`;
   const CSS = `
 #lab-play { position: relative; grid-column: 1 / -1; }
@@ -75,7 +76,7 @@
     input.checked = !!G.Settings.get('lab');
     input.disabled = guest;
     $('lab-q').classList.toggle('off', guest);
-    $('lab-q').title = guest ? 'In a group, the host\'s Lab setting decides' : 'Lab mode (the same switch as Settings → Experimental)';
+    $('lab-q').title = guest ? 'In co-op, the host\'s Lab setting decides for everyone' : 'Lab mode (the same switch as Settings → Experimental)';
   }
 
   build();

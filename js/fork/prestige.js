@@ -160,20 +160,20 @@ G.Prestige = (() => {
      'Prestigio {x}/{x}: +{x}% PS, danni, velocità e difesa.', 'Prestígio {x}/{x}: +{x}% vida, dano, velocidade e defesa.', '声望 {x}/{x}：生命、伤害、速度和防御 +{x}%。', '聲望 {x}/{x}：生命、傷害、速度和防禦 +{x}%。'],
     ['Prestigio máximo: empieza cada run con un objeto al azar.', 'Max prestige: every run starts with a random held item.', 'Prestige maximum : chaque partie commence avec un objet au hasard.',
      'Prestigio massimo: ogni run inizia con uno strumento a caso.', 'Prestígio máximo: cada run começa com um item aleatório.', '声望已满：每局开始时携带一个随机道具。', '聲望已滿：每局開始時攜帶一個隨機道具。'],
-    ['Todo comprado: puede subir de prestigio.', 'Everything bought: it can prestige.', 'Tout est acheté : il peut monter en prestige.', 'Tutto comprato: può salire di prestigio.', 'Tudo comprado: pode subir de prestígio.', '已全部购买：可以提升声望。', '已全部購買：可以提升聲望。'],
+    ['Todo comprado: puede subir de prestigio.', 'All upgrades bought: ready to prestige.', 'Tout est acheté : il peut monter en prestige.', 'Tutto comprato: può salire di prestigio.', 'Tudo comprado: pode subir de prestígio.', '已全部购买：可以提升声望。', '已全部購買：可以提升聲望。'],
     ['Compra todas sus mejoras para poder subir de prestigio.', 'Buy all its upgrades to be able to prestige.', 'Achetez toutes ses améliorations pour pouvoir monter en prestige.',
      'Compra tutti i suoi potenziamenti per poter salire di prestigio.', 'Compre todas as melhorias para poder subir de prestígio.', '买齐它的所有强化后才能提升声望。', '買齊牠的所有強化後才能提升聲望。'],
     ['Subir de prestigio', 'Prestige', 'Monter en prestige', 'Sali di prestigio', 'Subir de prestígio', '提升声望', '提升聲望'],
-    ['Confirmar: sus mejoras vuelven a 0', 'Confirm: its upgrades go back to 0', 'Confirmer : ses améliorations retombent à 0', 'Conferma: i potenziamenti tornano a 0', 'Confirmar: as melhorias voltam a 0', '确认：它的强化归零', '確認：牠的強化歸零'],
+    ['Confirmar: sus mejoras vuelven a 0', 'Confirm: its upgrades reset to 0', 'Confirmer : ses améliorations retombent à 0', 'Conferma: i potenziamenti tornano a 0', 'Confirmar: as melhorias voltam a 0', '确认：它的强化归零', '確認：牠的強化歸零'],
     ['Cada prestigio: +5% a vida, daño, velocidad y defensa, y sus mejoras vuelven a 0 (sin devolver monedas). Con el 3.º, un objeto al azar al empezar cada run.',
-     'Each prestige: +5% HP, damage, speed and defense, and its upgrades go back to 0 (coins aren\'t refunded). At the 3rd, a random held item at the start of every run.',
+     'Each prestige: +5% HP, damage, speed and defense, and its upgrades reset to 0 (coins aren\'t refunded). From prestige 3 on, every run starts with a random held item.',
      'Chaque prestige : +5 % PV, dégâts, vitesse et défense, et ses améliorations retombent à 0 (sans rembourser les pièces). Au 3e, un objet au hasard au début de chaque partie.',
      'Ogni prestigio: +5% PS, danni, velocità e difesa, e i potenziamenti tornano a 0 (le monete non tornano). Al 3º, uno strumento a caso all\'inizio di ogni run.',
      'Cada prestígio: +5% vida, dano, velocidade e defesa, e as melhorias voltam a 0 (sem devolver moedas). No 3º, um item aleatório no início de cada run.',
      '每次声望：生命、伤害、速度和防御 +5%，强化归零（不退还金币）。第 3 次起，每局开始时携带一个随机道具。',
      '每次聲望：生命、傷害、速度和防禦 +5%，強化歸零（不退還金幣）。第 3 次起，每局開始時攜帶一個隨機道具。'],
     ['¡{x} sube a prestigio {x}!', '{x} reaches prestige {x}!', '{x} atteint le prestige {x} !', '{x} sale al prestigio {x}!', '{x} chegou ao prestígio {x}!', '{x}提升到声望 {x}！', '{x}提升到聲望 {x}！'],
-    ['Prestigio máximo: llevas {x}.', 'Max prestige: you hold {x}.', 'Prestige maximum : vous tenez {x}.', 'Prestigio massimo: tieni {x}.', 'Prestígio máximo: você segura {x}.', '声望已满：你携带了{x}。', '聲望已滿：你攜帶了{x}。']
+    ['Prestigio máximo: llevas {x}.', 'Max prestige: you start with {x}.', 'Prestige maximum : vous tenez {x}.', 'Prestigio massimo: tieni {x}.', 'Prestígio máximo: você segura {x}.', '声望已满：你携带了{x}。', '聲望已滿：你攜帶了{x}。']
   ];
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
 

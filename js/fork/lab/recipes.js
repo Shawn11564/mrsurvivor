@@ -36,9 +36,9 @@ G.LabRecipes = (() => {
           G.Combat.hit(pl, o, m.dmg * pl.atkFor(m) * 0.4, col, o.x - e.x, o.y - e.y, 0, m);
         }
       } },
-    { id: 'wisp-hex', a: 'will-o-wisp', b: 'hex', n: 'Infernal Hex', t: 'Hex\'s chain burns every enemy it hits, so its later hops hit harder.',
+    { id: 'wisp-hex', a: 'will-o-wisp', b: 'hex', n: 'Infernal Hex', t: 'Hex\'s chain burns every enemy it hits, so its later jumps hit harder.',
       mod: m => { if (m.id === 'hex') m.burn = Math.max(m.burn || 0, 1); } },
-    { id: 'snow-beam', a: 'snowscape', b: 'ice-beam', n: 'Deep Freeze', t: 'Ice Beam freezes: its hits stop enemies for 0.5 s (once every 2 s each).',
+    { id: 'snow-beam', a: 'snowscape', b: 'ice-beam', n: 'Deep Freeze', t: 'Ice Beam freezes: its hits stop enemies for 0.5 s (at most once every 2 s per enemy).',
       hit: (pl, e, m) => { if (m.id === 'ice-beam' && !e.dead && once(e, '_labFrzAt', 2000)) e.applyStun(0.5); } },
     { id: 'seed-drain', a: 'leech-seed', b: 'giga-drain', n: 'Root Network', t: 'Giga Drain plants Leech Seed on everything it touches.',
       mod: m => { if (m.id === 'giga-drain') m.seed = 3; } }

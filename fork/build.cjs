@@ -43,8 +43,9 @@ try {
   fs.readFileSync = realRead;
 }
 // The site pages (make_seo_pages.py) translate with the English dictionary export_data.js
-// captured from upstream's files; add the fork's texts the pages show (the evolved stat moves).
-const FORK_TEXTS = ['js/fork/buff-evos.js', 'js/fork/evo-names.js'];
+// captured from upstream's files; add the fork's texts the pages show (the evolved stat moves, and
+// the fork's English fixes and review: js/fork/en-fixes.js, js/fork/en-review.js).
+const FORK_TEXTS = ['js/fork/buff-evos.js', 'js/fork/evo-names.js', 'js/fork/en-fixes.js', 'js/fork/en-review.js'];
 {
   const vm = require('vm'), data = path.join(ROOT, 'tools', 'cache', 'gamedata.json');
   const out = JSON.parse(realRead(data, 'utf8'));

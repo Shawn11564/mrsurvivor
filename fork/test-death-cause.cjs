@@ -101,7 +101,7 @@ async function player(browser, name, dex) {
       check(d.toasts.some(t => t === `Knocked out by ${d.name} (${HOW[how]}).`), 'the popup says who and how', d.toasts);
       const over = await settle(page, () => !document.getElementById('scr-over').classList.contains('hidden'), null, 15000);
       const txt = over ? await page.textContent('#over-stats') : '';
-      check(over && txt.includes('What knocked you out') && txt.includes(`${d.name} (${HOW[how]})`) && txt.includes('Last hits'),
+      check(over && txt.includes('What knocked you out') && txt.includes(`${d.name} (${HOW[how]})`) && txt.includes('Last hits taken'),
         'the game-over screen shows what knocked you out and the last hits', txt.replace(/\s+/g, ' ').slice(0, 160));
     }
     check(!errors.length, 'no page errors', errors);

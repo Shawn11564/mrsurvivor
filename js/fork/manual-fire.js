@@ -10,7 +10,7 @@
  * shout, endure: G.LabKinds.PASSIVE, G.LabKinds2.PASSIVE), which Lab casts with its own clocks.
  * Only your own Pokémon on this device; never on touch screens (they have no manual aim).
  *
- * "Mobility moves fire by hand" (G.Settings 'mobileByHand', off by default; fork/PLAN-2026-10-22.md A2.4,
+ * "Fire mobility moves manually" (G.Settings 'mobileByHand', off by default; fork/PLAN-2026-10-22.md A2.4,
  * the owner's G2), with or without Manual aim: the moves that move you or charge along a line (dash,
  * Lab's leap and recoil, a rolling ramp: MOBILE) only go off while you hold the same button; every
  * other attack keeps firing on its own. It makes a mobility move a decision without changing anyone
@@ -42,8 +42,8 @@ G.ManualFire = (() => {
   document.head.appendChild(css);
 
   /** The row under "Manual aim" (only while it's on; settings-ui re-renders when that changes), then
-   *  "Mobility moves fire by hand" (not on touch screens: no button to hold). */
-  const MOBILE_TEXT = ['Mobility moves fire by hand', 'Dash, leap, charge and roll moves only go off while you hold the left mouse button (or Space, or push the right stick). Your other attacks still fire on their own.'];
+   *  "Fire mobility moves manually" (not on touch screens: no button to hold). */
+  const MOBILE_TEXT = ['Fire mobility moves manually', 'Dash, leap, charge and roll moves only go off while you hold the left mouse button (or Space, or push the right stick). Your other attacks still fire on their own.'];
   G.I18n.add({ [MOBILE_TEXT[0]]: MOBILE_TEXT[0], [MOBILE_TEXT[1]]: MOBILE_TEXT[1] }, 'en');
   function settingsRow(toggle) {
     const auto = !G.Settings.get('aimManual') ? '' : toggle('autoFire', 'Auto-shoot', 'On: your attacks go off on their own, towards where you aim. Off: they only go off while you hold the left mouse button (or Space, or push the right stick). Stat boosts and support moves still go off on their own.')

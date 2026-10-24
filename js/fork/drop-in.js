@@ -155,7 +155,7 @@ G.DropIn = (() => {
     if (!rm) {
       await G.PlayerManager.command(uid, 'host');
       rm = await wait(() => { const s = live(); return s && s.s === 'run' && s.rm; }, 20000);
-      if (!rm) return { ok: false, error: name + '\'s game didn\'t open a room (an older version, or the run just ended).' };
+      if (!rm) return { ok: false, error: name + '\'s game didn\'t open a lobby (an older version, or the run just ended).' };
     }
     const r = await G.Social.joinRoom(rm, true);
     if (!r.ok) return r;

@@ -36,7 +36,7 @@ G.Mega = (() => {
     [SAY, 'Mega Evolution!', 'Méga-Évolution !', 'Megaevoluzione!', 'Megaevolução!', '超级进化！', '超級進化！'],
     [SAY_PRIMAL, 'Primal Reversion!', 'Primo-Résurgence !', 'Archeorisveglio!', 'Reversão Primitiva!', '原始回归！', '原始回歸！'],
     [CAN, 'Can Mega Evolve', 'Peut méga-évoluer', 'Può megaevolversi', 'Pode megaevoluir', '可以超级进化', '可以超級進化'],
-    [HINT, 'Can Mega Evolve: from minute 5 on, each rift legendary you beat with it has a 1 in 30 chance to drop its Mega Stone.',
+    [HINT, 'Can Mega Evolve: from minute 5 on, each rift legendary you defeat with it has a 1 in 30 chance to drop this Pokémon\'s Mega Stone.',
      'Peut méga-évoluer : dès la 5e minute, chaque légendaire de faille vaincu avec lui a 1 chance sur 30 de lâcher sa Méga-Gemme.',
      'Può megaevolversi: dal 5º minuto, ogni leggendario di fenditura sconfitto con lui ha 1 probabilità su 30 di lasciare la sua Megapietra.',
      'Pode megaevoluir: a partir do minuto 5, cada lendário de fenda derrotado com ele tem 1 chance em 30 de deixar sua Mega Pedra.',

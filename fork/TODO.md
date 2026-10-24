@@ -39,6 +39,7 @@ How to use it:
 - [x] 69. [lab] Eternatus raid harder: someone beat it without breaking the obelisks; obelisks must matter, phases · Lab (900fd198)
 - [x] 70. [lab][coop] A second raid at 45:00, like Eternatus's but with its own mechanic, solo and co-op · Lab (944646e8, Necrozma)
 - [x] 71. [lab][coop] Rare map sites from 20:00 (temples, dungeons): travel there and fight a strong guardian with a mechanic; rewards that help the run; solo and co-op · Lab (23c531f0)
+- [x] 72. [ui] English review: every text in menus, runs, moves, items and Pokémon names in correct, natural English ("Choose de Partner", Spanish names like Bramaluna for Roaring Moon, "Fill with the commonest") · everyone (7056b24, d7afdd2, d0fe4b3)
 
 ## Phase 1: fixes and cheap tuning
 

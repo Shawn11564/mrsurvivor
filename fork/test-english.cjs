@@ -385,7 +385,8 @@ async function game() {
             if (l === 'en' && (!c || c === 'move')) en.push(v); else if (l !== 'en') other.add(v);
           }
         }
-        const out = [], squash = s => s.replace(/\s+/g, ' ').toLowerCase();
+        // (Case counts: the word-by-word pass made "Lab runs" "Lab Runs" and "co-op" "Co-op".)
+        const out = [], squash = s => s.replace(/\s+/g, ' ');
         const texts = new Set([...en, ...fork.filter(s => !other.has(s))]);
         for (const s of texts) {
           if (G.I18n.has(s)) continue;                       // a Spanish text with its translation
@@ -396,6 +397,22 @@ async function game() {
       }, fork);
       check(bad.n > 1000 && !bad.out.length, `English texts come out of the dictionary unchanged (${bad.n} checked)`, bad.out.slice(0, 20));
       if (LIST) for (const s of bad.out) console.log('    ' + s);
+    }
+
+    // Pokémon names: Type: Null and the Paradox Pokémon have Spanish names in js/data/pokedex.js
+    // ("Bramaluna"); in English the dex carries the English one (js/fork/en-names.js), and the dictionary
+    // has them for texts that arrive with the Spanish name. And texts that only had the word-by-word pass:
+    // the partner button without "(shiny)" was "Choose de Partner"; the fullscreen button "Log out".
+    {
+      const EN_NAMES = { 772: 'Type: Null', 984: 'Great Tusk', 985: 'Scream Tail', 987: 'Flutter Mane', 988: 'Slither Wing',
+        989: 'Sandy Shocks', 991: 'Iron Bundle', 992: 'Iron Hands', 994: 'Iron Moth', 995: 'Iron Thorns', 1005: 'Roaring Moon',
+        1006: 'Iron Valiant', 1009: 'Walking Wake', 1010: 'Iron Leaves' };
+      const names = await page.evaluate(EN => Object.keys(EN).map(d => [d, G.DEX_BY[d].name, G.I18n.t(G.DEX_BY[d].name)]), EN_NAMES);
+      const wrong = names.filter(([d, n, t]) => n !== EN_NAMES[d] || t !== EN_NAMES[d]);
+      const es = await page.evaluate(() => ['Bramaluna', 'Ferropaladín', 'Código Cero'].map(s => G.I18n.t(s)));
+      check(!wrong.length && es.join() === 'Roaring Moon,Iron Valiant,Type: Null', 'Pokémon names in English (Type: Null, the Paradox Pokémon)', wrong.length ? wrong : undefined);
+      const t = await page.evaluate(() => [G.I18n.t('Elegir de compañero'), G.I18n.t('Elegir de compañero (shiny)'), G.T('Salir', 'fullscreen'), G.I18n.t('Salir')]);
+      check(t.join('|') === 'Choose as partner|Choose as partner (shiny)|Exit|Log out', 'the partner button and the fullscreen button in English', t);
     }
 
     // No Spanish left: every text upstream's game can show (spanishSources) and its data tables
@@ -470,8 +487,8 @@ async function game() {
       const before = seen.size;
       for (const [s, t] of texts) {
         seen.add(s);
-        // (The dictionary's word-by-word pass may only change a capital: "joystick" → "Joystick".)
-        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t.toLowerCase() !== s.toLowerCase() ? 'translatable'
+        // (A capital counts too: the word-by-word pass keeps an English word's case since 2026-10-23.)
+        const why = /[ñ¿¡áíóú]/i.test(s) ? 'accent' : SPANISH.test(s) ? 'word' : t !== s ? 'translatable'
           : (s.toLowerCase().match(/[\p{L}’']+/gu) || []).some(w => SPANISH_ONLY.has(w)) ? 'Spanish word' : null;
         if (why && !flagged.has(s)) flagged.set(s, `${where} [${why}]${t !== s ? ' → ' + t : ''}`);
       }

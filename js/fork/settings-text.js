@@ -1,14 +1,14 @@
 /* ============ settings-text.js — texts for the fork's settings (MrSurvivor) ============
- * The "Cuenta atrás al quitar la pausa" (Countdown after pausing) row (pauseCount, js/ui/settings-ui.js; used by
+ * The "Cuenta atrás al quitar la pausa" (Countdown on resume) row (pauseCount, js/ui/settings-ui.js; used by
  * resumeRun in js/game.js). Columns: Spanish, English, French, Italian, Portuguese (Brazil),
  * Simplified and Traditional Chinese, like js/fork/mega.js.
  */
 (() => {
   const ROWS = [
-    ['Cuenta atrás al quitar la pausa', 'Countdown after pausing', 'Compte à rebours après la pause', 'Conto alla rovescia dopo la pausa',
+    ['Cuenta atrás al quitar la pausa', 'Countdown on resume', 'Compte à rebours après la pause', 'Conto alla rovescia dopo la pausa',
      'Contagem regressiva após a pausa', '取消暂停后倒计时', '取消暫停後倒數'],
     ['Al volver de la pausa, 3 segundos con todo quieto antes de seguir. Las demás cuentas atrás (vínculos, objetos) no cambian.',
-     'When you leave the pause menu, 3 seconds with everything frozen before play goes on. The other countdowns (bonds, items) stay.',
+     'When you resume from a pause, everything stays frozen for 3 seconds before play continues. The other countdowns (bonds, items) are unchanged.',
      'En quittant la pause, 3 secondes avec tout figé avant de reprendre. Les autres comptes à rebours (liens, objets) restent.',
      'Uscendo dalla pausa, 3 secondi con tutto fermo prima di riprendere. Gli altri conti alla rovescia (legami, strumenti) restano.',
      'Ao sair da pausa, 3 segundos com tudo parado antes de continuar. As outras contagens (vínculos, itens) continuam.',
@@ -18,7 +18,7 @@
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach((l, i) => G.I18n.add(Object.fromEntries(ROWS.map(r => [r[0], r[i + 1]])), l));
   // Since TODO 47 a pause of 10 s or less never counts in (js/game.js countInAfter): the description says so,
   // in English for every language (the old translations above no longer fit).
-  const DESC = 'When you leave a pause that lasted over 10 s, 3 seconds with everything frozen before play goes on. '
-    + 'Shorter pauses carry straight on. The countdown after a long pick (cards, items, bonds) stays.';
+  const DESC = 'After a pause longer than 10 s, everything stays frozen for 3 seconds before play resumes. '
+    + 'Shorter pauses resume right away. The countdown after a long pick (cards, items, bonds) still applies.';
   ['en', 'fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'].forEach(l => G.I18n.add({ [ROWS[1][0]]: DESC }, l));
 })();

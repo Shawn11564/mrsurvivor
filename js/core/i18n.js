@@ -123,7 +123,9 @@ G.I18n = (() => {
     let r = whole(main, body, upper);
     if (r === undefined && back) r = whole(back, body, upper);
     if (r === undefined && fragRe()) {
-      r = body.replace(frag, w => keepCase(w, fragMap.get(w.toLowerCase()) || w));
+      // MrSurvivor: a piece whose English is the same word (an entry that only protects an English
+      // name, 'Runs': 'Runs') keeps its case: "Lab runs" stayed "Lab Runs" (fork/test-english.cjs).
+      r = body.replace(frag, w => { const en = fragMap.get(w.toLowerCase()) || w; return en.toLowerCase() === w.toLowerCase() ? w : keepCase(w, en); });
     }
     return lead + (r === undefined ? body : r) + tail;
   }

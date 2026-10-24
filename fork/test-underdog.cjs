@@ -8,7 +8,7 @@
 //      gives them), Charmander's row (Common) highlighted with its +39%. Back and Escape don't
 //      start a run; Start run does.
 //   2. In the run the XP bar's last part is gold, in the bonus's share (k / (1 + k)) of the
-//      fill, with "Underdog Bonus +39%" under it.
+//      fill, with "Underdog +39% XP" under it.
 //   3. Charizard: the ladder says no bonus, and the bar has no gold and no text.
 //   4. Random Pokémon shows the ladder for the Pokémon it picked.
 //   5. No ladder: with Lab off, with "Show this when I play a different Pokémon" unticked, or when
@@ -95,13 +95,13 @@ const inRun = page => page.evaluate(() => !!(G.Game.player && G.Game.state !== '
     const cv = document.getElementById('game'), x = cv.getContext('2d'), w = cv.width;
     const f = pl.xp / pl.xpNext, u = pl._labUnder, end = w * f, start = end / (1 + u);
     const px = X => Array.from(x.getImageData(Math.round(X), 3, 1, 1).data);
-    return { f, u, gold: px((start + end) / 2), base: px(start / 2), empty: px((end + w) / 2), label: window.__texts.find(t => t.startsWith('Underdog Bonus')) };
+    return { f, u, gold: px((start + end) / 2), base: px(start / 2), empty: px((end + w) / 2), label: window.__texts.find(t => t.startsWith('Underdog +')) };
   });
   const isGold = p => p[0] > 200 && p[1] > 170 && p[2] < 140;
   check(isGold(hud.gold), 'the bonus\'s share of the fill is gold', hud.gold);
   check(!isGold(hud.base) && hud.base[2] > 150, 'the rest of the fill keeps its blue', hud.base);
   check(!isGold(hud.empty), 'the empty part has no gold', hud.empty);
-  check(hud.label === `Underdog Bonus +${pct(hud.u)}%`, 'with "Underdog Bonus" and the % under it', hud.label);
+  check(hud.label === `Underdog +${pct(hud.u)}% XP`, 'with "Underdog" and the % under it', hud.label);
   check(!errs.length, 'no page errors', errs);
   await page.close();
 

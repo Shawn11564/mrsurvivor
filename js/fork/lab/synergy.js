@@ -48,22 +48,22 @@ G.LabSynergy = (() => {
         G.FX.ring(e.x, e.y, 6, 70, G.U.TYPE_COLOR.electric, 0.35, 4);
         for (const o of near(e, 70, 8)) extra(pl, o, m, 0.5);
       } },
-    { id: 'steam', ic: 'water', n: 'Steam Burst', from: 'a Water move + a Fire move', t: 'Water hits on a burning enemy deal 50% more.',
+    { id: 'steam', ic: 'water', n: 'Steam Burst', from: 'a Water move + a Fire move', t: 'Water hits on a burning enemy deal 50% more damage.',
       need: pl => ofType('water')(pl) && ofType('fire')(pl),
       hit: (pl, e, m) => { if (m.type === 'water' && burning(e) && !e.dead) extra(pl, e, m, 0.5); } },
     { id: 'wildfire', ic: 'grass', n: 'Wildfire', from: 'a Grass move + a Fire move', t: 'Grass hits on a burning enemy spread the burn to 2 enemies near it.',
       need: pl => ofType('grass')(pl) && ofType('fire')(pl),
       hit: (pl, e, m) => { if (m.type === 'grass' && burning(e)) for (const o of near(e, 80, 2)) o.applyBurn(1); } },
-    { id: 'toxic-drain', ic: 'grass', n: 'Toxic Drain', from: 'a Poison move + a Grass move', t: 'Grass hits on a poisoned enemy heal you 15% of the damage.',
+    { id: 'toxic-drain', ic: 'grass', n: 'Toxic Drain', from: 'a Poison move + a Grass move', t: 'Grass hits on a poisoned enemy heal you for 15% of the damage.',
       need: pl => ofType('poison')(pl) && ofType('grass')(pl),
       hit: (pl, e, m, dmg) => { if (m.type === 'grass' && poisoned(e)) pl.heal(Math.min(dmg * 0.15, pl.maxHp * 0.01)); } },
-    { id: 'shatter', ic: 'ice', n: 'Shatter', from: 'an Ice move + a Rock, Steel or Fighting physical move', t: 'Your physical hits on a slowed enemy deal 35% more.',
+    { id: 'shatter', ic: 'ice', n: 'Shatter', from: 'an Ice move + a Rock, Steel or Fighting physical move', t: 'Your physical hits on a slowed enemy deal 35% more damage.',
       need: pl => ofType('ice')(pl) && pl.moves.some(m => m.cat === 'physical' && ['rock', 'steel', 'fighting'].includes(m.type)),
       hit: (pl, e, m) => { if (m.cat === 'physical' && slowed(e) && !e.dead) extra(pl, e, m, 0.35); } },
     { id: 'quicksand', ic: 'ground', n: 'Quicksand', from: 'a Ground move + a Water move', t: 'Ground hits on a slowed enemy stop it for 0.5 s (once every 3 s).',
       need: pl => ofType('ground')(pl) && ofType('water')(pl),
       hit: (pl, e, m) => { if (m.type === 'ground' && slowed(e) && once(e, '_labSandAt', 3000)) e.applyStun(0.5); } },
-    { id: 'nightmare', ic: 'ghost', n: 'Nightmare', from: 'a Ghost move + a sleep move (Hypnosis, Sing, Spore...)', t: 'Ghost hits on a sleeping or confused enemy deal 60% more.',
+    { id: 'nightmare', ic: 'ghost', n: 'Nightmare', from: 'a Ghost move + a sleep move (Hypnosis, Sing, Spore...)', t: 'Ghost hits on a sleeping or confused enemy deal 60% more damage.',
       need: pl => ofType('ghost')(pl) && pl.moves.some(m => m.kind === 'sleep'),
       hit: (pl, e, m) => { if (m.type === 'ghost' && asleep(e) && !e.dead) extra(pl, e, m, 0.6); } }
   ];

@@ -88,7 +88,7 @@ G.LabAbilities = (() => {
                        if (W('rain')) pl.hp = Math.min(pl.maxHp, pl.hp + pl.maxHp * WX_HEAL * dt);
                        else if (W('sun')) pl.hp = Math.max(1, pl.hp - pl.maxHp * 0.004 * dt);
                      },
-                     desc: 'Water hits heal you instead and rain slowly heals you, but Fire hurts 25% more and sunlight slowly drains you.' },
+                     desc: 'Water hits heal you instead and rain slowly heals you, but Fire hits hurt 25% more and sunlight slowly drains you.' },
 
     // ---- damage you take ----
     intimidate:  { in: (pl, a, t, cat) => cat === 'physical' ? 0.75 : 1, desc: 'Enemies deal 25% less physical damage to you.' },
@@ -104,9 +104,9 @@ G.LabAbilities = (() => {
     'wonder-guard': {
       in: (pl, a, t) => t && G.Types.mult(t, pl.mon.types) <= 1 ? (note(pl, 'Wonder Guard', '#ffe14d'), 0) : 1,
       start: pl => { pl.maxHp = Math.max(1, Math.round(pl.maxHp / 2)); pl.hp = pl.maxHp; },
-      desc: 'Only super-effective attacks (and lava and traps) can hurt you, but you have half the HP.'
+      desc: 'Only super-effective attacks (and lava and traps) can hurt you, but your max HP is halved.'
     },
-    sturdy: { desc: 'A hit that would knock you out from half HP or more leaves you at 1 HP (once a minute).' },   // in hurt
+    sturdy: { desc: 'At half HP or more, a hit that would knock you out leaves you at 1 HP instead (once a minute).' },   // in hurt
 
     // ---- absorb a type ----
     'water-absorb':   { in: absorb('water', heal(0.5), 'Water Absorb'), desc: 'Water attacks heal you instead of hurting you.' },
@@ -115,8 +115,8 @@ G.LabAbilities = (() => {
                         out: (pl, m) => m.type === 'fire' && pl._labFire > 0 ? 1.5 : 1,
                         tick: (pl, dt) => { if (pl._labFire > 0) pl._labFire -= dt; },
                         desc: 'Fire attacks don\'t hurt you; being hit by one powers up your Fire moves by 50% for 8 s.' },
-    'lightning-rod':  { in: absorb('electric', buff('satk', 0.13), 'Lightning Rod'), desc: 'Electric attacks don\'t hurt you and raise your Special Attack instead.' },
-    'storm-drain':    { in: absorb('water', buff('satk', 0.13), 'Storm Drain'), desc: 'Water attacks don\'t hurt you and raise your Special Attack instead.' },
+    'lightning-rod':  { in: absorb('electric', buff('satk', 0.13), 'Lightning Rod'), desc: 'Electric attacks don\'t hurt you and raise your Sp. Atk instead.' },
+    'storm-drain':    { in: absorb('water', buff('satk', 0.13), 'Storm Drain'), desc: 'Water attacks don\'t hurt you and raise your Sp. Atk instead.' },
     'motor-drive':    { in: absorb('electric', buff('spd', 0.10), 'Motor Drive'), desc: 'Electric attacks don\'t hurt you and raise your Speed instead.' },
     'sap-sipper':     { in: absorb('grass', buff('patk', 0.13), 'Sap Sipper'), desc: 'Grass attacks don\'t hurt you and raise your Attack instead.' },
 
@@ -137,7 +137,7 @@ G.LabAbilities = (() => {
     pressure:       { contact: (pl, e) => { e.touchCd += 0.25; }, desc: 'Enemies touching you attack about 30% less often.' },
 
     // ---- your attacks ----
-    technician:      { out: (pl, m) => !m.evolved && power(m) > 0 && power(m) <= 60 ? 1.5 : 1, desc: 'Moves that are weak in the games (60 power or less) deal 50% more damage.' },
+    technician:      { out: (pl, m) => !m.evolved && power(m) > 0 && power(m) <= 60 ? 1.5 : 1, desc: 'Moves with 60 power or less in the main games deal 50% more damage.' },
     'iron-fist':     { out: (pl, m) => /Puño|puño|Punch/.test(m.name) ? 1.2 : 1, desc: 'Punching moves deal 20% more damage.' },
     'strong-jaw':    { out: (pl, m) => /Mordisco|Triturar|colmillo|Fang/i.test(m.name) ? 1.5 : 1, desc: 'Biting moves deal 50% more damage.' },
     'mega-launcher': { out: (pl, m) => /Esfera Aural|Pulso/.test(m.name) ? 1.5 : 1, desc: 'Aura and pulse moves deal 50% more damage.' },
@@ -157,7 +157,7 @@ G.LabAbilities = (() => {
                        desc: 'Moves that hit several times hit once more.' },
     prankster:       { learn: (pl, m) => { if (m.kind === 'buff' && !m.labPrank) { m.cd *= 0.7; m.labPrank = true; } },
                        unlearn: (pl, m) => { if (m.labPrank) { m.cd /= 0.7; delete m.labPrank; } },
-                       desc: 'Stat-boosting moves recharge 30% faster.' },
+                       desc: 'Stat-boosting moves have 30% less cooldown.' },
     simple:          { buff: () => 2, desc: 'Your stat boosts are twice as strong.' },
     // recoil: Double-Edge, Flare Blitz... (js/fork/lab/kinds.js, phase 4)
     'rock-head':     { desc: 'Recoil moves (Double-Edge, Head Smash...) don\'t hurt you.' },      // in kinds.js
@@ -166,9 +166,9 @@ G.LabAbilities = (() => {
     // ---- over time ----
     'speed-boost':  { tick: (pl, dt) => { pl._labSB = (pl._labSB || 0) + dt; if (pl._labSB >= 8) { pl._labSB = 0; pl.addBuff('spd', 0.08, 9, 5); } },
                       desc: 'Your Speed keeps rising as the run goes on.' },
-    moxie:          { tick: onKill(pl => pl.addBuff('patk', 0.05, 4, 5)), desc: 'Knocking out enemies keeps raising your Attack for a few seconds.' },
+    moxie:          { tick: onKill(pl => pl.addBuff('patk', 0.05, 4, 5)), desc: 'Each enemy you knock out raises your Attack for a few seconds.' },
     'beast-boost':  { tick: onKill(pl => pl.addBuff(G.Stats.sideOf(pl.mon) === 'special' ? 'satk' : 'patk', 0.05, 4, 5)),
-                      desc: 'Knocking out enemies keeps raising your best attacking stat for a few seconds.' },
+                      desc: 'Each enemy you knock out raises your best attacking stat for a few seconds.' },
     'shed-skin':    { tick: (pl, dt) => { if (pl.slowT > 0 && Math.random() < 0.3 * dt) { pl.slowT = 0; note(pl, 'Shed Skin', '#c6b08a'); } },
                       desc: 'You may shake off sticky slowdowns on your own.' },
     limber:         { tick: pl => { if (pl.slowT > 0) pl.slowT = 0; }, desc: 'Sticky traps can\'t slow you down.' },

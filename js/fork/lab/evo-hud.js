@@ -2,7 +2,7 @@
  * In a Lab run, if your Pokémon can evolve in it (G.LabGrowth.targets, js/fork/lab/growth.js),
  * top left, right under the HP and before the buffs and the altar power (which
  * move down to make room: G.HUD.belowHp, js/ui/hud.js): its evolution's face, its
- * name, "Lv N" (the level where the evolution card comes up) and a gold bar from the level where
+ * name, "Lv. N" (the level where the evolution card comes up) and a gold bar from the level where
  * this form started (1, or the level it evolved at) up to that one, counting the experience
  * you have in the current level. With several evolutions (Eevee), the earliest one and "+N more".
  * On reaching the level, the bar fills and blinks ("Evolution ready!"): the card comes up on every
@@ -56,7 +56,7 @@ G.LabEvoHud = (() => {
     face(ctx, e.to, px, y);
     ctx.textBaseline = 'alphabetic';
     // Right: the level (or READY); left: what it evolves into, without overlapping the right side.
-    const right = e.ready ? 'READY' : 'Lv ' + e.at;
+    const right = e.ready ? 'READY' : 'Lv. ' + e.at;
     ctx.font = F(800, 9);
     const rw = ctx.measureText(right).width;
     ctx.font = F(800, 10);

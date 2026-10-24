@@ -163,7 +163,7 @@ G.Rainbow = (() => {
     ['La tirada ×25 arcoíris, con un ticket arcoíris, trae al menos una Legendaria.', 'A ×25 rainbow pull, paid with a rainbow ticket, guarantees at least one Legendary.',
      'Un tirage arc-en-ciel ×25, payé avec un ticket arc-en-ciel, garantit au moins un Légendaire.', 'Un lancio arcobaleno ×25, pagato con un ticket arcobaleno, garantisce almeno un Leggendario.',
      'Um giro arco-íris ×25, pago com um ticket arco-íris, garante pelo menos um Lendário.', '彩虹 ×25 抽（用一张彩虹抽奖券）至少必得一只传说。', '彩虹 ×25 抽（用一張彩虹抽獎券）至少必得一隻傳說。'],
-    ['¡Ticket arcoíris ×25!', 'Rainbow ticket ×25!', 'Ticket arc-en-ciel ×25 !', 'Ticket arcobaleno ×25!', 'Ticket arco-íris ×25!', '彩虹 ×25 抽奖券！', '彩虹 ×25 抽獎券！'],
+    ['¡Ticket arcoíris ×25!', '×25 rainbow ticket!', 'Ticket arc-en-ciel ×25 !', 'Ticket arcobaleno ×25!', 'Ticket arco-íris ×25!', '彩虹 ×25 抽奖券！', '彩虹 ×25 抽獎券！'],
     ['Premio del legendario de la grieta.', 'A reward from the rift legendary.', 'Une récompense du légendaire de la faille.', 'Un premio del leggendario della crepa.', 'Uma recompensa do lendário da fenda.', '裂缝传说的奖励。', '裂縫傳說的獎勵。'],
     ['Has aguantado 30 minutos.', 'You lasted 30 minutes.', 'Vous avez tenu 30 minutes.', 'Hai resistito 30 minuti.', 'Você aguentou 30 minutos.', '你坚持了 30 分钟。', '你堅持了 30 分鐘。'],
     ['Premio de un logro.', 'An achievement reward.', 'Une récompense de succès.', 'Un premio per un obiettivo.', 'Uma recompensa de conquista.', '成就奖励。', '成就獎勵。']

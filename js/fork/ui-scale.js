@@ -164,7 +164,7 @@ G.UIScale = (() => {
     });
     return section('GUI')
       + `<div class="set-row"><div class="grow"><b>Icon size</b></div>${choice('hudSize', [[0.8, 'Small'], [1, 'Medium'], [1.3, 'Large']]).replace('set-chips', 'set-chips ui-inline')}</div>`
-      + `<div class="set-row"><div class="grow"><b>GUI scale</b><small>How big the menus, cards and HUD are. The middle is the size for your screen, and it never gets bigger than fits.${top <= def + 1e-6 ? ' Your window is too small to go bigger.' : ''}</small></div>
+      + `<div class="set-row"><div class="grow"><b>GUI scale</b><small>How big the menus, cards and HUD are. The middle is the best size for your screen, and it never goes bigger than your window allows.${top <= def + 1e-6 ? ' Your window is too small to go bigger.' : ''}</small></div>
            <input type="range" id="set-uiscale" min="0" max="100" step="1" value="${v}" aria-label="GUI scale" style="max-width:160px">
            <b id="set-uiscale-v" style="min-width:48px;text-align:right">${pct(v)}</b>
            <button class="btn small ghost" id="set-uiscale-reset" title="Back to the middle"${v === 50 ? ' disabled' : ''}>Reset</button></div>`;

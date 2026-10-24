@@ -72,7 +72,7 @@ G.Gems = (() => {
     }
     const g = have(), back = spent(dex), ok = g >= RESET && back > 0;
     box.innerHTML = `<div><b translate="no">Gems (Lab): <span class="gems-n" style="color:#7fffd4">${g}</span></b>
-        <div class="gems-what" translate="no" style="font-size:13px;color:var(--muted)">${back ? `Reset ${G.DEX_BY[dex].name}'s upgrades for ${RESET} gems and get the ${back.toLocaleString()} coins they cost back.` : 'Nothing bought to reset.'} Prestige also costs ${RESET} gems. Rare in Lab runs: bosses always drop one, legendaries two.</div></div>
+        <div class="gems-what" translate="no" style="font-size:13px;color:var(--muted)">${back ? `Reset ${G.DEX_BY[dex].name}'s upgrades for ${RESET} gems and get back the ${back.toLocaleString()} coins they cost.` : 'Nothing to reset: no upgrades bought yet.'} Prestige also costs ${RESET} gems. Found only in Lab runs: every boss drops one, every legendary two.</div></div>
       ${back ? `<button class="btn small ${ok ? 'gold' : ''}" data-reset translate="no" ${ok ? '' : 'disabled'}>${sure && ok ? `Confirm: ${RESET} gems, +${back.toLocaleString()} coins` : `Reset upgrades (${RESET} gems)`}</button>` : ''}`;
     const btn = box.querySelector('[data-reset]');
     if (btn) btn.onclick = () => {

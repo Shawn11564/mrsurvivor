@@ -17,7 +17,7 @@
     ['Corpulencia', 'Bulk Up', 'Gonflette', 'Granfisico', 'Bulk Up', '健美', '健美']
   ];
   const TEXT = [
-    [EFFECT, 'Casts on its own from any slot (no more switching to it) and +1 max stack',
+    [EFFECT, 'Casts on its own from any slot (no more switching to it), +1 max stack',
      'Se lance seul depuis n’importe quel emplacement (plus besoin de passer dessus) et +1 cumul',
      'Si attiva da solo da qualsiasi slot (non serve più passare a lui) e +1 accumulo',
      'É usado sozinho de qualquer espaço (não precisa mais trocar para ele) e +1 acúmulo',

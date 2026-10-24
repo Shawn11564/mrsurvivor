@@ -7,16 +7,16 @@
  *
  * Kind 'ally' (js/fork/lab/lab-moves.js): on their own from any slot, each on its own clock (`_st`),
  * when the team needs it; `ally` says what it does:
- *   heal   Heal Pulse: when a teammate in reach is below `below` HP, every teammate in reach (not you)
+ *   heal   Heal Pulse: when a teammate in reach is below `below` HP, every teammate in range (not you)
  *          gets `amount` of their max HP back
  *   scent  Aromatherapy: when you or a teammate in reach is below `below`, you and they heal `amount`
  *          of max HP a second for `dur` s
- *   guard  Wide Guard: when enemies are near the team, you and every teammate in reach block the next
+ *   guard  Wide Guard: when enemies are near the team, you and every teammate in range block the next
  *          `count` hits within `dur` s (not "pure" damage: Arceus's judgment)
  *   block  Block: when 2+ enemies close in on a teammate in reach, you stand guard for `dur` s: the
  *          enemies within `radius` of you come for you instead (a decoy that follows you, mech.js's;
  *          bosses ignore it) and you take `amount` less damage (up to BLOCK_CAP)
- *   help   Helping Hand: when a teammate in reach is fighting, every teammate in reach (not you) deals
+ *   help   Helping Hand: when a teammate in reach is fighting, every teammate in range (not you) deals
  *          `amount` more damage (up to HELP_CAP) for `dur` s
  *
  * Co-op: each player's HP and damage are their own, so nothing new travels. The caster's cast reaches
