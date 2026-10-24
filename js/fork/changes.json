@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-23",
-      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus, temples, dungeons and wormholes, relics, the Necrozma raid at 45:00, English review, trading",
+      "title": "Lab leaderboard, a bar per boss, Choice Band pick, move dex, EV auto-pick in co-op, End run, Keep them apart nerf, less memory in long runs, Skip under the machine, TM descriptions, contract rewards and progress, gems in the coin bubble, the endgame wall, late bosses keep up, a harder Eternatus, temples, dungeons and wormholes, relics, the Necrozma raid at 45:00, English review, trading, the collection shows shinies and radiants",
       "items": [
+        { "k": "fix", "s": "all", "a": "Collection", "t": "The Pokémon screen shows each Pokémon as the shiny or radiant you use; only your partner did, and the others showed it only once you clicked them. Changing it in the detail card changes its picture in the grid too." },
         { "k": "new", "s": "lab", "a": "Necrozma", "t": "At 45:00, once Eternatus is beaten, everyone travels to Ultra Space to fight Necrozma. It drinks the light: the screen darkens and at full dark you lose 8% of your max HP a second while it heals. Breaking one of its 4 prisms brings the light back and exposes it for 7 s; otherwise its Prism Armor halves your damage. Photon Geyser and a sweeping Prismatic Laser to dodge, and at half HP Ultra Burst makes it all faster. 3:30, or the run ends." },
         { "k": "new", "s": "lab", "a": "Necrozma", "t": "Beating Necrozma gives a x25 rainbow ticket, 3 gems, half your HP and two relic picks, and the run goes on." },
         { "k": "change", "s": "lab", "a": "Rifts", "t": "Between the two raids rifts stop opening 2 minutes before 45:00, as they do before 30:00." },

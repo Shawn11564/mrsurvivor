@@ -217,6 +217,10 @@ only the radiant files (the unrelated change stays) and pushes, and waits for a 
 run, co-op card, the collection's detail and partner pick, and a shiny won after the radiant), that picking Shiny or
 Normal is respected and kept, and the **Radiant** filter on the Pokémon screen (only your radiants, kept in `ms.dex`).
 
+`node fork/test-dex-forms.cjs` (server; on `dev.html`, then the built `index.html`) checks that every cell of the Pokémon
+screen shows the form you use (shiny, radiant or normal, the partner's being the one you play), not only the partner's
+(`G.Radiant.cell` in `js/fork/radiant.js`), and that a pick in the detail card redraws its cell.
+
 `node fork/test-ui-scale.cjs` (server; `SHOTS=<dir>`) checks the interface scale: at 1280×720 nothing changes; at
 2560×1440 the HUD and the pages are ×1.69, the move slots' buttons are where they're drawn (a real hover shows the
 tooltip, a real click switches move), a level-up card is bigger and a real click picks it, and the built `index.html`

@@ -256,17 +256,34 @@ G.Radiant = (() => {
     cv.classList.remove('shiny'); cv.classList.add('radiant');
     $('menu-partner-name').innerHTML = esc(mon.name) + ' ' + icon(24);
   }
-  /** Collection cell: the mark, and the radiant sprite if it's your partner and you use it. */
+  /** The form dex's collection cell shows: the one you use (radiant, shiny or normal); your partner, the one you play. */
+  function form(dex) {
+    const s = save();
+    if (!s.owned[dex]) return null;
+    if (wants(dex)) return 'radiant';
+    if (dex === s.partner) return s.partnerShiny && G.DB.ownsShiny(dex) ? 'shiny' : 'normal';
+    return (G.ShinyPref ? G.ShinyPref.wants(dex) : G.DB.ownsShiny(dex)) ? 'shiny' : 'normal';
+  }
+  // menu.js dexCell draws the shiny only for a shiny partner; the cell is redrawn when its form differs.
+  function paintCell(el, dex) {
+    const f = form(dex), old = el.querySelector('canvas'), s = save();
+    const drawn = el._form || (dex === s.partner && s.partnerShiny && G.DB.ownsShiny(dex) ? 'shiny' : 'normal');
+    if (!f || !old || f === drawn) return;
+    old.replaceWith(G.UI.spriteCanvas(dex, 92, 80, { scale: 2, shadow: true, shiny: f === 'shiny', radiant: f === 'radiant' }));
+    el._form = f;
+  }
+  /** Collection cell: the mark if you have its radiant, and the sprite of the form you use. */
   function cell(el, dex) {
-    if (!owns(dex) || !has(dex)) return;
-    el.insertAdjacentHTML('beforeend', `<span class="rad-badge" title="You have its radiant">${icon(14)}</span>`);
-    if (dex !== save().partner || !wants(dex)) return;
-    const old = el.querySelector('canvas');
-    if (old) old.replaceWith(G.UI.spriteCanvas(dex, 92, 80, { scale: 2, shadow: true, radiant: true }));
+    el.dataset.dex = dex;
+    if (owns(dex) && has(dex)) el.insertAdjacentHTML('beforeend', `<span class="rad-badge" title="You have its radiant">${icon(14)}</span>`);
+    paintCell(el, dex);
   }
 
   /** Collection detail card: the Radiant button and its sprite. redraw() redraws the card. */
   function detail(dex, redraw, regrid) {
+    // The card opens again after every Normal / Shiny / Radiant pick: its cell follows.
+    const c = document.querySelector(`#dex-grid .cell[data-dex="${dex}"]`);
+    if (c) paintCell(c, dex);
     if (!owns(dex) || !has(dex)) return;
     const box = $('dex-detail'), big = $('dex-big');
     let seg = box.querySelector('.seg');
