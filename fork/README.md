@@ -251,6 +251,11 @@ no radiants yet; the cloud merge (sacrificed shinies stay gone); the Normal / Sh
 menu and the collection; radiant in a run (and its Mega) and on the co-op lobby card; and the ritual on the
 built `index.html`.
 
+`node fork/test-focus-audio.cjs` (server) checks that the game is silent while its tab is hidden or another window
+or tab has the focus (`js/fork/focus-audio.js` suspends `js/core/audio.js`'s AudioContext, caught when it's made), on
+`dev.html` and the built `index.html`: it stops within half a second, nothing plays while away, and it comes back by
+itself on returning, the music going on where it stopped. Focus emulation is off (CDP), so another page in front really takes the focus.
+
 `node fork/test-coop-background.cjs` (server + Firebase emulator) checks that a co-op run keeps
 going while the host's tab is hidden: the host's frames come from a Worker then
 (`js/fork/coop-background.js`, `js/fork/tick-worker.js`) and `js/net/coop.js` no longer tells the
