@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-24",
-      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list, every run on the leaderboard, stat boosts that stack",
+      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list, every run on the leaderboard, stat boosts that stack, the Rat title",
       "items": [
+        { "k": "new", "s": "all", "a": "Titles", "t": "A new title, \"Rat\": reach 15:00 in a run as Rattata. It unlocks the moment the clock gets there (an achievement under Survival), and you can pick it in Goals → Profile." },
         { "k": "buff", "s": "all", "a": "Moves", "t": "Two stat-boosting moves on the same stat now stack: Swords Dance and Dragon Dance together give ATK ×10 instead of stopping at ×5, and each move keeps its own timer (its slot shows its own time and stacks), so one running out no longer ends the other.", "n": "Swords Dance + Dragon Dance at 5 stacks each: ×1.65 -> ×2.20 physical damage" },
         { "k": "buff", "s": "lab", "a": "Moves", "t": "The same for the Lab boosters (Bulk Up, Calm Mind, Coil, Shift Gear, Work Up, Shell Smash, Curse, Fillet Away) and Flame Charge's speed: each adds its own stacks on top of the others, with its own timer.", "n": "Bulk Up + Swords Dance at 5 stacks each: ×1.65 -> ×2.15 physical damage" },
         { "k": "new", "s": "all", "a": "Move dex", "t": "Each move in the Moves list shows what it evolves into (\"→ Fire Blast\"), without opening it." },
