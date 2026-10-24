@@ -251,6 +251,12 @@ no radiants yet; the cloud merge (sacrificed shinies stay gone); the Normal / Sh
 menu and the collection; radiant in a run (and its Mega) and on the co-op lobby card; and the ritual on the
 built `index.html`.
 
+`node fork/test-topbar-room.cjs` (server; `SHOTS=<dir>` saves any screen that overlaps) clicks every entry of the main
+menu and its top bar at 1280x720, 1366x600, 1024x500, on 860x412 and 740x360 touch screens and at 2560x1440 and
+3840x2160 (where `js/fork/ui-scale.js` zooms the pages), and checks that each screen starts just below the top bar, fits
+the window and stays put scrolled (`js/fork/topbar-room.js`: while the bar shows, every screen but the main menu gets the
+bar's measured bottom, in its own zoomed pixels, as its top padding, and its box the room left); also on `index.html`.
+
 `node fork/test-focus-audio.cjs` (server) checks that the game is silent while its tab is hidden or another window
 or tab has the focus (`js/fork/focus-audio.js` suspends `js/core/audio.js`'s AudioContext, caught when it's made), on
 `dev.html` and the built `index.html`: it stops within half a second, nothing plays while away, and it comes back by
