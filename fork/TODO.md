@@ -50,7 +50,7 @@ How to use it:
 - [x] 80. [ui] A level-up reward popup soon after another one opens without the delay before you can pick · everyone (d172b67)
 - [x] 81. [lab] Ancient Temple (Regigigas and the other Regis): the rune plates take about as long to light as a revive · Lab (9f7199f)
 - [ ] 82. [bug] Leaderboards track every run however it ends: dying, Quit run, the End run button (pause menu and in-run), closing the tab, and the rest · everyone
-- [ ] 83. [ui] The Moves list (Pokémon screen → Moves) shows what each move evolves into on its row (the owner picked the list rows) · everyone
+- [x] 83. [ui] The Moves list (Pokémon screen → Moves) shows what each move evolves into on its row (the owner picked the list rows) · everyone (827ac14)
 
 ## Phase 1: fixes and cheap tuning
 
