@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-24",
-      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer",
+      "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list",
       "items": [
+        { "k": "new", "s": "all", "a": "Move dex", "t": "Each move in the Moves list shows what it evolves into (\"→ Fire Blast\"), without opening it." },
         { "k": "nerf", "s": "lab", "a": "Map sites", "t": "The Ancient Temple's rune plates take as long to light as a revive; they stay lit longer to make up for it, so you can still light all four alone.", "n": "light 1.3 s -> 3 s (1.8 -> 4 s below half HP); stay lit 16 -> 24 s (15 -> 25 s)" },
         { "k": "change", "s": "all", "a": "Level-up", "t": "Reward cards that open right after another reward (several levels at once, or the next level after a slow pick) can be picked at once. The 1 s delay before picking stays for cards that pop up mid-fight.", "n": "1 s delay -> none within 3 s of play after the last reward" },
         { "k": "buff", "s": "lab", "a": "Level-up", "t": "The Sitrus Berry card's healing past your max HP becomes Overhealth (a gold strip under your HP bar): hits take it first, and once lost it doesn't come back. Berries add up, to your max HP at most.", "n": "heal past max HP: lost -> Overhealth, up to 100% of max HP" },

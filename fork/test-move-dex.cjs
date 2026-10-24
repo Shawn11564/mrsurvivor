@@ -9,6 +9,8 @@
 //      the game's moves.
 //   2. dev.html, Lab off: every normal move is listed (G.Moves.ALL), no Lab-only one; the LAB chip
 //      adds the Lab-only moves, tagged LAB.
+//      Each row says what the move evolves into ("→ Inferno"), the same as its card (G.Moves.evoInfo at max level);
+//      a move that doesn't evolve says nothing (2026-10-24, TODO 83).
 //   3. Filters: search, type, category, and sorting by damage.
 //   4. A move's card (Ember): its Lv.1 and max-level numbers are G.Moves.instance's, one line per
 //      upgrade, its evolution, who learns it (Fire Pokémon); a Lab move's card names Lab learners.
@@ -46,6 +48,8 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     await built.click('.mdex-switch [data-v=moves]');
     const bRows = await rows(built);
     check(bRows.length >= 100 && !(await built.isVisible('#dex-grid')), 'Moves lists the moves and hides the Pokémon grid', bRows.length);
+    const bEvo = await built.$$eval('#mdex-list .mdex-row .mdex-evo', els => els.map(e => e.textContent.trim()).filter(t => /^→ \S/.test(t)).length);
+    check(bEvo > 30, 'its rows say what the moves evolve into', bEvo);
     check(!built.errs.length, 'no page errors on index.html', built.errs.slice(0, 3));
     await built.context().close();
 
@@ -60,6 +64,20 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     r = await rows(page);
     const labShown = r.filter(x => x.lab).map(x => x.id).sort();
     check(r.length === want.all.length + want.labOnly.length && JSON.stringify(labShown) === JSON.stringify(want.labOnly), 'the LAB chip adds every Lab-only move, tagged', { shown: r.length, lab: labShown.length, want: want.labOnly.length });
+
+    // Each row: what it evolves into, as G.Moves.evoInfo says at max level (and the card), nothing if it doesn't.
+    const evo = await page.evaluate(() => {
+      const want = id => { try { const d = G.Moves.BY_ID[id], e = G.Moves.evoInfo(G.Moves.instance(id, d.maxLvl || 1), null); return e ? G.T(e.name, 'move') : null; } catch (err) { return null; } };
+      const out = { rows: 0, with: 0, bad: [] };
+      for (const el of document.querySelectorAll('#mdex-list .mdex-row')) {
+        const id = el.dataset.move, w = want(id), e = el.querySelector('.mdex-evo'), got = e ? e.textContent.replace(/\s+/g, ' ').trim() : null;
+        out.rows++;
+        if (w) out.with++;
+        if (w ? got !== '→ ' + w : got) out.bad.push({ id, want: w, got });
+      }
+      return out;
+    });
+    check(evo.rows > 100 && evo.with > 50 && !evo.bad.length, `each row says what its move evolves into (${evo.with} of ${evo.rows} evolve), nothing if it doesn't`, evo.bad.slice(0, 5));
 
     console.log('3. Filters');
     await page.fill('#mdex-q', 'flame');
@@ -94,6 +112,8 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     check(JSON.stringify(card.dmg) === JSON.stringify(card.want), 'Lv.1 and max-level damage are the game\'s', card.dmg);
     check(card.ups === card.wantUps, 'one line per upgrade', card.ups);
     check(card.text.includes(card.evo) && /Evolves/.test(card.text), 'its evolution: ' + card.evo);
+    const rowEvo = await page.textContent('#mdex-list .mdex-row[data-move=ember] .mdex-evo').catch(() => '');
+    check(rowEvo.includes(card.evo), 'and its row says the same', rowEvo);
     check(/Fire-type Pokémon, in normal runs/.test(card.text), 'who learns it: Fire-type Pokémon (and "normal runs" as written)', card.text.slice(-160));
     await page.fill('#mdex-q', 'swift'); await page.waitForTimeout(300);
     await page.click('#mdex-list .mdex-row[data-move=swift]');

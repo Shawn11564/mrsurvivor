@@ -3,7 +3,8 @@
  * move in the game (G.Moves.BY_ID: the normal ones, and with the LAB chip the Lab-only ones, tagged),
  * searchable by name, filtered by type and category (physical / special / status), sorted by type,
  * name, damage or cooldown. Picking one shows its card: how its kind works, its numbers at level 1
- * and at max level (G.Moves.instance), each upgrade on the way, its evolution and what it needs
+ * and at max level (G.Moves.instance), each upgrade on the way, its evolution and what it needs (the row in the
+ * list says what it evolves into too: "→ Fire Blast")
  * (G.Moves.evoInfo), and who learns it: Pokémon of its type in normal runs (G.Moves.POOL; Normal
  * moves, everyone), the Lab learnsets (G.Lab.learnOf) and signature lines in Lab.
  * Everything is drawn here; menu.js's own dex isn't touched (its view is hidden while Moves shows).
@@ -79,6 +80,16 @@ G.MoveDex = (() => {
     return b;
   };
   const badge = m => (labOnly(m) ? ' <span class="lab-badge">LAB</span>' : '') + (m.sig ? ' <span class="mdex-sig">signature</span>' : '');
+  // What a move evolves into, as its card says (G.Moves.evoInfo at max level), for its row; '' if it doesn't.
+  const evoOf = new Map();
+  function evoName(m) {
+    if (!evoOf.has(m.id)) {
+      let n = '';
+      try { const e = G.Moves.evoInfo(G.Moves.instance(m.id, m.maxLvl || 1), null); if (e) n = T(e.name, 'move'); } catch (err) { /* no evolution */ }
+      evoOf.set(m.id, n);
+    }
+    return evoOf.get(m.id);
+  }
 
   /** The list side: tools, filters and rows. */
   function render() {
@@ -111,7 +122,7 @@ G.MoveDex = (() => {
       el.className = 'mdex-row' + (m.id === sel ? ' on' : '');
       el.dataset.move = m.id;
       el.innerHTML = `<span class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 26)}</span>
-        <span class="nm"><b>${esc(T(m.name, 'move'))}</b>${badge(m)}<small>${esc(T(m.desc))}</small></span>
+        <span class="nm"><b>${esc(T(m.name, 'move'))}</b>${badge(m)}<small>${esc(T(m.desc))}</small>${evoName(m) ? `<small class="mdex-evo">→ ${esc(evoName(m))}</small>` : ''}</span>
         <span class="mdex-meta"><span class="tag-chip" style="background:${col}">${esc(G.T(G.U.TYPE_NAME[m.type] || m.type))}</span><small>${CAT[m.cat || null]}</small></span>
         <span class="mdex-num"><b>${m.dmg ? Math.round(m.dmg) : '–'}</b><small>${m.cd ? m.cd.toFixed(2) + ' s' : ''}</small></span>`;
       el.onclick = () => { sel = m.id; box.querySelectorAll('.mdex-row.on').forEach(r => r.classList.remove('on')); el.classList.add('on'); detail(m.id); stacked() && $('mdex-detail').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
@@ -195,6 +206,7 @@ G.MoveDex = (() => {
 .mdex-meta, .mdex-num { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; }
 .mdex-meta small, .mdex-num small { color: var(--muted); }
 .mdex-sig { font-size: 10px; color: var(--gold); margin-left: 4px; }
+.mdex-row .nm small.mdex-evo { color: var(--gold); }
 #mdex-detail { max-height: 62vh; overflow-y: auto; }
 #mdex-detail h3 { margin: 0 0 2px; } #mdex-detail h4 { margin: 10px 0 4px; } #mdex-detail p { margin: 6px 0; }
 .mdex-head { display: flex; gap: 10px; align-items: center; }
