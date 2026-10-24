@@ -51,6 +51,7 @@ How to use it:
 - [x] 81. [lab] Ancient Temple (Regigigas and the other Regis): the rune plates take about as long to light as a revive · Lab (9f7199f)
 - [x] 82. [bug] Leaderboards track every run however it ends: dying, Quit run, the End run button (pause menu and in-run), closing the tab, and the rest · everyone (90080b2; rules deployed 2026-10-24)
 - [x] 83. [ui] The Moves list (Pokémon screen → Moves) shows what each move evolves into on its row (the owner picked the list rows) · everyone (827ac14)
+- [ ] 84. [feat] Stat-boosting moves on the same stat stack, each with its own timer: Swords Dance + Dragon Dance (or Bulk Up) past ×5 ATK, one running out doesn't end the other · everyone, Lab boosters in Lab (claimed: cc-ywzgs)
 
 ## Phase 1: fixes and cheap tuning
 

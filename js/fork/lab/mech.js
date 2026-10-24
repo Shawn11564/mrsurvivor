@@ -319,7 +319,7 @@ G.LabMech = (() => {
     if (m.meekHit) G.LabKinds2.mark(e, { meek: m.meekHit, dur: 4 });
     if (m.weakHit) G.LabKinds2.mark(e, { weak: m.weakHit, weakCat: m.weakCat || null, dur: 4 });
     if (m.omni && Math.random() < m.omni) {
-      for (const st of ['patk', 'satk']) pl.addBuff(st, OMNI_AT.k, OMNI_AT.s, 1);
+      for (const st of ['patk', 'satk']) pl.addBuff(st, OMNI_AT.k, OMNI_AT.s, 1, 'omni');
       G.FX.dmgText(pl.x, pl.y - pl.bodyH - 10, 'Power up!', '#ffd23f');
       for (let i = 0; i < 3; i++) G.FX.sp('arrow', 'normal', pl.x + G.U.rand(-10, 10), pl.y - G.U.rand(0, pl.bodyH), { vy: -70, life: 0.6 });
     }

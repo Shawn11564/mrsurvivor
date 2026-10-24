@@ -384,15 +384,39 @@ G.Player = class Player {
     this.power = { def, t: dur, dur };
   }
 
-  addBuff(stat, amount, dur, maxStacks) {
+  /**
+   * Fork: each source (`src`, a move's id; abilities and the rest share one) keeps its own
+   * stacks and timer, and the stat adds them up: Swords Dance and Dragon Dance (or Bulk Up)
+   * make ATK ×10, and each runs out on its own (fork/test-buff-stack.cjs). b.n, b.amount and
+   * b.t stay the totals the rest of the game reads (b.n × b.amount = the whole boost; b.t,
+   * the longest left); b.src[id] is one move's own (the HUD's slot timer).
+   */
+  addBuff(stat, amount, dur, maxStacks, src) {
     const b = this.buffs[stat];
     if (!b) return;
-    // Dos de la misma stat (Danza Espada y Danza Dragón): el más corto no le recorta el tiempo
-    // al otro, ni el más flojo su potencia o sus cargas (fork, fork/test-moves.cjs).
-    const on = b.n > 0;
-    b.amount = on ? Math.max(b.amount, amount) : amount;
-    b.n = Math.max(b.n, Math.min(maxStacks, b.n + 1));
-    if (!on || dur >= b.t) b.t = b.dur = dur;
+    const all = b.src || (b.src = {}), e = all[src || '_'] || (all[src || '_'] = { n: 0, t: 0, dur: 0, amount: 0 });
+    // Again from the same source (with another strength or duration): the weaker cast doesn't
+    // lower its power or stacks, the shorter one doesn't cut its time (fork/test-moves.cjs).
+    const on = e.n > 0;
+    e.amount = on ? Math.max(e.amount, amount) : amount;
+    e.n = Math.max(e.n, Math.min(maxStacks, e.n + 1));
+    if (!on || dur >= e.t) e.t = e.dur = dur;
+    Player.sumBuff(b);
+  }
+  /** One source's part of a boost (`src` as in addBuff), or null when it's off. */
+  buffOf(stat, src) {
+    const e = this.buffs[stat] && this.buffs[stat].src && this.buffs[stat].src[src || '_'];
+    return e && e.n > 0 ? e : null;
+  }
+  static sumBuff(b) {
+    let n = 0, sum = 0, t = 0, dur = 0;
+    for (const k in b.src) {
+      const e = b.src[k];
+      if (e.n <= 0) { delete b.src[k]; continue; }
+      n += e.n; sum += e.n * e.amount;
+      if (e.t > t) { t = e.t; dur = e.dur; }
+    }
+    b.n = n; b.amount = n ? sum / n : 0; b.t = t; b.dur = dur;
   }
 
   // ---------------- ciclo ----------------
@@ -405,7 +429,10 @@ G.Player = class Player {
 
     for (const k in this.buffs) {
       const b = this.buffs[k];
-      if (b.n > 0) { b.t -= dt; if (b.t <= 0) b.n = 0; }
+      // (Fork: each source on its own timer, see addBuff; a boost zeroed from outside drops them all.)
+      if (b.n > 0 && b.src) { for (const s in b.src) { const e = b.src[s]; if ((e.t -= dt) <= 0) e.n = 0; } Player.sumBuff(b); }
+      else if (b.n > 0) { b.t -= dt; if (b.t <= 0) b.n = 0; }
+      else if (b.src) b.src = {};
     }
     if (this.slowT > 0) this.slowT -= dt;
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }

@@ -34,7 +34,8 @@ G.HUD = (() => {
   const BUFF_COL = { atk: '#ff6b4d', patk: '#ff6b4d', satk: '#c47bff', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
   const BUFF_WARN = G.Player.BUFF_WARN;
   function buffLeft(pl, m) {
-    const b = m.kind === 'buff' && pl.buffs[m.stat];
+    // (Fork: each move's own stacks and time, Player.buffOf; two on one stat each have theirs.)
+    const b = m.kind === 'buff' && (pl.buffOf ? pl.buffOf(m.stat, m.id) : pl.buffs[m.stat]);
     return b && b.n > 0 ? { b, frac: G.U.clamp(b.t / (m.dur || 7), 0, 1) } : null;
   }
   // Segundos que quedan, sin redondear hacia arriba: 10,5 s salía "11s" y medio segundo

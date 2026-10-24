@@ -95,7 +95,7 @@ G.LabMobility = (() => {
   }
   /** After a dash or recoil: Flame Charge's speed stack, a pivot's slot switch. */
   function after(pl, m) {
-    if (m.rush) pl.addBuff('spd', m.rush, m.rushDur || 4, m.rushStacks || 3);
+    if (m.rush) pl.addBuff('spd', m.rush, m.rushDur || 4, m.rushStacks || 3, m.id);
     if (m.pivot && pl.slots.length > 1) pl.cycle(1);
   }
   C.EXTRA.dash = {

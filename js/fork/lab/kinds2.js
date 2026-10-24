@@ -454,12 +454,12 @@ G.LabKinds2 = (() => {
     const r = pcast.call(this, as ? { kind: as, cd: m.cd, type: m.type, anim: m.anim } : m);
     if (m && m.kind === 'buff' && m.def && !this.remote && (m.also || m.drum)) {
       const s = m.def.amount ? m.amount / m.def.amount : 1, all = [{ stat: m.stat, amount: m.amount / s }].concat(m.also || []);
-      if (m.drum && !(this.buffs[m.stat].n > 0) && this.hp > this.maxHp * 0.5) {
+      if (m.drum && !this.buffOf(m.stat, m.id) && this.hp > this.maxHp * 0.5) {
         this.hp -= this.maxHp * m.drum;
         G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(this.maxHp * m.drum), '#ffae5c');
-        for (const a of all) for (let i = 1; i < (m.stacks | 0); i++) this.addBuff(a.stat, a.amount * s, m.dur, m.stacks | 0);
+        for (const a of all) for (let i = 1; i < (m.stacks | 0); i++) this.addBuff(a.stat, a.amount * s, m.dur, m.stacks | 0, m.id);
       }
-      for (const a of m.also || []) this.addBuff(a.stat, a.amount * s, m.dur, m.stacks | 0);
+      for (const a of m.also || []) this.addBuff(a.stat, a.amount * s, m.dur, m.stacks | 0, m.id);
     }
     return r;
   };

@@ -266,9 +266,9 @@ G.LabAbilities = (() => {
   };
 
   const addBuff = P.addBuff;
-  P.addBuff = function (stat, amount, dur, maxStacks) {
+  P.addBuff = function (stat, amount, dur, maxStacks, src) {
     const d = def(this);
-    return addBuff.call(this, stat, d && d.buff ? amount * d.buff(this) : amount, dur, maxStacks);
+    return addBuff.call(this, stat, d && d.buff ? amount * d.buff(this) : amount, dur, maxStacks, src);
   };
 
   // An enemy touches you (Combat.resolve: e.touchCd, e.strike(pl), pl.hurt...).
