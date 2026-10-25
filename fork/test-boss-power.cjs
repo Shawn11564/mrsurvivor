@@ -59,6 +59,7 @@ async function solo(browser) {
   await page.addInitScript(() => { try { localStorage.setItem('ps.savenote.1', '1'); localStorage.setItem('ps.ranknote.1', '1'); localStorage.setItem('ps.lang', 'en'); } catch (e) { /* nothing */ } });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
+  await page.route('**/js/core/firebase-config.js*', r => r.fulfill({ contentType: 'application/javascript', body: 'G.FIREBASE_CONFIG = null;' }));
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await pastStart(page, '#btn-guest');
   await page.$eval('#btn-guest', e => e.click());
@@ -104,7 +105,7 @@ async function solo(browser) {
     const t = 2700, B = G.Enemies.BOSSES[4], E = G.LabEndgame, P = G.LabPower;
     window.__bdef = B;
     await __run(false, t);
-    const nb = new G.Enemy(B, 0, 0, G.Enemies.bossScale(t), true); G.EnemyMgr.add(nb);
+    const nb = new G.Enemy(B, 0, 0, G.Enemies.bossScale(t), true); // Constructor baseline, before the promoted scaling hooks.
     const ws = G.WildLegends.stats(t, 1);
     await __run(true, t); P.reset();
     const lb = new G.Enemy(__bdef, 0, 0, G.Enemies.bossScale(t), true); G.EnemyMgr.add(lb);
@@ -112,8 +113,8 @@ async function solo(browser) {
     return { normal: { hp: nb.maxHp, dmg: nb.dmg }, lab: { hp: lb.maxHp, dmg: lb.dmg, cap: lb._hitCap }, hpK: P.hpK(t), dmgK: P.dmgK(t), endDmg: E.dmg(t),
       wild: { hp: w.maxHp, dmg: w.dmg, want: ws.hp * (1 + t / 600) * P.hpK(t), wantDmg: ws.dmg * (1 + t / 1800) * P.dmgK(t) } };
   });
-  check(near(c.lab.hp, c.normal.hp * c.hpK) && near(c.lab.dmg, c.normal.dmg * c.dmgK) && Math.abs(c.hpK - 3.93) < 0.02 && Math.abs(c.dmgK - Math.sqrt(c.endDmg)) < 1e-9,
-    'a boss: HP × 3.93 and damage × √4.29 over a normal run\'s', c);
+  check(near(c.lab.hp, c.normal.hp * c.hpK) && near(c.lab.dmg, c.normal.dmg * c.dmgK) && Math.abs(c.hpK - 3.93) < 0.02 && Math.abs(c.dmgK - c.endDmg) < 1e-9,
+    'a boss: unchanged HP × 3.93 and the full horde damage multiplier', c);
   check(near(c.wild.hp, c.wild.want) && near(c.wild.dmg, c.wild.wantDmg), 'a wild legendary: × (1 + t/600) HP and × (1 + t/1800) damage on top', c.wild);
 
   console.log('4. The hit cap');
@@ -135,7 +136,7 @@ async function solo(browser) {
     return { lab10: await one(true, 600), normal10: await one(false, 600), normal45: await one(false, 2700), normal45b: await one(false, 2700) };
   });
   check(same.lab10[0] === same.normal10[0] && same.lab10[1] === same.normal10[1], 'at 10:00 a Lab boss has a normal run\'s numbers', same);
-  check(!same.normal45[2], 'a normal run at 45:00: untouched', same);
+  check(same.normal45[2], 'a normal run at 45:00 uses the promoted boss scaling', same);
   check(!errors.length, 'no page errors', errors);
   await page.close();
 }
@@ -192,11 +193,12 @@ async function coop(browser) {
     const g = G.Game.everyone().find(p => p !== G.Game.player);
     const w = G.WildLegends.spawn();
     w.x = g.x + 150; w.y = g.y; w.stunT = 1e9;
-    return { id: w.id, max: w.maxHp, power: m.power, cap: w._hitCap };
+    return { id: w.id, max: w.maxHp, dmg: w.dmg, power: m.power, cap: w._hitCap };
   });
   const seen = await settle(guest, id => { const e = G.EnemyMgr.get(id); return e && e.remote; }, h.id, 8000);
-  const g = await guest.evaluate(id => { const e = G.EnemyMgr.get(id); return e ? { max: e.maxHp, remote: !!e.remote } : null; }, h.id);
+  const g = await guest.evaluate(id => { const e = G.EnemyMgr.get(id); return e ? { max: e.maxHp, dmg: e.dmg, remote: !!e.remote } : null; }, h.id);
   check(seen && g && g.max === Math.ceil(h.max) && h.max > h.power * 15, 'the guest sees the host\'s wild legendary with its full max HP (power × 16 s)', { h, g });
+  check(g && Math.abs(g.dmg - h.dmg) <= 0.011, 'the guest receives the host\'s stronger damage without scaling it twice', { host: h.dmg, guest: g && g.dmg });
   await guest.evaluate(id => G.EnemyMgr.get(id).hurt(1e15), h.id);
   const hit = await settle(host, id => { const e = G.EnemyMgr.get(id); return e && e.hp < e.maxHp; }, h.id, 6000);
   const after = await host.evaluate(id => { const e = G.EnemyMgr.get(id); return e && { lost: (e.maxHp - e.hp) / e.maxHp, dead: e.dead }; }, h.id);

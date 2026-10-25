@@ -25,6 +25,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.addInitScript(() => { try { localStorage.setItem('ps.savenote.1', '1'); localStorage.setItem('ps.ranknote.1', '1'); localStorage.setItem('ps.lang', 'en'); } catch (e) { /* nothing */ } });
     const errors = [];
     page.on('pageerror', e => errors.push(String(e)));
+  await page.route('**/js/core/firebase-config.js*', r => r.fulfill({ contentType: 'application/javascript', body: 'G.FIREBASE_CONFIG = null;' }));
     await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
     await pastStart(page, '#btn-guest');
     await page.$eval('#btn-guest', e => e.click());
@@ -37,6 +38,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         G.Settings.set('underdogLadder', false);
         G.Settings.set('lab', lab);
         G.UI.hideAll(); G.Flow.goMenu(); G.Game.startRun(null, { dex: 4, shiny: false });
+        // This harness exercises the post-raid horde. The raid suites cover the fights themselves.
+        G.Game.player._labEternatus = true; G.Game.player._labNecrozma = true;
         G.Game.debugTime(t);
         await __wait(() => G.Game.state === 'playing');
         const pl = G.Game.player; pl.god = true;
@@ -50,7 +53,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         const pl = G.Game.player, t = G.Game.st.time, def = opt.def || (window.__def = window.__def || G.Enemies.cast[2].list[0]);
         const e = new G.Enemy(def, pl.x + 400, pl.y, G.Enemies.scale(t), !!opt.boss);
         Object.assign(e, opt.flags || {});
-        G.EnemyMgr.add(e);
+        if (!opt.raw) G.EnemyMgr.add(e);
         const r = { hp: e.maxHp, dmg: e.dmg, spd: e.spd, xp: e.xp, elite: !!e._elite, endgame: !!e._endgame, affix: e.affix || null };
         G.EnemyMgr.clear();
         return r;
@@ -60,7 +63,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     console.log('1-2. The same enemy, Lab and normal');
     for (const t of [900, 1500, 1800, 2700, 3600]) {
       const r = await page.evaluate(async t => {
-        await __run(false, t); const a = __one();
+        await __run(false, t); const a = __one({ raw: true }); // Constructor baseline; the old Lab preference no longer disables scaling.
         await __run(true, t);
         const b = []; for (let i = 0; i < 12; i++) b.push(__one());
         const E = G.LabEndgame;
@@ -76,17 +79,17 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       if (t === 900) check(r.hp === 1 && r.dmg === 1 && r.spd === 1, 'at 15:00 the curve is still ×1');
     }
     const curve = await page.evaluate(() => { const E = G.LabEndgame; return [E.hp(1800), E.hp(2700), E.hp(3600), E.dmg(2700), E.spd(2700), E.spd(3600)].map(v => +v.toFixed(2)); });
-    check(curve[0] === 2 && Math.abs(curve[1] - 13.74) < 0.05 && curve[2] > 75 && Math.abs(curve[3] - 4.29) < 0.05 && curve[4] === 1.4 && curve[5] === 1.6,
-      'the curve: HP ×2 at 30:00, ×13.7 at 45:00, ×77 at 60:00; damage ×4.3 at 45:00; speed ×1.4 at 45:00, at most ×1.6', curve);
+    check(curve[0] === 2 && Math.abs(curve[1] - 13.74) < 0.05 && curve[2] > 75 && Math.abs(curve[3] - 8.12) < 0.05 && curve[4] === 1.4 && curve[5] === 1.6,
+      'unchanged HP/speed curves; stronger damage ×8.12 at 45:00', curve);
     const normal = await page.evaluate(async () => { await __run(false, 2700); const a = __one(), b = __one(); return { a, b }; });
-    check(normal.a.hp === normal.b.hp && !normal.a.elite, 'a normal run at 45:00: no change', normal);
+    check(normal.a.endgame && normal.b.endgame, 'normal runs also use the promoted late-game curve', normal);
 
     console.log('3. What keeps its own numbers');
     const own = await page.evaluate(async () => {
       await __run(true, 2700);
       const out = {};
       const pairs = { obelisk: { obelisk: true }, thief: null, split: { _split: 1 }, noScale: { _noScale: true } };
-      const base = (def, flags) => { G.Settings.set('lab', false); const a = __one({ def, flags }); G.Settings.set('lab', true); const b = __one({ def, flags }); return a.hp === b.hp && a.dmg === b.dmg; };
+      const base = (def, flags) => { const a = __one({ def, flags, raw: true }); const b = __one({ def, flags }); return a.hp === b.hp && a.dmg === b.dmg; };
       for (const k in pairs) {
         const def = k === 'thief' ? { dex: 52, name: 'Meowth', behavior: 'thief', hp: 400, spd: 92, dmg: 0, xp: 10 } : window.__def;
         out[k] = base(def, pairs[k]);
@@ -130,7 +133,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       };
       return { t15: await seen(true, 900), t25: await seen(true, 1500), t45: await seen(true, 2700), normal: await seen(false, 2700) };
     });
-    check(!hud.t15 && hud.t25 === 'THREAT ×1.5' && hud.t45 === 'THREAT ×14' && !hud.normal, 'THREAT next to the clock from 20:00 in Lab only', hud);
+    check(!hud.t15 && hud.t25 === 'THREAT ×1.5' && hud.t45 === 'THREAT ×14' && hud.normal === hud.t45, 'THREAT next to the clock from 20:00 in every run', hud);
     check(!errors.length, 'no page errors', errors);
   } catch (e) { console.error(e); failures++; }
   await browser.close();

@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [ ] [feat] Strengthen time-based enemy and boss damage, including ordinary raid attacks (claimed: cc-tuiai).
+
 - [x] [feat] Promote all currently implemented Lab features to standard gameplay; four-hour leaderboard rules deployed (55c801c).
 
 - [x] 44. [feat][coop] A player who's down in a rift boss fight is revived the moment the boss dies (they were already revived on leaving the rift; this makes it clear) · rift · co-op (f66160a)

@@ -90,7 +90,7 @@ G.Necrozma = (() => {
     const floor = (3200 + t * 9) * G.Coop.scaleHp(n) * (n > 1 ? 1.4 : 1) * 3;
     const single = (G.Judgment.debug && G.Judgment.debug.single) || 0, power = G.LabPower ? G.LabPower.power() : 0;
     const hp = Math.round(Math.max(floor, single * 45, power * POWER_S));
-    const dk = G.LabPower ? G.LabPower.dmgK(t) : 1;
+    const dk = G.LabPower ? G.LabPower.raidDmgK(t) : 1;
     const def = { dex: DEX, name: 'Necrozma', hp, spd: 44, dmg: Math.round((40 + t / 20) * dk), xp: Math.round(2500 + t * 2),
       behavior: 'ranged', shotDmg: Math.round((22 + t / 40) * dk), shotCd: 1.0, range: 320 };
     const e = new G.Enemy(def, raid.x, raid.y - ts * 3, { hp: 1, spd: 1, dmg: 1 }, true);

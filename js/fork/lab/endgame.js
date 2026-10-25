@@ -4,7 +4,7 @@
  * a strong build's damage grows much faster, so a good run could go on for ever. In a Lab run, every
  * regular enemy that joins the fight from 20:00 on gets, on top of the spawner's numbers:
  *   HP      × (1 + (t − 20:00)/10 min) × 1.2 ^ ((t − 30:00)/2 min)      ×2 at 30:00, ×13.7 at 45:00, ×77 at 60:00
- *   damage  × (1 + (t − 20:00)/30 min) × 1.12 ^ ((t − 30:00)/2 min)     ×1.33 at 30:00, ×4.3 at 45:00, ×12.8 at 60:00
+ *   damage  × (1 + (t − 20:00)/15 min) × 1.16 ^ ((t − 30:00)/2 min)     ×1.67 at 30:00, ×8.1 at 45:00, ×34 at 60:00
  *   speed   × (1 + 0.3 × (t − 20:00)/30 min + 0.3 × (t − 30:00)/30 min), at most ×1.6
  *                                                                        ×1.1 at 30:00, ×1.4 at 45:00, ×1.6 at 55:00
  *   XP      × √(the HP factor), so levels keep coming, just not as fast as the horde grows
@@ -17,17 +17,18 @@
  * obelisks, split copies, thieves and anything marked _noScale keep their own numbers (bosses grow in
  * js/fork/lab/boss-power.js). On the machine that runs the enemies (a guest's copy gets the host's numbers;
  * the HUD reads the shared clock). Load order: after affixes.js (so a Shielded shield is 60 % of the scaled
- * HP). Hook: G.EnemyMgr.add, G.Events.drawHud. Test: fork/test-endgame.cjs.
+ * HP). Hook: G.EnemyMgr.add, G.Events.drawHud. Tests: fork/test-endgame.cjs,
+ * fork/test-damage-pace.cjs (real shots and hazards through a late-run player's defenses).
  */
 G.LabEndgame = (() => {
-  const FROM = 1200, REGIME = 1800, STEP = 120, HP_EXP = 1.2, DMG_EXP = 1.12, SPD_MAX = 1.6;
+  const FROM = 1200, REGIME = 1800, STEP = 120, HP_EXP = 1.2, DMG_EXP = 1.16, SPD_MAX = 1.6;
   const ELITE = 0.5, AFFIX = 0.3, LATE = 1800;      // elite / affix share reached LATE s after the regime change
   const lab = () => !!(G.Lab && G.Lab.active);
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const after = (t, from) => Math.max(0, t - from);
 
   const hp = t => (1 + after(t, FROM) / 600) * Math.pow(HP_EXP, after(t, REGIME) / STEP);
-  const dmg = t => (1 + after(t, FROM) / 1800) * Math.pow(DMG_EXP, after(t, REGIME) / STEP);
+  const dmg = t => (1 + after(t, FROM) / 900) * Math.pow(DMG_EXP, after(t, REGIME) / STEP);
   const spd = t => Math.min(SPD_MAX, 1 + 0.3 * after(t, FROM) / 1800 + 0.3 * after(t, REGIME) / 1800);
   const eliteShare = t => Math.min(ELITE, ELITE * after(t, REGIME) / LATE);
   const affixShare = t => Math.min(AFFIX, AFFIX * after(t, REGIME) / LATE);

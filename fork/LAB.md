@@ -1,5 +1,15 @@
 # Lab mode and the move overhaul: plan and tracking
 
+**Damage pace, 2026-10-25:** enemies' extra damage from 20:00 now uses
+`(1 + max(0,t-1200)/900) * 1.16^(max(0,t-1800)/120)`. Bosses receive the full factor rather
+than its square root. Site guardians already share that factor; raids now also receive the
+legendary clock `1+t/1800`. HP, XP, speed, defenses and percentage-based raid attacks are unchanged.
+Regression: `node fork/test-damage-pace.cjs` against `node fork/serve.cjs` (set `TEST_PORT` to an
+isolated port if needed). It reproduced a ~19-HP Eternatus shot against a 2,000-HP max-toughness
+build before the change (~63 HP after), and covers actual projectiles/hazards, both raids, early
+damage, unchanged boss HP, the endless ramp and unscaled remote copies. Additional checks:
+`test-endgame.cjs`, `test-boss-power.cjs`, `test-eternatus.cjs`, `test-necrozma.cjs`.
+
 **Promotion, 2026-10-25:** the owner requested every implemented Lab feature in the main game.
 All existing systems now run in solo and co-op, regardless of the saved `lab` setting. Menus use
 the species pools, TMs, starting picks, candies, contracts and gems. Standard progression handles

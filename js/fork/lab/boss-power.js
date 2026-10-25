@@ -13,14 +13,14 @@
  *   - From 20:00 they can't be burst: one hit takes at most HIT_CAP of a boss's max HP (Enemy.hurt, this file
  *     loads before every Lab file that changes a hit's damage, so the cap applies to the final number).
  *   - From 30:00 they grow like the horde (js/fork/lab/endgame.js): HP × 1.2^((t − 30:00)/2 min) (×3.9 at 45:00)
- *     and damage × √(the horde's damage factor) (×2.1 at 45:00, ×3.6 at 60:00), their XP × √(the HP gained),
+ *     and the full horde damage factor (×8.1 at 45:00, ×34 at 60:00), their XP × √(the HP gained),
  *     at most ×3. Wild legendaries also get the bosses' own clock, which they lacked: HP × (1 + t/10 min) and
  *     damage × (1 + t/30 min), as rift-scaling.js gives the rift's.
  * Not for Arceus's Judgment, Eternatus and its obelisks, or a raid's or a site's guardian (_noPower: those set
  * their HP from power() themselves). Load order: before js/fork/rift-scaling.js and js/fork/lab/kinds.js (inner
  * wrapper of G.EnemyMgr.add, so the floor sees what rift-scaling and mega-rift made of the legendary, and of
  * Enemy.hurt). Hooks: G.Judgment.noteDmg / update / reset, G.EnemyMgr.add, G.Enemy.prototype.hurt.
- * Test: fork/test-boss-power.cjs.
+ * Tests: fork/test-boss-power.cjs, fork/test-damage-pace.cjs (ordinary attacks after defenses).
  */
 G.LabPower = (() => {
   const KEEP = 60, TOP = 5, FROM = 900, CAP_FROM = 1200, REGIME = 1800, HIT_CAP = 0.1, HITS = 8, XP_MAX = 3;
@@ -42,7 +42,9 @@ G.LabPower = (() => {
   /** The least HP a boss of that kind gets at t (0 before 15:00). */
   function floor(kind, t) { return t < FROM ? 0 : Math.max(power() * secs(kind, t), maxHit() * HITS); }
   const hpK = t => Math.pow(1.2, after(t, REGIME) / 120);
-  const dmgK = t => Math.sqrt(G.LabEndgame ? G.LabEndgame.dmg(t) : 1);
+  const dmgK = t => G.LabEndgame ? G.LabEndgame.dmg(t) : 1;
+  // Raids bypass the normal boss clock. Give ordinary hits the legendary damage clock too.
+  const raidDmgK = t => (1 + Math.max(0, t) / 1800) * dmgK(t);
 
   // ---------------- the meter ----------------
   const J = G.Judgment, note = J.noteDmg;
@@ -100,7 +102,7 @@ G.LabPower = (() => {
     return hurt.apply(this, arguments);
   };
 
-  return { FROM, CAP_FROM, HIT_CAP, HITS, SECS, power, maxHit, secs, floor, hpK, dmgK, reset,
+  return { FROM, CAP_FROM, HIT_CAP, HITS, SECS, power, maxHit, secs, floor, hpK, dmgK, raidDmgK, reset,
     /** For the checks: what the meter holds. */
     get samples() { return samples.slice(); } };
 })();

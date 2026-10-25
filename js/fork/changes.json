@@ -5,6 +5,8 @@
       "d": "2026-10-25",
       "title": "All existing Lab features join the main game",
       "items": [
+        { "k": "buff", "s": "all", "a": "Enemy damage", "t": "Enemies hit harder from 20:00, with faster damage growth after 30:00. Bosses, wild and rift legendaries and site guardians get the full late-game damage curve. HP, XP, speed and player defenses are unchanged.", "n": "horde extra damage at 30/45/60 min: x1.33/x4.29/x12.77 -> x1.67/x8.12/x33.97; boss extra damage: x1.15/x2.07/x3.57 -> x1.67/x8.12/x33.97" },
+        { "k": "buff", "s": "all", "a": "Raid damage", "t": "Eternatus and Necrozma now apply the legendary time scaling to their ordinary contact, shots and damage-based area attacks. Eternabeam's percentage hit and Necrozma's darkness percentages are unchanged.", "n": "30-min Eternatus base shot: 65 -> 217; 45-min Necrozma base shot: 185 -> 1816 (before defenses)" },
         { "k": "change", "s": "all", "a": "Art", "t": "Art from the Asset Admin: code icons lb-m.", "c": "6d5aa38" },
         { "k": "change", "s": "all", "a": "Art", "t": "Art from the Asset Admin: code icons lb-m.", "c": "4b2e16a" },
         { "k": "change", "s": "all", "a": "Gameplay", "t": "Every run now uses the former Lab gameplay: species learnsets, abilities, signature moves, new move kinds, branching upgrades, sets, synergies, bond recipes and co-op support moves. The Lab setting and Play switch are retired; co-op uses the same gameplay for everyone." },
