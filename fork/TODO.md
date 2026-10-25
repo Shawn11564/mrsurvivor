@@ -11,7 +11,7 @@ How to use it:
 
 ## Inbox
 
-- [ ] [feat] Strengthen time-based enemy and boss damage, including ordinary raid attacks (claimed: cc-tuiai).
+- [x] [feat] Strengthen time-based enemy and boss damage, including ordinary raid attacks (f01e2b0).
 
 - [x] [feat] Promote all currently implemented Lab features to standard gameplay; four-hour leaderboard rules deployed (55c801c).
 
