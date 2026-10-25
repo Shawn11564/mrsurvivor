@@ -11,7 +11,7 @@ How to use it:
 
 ## Inbox
 
-- [ ] [feat] Leaderboards keep each player's final species, Mega form and shiny/radiant skin (claimed: cc-tuiai).
+- [x] [feat] Leaderboards keep each player's final species, Mega form and shiny/radiant skin; appearance rules deployed (526ab16).
 
 - [x] [feat] Strengthen time-based enemy and boss damage, including ordinary raid attacks (f01e2b0).
 
