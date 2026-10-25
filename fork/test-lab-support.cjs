@@ -49,7 +49,7 @@ async function solo(browser) {
   console.log('1. Solo: where they may show up');
   const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
   const errs = [];
-  page.on('pageerror', e => errs.push(String(e)));
+  page.on('pageerror', e => errs.push(e.stack || String(e)));
   await page.addInitScript(() => { try { localStorage.setItem('ps.savenote.1', '1'); localStorage.setItem('ps.ranknote.1', '1'); localStorage.setItem('ps.lang', 'en'); } catch (e) { /* none */ } });
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.DB && G.Game && G.Lab && G.LabSupport, null, { timeout: 60000 }).catch(() => {});
@@ -87,7 +87,7 @@ async function solo(browser) {
   check(s1.lab && !s1.coop && h1.any === 0 && !s1.pool.length, `solo Lab run (Chansey): no co-op card in 300 hands (${h1.any}), none in its list`, { s1, h1 });
   const s2 = await run(false);
   const h2 = await deal(page, 300);
-  check(!s2.lab && h2.any === 0 && !s2.pool.length, `normal run: no co-op card in 300 hands (${h2.any})`, { s2, h2 });
+    check(s2.lab && h2.any === 0 && !s2.pool.length, `normal run uses promoted gameplay: no co-op card in 300 solo hands (${h2.any})`, { s2, h2 });
   check(!errs.length, 'no page errors (solo)', errs.slice(0, 3));
   await page.close();
 }
@@ -98,7 +98,7 @@ async function player(browser, name, dex) {
   await ctx.route('**/js/core/firebase-config.js*', r => r.fulfill({ contentType: 'application/javascript', body: EMU }));
   const page = await ctx.newPage();
   page.errs = [];
-  page.on('pageerror', e => page.errs.push(String(e)));
+  page.on('pageerror', e => page.errs.push(e.stack || String(e)));
   // A frame that throws is caught by the game's loop (console.error), and 180 in a row end the run.
   page.on('console', m => { if (m.type() === 'error' && /fotograma|frame/i.test(m.text())) page.errs.push(m.text()); });
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
@@ -128,8 +128,8 @@ async function coop(browser) {
   const host = await player(browser, 'suph' + tag, 113);       // Chansey: Heal Pulse, Helping Hand...
   const guest = await player(browser, 'supg' + tag, 143);      // Snorlax: Block, Helping Hand...
   const ALL = [host, guest];
-  await host.evaluate(() => G.Settings.set('lab', true));
-  await guest.evaluate(() => G.Settings.set('lab', false));
+  await host.evaluate(() => G.Settings.set('lab', false));
+  await guest.evaluate(() => G.Settings.set('lab', true));
   const id = await host.evaluate(async () => (await G.Social.createRoom()).id);
   const j = await guest.evaluate(id => G.Social.joinRoom(id), id);
   if (!j.ok) throw new Error('join failed: ' + JSON.stringify(j));

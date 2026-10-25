@@ -27,7 +27,7 @@
 G.LabContracts = (() => {
   const $ = id => document.getElementById(id);
   const lab = () => !!(G.Lab && G.Lab.active);
-  const labOn = () => G.Settings.get('lab') === true;
+  const labOn = () => G.Lab.enabled;
   const side = mon => G.Stats.sideOf(mon);
   const attacks = pl => pl.moves.filter(m => m.kind !== 'buff' && m.cat);
   const typeName = t => G.T(G.U.TYPE_NAME[t] || t);
@@ -148,7 +148,7 @@ G.LabContracts = (() => {
     el.id = 'lab-contracts';
     el.setAttribute('translate', 'no');
     const rows = list(dex);
-    el.innerHTML = `<div class="row between goals-h"><h3><span class="ud-tag">LAB</span> Contracts · ${G.Lab.esc(mon.name)}</h3>
+    el.innerHTML = `<div class="row between goals-h"><h3>Contracts · ${G.Lab.esc(mon.name)}</h3>
       <span class="sub">Rewards: <span class="ccoin"></span> contract coins (only for ${G.Lab.esc(mon.name)}'s upgrades) and 🍬 candy · <span class="ccoin"></span> ${balance(dex)} unspent</span></div>`;
     for (const { d, st } of rows) {
       const m = document.createElement('div');

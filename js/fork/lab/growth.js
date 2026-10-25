@@ -205,7 +205,7 @@ G.LabGrowth = (() => {
   const pull = G.Gacha.pull;
   G.Gacha.pull = function (save) {
     const res = pull.apply(this, arguments);
-    if (G.Settings.get('lab') && save && Array.isArray(res)) {
+    if (save && Array.isArray(res)) {
       const got = res.filter(r => !r.isNew && G.DEX_BY[r.dex]);
       if (got.length) {
         const lab = save.lab = save.lab && typeof save.lab === 'object' ? save.lab : {};

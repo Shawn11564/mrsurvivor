@@ -1,5 +1,11 @@
 # MrSurvivor (fork of PokéSurvivor)
 
+As of 2026-10-25, all implemented Lab gameplay is standard in solo and co-op. The old Lab toggle
+is retired; historical Lab leaderboards remain an archive. See [LAB.md](LAB.md) for the promotion
+inventory and approved rule deployment. Run `node fork/test-promotion.cjs` and
+`node fork/test-promotion.cjs --release` against `node fork/serve.cjs` to check the source and build.
+Earlier Lab sections below document implementation history rather than a separate current mode.
+
 MrSurvivor is a fork of [PokéSurvivor](https://github.com/JPTER78/pokesurvivor) by JPTER78,
 used under the PolyForm Noncommercial License 1.0.0 (`LICENSE`, `LICENSE-NONCOMMERCIAL.md`).
 It must stay free: no ads, no paid anything. The sprites are CC BY-NC 4.0 (`CREDITS.md`).

@@ -192,7 +192,7 @@ async function beam(page, hide) {
     await page.evaluate(() => G.Game.debugTime(1800));
     await page.waitForTimeout(2000);
     const n1 = await st(page);
-    check(!n1.on && n1.arceus, 'at 30:00 Arceus\'s Judgment, as always', n1);
+    check(n1.on && !n1.arceus, 'with the legacy Lab setting off, Eternatus starts at 30:00', n1);
     check(!page.errs.length, 'no page errors', page.errs);
     await page.close();
 

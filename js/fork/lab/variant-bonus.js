@@ -36,14 +36,14 @@ G.VariantBonus = (() => {
     const icon = w.kind === 'radiant' ? G.Radiant.icon(14) : G.Icons.html('shiny', 12);
     const base = G.Upgrades.perks(G.DB.upgradesOf(dex)).rerolls || 0;
     const pips = '<i></i>'.repeat(base) + '<i class="vb-x"></i>'.repeat(b.rerolls);
-    const lab = !!G.Settings.get('lab');
+    const lab = G.Lab.enabled;
     const note = !w.on ? `Pick ${name} above to use it.`
       : `Every run, ${n} of its ${VS.STATS.length} stats (${G.T(rar)}) ${n === 1 ? 'gets' : 'get'} +${k}%, picked at random.` + (lab ? '' : ' ' + LAB_ONLY) +
         (w.better ? ` Its radiant gives more: +${pct(VS.K.radiant)}% stats, +${G.LabShiny.RBONUS.rerolls} rerolls.` : '');
     return `<div class="vb-box${w.on ? '' : ' off'}" id="vb-box" data-kind="${w.kind}" style="--vb:${C[w.kind]}">
       <div class="vb-head">${icon} <b>${name} bonus</b></div>
       <div class="stat vb-row" title="${n} of HP, Attack, Sp. Atk, Defense, Sp. Def and Speed, a new pick every run"><span>Stats</span><div class="vb-pips vb-spips">${spips}</div><span class="vb-n">+${k}%</span></div>
-      <div class="stat vb-row"><span>Rerolls <span class="vb-lab">LAB</span></span><div class="vb-pips">${pips}</div><span class="vb-n">+${b.rerolls}</span></div>
+      <div class="stat vb-row"><span>Rerolls</span><div class="vb-pips">${pips}</div><span class="vb-n">+${b.rerolls}</span></div>
       <p class="vb-note">${note}</p></div>`;
   }
 

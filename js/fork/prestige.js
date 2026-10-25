@@ -19,7 +19,7 @@ G.Prestige = (() => {
   const level = dex => { const s = save(), v = s && s.prest && s.prest[dex]; return Math.max(0, Math.min(MAX, v | 0)); };
   const maxedAll = dex => { const lv = G.DB.upgradesOf(dex) || {}; return G.Upgrades.LIST.every(u => (lv[u.id] || 0) >= u.max); };
   const GEMS = 100;
-  const gemCost = () => (G.Settings.get('lab') ? GEMS : 0);       // gems: Lab first
+  const gemCost = () => GEMS; // Gems are part of standard progression.
   const can = dex => level(dex) < MAX && maxedAll(dex) && ((save() && save().gems) | 0) >= gemCost();
 
   function prestige(dex) {

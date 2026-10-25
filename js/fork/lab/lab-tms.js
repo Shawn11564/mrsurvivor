@@ -12,7 +12,7 @@
  */
 G.LabTms = (() => {
   const D = G.LabData;
-  const on = () => !!(G.Settings.get('lab') || (G.Lab && G.Lab.active));
+  const on = () => G.Lab.enabled;
   const isLab = id => !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].lab && !G.Moves.BY_ID[id].sig && !G.Moves.BY_ID[id].coop);   // (co-op moves: support.js's cards only)
 
   // LAB_TMS[id] = the species that learn it by TM in the games (Lab moves upstream doesn't sell).
@@ -73,14 +73,14 @@ G.LabTms = (() => {
   };
 
   // The shop: a LAB tag on a Lab TM's row, and what that means.
-  const NOTE = 'Lab TM: the move works in Lab runs only.';
+  const NOTE = 'Extra daily TM: available in every run.';
   G.I18n.add({ [NOTE]: NOTE }, 'en');
   function mark(box) {
     for (const b of box.querySelectorAll('[data-buy^="tm:"]')) {
       const id = b.dataset.buy.slice(3), row = b.closest('.upg-item');
       if (!isLab(id) || !row || row.querySelector('.lab-tm')) continue;
       const title = row.querySelector('b');
-      if (title) title.insertAdjacentHTML('beforeend', ' <span class="lab-badge lab-tm">LAB</span>');
+      if (title) title.insertAdjacentHTML('beforeend', ' <span class="lab-badge lab-tm">TM</span>');
       const sub = row.querySelector('.sub');
       if (sub) sub.insertAdjacentHTML('beforeend', ` <span class="lab-tm-note">${NOTE}</span>`);
     }

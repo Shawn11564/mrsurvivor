@@ -95,8 +95,8 @@ G.LabUnderdog = (() => {
         <span class="ud-stars">${'★'.repeat(r)}</span><b>${RAR[r]}</b><span class="ud-range">${range(ladder()[r])}</span>
         ${r === mon.rarity ? `<span class="ud-you">${mon.name}: <b>${mine > 0 ? '+' + pct(mine) + '% XP' : 'no bonus'}</b></span>` : ''}</div>`).join('');
     return `<div class="ud-card" role="dialog" aria-labelledby="ud-title">
-      <h2 id="ud-title"><span class="ud-tag">LAB</span> Underdog XP</h2>
-      <p class="sub">Weaker Pokémon level up faster in Lab runs: the lower their base stats, the more XP they get,
+      <h2 id="ud-title">Underdog XP</h2>
+      <p class="sub">Weaker Pokémon level up faster: the lower their base stats, the more XP they get,
         up to +60%. Evolving during the run changes the bonus.</p>
       <div class="ud-ladder">${rows}</div>
       <p class="ud-mine" style="color:${col(mon.rarity)}">${mine > 0
@@ -169,7 +169,7 @@ G.LabUnderdog = (() => {
     G.Game.startRun = function (coop = null, pick = null) {
       const was = armed;
       armed = false;
-      if (!was || coop || !G.Settings.get('lab') || !on()) return startRun.apply(this, arguments);
+      if (!was || coop || !on()) return startRun.apply(this, arguments);
       const mon = G.DEX_BY[pick ? pick.dex : G.DB.save.partner];
       if (!mon || G.Settings.get('underdogSeen') === mon.dex) return startRun.apply(this, arguments);   // already saw it with this one
       const self = this, args = arguments;
@@ -201,9 +201,9 @@ G.LabUnderdog = (() => {
       tag = document.createElement('span'); tag.id = 'ud-play'; tag.className = 'ud-play'; btn.appendChild(tag);
     }
     const mon = G.DEX_BY[G.DB.save && G.DB.save.partner], u = mon ? k(mon) : 0;
-    tag.classList.toggle('hidden', !G.Settings.get('lab') || u <= 0);
-    tag.innerHTML = `<span class="ud-tag">LAB</span>Underdog +${pct(u)}% XP`;
-    tag.title = mon ? `${mon.name} levels up ${pct(u)}% faster in Lab runs` : '';
+    tag.classList.toggle('hidden', u <= 0);
+    tag.innerHTML = `Underdog +${pct(u)}% XP`;
+    tag.title = mon ? `${mon.name} levels up ${pct(u)}% faster in runs` : '';
   }
   const open = G.MenuUI.open;
   G.MenuUI.open = function () { const r = open.apply(this, arguments); try { playTag(); } catch (e) { /* no partner yet */ } return r; };

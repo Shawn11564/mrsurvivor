@@ -35,6 +35,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const page = await browser.newPage({ viewport: { width: vw, height: vh } });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
+  // Guest gameplay uses the real local-save path; no production Firebase boot dependency.
+  await page.route('**/js/core/firebase-config.js*', r => r.fulfill({ contentType: 'application/javascript', body: 'G.FIREBASE_CONFIG = null;' }));
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.DB && G.DB.playAsGuest && G.Game && G.EnemyMgr, null, { timeout: 30000 });
   await pastStart(page, '#btn-guest');
@@ -45,7 +47,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   // Charmander: fire, starts with a fire move.
   // A neutral nature (Hardy): natures (upstream, 2026-10-21) are rolled per save and one like Adamant makes
   // Charmander physical, whose pool has no physical boost to flag (the boost check below).
-  await page.evaluate(() => { G.DB.save.partner = 4; G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.DB.save.pnat = { 4: ['hardy', Date.now()] }; G.MenuUI.open(); });
+  await page.evaluate(() => { G.Settings.set('underdogLadder', false); G.DB.save.partner = 4; G.DB.save.owned[4] = G.DB.save.owned[4] || { at: Date.now() }; G.DB.save.pnat = { 4: ['hardy', Date.now()] }; G.MenuUI.open(); });
 
   console.log('Collection: Power sort');
   await page.click('#scr-menu [data-go="dex"]');
@@ -475,6 +477,10 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   // (Nasty Plot for a special Pokémon, Swords/Dragon Dance for a physical one).
   const boost = await page.evaluate(() => {
     const pl = G.Game.player, CAT = { patk: 'physical', satk: 'special' }, bad = [], seen = { yes: 0, no: 0 };
+    // Species learnsets replaced the universal type pool. Use a real species that learns the booster.
+    const mon = pl.mon, max = pl.maxMoves;
+    pl.mon = G.DEX.find(m => G.Stats.sideOf(m) === 'special' && G.Moves.poolFor(m).includes('nasty-plot'));
+    pl.maxMoves = 99;
     for (let i = 0; i < 400; i++) for (const c of G.LevelUp.offer(pl)) {
       if (c.type !== 'new') { if (c.boost) bad.push(c.key); continue; }
       const d = G.Moves.BY_ID[c.key.slice(4)];
@@ -484,11 +490,13 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     }
     let hand;
     for (let i = 0; i < 600 && !hand; i++) { const h = G.LevelUp.offer(pl); if (h.some(c => c.boost)) hand = h; }
-    if (!hand) return { bad, seen, side: G.Stats.sideOf(pl.mon) };
+    if (!hand) { pl.mon = mon; pl.maxMoves = max; return { bad, seen }; }
     G.RunUI.showLevelUp(pl.level, hand, () => {});
     const els = [...document.querySelectorAll('#cards .card')];
-    return { bad, seen, side: G.Stats.sideOf(pl.mon), dom: els.map((el, i) => ({ key: hand[i].key, boost: !!hand[i].boost,
+    const out = { bad, seen, name: pl.mon.name, side: G.Stats.sideOf(pl.mon), dom: els.map((el, i) => ({ key: hand[i].key, boost: !!hand[i].boost,
       cls: el.classList.contains('boost'), chip: !!el.querySelector('.boost-chip'), note: (el.querySelector('.fit-good') || {}).textContent || '' })) };
+    pl.mon = mon; pl.maxMoves = max;
+    return out;
   });
   check(boost.bad.length === 0 && boost.seen.yes > 0, `boost flag only on the stronger side's attack boost (${boost.side} Pokémon; ${boost.seen.yes} flagged, ${boost.seen.no} other buffs)` + (boost.bad.length ? ' bad: ' + boost.bad.slice(0, 5) : ''));
   // The game translates new text with a MutationObserver: read the note once it has run.
@@ -496,7 +504,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   if (boost.dom) boost.dom = await page.evaluate(dom => dom.map((d, i) => Object.assign(d, {
     note: (document.querySelectorAll('#cards .card')[i].querySelector('.fit-good') || {}).textContent || '' })), boost.dom);
   const bc = (boost.dom || []).find(d => d.boost);
-  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && /^Good for Charmander: boosts its special moves, its strong suit\.$/.test(bc.note),
+  check(!!bc && boost.dom.every(d => d.boost === d.cls && d.boost === d.chip) && bc.note === `Good for ${boost.name}: boosts its special moves, its strong suit.`,
     `rendered: ${bc && bc.key} gets .boost, the "Good fit" chip and "${bc && bc.note}"`);
   if (SHOTS) { await page.waitForTimeout(800); await page.screenshot({ path: path.join(SHOTS, 'levelup-boost.png') }); }
 
@@ -726,7 +734,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
     pl.equip(null);
     return r;
   });
-  check(!noMega.lab && noMega.offered, 'a normal run: a rift won at 6:40 on the luckiest roll offers the Mega Stone', noMega);
+  check(noMega.lab && noMega.offered, 'a normal run uses promoted gameplay: a rift won at 6:40 on the luckiest roll offers the Mega Stone', noMega);
   check(noMega.mega && noMega.key !== 94 && noMega.atk === 1.25, 'holding it Mega Evolves (Mega Gengar, ×1.25 damage)', noMega);
 
   // ---------------- Countdown after a bond or an item choice (solo), when it took over 10 s ----------------
@@ -794,7 +802,7 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   check(evo.has && evo.title === 'Swords Dance → Belly Drum', `at its top level, Swords Dance's evolution card comes up with no stat card needed ("${evo.title}")`);
   await page.waitForTimeout(80);
   const evoDs = evo.has && await page.evaluate(i => document.querySelectorAll('#cards .card')[i].querySelector('.ds').textContent, evo.i);
-  check(evoDs === 'Casts on its own from any slot (no more switching to it), +1 max stack', `the card says what it does: "${evoDs}"`);
+  check(evoDs === 'Casts on its own from any slot, +1 max stack. Belly Drum: when your Attack boost has run out and you are above half HP, it costs half your HP and maxes the boost at once.', `the promoted Belly Drum card describes its passive cast and HP trade-off: "${evoDs}"`);
   const evo2 = await page.evaluate(() => new Promise(r => {
     const pl = G.Game.player, sd = pl.moves.find(m => m.id === 'swords-dance');
     G.Moves.evolve(sd); G.UI.hide('scr-levelup');

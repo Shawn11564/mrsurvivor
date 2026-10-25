@@ -49,7 +49,7 @@ and Traditional) are in Settings → Graphics → Language.
 - Enemies have personalities: some heal, shield, call their pack or warn before an area attack.
 - Each wild Pokémon has a 1 in 4096 chance to be **shiny**. An arrow points to it, and beating it
   makes it yours.
-- At 30:00, **Arceus's Judgment** ends the run.
+- At 30:00, the **Eternatus raid** begins; winning lets the run continue.
 - **Mega Evolution**: past minute 5, a won rift can drop a Mega Stone, and holding it Mega Evolves
   a Pokémon that has a Mega.
 
@@ -70,12 +70,15 @@ Between runs:
   **leaderboards** (solo or group, daily to all-time, by Pokémon). Co-op connects players
   directly, peer to peer, so a few strict networks can't join.
 
-**Lab mode** (Settings → Experimental) tries out what's still in testing: the moves each Pokémon
-learns in the games and one of its abilities, new kinds of moves, signature moves for 70 lines,
-evolving during a run, candies, gems, a revive card, resuming a run after a reload, wild
-legendaries roaming from 15:00, Mega and Primal rift legendaries, and the **Eternatus raid** at
-30:00. Lab runs keep coins, tickets and shinies, but don't count for leaderboards, missions,
-achievements or records. In co-op, the host's setting decides.
+All former **Lab features are now standard gameplay**, in solo and co-op: species learnsets and
+abilities, signature moves, new move kinds, branching upgrades, set bonuses, synergies, bond
+recipes and co-op support moves. Pokémon can evolve during a run, earn candy from duplicates,
+complete contracts and spend gems. Runs offer revive cards, Overhealth and reload resume;
+wild legendaries roam from 15:00, and rifts can contain Mega and Primal legendaries.
+From 20:00, map sites offer guardian fights and relics. The **Eternatus raid** at 30:00 replaces
+Arceus's Judgment; beat it to continue toward **Necrozma at 45:00** and the growing endless horde.
+Every new run counts for regular leaderboards, missions, achievements, personal records and
+stats. Earlier Lab leaderboard entries remain under **Lab archive**. The old Lab toggle is retired.
 
 ## Saves
 

@@ -39,7 +39,7 @@ G.RankingUI = (() => {
     G.UI.show('scr-rank', true);
     if (!G.Social.started) G.Social.start();
     $('rk-mod').classList.toggle('hidden', !G.Ranking.isAdmin());
-    if (lab === null) lab = !!G.Settings.get('lab');
+    if (lab === null) lab = false;
     tabs();
     load();
   }
@@ -60,14 +60,14 @@ G.RankingUI = (() => {
     // Fork: the Lab boards (Lab runs only), a switch at the end of the row.
     const lb = document.createElement('button');
     lb.className = 'gen-tab rk-lab' + (lab ? ' on' : '');
-    lb.title = 'Lab runs only: experimental moves and abilities';
-    lb.innerHTML = '<span class="lab-badge">LAB</span>';
+    lb.title = 'Archived Lab runs from before promotion';
+    lb.innerHTML = '<span class="lab-badge">Lab archive</span>';
     lb.onclick = () => { lab = !lab; tabs(); load(); };
     $('rk-mode').appendChild(lb);
     let note = $('rk-labnote');
     if (!note) { $('rk-mode').insertAdjacentHTML('afterend', '<p id="rk-labnote" class="note lab-note"></p>'); note = $('rk-labnote'); }
     note.classList.toggle('hidden', !lab);
-    note.innerHTML = '<span class="lab-badge">LAB</span> Lab leaderboard: Lab runs only. Normal runs are on the regular one.';
+    note.innerHTML = 'Lab archive: past runs before promotion. New runs are on the regular leaderboard.';
     mk($('rk-period'), G.Ranking.PERIODS, period, k => {
       period = k;
       if (k !== 'a' && dex) { dex = null; $('rk-poke').value = ''; $('rk-clear').classList.add('hidden'); }

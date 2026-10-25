@@ -1,5 +1,27 @@
 # Lab mode and the move overhaul: plan and tracking
 
+**Promotion, 2026-10-25:** the owner requested every implemented Lab feature in the main game.
+All existing systems now run in solo and co-op, regardless of the saved `lab` setting. Menus use
+the species pools, TMs, starting picks, candies, contracts and gems. Standard progression handles
+achievements, missions, records and stats; new runs use the regular leaderboard. Historical Lab
+boards remain as an archive. Internal `G.Lab` names and `save.lab` data remain compatible.
+The old opt-in, Experimental tab and Lab-only notices are retired.
+
+Regression: `node fork/test-promotion.cjs` (source) and
+`node fork/test-promotion.cjs --release` (built page), with `node fork/serve.cjs` running.
+The check starts a real guest run with the legacy Lab setting off. Older feature harnesses still
+use internal Lab names; their mode-isolation assertions describe pre-promotion behavior.
+`node fork/test-promotion-ranking.cjs` checks regular solo/group routing and archived submissions
+against the real Firebase emulators, accepts a one-hour regular run and rejects scores over four
+hours. `--current-rules` records the old 45-minute rejection for pre-promotion fixtures only.
+
+Approved and deployed on 2026-10-25: regular boards accept up to four hours, matching the existing
+Lab limit (`fork/promotion-firestore.patch` records the one-line change). All other validation stays
+unchanged. The deployment to Firebase project `mrsurvivor` compiled and released successfully.
+
+The rest of this file is implementation history. Its opt-in and progression-isolation decisions
+are superseded by this notice.
+
 MrSurvivor-only. New move systems are tested in an opt-in **Lab** mode before they go into the
 normal game. This file is the source of truth for what's planned, decided and done. Update the
 status table as work lands.

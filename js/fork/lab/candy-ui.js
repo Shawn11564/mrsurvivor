@@ -15,7 +15,7 @@ G.LabCandyUI = (() => {
     const list = $('upg-list');
     if (!list) return;
     let box = $('candy-panel');
-    const on = !!G.Settings.get('lab'), dex = dexNow();
+    const on = G.Lab.enabled, dex = dexNow();
     if (!on || !dex || !G.DEX_BY[dex]) { if (box) box.remove(); return; }
     if (!box) {
       box = document.createElement('div');
@@ -28,12 +28,12 @@ G.LabCandyUI = (() => {
     const full = used >= L.CANDY_MAX;
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
-        <b translate="no">Candy (Lab) · ${esc(G.DEX_BY[dex].name)}'s line</b>
+        <b translate="no">Candy · ${esc(G.DEX_BY[dex].name)}'s line</b>
         <span translate="no" class="cand-sum" style="color:var(--muted);font-size:13px">${left} left · ${used}/${L.CANDY_MAX} points</span>
       </div>
       <div class="cand-rows" style="display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-top:8px"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;flex-wrap:wrap">
-        <small translate="no" style="color:var(--muted)">Gacha duplicates (with Lab on) give candy to their evolution line. A stat's 1st point costs 1 candy, its 2nd costs 2, and so on.</small>
+        <small translate="no" style="color:var(--muted)">Gacha duplicates give candy to their evolution line. A stat's 1st point costs 1 candy, its 2nd costs 2, and so on.</small>
         <button class="btn small" data-reset translate="no" ${used ? '' : 'disabled'}>Reset (refund ${L.spent(dex)})</button>
       </div>`;
     const rows = box.querySelector('.cand-rows');

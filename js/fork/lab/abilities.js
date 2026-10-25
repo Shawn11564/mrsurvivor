@@ -355,8 +355,8 @@ G.LabAbilities = (() => {
     G.VariantBonus.detail = function (dex) {
       const r = detail.apply(this, arguments);
       const box = document.querySelector('#dex-detail .mx-desc'), id = G.Mons.abilityOf(dex).id;
-      if (box && G.Settings.get('lab') && DEF[id] && !box.parentNode.querySelector('.lab-abil-note'))
-        box.insertAdjacentHTML('afterend', `<p class="sub mx-desc lab-abil-note"><span class="lab-badge">LAB</span> In Lab: ${G.Lab.esc(DEF[id].desc)}</p>`);
+      if (box && DEF[id] && !box.parentNode.querySelector('.lab-abil-note'))
+        box.textContent = DEF[id].desc;
       return r;
     };
   });

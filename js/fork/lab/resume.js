@@ -67,7 +67,6 @@ G.Resume = (() => {
   function resume() {
     const s = read();
     if (!s || s.who !== who() || !G.DEX_BY[s.dex]) { write(null); return false; }
-    G.Settings.set('lab', true);
     G.UI.hideAll();
     G.Game.startRun(null, { dex: s.dex, shiny: s.shiny });
     const pl = G.Game.player;
@@ -103,7 +102,7 @@ G.Resume = (() => {
     box.className = 'panel';
     box.setAttribute('translate', 'no');
     box.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;padding:16px 18px;min-width:280px;text-align:center';
-    box.innerHTML = `<b>Unfinished Lab run</b><div style="margin:6px 0 12px;color:var(--muted)">${G.Lab.esc(mon.name)} · ${G.U.mmss(s.time)} · level ${s.p.level}</div>
+    box.innerHTML = `<b>Unfinished run</b><div style="margin:6px 0 12px;color:var(--muted)">${G.Lab.esc(mon.name)} · ${G.U.mmss(s.time)} · level ${s.p.level}</div>
       <div style="display:flex;gap:8px;justify-content:center"><button class="btn gold" data-r>Resume</button><button class="btn" data-e>End run</button></div>`;
     document.body.appendChild(box);
     box.querySelector('[data-r]').onclick = () => { box.remove(); resume(); };

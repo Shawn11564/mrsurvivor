@@ -65,7 +65,7 @@ const settle = (p, pred, arg, ms = 5000) => p.waitForFunction(pred, arg, { timeo
     const host = await player(browser, 'bbh' + tag, 4);
     const guest = await player(browser, 'bbg' + tag, 7);
     const ALL = [host, guest];
-    for (const p of ALL) await p.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', true); });
+    for (const p of ALL) await p.evaluate(() => { G.Settings.set('underdogLadder', false); G.Settings.set('lab', false); });
     await party(host, [guest]);
     await settle(host, () => !document.getElementById('lobby-start').disabled, undefined, 30000);
     await host.click('#lobby-start');

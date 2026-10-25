@@ -30,7 +30,7 @@ G.UpgradeAll = (() => {
   function render() {
     const list = $('upg-list'), dex = dexNow();
     let box = $('upgall-panel');
-    if (!list || !dex || !G.DEX_BY[dex] || !G.Settings.get('lab')) { if (box) box.remove(); return; }
+    if (!list || !dex || !G.DEX_BY[dex]) { if (box) box.remove(); return; }
     if (!box) {
       box = document.createElement('div');
       box.id = 'upgall-panel';
@@ -42,7 +42,7 @@ G.UpgradeAll = (() => {
     const what = !q.steps ? 'Every upgrade is already maxed.'
       : ok ? `${q.steps} ${q.steps === 1 ? 'level' : 'levels'} left, ${q.total.toLocaleString()} coins in total.`
       : `${q.steps} ${q.steps === 1 ? 'level' : 'levels'} left, ${q.total.toLocaleString()} coins in total: ${(q.total - coins).toLocaleString()} more needed.`;
-    box.innerHTML = `<div><b translate="no">Upgrade all (Lab)</b><div class="upgall-what" translate="no" style="font-size:13px;color:var(--muted)">${what}</div></div>
+    box.innerHTML = `<div><b translate="no">Upgrade all</b><div class="upgall-what" translate="no" style="font-size:13px;color:var(--muted)">${what}</div></div>
       ${q.steps ? `<button class="btn small ${ok ? 'gold' : ''}" data-all translate="no" ${ok ? '' : 'disabled'}>${sure && ok ? `Confirm: spend <span class="coin"></span> ${q.total.toLocaleString()}` : 'Upgrade all'}</button>` : ''}`;
     const btn = box.querySelector('[data-all]');
     if (btn) btn.onclick = () => {

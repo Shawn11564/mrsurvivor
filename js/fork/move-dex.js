@@ -56,7 +56,7 @@ G.MoveDex = (() => {
   const stacked = () => getComputedStyle($('mdex')).gridTemplateColumns.trim().split(/\s+/).length < 2;
   const labOnly = m => !!m.lab && !G.Moves.ALL.includes(m);
   function list() {
-    if (f.lab === null) f.lab = !!G.Settings.get('lab');
+    if (f.lab === null) f.lab = true;
     const q = fold(f.q), types = Object.keys(G.U.TYPE_NAME);
     const out = Object.values(G.Moves.BY_ID).filter(m => {
       if (labOnly(m) && !f.lab) return false;
@@ -79,7 +79,7 @@ G.MoveDex = (() => {
     b.onclick = () => { fn(); render(); };
     return b;
   };
-  const badge = m => (labOnly(m) ? ' <span class="lab-badge">LAB</span>' : '') + (m.sig ? ' <span class="mdex-sig">signature</span>' : '');
+  const badge = m => m.sig ? ' <span class="mdex-sig">signature</span>' : '';
   // What a move evolves into, as its card says (G.Moves.evoInfo at max level), for its row; '' if it doesn't.
   const evoOf = new Map();
   function evoName(m) {
@@ -107,7 +107,6 @@ G.MoveDex = (() => {
     ts.value = f.type;
     chips.innerHTML = '';
     for (const [k, l] of [['', 'All'], ['physical', 'Physical'], ['special', 'Special'], ['null', 'Status']]) chips.appendChild(chip(l, f.cat === k, () => { f.cat = k; }));
-    chips.appendChild(chip('<span class="lab-badge">LAB</span> moves', !!f.lab, () => { f.lab = !f.lab; }));
     const sort = $('mdex-sort');
     sort.innerHTML = '<span class="sub">Sort:</span>';
     for (const [k, l] of SORTS) sort.appendChild(chip(l, f.sort === k, () => { f.sort = k; }));

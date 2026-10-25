@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [ ] [feat] Promote all currently implemented Lab features to standard gameplay (claimed: cc-tuiai).
+
 - [x] 44. [feat][coop] A player who's down in a rift boss fight is revived the moment the boss dies (they were already revived on leaving the rift; this makes it clear) · rift · co-op (f66160a)
 - [x] 45. [feat][coop] Fairer rift boss rewards: not decided by who's closest to the drops when it dies; e.g. everyone gets their own roll for a held item instead of one item dropping · rift · co-op (f66160a)
 - [x] 46. [lab][coop] Co-op-only moves that help teammates (heal or shield an ally, draw enemies off them, team buffs), so a build can turn into a support or a tank; only offered in co-op level-up cards · Lab (e4e5368)

@@ -2,6 +2,20 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-10-25",
+      "title": "All existing Lab features join the main game",
+      "items": [
+        { "k": "change", "s": "all", "a": "Art", "t": "Art from the Asset Admin: code icons lb-m.", "c": "6d5aa38" },
+        { "k": "change", "s": "all", "a": "Art", "t": "Art from the Asset Admin: code icons lb-m.", "c": "4b2e16a" },
+        { "k": "change", "s": "all", "a": "Gameplay", "t": "Every run now uses the former Lab gameplay: species learnsets, abilities, signature moves, new move kinds, branching upgrades, sets, synergies, bond recipes and co-op support moves. The Lab setting and Play switch are retired; co-op uses the same gameplay for everyone." },
+        { "k": "new", "s": "all", "a": "Progression", "t": "In-run evolution, Everstone, species items, underdog XP, duplicate candy and candy upgrades, contracts, gems, upgrade resets, shiny and radiant rerolls, extra daily TMs, revive cards and run resume are available to everyone." },
+        { "k": "new", "s": "all", "a": "Endgame", "t": "Wild legendaries, Mega and Primal rift encounters, elite affixes, extra bosses, late-game scaling, map sites, relics, the Eternatus raid at 30:00 and the Necrozma raid at 45:00 are now standard gameplay." },
+        { "k": "change", "s": "all", "a": "Progress", "t": "New runs count normally for missions, achievements, personal stats, records and regular leaderboards. Previous Lab leaderboard entries remain available under Lab archive." },
+        { "k": "nerf", "s": "all", "a": "Prestige", "t": "The former Lab prestige gem cost now applies to everyone.", "n": "normal-game prestige gem cost: 0 -> 100 gems" },
+        { "k": "buff", "s": "all", "a": "Gacha", "t": "Half of Legendary pulls choose a Legendary you do not yet own while the banner still has one available.", "n": "normal-game missing-Legendary selection chance: 0% -> 50%" }
+      ]
+    },
+    {
       "d": "2026-10-24",
       "title": "Your HP bar back in the top left, Overhealth from the Sitrus Berry, no pick delay between rewards, temple plates take longer, move evolutions in the move list, every run on the leaderboard, stat boosts that stack, the Rat title, a hotkey for Keep them apart, Spikes burst again, Requests for the artist",
       "items": [

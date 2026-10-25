@@ -61,7 +61,7 @@ G.Presence = (() => {
       st.dex = pl.dex | 0;
       if (pl.shiny) st.sh = true;
       if (pl.radiant) st.rad = true;
-      if (G.Lab && G.Lab.active) st.lab = true;
+      // Promoted gameplay is ordinary gameplay in presence, too.
       st.ps = pl.dead && g.state === 'playing' ? 'dead' : g.state;
     } else st.s = room ? 'lobby' : 'menu';
     st.scr = screen();

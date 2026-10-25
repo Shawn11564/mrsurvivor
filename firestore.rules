@@ -158,7 +158,7 @@ service cloud.firestore {
       let d = request.resource.data;
       let sv = /databases/$(database)/documents/saves/$(me());
       return d.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'lv', 'kills', 'at'])
-        && d.t is int && d.t > 0 && d.t <= (board.matches('[sg]_L.*') ? 14400 : 2700)
+        && d.t is int && d.t > 0 && d.t <= 14400
         && d.lv is int && d.lv >= 1 && d.lv <= 10 + d.t / 4
         && d.kills is int && d.kills >= 0 && d.kills <= 100 + d.t * 12
         && (!exists(sv) || get(sv).data.get('ban', false) == false)

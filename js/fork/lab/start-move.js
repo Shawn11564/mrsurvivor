@@ -21,7 +21,7 @@ G.LabStart = (() => {
   /** Lab picks? While a run starts or goes on: whether it's a Lab run. In the menus: the Lab setting. */
   function on() {
     const idle = !starting && ['ui', 'over'].includes(G.Game.state);
-    return idle ? !!G.Settings.get('lab') : !!G.Lab.active;
+    return idle ? G.Lab.enabled : !!G.Lab.active;
   }
   const bought = dex => { const s = G.DB.save; return !!(s && s.pupg && s.pupg[dex] && s.pupg[dex].start); };
 
@@ -69,9 +69,9 @@ G.LabStart = (() => {
     const ids = labChoices(dex).sort((a, b) => name(a).localeCompare(name(b)));
     const el = document.createElement('div');
     el.className = 'panel ban-picker';
-    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose which move it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
+    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose which move it starts <b>runs</b> with. You can change it any time, for free.</p>
       <div class="ban-moves">${ids.map(id => `<button class="chip ${id === cur ? 'on' : ''}" data-id="${id}">${G.Icons.html('move:' + id, 16)} ${name(id)}` +
-        (id === base ? ' <small>(default)</small>' : !normal.includes(id) ? ' <small class="lab-only">LAB</small>' : '') + '</button>').join('')}</div>`;
+        (id === base ? ' <small>(default)</small>' : '') + '</button>').join('')}</div>`;
     el.querySelectorAll('[data-id]').forEach(b => {
       b.onclick = () => {
         const id = b.dataset.id;
@@ -81,7 +81,7 @@ G.LabStart = (() => {
         if (i >= 0) l.splice(i, 1);
         G.DB.commit();
         G.Audio.sfx('select');
-        G.UI.toast(G.DEX_BY[dex].name + ' will start Lab runs with ' + name(id));
+        G.UI.toast(G.DEX_BY[dex].name + ' will start runs with ' + name(id));
         redraw();
       };
     });
@@ -95,9 +95,9 @@ G.LabStart = (() => {
     const ids = labChoices(dex).filter(id => id !== first).sort((a, b) => name(a).localeCompare(name(b)));
     const el = document.createElement('div');
     el.className = 'panel ban-picker';
-    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose the second move it starts <b>Lab runs</b> with (Lab mode is on; turn it off in Settings to choose for normal runs). You can change it any time, for free.</p>
+    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Choose the second move it starts <b>runs</b> with. You can change it any time, for free.</p>
       <div class="ban-moves"><button class="chip ${!cur ? 'on' : ''}" data-id="">Random</button>${ids.map(id => `<button class="chip ${id === cur ? 'on' : ''}" data-id="${id}">${G.Icons.html('move:' + id, 16)} ${name(id)}` +
-        (!normal.includes(id) ? ' <small class="lab-only">LAB</small>' : '') + '</button>').join('')}</div>`;
+        '</button>').join('')}</div>`;
     el.querySelectorAll('[data-id]').forEach(b => {
       b.onclick = () => {
         const id = b.dataset.id;
@@ -107,7 +107,7 @@ G.LabStart = (() => {
         if (i >= 0) l.splice(i, 1);
         G.DB.commit();
         G.Audio.sfx('select');
-        G.UI.toast(id ? G.DEX_BY[dex].name + ' will also start Lab runs with ' + name(id) : 'Lab runs: the second move will be random');
+        G.UI.toast(id ? G.DEX_BY[dex].name + ' will also start runs with ' + name(id) : 'The second move will be random');
         redraw();
       };
     });

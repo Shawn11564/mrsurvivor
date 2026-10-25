@@ -5,7 +5,7 @@
  * Test: fork/test-half-new.cjs.
  */
 G.GachaPick = (list, rarity, save) => {
-  if (rarity !== 5 || !G.Settings.get('lab') || !save || Math.random() >= 0.5) return null;
+  if (rarity !== 5 || !save || Math.random() >= 0.5) return null;
   const fresh = list.filter(p => !(save.owned && save.owned[p.dex]));
   return fresh.length ? G.U.pick(fresh) : null;
 };
@@ -16,7 +16,7 @@ if (G.PityBar) {
     const r = draw.apply(this, arguments);
     Promise.resolve().then(() => {
       const note = document.getElementById('gacha-rates') && document.getElementById('gacha-rates').querySelector('.note');
-      if (note && G.Settings.get('lab') && !note.querySelector('.nhalf')) note.insertAdjacentHTML('beforeend', '<br><span class="nhalf" translate="no">· Lab: half of the Legendaries you pull are ones you don\'t have yet (while the banner still has some).</span>');
+      if (note && !note.querySelector('.nhalf')) note.insertAdjacentHTML('beforeend', '<br><span class="nhalf" translate="no">· Half of the Legendaries you pull are ones you don\'t have yet (while the banner still has some).</span>');
     });
     return r;
   };

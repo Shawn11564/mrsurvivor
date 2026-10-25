@@ -1,0 +1,5 @@
+--- a/firestore.rules
++++ b/firestore.rules
+@@ -161,1 +161,1 @@
+-        && d.t is int && d.t > 0 && d.t <= (board.matches('[sg]_L.*') ? 14400 : 2700)
++        && d.t is int && d.t > 0 && d.t <= 14400

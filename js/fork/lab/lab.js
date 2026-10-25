@@ -1,36 +1,11 @@
-/* ============ lab.js — Lab mode: moves and abilities being tested (MrSurvivor fork) ============
- * Plan, decisions and status: fork/LAB.md. Tests: fork/test-lab.cjs and fork/test-lab-coop.cjs (group).
- *
- * Setting: Settings → Experimental (G.Settings 'lab', per device; this file adds the tab
- * and settingsRow draws its content from js/ui/settings-ui.js). Each run decides when it starts (begin):
- *   - solo: your setting
- *   - group: the HOST's, sent in its 'start' message (lab, labV); the guests' setting
- *     doesn't count. If its labV isn't yours, a notice to reload.
- * G.Lab.active: a Lab run is under way (with a Pokémon). Outside a run it's false, so
- * the menus (starting move, veto, collection) always see the normal game and nothing from the Lab
- * is ever stored in the saved run.
- *
- * In a Lab run:
- *   - G.Moves.poolFor(mon) gives its Lab list (poolFor, below): what it learns in the games.
- *   - its ability (js/fork/lab/abilities.js)
- *   - it goes on the Lab leaderboard, never the regular one (the Lab boards in js/net/ranking.js:
- *     submitSolo / submitGroup get lab: true, below), and doesn't count for achievements or records: the
- *     G.Progress notices are muted and save.stats goes back to how it was at the end. Missions,
- *     coins, tickets and shinies do count (missions() below). Test: fork/test-lab-missions.cjs.
- *   - "LAB" on the HUD, its ability and its list in the pause menu, and a note on the final summary.
- * Co-op lobby: the host sends { k:'lab', on, v } to each player on connecting and when
- * the setting changes (only over the direct connection between players), and the lobby shows it.
- *
- * Everything hooks in from here (wrapping functions the game calls as G.X.y); upstream's
- * files only have one line, in settings-ui.js.
+/* Promoted gameplay registry: all implemented Lab systems are standard gameplay.
+ * Internal names and save keys remain compatible. See fork/LAB.md and fork/test-promotion.cjs.
  */
 G.Lab = (() => {
   const D = G.LabData;
   const $ = id => document.getElementById(id);
   let run = false;                      // is the current run a Lab run? (begin)
-  let stats0 = null;                    // save.stats at the start (restoreStats)
   let info = null;                      // its ability: G.LabAbilities.of
-  const hostLab = new Map();            // host uid -> { on, v } (group lobby)
   const active = () => run && !!(G.Game && G.Game.player);
 
   // ---------------- moves that only exist in the Lab ----------------
@@ -60,7 +35,7 @@ G.Lab = (() => {
     const s = JSON.stringify([G.LabMoves, D.MOVES, Object.keys(G.LabAbilities.DEF)]);
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    return (h >>> 0).toString(36);
+    return 'main-' + (h >>> 0).toString(36); // Promotion differs from pre-promotion co-op clients.
   })();
 
   // ---------------- signature moves (phase 5) ----------------
@@ -170,11 +145,9 @@ G.Lab = (() => {
     for (const d of from) for (const id of G.Mons.taught(d)) if (!ids.includes(id)) ids.push(id);
     return ids;
   }
-  const poolFor = G.Moves.poolFor;
   // `natural` (no TMs) goes through: G.Mons.natural asks for it ("does it know this without a TM?").
-  // Outside a Lab run, a Lab move taught by a Lab TM (js/fork/lab/lab-tms.js) stays out: Lab TMs are Lab-only (plan G5).
-  G.Moves.poolFor = (mon, natural) => active() ? labList(mon, natural)
-    : poolFor(mon, natural).filter(id => !G.Moves.BY_ID[id].lab || G.Moves.BY_ID[id].promote).concat((SIG[mon.dex] || []).filter(id => G.Moves.BY_ID[id].promote));   // signatures already promoted (phase 8)
+  // All taught moves are available in menus and runs.
+  G.Moves.poolFor = labList; // Promoted: menus and runs share species pools and taught TMs.
 
   // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
   // hand, in 1 hand out of 3 it takes the place of the last new-move card.
@@ -203,10 +176,10 @@ G.Lab = (() => {
 
   /** At the start of any run: is it Lab? (in a group, the host says so in cfg). */
   function begin(coop) {
-    run = coop ? !!coop.lab : !!G.Settings.get('lab');
-    info = null; stats0 = null;
-    if (coop && coop.lab && coop.labV !== VERSION && coop.host !== G.Net.uid) {
-      G.UI.toast('Lab mode: your game is a different version from the host\'s. Reload the page so you both see the same moves.', 6000);
+    run = true; // All currently implemented Lab gameplay is standard in every run.
+    info = null;
+    if (coop && coop.labV !== VERSION && coop.host !== G.Net.uid) {
+      G.UI.toast('Your game is a different version from the host\'s. Reload the page so you both see the same moves.', 6000);
     }
   }
 
@@ -221,71 +194,25 @@ G.Lab = (() => {
       const pl = G.Game.player;
       startDex = pl ? pl.dex : 0;
       if (run && pl) {
-        const sv = G.DB.save;
-        stats0 = sv && sv.stats ? JSON.parse(JSON.stringify(sv.stats)) : null;
         info = G.LabAbilities.describe(pl.abilId, pl.mon);   // set by pl.setAbility (abilities.js), not attached twice
         G.LabAnims.preload(pl);                         // its signatures' animations (phase 5)
         G.LabGrowth.start(pl);                          // XP for the weak ones, and candies (phase 6)
         G.LabShiny.start(pl);                           // the shiny's colours and extras (phase 7)
-        G.Spawner.say('LAB · ' + (info ? 'Ability: ' + info.name : 'experimental moves'), 3.4, true);
+        if (info) G.Spawner.say('Ability: ' + info.name, 3.4, true);
       }
       badge();
       return r;
     };
   });
 
-  /** End of a Lab run: records and stats back to how they were. */
-  function restoreStats() {
-    const s = G.DB.save && G.DB.save.stats;
-    if (!s || !stats0) return;
-    for (const k of Object.keys(s)) if (!(k in stats0)) delete s[k];
-    Object.assign(s, stats0);
-    stats0 = null;
-  }
-  // Achievements, stats and collections: muted in a Lab run. 'runEnd' arrives right after
-  // endRun (game.js) records the stats: that's where they're put back. Missions do count:
-  // progress.js advances them inside event() with everything else, so here they're advanced
-  // on their own (same rules as its advance()).
-  for (const k of ['event', 'kill', 'checkAch']) {
-    const f = G.Progress[k];
-    G.Progress[k] = function (a, d) {                 // event(kind, data) · kill(enemy) · checkAch()
-      if (!active()) return f.apply(this, arguments);
-      if (k === 'event') { if (a === 'runEnd') restoreStats(); missions(a, d || {}); }
-      // As progress.js kill(): Arceus's legendaries in the Judgment aren't bosses.
-      else if (k === 'kill' && a) missions('kill', { types: a.types || [], boss: !!a.boss && !(G.Judgment && G.Judgment.active) });
-    };
-  }
-  function missions(kind, d) {
-    const s = G.DB.save;
-    if (!s) return;
-    G.Progress.ensure(s);
-    for (const m of [...s.missions.daily, ...s.missions.weekly]) {
-      if (m.claimed || G.Progress.done(m)) continue;
-      const def = G.MissionDefs.BY[m.id];
-      if (!def || def.ev !== kind || (def.match && !def.match(d, m.param))) continue;
-      const v = def.value ? def.value(d) : 1;
-      m.prog = def.mode === 'max' ? Math.max(m.prog, v) : m.prog + v;
-      if (G.Progress.done(m) && !m.told) { m.told = true; told(m); }
-    }
-  }
-  /** The same popup as progress.js notify() (not exported), for a mission finished in a Lab run. */
-  function told(m) {
-    let el = document.getElementById('ach-pop');
-    if (!el) { el = document.createElement('div'); el.id = 'ach-pop'; el.className = 'box ach-pop'; document.body.appendChild(el); }
-    el.innerHTML = `${G.Icons.html('medal2', 24)}<div><b>${esc('Misión completada: ' + G.Progress.text(m))}</b><small>${esc('Recoge el premio en Misiones')}</small></div>`;
-    el.classList.remove('hidden');
-    G.Audio.sfx('confirm');
-    clearTimeout(told.t);
-    told.t = setTimeout(() => el.classList.add('hidden'), 2800);
-  }
-
-  // A Lab run's time goes on the Lab boards (js/net/ranking.js), the regular ones never see it.
+  // Promoted runs use normal progression, achievements and records.
+  // New runs use regular boards; explicitly tagged historical queued records keep their category.
   // game.js calls these at the end of the run, before the next begin(), so `run` is still this run's.
   // (The anti-cheat clean() still applies.) A run sent later (js/fork/run-record.js: the tab closed mid-run)
   // says which it was itself: r.lab is kept.
   for (const k of ['submitSolo', 'submitGroup']) {
     const f = G.Ranking[k];
-    G.Ranking[k] = function (r) { return f.call(this, Object.assign({}, r, { lab: r && typeof r.lab === 'boolean' ? r.lab : run })); };
+    G.Ranking[k] = function (r) { return f.call(this, Object.assign({}, r, { lab: !!(r && r.lab) })); };
   }
 
   // ---------------- co-op ----------------
@@ -293,51 +220,12 @@ G.Lab = (() => {
   G.Net.broadcast = function (msg) {
     // The host's 'start' (social-ui.js LobbyUI.start) carries its setting; it's the same
     // object G.Flow.startCoop then receives, so the host sees it too.
-    if (msg && msg.k === 'start' && msg.lab == null) { msg.lab = !!G.Settings.get('lab'); msg.labV = VERSION; }
+    if (msg && msg.k === 'start') { msg.lab = true; msg.labV = VERSION; }
     return broadcast.apply(this, arguments);
   };
-  /** The host tells its setting (to one player or to all). */
-  function tell(uid) {
-    const room = G.Social.room;
-    if (!room || !room.isHost) return;
-    const msg = { k: 'lab', on: !!G.Settings.get('lab'), v: VERSION };
-    if (uid) G.Net.send(uid, msg); else broadcast.call(G.Net, msg);
-  }
-  G.Net.on((from, msg) => { if (msg && msg.k === 'lab') { hostLab.set(from, msg); lobby(); } });
-  G.Net.onPeer((u, mode) => { if (mode === 'direct' || mode === 'relay') tell(u); });
-  G.Settings.on(k => { if (k === 'lab') { tell(); lobby(); } });
-  G.Social.on(what => { if (what === 'room') lobby(); });
-
-  // ---------------- what you see ----------------
-  const NOTE = 'Lab run: experimental moves and abilities. It goes on the Lab leaderboard, and won\'t count for the regular leaderboard, achievements or records.';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-  /** In a group room: will the run be Lab? (the host's setting; a guest's comes in its 'lab' message) */
-  function roomLab() {
-    const room = G.Social.room;
-    if (!room) return false;
-    if (room.isHost) return !!G.Settings.get('lab');
-    const h = hostLab.get(room.host);
-    return !!(h && h.on);
-  }
-  /** The group lobby: will it be Lab? */
-  function lobby() {
-    const el = $('lab-lobby'), room = G.Social.room;
-    if (!el) return;
-    const on = roomLab(), h = room && !room.isHost && hostLab.get(room.host), other = !!(on && h && h.v !== VERSION);
-    el.classList.toggle('hidden', !on);
-    el.innerHTML = '<span class="lab-badge">LAB</span> ' + esc(other
-      ? 'The host has a different version of Lab mode. Reload the page so you both see the same moves.'
-      : (room && room.isHost ? 'Your Lab setting is on: this run will be a Lab run for everyone. ' : 'The host turned on Lab mode for this run. ') + 'It goes on the Lab leaderboard, not the regular one, and won\'t count for achievements or records.');
-  }
-
-  /** The Settings → Experimental tab (settings-ui.js draws it with its own pieces). */
-  function settingsRow(toggle, section) {
-    return section('Experimental')
-      + toggle('lab', 'Lab mode', 'Try moves and abilities that are still being tested: each Pokémon gets the moves it learns in the games and one of its abilities. '
-        + 'Lab runs give coins, tickets and shinies and count for missions as usual. Their times go on the Lab leaderboard (Leaderboards → LAB), not the regular one, and they don\'t count for achievements or records. In co-op, the host\'s setting decides.');
-  }
-
+  const roomLab = () => !!G.Social.room;
+  function settingsRow() { return ''; } // Compatibility with old settings routes.
   /** Pause: its ability and what it can learn here. */
   function pauseBlock() {
     const pl = G.Game.player;
@@ -349,9 +237,9 @@ G.Lab = (() => {
     }).join('');
     // More lines from the other Lab files (evolution, candies, shiny...).
     const more = pauseExtra.map(f => f(pl)).filter(Boolean).map(t => `<div class="lab-more"><small>${t}</small></div>`).join('');
-    return `<div class="lab-pause"><div><span class="lab-badge">LAB</span> ${info
+    return `<div class="lab-pause"><div>${info
         ? `Ability: <b>${esc(info.name)}</b> <small>${esc(info.desc)}</small>` : ''}</div>
-      <div class="lab-pool"><small>${esc(pl.mon.name)} can learn in Lab mode:</small> ${icons}</div>${more}</div>`;
+      <div class="lab-pool"><small>${esc(pl.mon.name)} can learn:</small> ${icons}</div>${more}</div>`;
   }
   const pauseExtra = [];
 
@@ -361,15 +249,6 @@ G.Lab = (() => {
     if (active()) $('pause-sum').insertAdjacentHTML('afterbegin', pauseBlock());
     return r;
   };
-  const showOver = G.RunUI.showOver;
-  G.RunUI.showOver = function (r) {
-    const lab = active();
-    if (lab && r) r.record = false;
-    const out = showOver.apply(this, arguments);
-    if (lab) $('over-stats').insertAdjacentHTML('beforeend', `<div class="lab-over"><span class="lab-badge">LAB</span> ${esc(NOTE)}</div>`);
-    return out;
-  };
-
   // "LAB" in the run (and its ability).
   const hud = document.createElement('div');
   hud.id = 'lab-hud';
@@ -378,25 +257,11 @@ G.Lab = (() => {
   function badge() {
     const on = active() && G.Game.state !== 'over';
     hud.classList.toggle('hidden', !on);
-    if (on) hud.textContent = 'LAB' + (info ? ' · ' + info.name : '');
+    if (on) hud.textContent = info ? 'Ability: ' + info.name : '';
   }
   setInterval(badge, 400);
-  // The Experimental tab in Settings, before Account.
-  const acc = document.querySelector('#set-tabs [data-t="acc"]');
-  if (acc) {
-    const b = document.createElement('button');
-    b.className = 'gen-tab';
-    b.dataset.t = 'lab';
-    b.textContent = 'Experimental';
-    b.onclick = () => G.SettingsUI.open('lab');
-    acc.before(b);
-  }
-  // The lobby notice, under its note.
-  const ln = $('lobby-note');
-  if (ln) ln.insertAdjacentHTML('afterend', '<p id="lab-lobby" class="note lab-note hidden"></p>');
-
   return {
-    VERSION, begin, learnOf, settingsRow, SIG, esc,
+    enabled: true, VERSION, begin, learnOf, settingsRow, SIG, esc,
     poolFor: labList,
     /** Another line for the Lab block in the pause menu: f(pl) → HTML or ''. */
     pauseLine(f) { pauseExtra.push(f); },

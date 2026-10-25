@@ -57,7 +57,7 @@ G.LabTraits = (() => {
   const MOVER = 'Lab: it goes the way you\'re walking (toward your target when you stand still), hits everything in its path, and you stay where you are.';
   // In Lab the close-range cut is 35 % (js/fork/lab/kinds2.js LAB_CLOSE): the box says so.
   const CLOSE_ES = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
-  const CLOSE_LAB = 'Close range (Lab): you take 35% less damage while it’s active.';
+  const CLOSE_LAB = 'Close range: you take 35% less damage while it’s active.';
   M.keep(...Object.values(TEXT), STEP4.t, EVO.t, MOVER, CLOSE_LAB);
 
   /** The run's first moves were made before G.Lab.active: swap them for their Lab copies. */

@@ -51,7 +51,8 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
   const browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--mute-audio'] });
   const page = await browser.newPage({ viewport: { width: 1100, height: 700 } });
   const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
+  page.on('pageerror', e => errors.push(e.stack || String(e)));
+  page.on('requestfailed', r => { if (/\/js\/.*\.js/.test(r.url())) errors.push(r.url() + ': ' + r.failure()?.errorText); });
   await page.addInitScript(() => { try { localStorage.setItem('ps.savenote.1', '1'); localStorage.setItem('ps.ranknote.1', '1'); localStorage.setItem('ps.lang', 'en'); } catch (e) { /* none */ } });
   await page.goto(BASE + '/dev.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.DB && G.Game && G.Lab && G.LabMech, null, { timeout: 60000 });
@@ -176,7 +177,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       await __fire(fs, 350);
       return { mark: fs.mark || ps.mark || 0, marked: !!a._labMark, tip: G.MoveText.tipNotes(fs, pl).length };
     });
-    check(!n.mark && !n.marked, 'in a normal run Psybeam and Psychic don\'t mark', n);
+    check(n.mark && n.marked, 'normal runs also get the promoted Psybeam and Psychic marks', n);
   }
 
   // ---------------- B3.2 persistent hazard fields ----------------
@@ -243,7 +244,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
       await __fire(sp, 250);
       return { mines: G.Combat.fields.filter(f => f.kind === 'mine').length, hz: G.LabMech.hazards().length };
     });
-    check(n.mines === 2 && n.hz === 0, 'in a normal run Spikes are the usual bursting mines', n);
+    check(n.mines === 2 && n.hz === 0, 'normal runs retain the latest bursting Spikes behavior', n);
   }
 
   // ---------------- B3.3 status converters ----------------
@@ -562,7 +563,7 @@ const check = (ok, what, info) => { console.log((ok ? '  PASS ' : '  FAIL ') + w
 
     await start(false);
     const n = await page.evaluate(() => ['rapid-spin', 'vacuum-wave', 'hydro-pump', 'magnitude'].map(id => { const m = G.Moves.instance(id, 1); return !!(m.haste || m.close || m.labKnock || m.magnitude || m.labId); }));
-    check(n.every(x => !x), 'in a normal run the same moves have no Lab field', n);
+    check(n.every(Boolean), 'normal runs also get the promoted move fields', n);
   }
 
   // ---------------- the built game ----------------
