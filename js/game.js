@@ -384,7 +384,7 @@ G.Game = (() => {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid;                    // sólo las partidas en grupo le ponen uid
     const wasHost = !!pl.coopHost;
-    const team = coop ? G.Coop.members.slice() : [];
+    const team = coop ? G.RunAppearance.members() : [];
     const party = G.RunStats.party();                  // antes de cerrar el grupo (js/fork/run-stats.js)
     if (G.Coop.active) G.Coop.end();
     if (coop) G.Social.setPlaying(false);
@@ -426,7 +426,7 @@ G.Game = (() => {
     const mark = { t: Math.floor(time), lv: pl.level, kills: pl.kills };
     // Si la partida se ha tocado (ver clean()), no sube al ranking (sin avisar); lo demás, sí.
     const ok = clean();
-    const sent = ok && !coop ? G.Ranking.submitSolo(Object.assign(mark, { dex: pl.dex, shiny: pl.shiny }))
+    const sent = ok && !coop ? G.Ranking.submitSolo(Object.assign(mark, G.RunAppearance.of(pl)))
                : ok && wasHost ? G.Ranking.submitGroup(Object.assign(mark, { members: team })) : null;
     if (sent) sent.then(b => { if (b && b.some(p => p !== 'a')) G.DB.commit(true); }).catch(() => {});
 

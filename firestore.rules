@@ -154,10 +154,16 @@ service cloud.firestore {
     //   - nivel y derrotados con margen de sobra (un grupo de 4 muy bueno)
     //   - la cuenta no puede estar baneada por el admin (saves/{uid}.ban; si aún
     //     no ha guardado nunca en la nube, no tiene documento y no está baneada)
+    // Appearance flags are optional for older clients and scores; each teammate gets one boolean.
+    function appearanceFlags(v, n) {
+      return v is list && v.size() == n && n >= 1 && n <= 4
+        && v[0] is bool && (n < 2 || v[1] is bool)
+        && (n < 3 || v[2] is bool) && (n < 4 || v[3] is bool);
+    }
     function validEntry(board, id) {
       let d = request.resource.data;
       let sv = /databases/$(database)/documents/saves/$(me());
-      return d.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'lv', 'kills', 'at'])
+      return d.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'mega', 'radiant', 'lv', 'kills', 'at'])
         && d.t is int && d.t > 0 && d.t <= 14400
         && d.lv is int && d.lv >= 1 && d.lv <= 10 + d.t / 4
         && d.kills is int && d.kills >= 0 && d.kills <= 100 + d.t * 12
@@ -166,6 +172,8 @@ service cloud.firestore {
         && d.names is list && d.names.size() == d.uids.size()
         && d.dex is list && d.dex.size() == d.uids.size()
         && d.shiny is list && d.shiny.size() == d.uids.size()
+        && (!('mega' in d) || appearanceFlags(d.mega, d.uids.size()))
+        && (!('radiant' in d) || appearanceFlags(d.radiant, d.uids.size()))
         && d.at == request.time
         && (board.matches('s_.*')
               ? (d.uids.size() == 1 && id == me())
@@ -207,10 +215,12 @@ service cloud.firestore {
       // shiny es opcional: las versiones del juego de antes del 18-10 no lo ponían.
       return me() in e.uids
         && changed.hasOnly([d.me, d.ev])
-        && row.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'lv', 'kills'])
+        && row.keys().hasOnly(['t', 'uids', 'names', 'dex', 'shiny', 'mega', 'radiant', 'lv', 'kills'])
         && row.t == e.t && row.uids == e.uids && row.names == e.names && row.dex == e.dex
         && row.lv == e.lv && row.kills == e.kills
         && (!('shiny' in row) || row.shiny == e.shiny)
+        && row.get('mega', []) == e.get('mega', [])
+        && row.get('radiant', []) == e.get('radiant', [])
         && (d.ev == '' || (!(d.ev in d.top) && d.ev in old && old[d.ev].t <= e.t));
     }
     function removeMine(d, old, changed) {

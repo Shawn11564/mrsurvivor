@@ -183,7 +183,8 @@ G.Ranking = (() => {
     const U = G.U; v = v || {};
     return { id: U.str(String(id), 200), t: U.int(v.t, 86400), uids: U.list(v.uids, 4).map(x => U.str(x, 128)),
              names: U.list(v.names, 4).map(x => U.str(x, 24)), dex: U.list(v.dex, 4).map(x => U.int(x, 2000)),
-             shiny: U.list(v.shiny, 4).map(x => x === true), lv: U.int(v.lv, 999) || 1, kills: U.int(v.kills, 1e9) };
+             shiny: U.list(v.shiny, 4).map(x => x === true), mega: U.list(v.mega, 4).map(x => x === true),
+             radiant: U.list(v.radiant, 4).map(x => x === true), lv: U.int(v.lv, 999) || 1, kills: U.int(v.kills, 1e9) };
   };
   const sorted = top => Object.entries(top || {}).map(([id, v]) => rowOf(id, v)).sort((a, b) => b.t - a.t);
   const now = () => firebase.firestore.FieldValue.serverTimestamp();
@@ -283,6 +284,8 @@ G.Ranking = (() => {
             // (Sin "shiny" si no hay ninguno: el resumen pesa menos.)
             const mine = { t: entry.t, uids: entry.uids, names: entry.names, dex: entry.dex, shiny: entry.shiny, lv: entry.lv, kills: entry.kills };
             if (entry.shiny.some(Boolean)) mine.shiny = entry.shiny;
+            if (entry.mega) mine.mega = entry.mega;
+            if (entry.radiant) mine.radiant = entry.radiant;
             let ev = '';
             // Ya estabas con una marca mejor (otro ordenador): nada que escribir.
             if (id in top && top[id].t >= entry.t) { entered = false; newTop = top; return; }
@@ -328,7 +331,8 @@ G.Ranking = (() => {
     if (!fb || !G.Social.me || r.t < MIN_T) return [];
     flushDeferred();
     const m = r.lab ? 'ls' : 's';                      // a Lab run: the Lab boards (fork)
-    const entry = { t: r.t, uids: [fb.uid], names: [G.Social.me.name], dex: [r.dex], shiny: [!!r.shiny], lv: r.lv, kills: r.kills };
+    const entry = { t: r.t, uids: [fb.uid], names: [G.Social.me.name], dex: [r.dex], shiny: [!!r.shiny],
+      mega: [!!r.mega], radiant: [!!r.radiant], lv: r.lv, kills: r.kills };
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
     if (r.t >= MIN_T_MON) boards.push([board(m, 'a', r.dex), 'p']);
     const better = await store(boards, fb.uid, entry);
@@ -344,7 +348,7 @@ G.Ranking = (() => {
     const ms = r.members.slice().sort((a, b) => (a.uid < b.uid ? -1 : 1));
     const id = ms.map(m => m.uid).join('_');
     const entry = { t: r.t, uids: ms.map(m => m.uid), names: ms.map(m => m.name), dex: ms.map(m => m.dex),
-                    shiny: ms.map(m => !!m.shiny), lv: r.lv, kills: r.kills };
+                    shiny: ms.map(m => !!m.shiny), mega: ms.map(m => !!m.mega), radiant: ms.map(m => !!m.radiant), lv: r.lv, kills: r.kills };
     const m = r.lab ? 'lg' : 'g';                      // a Lab run: the Lab boards (fork)
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
     if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push([board(m, 'a', d), 'p']);

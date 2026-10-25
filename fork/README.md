@@ -1,5 +1,17 @@
 # MrSurvivor (fork of PokéSurvivor)
 
+Leaderboard appearance snapshots (`js/fork/run-appearance.js`) keep final species, Mega/Primal
+form and shiny/radiant skin for solo and every co-op member. Co-op snapshots its runtime players
+before teardown; interrupted-run checkpoints carry the same fields. `js/net/ranking.js` stores
+optional boolean `mega`/`radiant` arrays aligned with `uids` in both entries and top summaries.
+The renderer uses the same sprite keys and missing-art fallback as the game. Existing scores
+without these fields remain valid and keep their recorded species/shiny appearance.
+Regression: `node fork/test-ranking-appearance.cjs` against the local Firebase emulators and
+`node fork/serve.cjs` (use the same isolated `TEST_PORT` in both terminals). It covers actual run
+end, both skins, Mega form, co-op evolution/teardown/rendering, real reload recovery, legacy
+entries and rejection of malformed flags or forged summary appearances.
+The optional appearance-field rules were approved and deployed to `mrsurvivor` on 2026-10-25.
+
 As of 2026-10-25, all implemented Lab gameplay is standard in solo and co-op. The old Lab toggle
 is retired; historical Lab leaderboards remain an archive. See [LAB.md](LAB.md) for the promotion
 inventory and approved rule deployment. Run `node fork/test-promotion.cjs` and

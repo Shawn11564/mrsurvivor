@@ -32,8 +32,8 @@ G.RunRecord = (() => {
     const rid = runId(pl);
     if (!G.Game.isClean || !G.Game.isClean()) return { id: rid, tainted: true };
     const r = { t: Math.floor(G.Game.st.time), lv: pl.level, kills: pl.kills, lab: false };
-    if (group) r.members = (G.Coop.members || []).map(m => ({ uid: m.uid, name: m.name, dex: m.dex, shiny: !!m.shiny }));
-    else { r.dex = pl.dex; r.shiny = !!pl.shiny; }
+    if (group) r.members = G.RunAppearance.members();
+    else Object.assign(r, G.RunAppearance.of(pl));
     return { id: rid, who: uid, at: Date.now(), group, r };
   }
   function keep() {

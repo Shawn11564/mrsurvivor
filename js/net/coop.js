@@ -87,6 +87,8 @@ G.Coop = (() => {
   }
 
   function end() {
+    // Run-end ranking happens after teardown on quit/vote/all-down paths. Keep final appearances first.
+    if (active && G.RunAppearance) members = G.RunAppearance.members();
     active = false; host = false; local = null;
     mates.clear(); outEv = []; waiting = new Set(); holds = new Set();
   }

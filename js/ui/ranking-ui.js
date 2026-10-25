@@ -134,7 +134,9 @@ G.RankingUI = (() => {
     el.insertAdjacentHTML('beforeend', `<span class="pos">${pos <= 3 ? G.Icons.html('trophy', 20) : ''}${pos}</span>`);
     const mons = document.createElement('span');
     mons.className = 'mons';
-    r.dex.forEach((d, i) => { if (G.DEX_BY[d]) mons.appendChild(G.UI.spriteCanvas(d, 44, 40, { scale: 1, shiny: !!r.shiny[i] })); });
+    r.dex.forEach((d, i) => { if (G.DEX_BY[d]) mons.appendChild(G.RunAppearance.sprite(d, {
+      shiny: !!r.shiny[i], mega: !!(r.mega && r.mega[i]), radiant: !!(r.radiant && r.radiant[i])
+    })); });
     el.appendChild(mons);
     el.insertAdjacentHTML('beforeend',
       `<span class="who"><b translate="no">${r.names.map((n, i) => `<a href="#" class="plink" data-u="${esc(r.uids[i] || '')}">${esc(n)}</a>`).join(' · ')}</b><small>Nv. ${r.lv || 1} · ${(r.kills || 0).toLocaleString(G.I18n.locale)} derrotados</small></span>
