@@ -585,7 +585,7 @@ G.HUD = (() => {
       const o = m.pl;
       ctx.font = F(800, 10);
       ctx.fillStyle = m.color;
-      G.I18n.rawCanvas(ctx, 'fillText', m.name, px, y + 9);
+      G.PlayerNames.draw(ctx, m.uid, m.name, px, y + 9, { maxWidth: 73 });
       const lx = px + 78;
       bar(ctx, lx, y + 1, 110, 8, o.dead ? 0 : o.hp / o.maxHp, o.dead ? '#ff5f6d' : '#5fe08a');
       if (o.dead) {
@@ -630,9 +630,8 @@ G.HUD = (() => {
       const label = o.dead ? G.I18n.f('¡{x} necesita ayuda! · {x} m', m.name, metres) : m.name + ' · ' + metres + ' m';
       ctx.textAlign = Math.cos(a) > 0.3 ? 'right' : Math.cos(a) < -0.3 ? 'left' : 'center';
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.8)';
-      G.I18n.rawCanvas(ctx, 'strokeText', label, lx, ly);
       ctx.fillStyle = col;
-      G.I18n.rawCanvas(ctx, 'fillText', label, lx, ly);
+      G.PlayerNames.draw(ctx, m.uid, label, lx, ly, { stroke: true });
       ctx.restore();
     }
 
@@ -655,12 +654,12 @@ G.HUD = (() => {
         const label = (m ? G.I18n.f('Viendo a {x}', m.name) + ' · ' + G.I18n.t('cambiar') : G.I18n.t('Ver a un compañero'))
           + (G.Touch.active ? '' : '  (E)');
         ctx.font = F(800, 13);
-        const bw = ctx.measureText(label).width + 28, bh = 28, bx = w / 2 - bw / 2, by = h * 0.62 + 32;
+        const bw = G.PlayerNames.width(ctx, m && m.uid, label) + 28, bh = 28, bx = w / 2 - bw / 2, by = h * 0.62 + 32;
         roundRect(ctx, bx, by, bw, bh, 8);
         ctx.fillStyle = 'rgba(10,16,28,.75)'; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = m ? m.color : 'rgba(244,248,255,.8)'; ctx.stroke();
         ctx.fillStyle = '#f4f8ff';
-        G.I18n.rawCanvas(ctx, 'fillText', label, w / 2, by + 19);
+        G.PlayerNames.draw(ctx, m && m.uid, label, w / 2, by + 19);
         G.Touch.addButton(bx, by, bw, bh, () => G.Game.cycleWatch(1), 8);
       }
       ctx.restore();

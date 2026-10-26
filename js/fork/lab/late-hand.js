@@ -113,7 +113,7 @@ G.LabLateHand = (() => {
     const r = setWaiting.apply(this, arguments);
     if (wait && !wait.classList.contains('hidden')) {
       const me = G.Social.me ? G.Social.me.name : '', others = (names || []).filter(n => n !== me);
-      wait.innerHTML = `<b style="color:#c9a4ff">Auto-picked ${esc(waitTitle)}</b><br><small>${others.length ? 'Waiting for ' + others.map(esc).join(', ') + '…' : 'Waiting for the others to pick…'}</small>`;
+      wait.innerHTML = `<b style="color:#c9a4ff">Auto-picked ${esc(waitTitle)}</b><br><small>${others.length ? 'Waiting for ' + others.map(G.PlayerNames.htmlFor).join(', ') + '…' : 'Waiting for the others to pick…'}</small>`;
     }
     return r;
   };

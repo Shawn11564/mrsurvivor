@@ -238,19 +238,19 @@
     /** Abre el perfil de otro jugador por su uid. */
     async function show(uid) {
       if (!uid) return;
-      if (uid === G.Social.uid) { showData(G.Social.profileData()); return; }
+      if (uid === G.Social.uid) { showData(G.Social.profileData(), uid); return; }
       $('prof-body').innerHTML = '<p class="sub">Cargando…</p>';
       $('scr-profile').classList.remove('hidden');
       const d = await G.Social.getProfile(uid);
       if (!d) { $('prof-body').innerHTML = '<p class="sub">Este jugador aún no tiene perfil.</p>'; return; }
-      showData(d);
+      showData(d, uid);
     }
 
-    function showData(d) {
+    function showData(d, uid = G.PlayerNames.mine()) {
       const b = d.best || {};
       const body = $('prof-body');
       body.innerHTML = `
-        <div class="prof-head"><h2 translate="no">${esc(d.name || '???')}</h2>${d.title ? `<span class="prof-title">${esc(d.title)}</span>` : ''}</div>
+        <div class="prof-head"><h2 translate="no">${G.PlayerNames.html(uid, d.name || '???')}</h2>${d.title ? `<span class="prof-title">${esc(d.title)}</span>` : ''}</div>
         <div class="fav-slots view" id="prof-favs"></div>
         <div class="prof-marks">
           <div><span>Mejor tiempo</span><b>${fmt(b.solo || 0)}</b></div>

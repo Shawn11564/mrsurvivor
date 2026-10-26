@@ -1,5 +1,17 @@
 # MrSurvivor (fork of PokéSurvivor)
 
+Weekly podium names (`js/fork/player-names.js`) use two live leaderboard summary listeners:
+the regular weekly solo and group boards. Their top three get gold/silver/bronze names and
+numbered circular solo or square group badges. Every group member gets the team's rank;
+multiple group placements use the best one. Both board badges can appear, with the best rank
+setting the name color. UID-based DOM names and canvas names share the registry. Snapshots
+also refresh the leaderboard cache and visible rows. Week rollover and logout clear awards;
+no badge claims or profile writes are accepted from peers.
+Regression: `node fork/test-player-names.cjs` against local Firebase emulators and
+`node fork/serve.cjs` (the same isolated `TEST_PORT` in both terminals). It checks real public
+profiles, lobbies, co-op rendering, team summaries, live standings/cache updates, ties,
+weekly rollover, logout, and exclusion of all-time and Lab archive standings.
+
 Leaderboard appearance snapshots (`js/fork/run-appearance.js`) keep final species, Mega/Primal
 form and shiny/radiant skin for solo and every co-op member. Co-op snapshots its runtime players
 before teardown; interrupted-run checkpoints carry the same fields. `js/net/ranking.js` stores

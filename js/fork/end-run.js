@@ -133,8 +133,8 @@ G.EndRun = (() => {
     if (!seen || !inRun()) { box.classList.add('hidden'); return; }
     const me = myUid(), said = seen.yes.includes(me) || (mine && mine.id === seen.id && mine.yes);
     const missing = seen.need.filter(u => !seen.yes.includes(u)).map(nameOf);
-    box.innerHTML = `<b>End the run for everyone?</b><br><small>${esc(seen.by)} asked · ${seen.yes.length}/${seen.need.length} said yes · ${seen.left} s</small>`
-      + (said ? `<div class="sub" style="margin-top:6px">You said yes. Waiting for ${esc(missing.join(', '))}…</div>`
+    box.innerHTML = `<b>End the run for everyone?</b><br><small>${G.PlayerNames.htmlFor(seen.by)} asked · ${seen.yes.length}/${seen.need.length} said yes · ${seen.left} s</small>`
+      + (said ? `<div class="sub" style="margin-top:6px">You said yes. Waiting for ${missing.map(G.PlayerNames.htmlFor).join(', ')}…</div>`
         : `<div class="row" style="justify-content:center;gap:8px;margin-top:8px"><button class="btn small gold" data-v="yes">Yes, end it</button><button class="btn small" data-v="no">No</button></div>`);
     box.querySelectorAll('button').forEach(b => { b.onclick = () => vote_(b.dataset.v === 'yes'); });
     box.classList.remove('hidden');

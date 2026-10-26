@@ -186,7 +186,14 @@ G.Ranking = (() => {
              shiny: U.list(v.shiny, 4).map(x => x === true), mega: U.list(v.mega, 4).map(x => x === true),
              radiant: U.list(v.radiant, 4).map(x => x === true), lv: U.int(v.lv, 999) || 1, kills: U.int(v.kills, 1e9) };
   };
-  const sorted = top => Object.entries(top || {}).map(([id, v]) => rowOf(id, v)).sort((a, b) => b.t - a.t);
+  const sorted = top => Object.entries(top || {}).map(([id, v]) => rowOf(id, v))
+    .sort((a, b) => b.t - a.t || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const summaryListeners = new Set();
+  // The weekly podium listener supplies fresh summaries to the ordinary leaderboard cache too.
+  function receiveSummary(b, top) {
+    cacheSet('s:' + b, top); noteTop(b, top);
+    for (const fn of summaryListeners) fn(b);
+  }
   const now = () => firebase.firestore.FieldValue.serverTimestamp();
 
   // ---------------- anti-trampas ----------------
@@ -605,5 +612,6 @@ G.Ranking = (() => {
   }
 
   return { PERIODS, periodIds, board, runStarted, submitSolo, submitGroup, top, myRank, removeMine,
+           receiveSummary, onSummary(fn) { summaryListeners.add(fn); },
            report, reported, isAdmin, reports, entryInfo, removeEntry, purgeAbove, removeEverywhere, setMarked, dismiss, markedAccounts };
 })();

@@ -42,7 +42,7 @@ G.NetStats = (() => {
     const out = [];
     for (const m of G.Coop.mates) {
       const s = S.get(m.uid);
-      out.push({ col: m.color || '#eaf2ff', text: `${m.name}: ${s ? Math.round(s.rtt) + ' ms · ±' + Math.round(s.jit) + ' ms' : '…'}` });
+      out.push({ uid: m.uid, col: m.color || '#eaf2ff', text: `${m.name}: ${s ? Math.round(s.rtt) + ' ms · ±' + Math.round(s.jit) + ' ms' : '…'}` });
     }
     out.push({ col: fps >= 50 ? '#5fe08a' : fps >= 30 ? '#ffd23f' : '#ff5f6d', text: fps + ' FPS' });
     return out;
@@ -58,10 +58,10 @@ G.NetStats = (() => {
     const L = lines(), y0 = h - 24 - (G.Settings.get('fps') ? 14 : 0);
     L.slice().reverse().forEach((l, i) => {
       ctx.fillStyle = 'rgba(0,0,0,.5)';
-      const tw = ctx.measureText(l.text).width;
+      const tw = G.PlayerNames.width(ctx, l.uid, l.text);
       ctx.fillRect(w - 14 - tw, y0 - i * 13 - 10, tw + 8, 12);
       ctx.fillStyle = l.col;
-      G.I18n.rawCanvas(ctx, 'fillText', l.text, w - 10, y0 - i * 13);
+      G.PlayerNames.draw(ctx, l.uid, l.text, w - 10, y0 - i * 13);
     });
     ctx.restore();
     return r;

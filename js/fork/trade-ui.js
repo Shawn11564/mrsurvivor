@@ -262,7 +262,7 @@ G.TradeUI = (() => {
     for (const f of list) {
       const el = document.createElement('div');
       el.className = 'fr-row';
-      el.innerHTML = `<i class="dot on"></i><b>${esc(f.name)}</b><span class="grow"></span>`;
+      el.innerHTML = `<i class="dot on"></i><b>${G.PlayerNames.html(f.uid, f.name)}</b><span class="grow"></span>`;
       const b = document.createElement('button');
       b.className = 'btn small gold'; b.type = 'button'; b.textContent = 'Send trade request';
       b.dataset.sfx = 'confirm';
@@ -307,7 +307,7 @@ G.TradeUI = (() => {
     $('trade-pop').classList.toggle('lift', !$('invite-pop').classList.contains('hidden'));
     if (popCur && popCur.id === t.id) return;
     popCur = t;
-    $('tp-text').innerHTML = `${icon(22)} <b class="gold">${esc(T.nameOf(t.a, t))}</b> wants to trade Pokémon with you`;
+    $('tp-text').innerHTML = `${icon(22)} <b class="gold">${G.PlayerNames.html(t.a, T.nameOf(t.a, t))}</b> wants to trade Pokémon with you`;
     $('trade-pop').classList.remove('hidden');
     G.Audio.sfx('shiny');
   }
@@ -494,8 +494,8 @@ G.TradeUI = (() => {
     const t = T.trade;
     if (!t) return;
     const other = T.nameOf(T.other);
-    $('tr-who').textContent = other;
-    $('tr-their-h').textContent = other + ' gives';
+    $('tr-who').innerHTML = G.PlayerNames.html(T.other, other);
+    $('tr-their-h').innerHTML = G.PlayerNames.html(T.other, other) + ' gives';
     const mine = T.mine, theirs = T.theirs, side = T.side, os = side === 'a' ? 'b' : 'a';
     if (!!T.theirHave !== haveSeen) { haveSeen = !!T.theirHave; renderGrid(); }
     const km = mine.map(i => i.key).join(), kt = theirs.map(i => i.key).join() + '|' + (G.DB.save ? Object.keys(G.DB.save.owned).length : 0);
@@ -559,7 +559,7 @@ G.TradeUI = (() => {
     for (const m of msgs) {
       const el = document.createElement('div');
       el.className = 'm' + (m.u === me ? ' me' : '');
-      el.innerHTML = `<b>${esc(m.u === me ? 'You' : other)}:</b> ${esc(String(m.t || '').slice(0, 200))}`;
+      el.innerHTML = `<b>${G.PlayerNames.html(m.u, m.u === me ? 'You' : other)}:</b> ${esc(String(m.t || '').slice(0, 200))}`;
       box.appendChild(el);
     }
     if (atEnd || msgs.length && msgs[msgs.length - 1].u === me) box.scrollTop = box.scrollHeight;
@@ -582,7 +582,7 @@ G.TradeUI = (() => {
     const cover = $('tr-cover');
     cover.dataset.k = 'done';
     $('tr-cover-in').innerHTML = `<h3>${icon(24)} Trade complete!</h3>
-      <p class="sub" style="margin:0">With <b class="gold">${esc(e.name)}</b></p>
+      <p class="sub" style="margin:0">With <b class="gold">${G.PlayerNames.htmlFor(e.name)}</b></p>
       <b>You got</b><div class="tr-slots" id="trd-got"></div>
       <b>You gave</b><div class="tr-slots" id="trd-out"></div>
       <p class="note" style="margin:0">${FRESH}</p>

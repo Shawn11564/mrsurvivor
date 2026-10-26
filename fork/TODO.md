@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [ ] [ui] Public colored names and numbered badges for weekly solo/group top-three players across name displays (claimed: cc-tuiai).
+
 - [x] [feat] Leaderboards keep each player's final species, Mega form and shiny/radiant skin; appearance rules deployed (526ab16).
 
 - [x] [feat] Strengthen time-based enemy and boss damage, including ordinary raid attacks (f01e2b0).

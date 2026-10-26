@@ -297,7 +297,7 @@ G.Requests = (() => {
     const list = [...items.values()].filter(shown).sort((a, b) => ms(b.up) - ms(a.up));
     el.querySelector('#rq-rows').innerHTML = list.length ? list.map(d => `
 <button class="rq-row${d.id === cur ? ' on' : ''}${unread(d) ? ' unread' : ''}" data-a="open" data-v="${esc(d.id)}">
-  <div class="l1"><span class="rq-dot"></span>${stChip(d.st)}<span class="rq-k" title="${KIND[d.k] ? KIND[d.k][0] : ''}">${KIND[d.k] ? KIND[d.k][1] : '·'}</span><b>${esc(d.n)}</b><span class="rq-grow"></span><span>${fmtAgo(ms(d.up))}</span></div>
+  <div class="l1"><span class="rq-dot"></span>${stChip(d.st)}<span class="rq-k" title="${KIND[d.k] ? KIND[d.k][0] : ''}">${KIND[d.k] ? KIND[d.k][1] : '·'}</span><b>${G.PlayerNames.html(d.by, d.n)}</b><span class="rq-grow"></span><span>${fmtAgo(ms(d.up))}</span></div>
   <div class="l2">${esc((d.t || '').split('\n')[0])}${d.pics && d.pics.length ? ' 🖼' : ''}</div>
 </button>`).join('') : `<div class="rq-empty">${st.filter === 'open' ? 'Nothing open. Write a new request, or ask a question.' : 'Nothing here yet.'}</div>`;
   }
@@ -354,7 +354,7 @@ G.Requests = (() => {
       ? `<select id="rq-status" title="Status">${Object.keys(STATUS).map(s => `<option value="${s}"${s === d.st ? ' selected' : ''}>${STATUS[s][0]}</option>`).join('')}</select>`
       : (mine && ['new', 'ask'].includes(d.st) ? '<button class="ghost" data-a="closeit">Close request</button>' : '');
     head.innerHTML = `<button class="ghost rq-back" data-a="back">‹ Back</button>${stChip(d.st)}<span class="rq-k">${KIND[d.k] ? KIND[d.k][0] : ''}</span>
-<h3 title="${esc(d.t)}">${esc((d.t || '').split('\n')[0])}</h3><span class="sub" style="color:#9db0c9;font-size:12px">${esc(d.n)} · ${fmtAgo(ms(d.at))}</span>${ctl}`;
+<h3 title="${esc(d.t)}">${esc((d.t || '').split('\n')[0])}</h3><span class="sub" style="color:#9db0c9;font-size:12px">${G.PlayerNames.html(d.by, d.n)} · ${fmtAgo(ms(d.at))}</span>${ctl}`;
     const sel = head.querySelector('#rq-status');
     if (sel) sel.onchange = () => setStatus(cur, sel.value).catch(e => G.UI.toast("Couldn't change the status (" + (e.code || 'error') + ')'));
   }
@@ -363,7 +363,7 @@ G.Requests = (() => {
   function msgHtml(m, first) {
     const claude = m.by === 'claude', mine = m.by === me();
     return `<div class="rq-msg${claude ? ' claude' : mine ? ' mine' : ''}">
-  <div class="who"><b>${claude ? 'Claude' : esc(m.n)}</b> · ${fmtAgo(ms(m.at))}${first ? ' · ' + (KIND[m.k] ? KIND[m.k][0].toLowerCase() : '') : ''}</div>
+  <div class="who"><b>${claude ? 'Claude' : G.PlayerNames.html(m.by, m.n)}</b> · ${fmtAgo(ms(m.at))}${first ? ' · ' + (KIND[m.k] ? KIND[m.k][0].toLowerCase() : '') : ''}</div>
   <div class="txt">${esc(m.t)}</div>${picsHtml(m.pics)}${commitsHtml(m.c)}
 </div>`;
   }

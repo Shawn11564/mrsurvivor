@@ -306,7 +306,7 @@ G.PlayerManager = (() => {
 .pm-danger b{display:block;color:#ffd9de}
 .pm-danger small{color:#a88e96;font-size:12px}
 .pm-names{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 14px}
-.pm-names span{background:#172338;border:1px solid #2f4a70;border-radius:99px;padding:2px 9px;font-size:12px}
+.pm-names>span{background:#172338;border:1px solid #2f4a70;border-radius:99px;padding:2px 9px;font-size:12px}
 .pm-bulkcur{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
 .pm-bulkcur label{font-size:11px;color:#8fa3bf;display:flex;flex-direction:column;gap:4px}
 .pm-bulkcur input{width:100%}
@@ -490,7 +490,7 @@ G.PlayerManager = (() => {
       return `<div class="pm-row${p.uid === cur && view === 'player' ? ' cur' : ''}" data-u="${esc(p.uid)}">
         <input type="checkbox" data-sel="${esc(p.uid)}" ${sel.has(p.uid) ? 'checked' : ''} title="Select for bulk actions">
         <i class="pm-dot${on ? (hid ? ' idle' : ' on') : ''}" title="${on ? (hid ? 'Online, tab in the background' : 'Online') : 'Offline'}"></i>
-        <div class="who"><b>${esc(p.name)}${p.uid === (G.DB.fb && G.DB.fb.uid) ? ' <span style="color:#ff8ad8;font-weight:400">(you)</span>' : ''}</b><small>${esc(short(p.uid))}</small></div>
+      <div class="who"><b>${G.PlayerNames.html(p.uid, p.name)}${p.uid === (G.DB.fb && G.DB.fb.uid) ? ' <span style="color:#ff8ad8;font-weight:400">(you)</span>' : ''}</b><small>${esc(short(p.uid))}</small></div>
         <div class="meta">${s ? `<span title="Pokémon">${s.owned}</span>${s.shiny ? `<span class="pm-sh" title="Shinies">✦${s.shiny}</span>` : ''}${s.radiant ? `<span class="pm-rad" title="Radiants">◆${s.radiant}</span>` : ''}` : '<span title="No cloud save">—</span>'}</div>
       </div>`;
     }).join('');
@@ -592,7 +592,7 @@ G.PlayerManager = (() => {
       <div class="pm-head">
         <div class="pic" id="pm-pic"></div>
         <div>
-          <h3>${esc(p.name)}${p.title ? `<small>${esc(p.title)}</small>` : ''}</h3>
+          <h3>${G.PlayerNames.html(p.uid, p.name)}${p.title ? `<small>${esc(p.title)}</small>` : ''}</h3>
           <div class="pm-sub"><span class="pm-uid" data-a="copy" title="Copy the uid">${esc(p.uid)}</span>
             ${p.ban ? '<span class="pm-tag">Leaderboard ban</span>' : ''}
             <span>${p.hasSave ? 'Cloud save ' + ago(p.at) : 'No cloud save yet'}</span>
@@ -829,7 +829,7 @@ G.PlayerManager = (() => {
     main.innerHTML = `
       <button class="pm-btn sm pm-back" data-a="back">‹ Players</button>
       <h3 style="font-size:22px">Bulk actions <span style="font:13px 'Segoe UI';color:#8fa3bf">${list.length} selected${saves.length < list.length ? ` · ${list.length - saves.length} without a cloud save (skipped)` : ''}</span></h3>
-      <div class="pm-names">${list.slice(0, 40).map(p => `<span>${esc(p.name)}</span>`).join('')}${list.length > 40 ? `<span>+${list.length - 40} more</span>` : ''}</div>
+      <div class="pm-names">${list.slice(0, 40).map(p => `<span>${G.PlayerNames.html(p.uid, p.name)}</span>`).join('')}${list.length > 40 ? `<span>+${list.length - 40} more</span>` : ''}</div>
       <div class="pm-cards">
         <section class="pm-card wide">
           <h4>Give currencies <small>to each selected player</small></h4>

@@ -129,7 +129,7 @@ G.Markers = (() => {
       for (const m of G.Coop.mates) {
         if (!m.connected) continue;
         const d = !!m.pl.dead;
-        if (d && !wasDown.get(m.uid) && now - runAt > 500) { notes.push({ name: m.name, color: m.color, at: now }); focus(); G.Audio.sfx('hurt'); }
+        if (d && !wasDown.get(m.uid) && now - runAt > 500) { notes.push({ uid: m.uid, name: m.name, color: m.color, at: now }); focus(); G.Audio.sfx('hurt'); }
         wasDown.set(m.uid, d);
       }
     }
@@ -148,7 +148,7 @@ G.Markers = (() => {
       ctx.textAlign = 'center';
       const t1 = G.I18n.f(T.down, n.name), t2 = G.T(T.downSub);
       ctx.font = '800 20px Pixelify,"Segoe UI",system-ui,sans-serif';
-      const w1 = ctx.measureText(t1).width;
+      const w1 = G.PlayerNames.width(ctx, n.uid, t1);
       ctx.font = '700 11px Pixelify,"Segoe UI",system-ui,sans-serif';
       const bw = Math.min(w - 24, Math.max(w1, ctx.measureText(t2).width) + 36);
       G.HUD.roundRect(ctx, -bw / 2, -26, bw, 52, 10);
@@ -156,7 +156,7 @@ G.Markers = (() => {
       ctx.lineWidth = 2; ctx.strokeStyle = '#ff5f6d'; ctx.stroke();
       ctx.font = '800 20px Pixelify,"Segoe UI",system-ui,sans-serif';
       ctx.fillStyle = '#ffd0d5';
-      G.I18n.rawCanvas(ctx, 'fillText', t1, 0, -2);
+      G.PlayerNames.draw(ctx, n.uid, t1, 0, -2);
       ctx.font = '700 11px Pixelify,"Segoe UI",system-ui,sans-serif';
       ctx.fillStyle = '#ffb0b8';
       G.I18n.rawCanvas(ctx, 'fillText', t2, 0, 16);

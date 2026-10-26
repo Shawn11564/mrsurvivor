@@ -102,9 +102,10 @@ G.RunUI = (() => {
   function setWaiting(names) {
     const me = G.Social.me ? G.Social.me.name : '';
     const others = names.filter(n => n !== me);
-    const list = a => new Intl.ListFormat(G.I18n.locale, { style: 'long', type: 'conjunction' }).format(a);
+    const list = a => new Intl.ListFormat(G.I18n.locale, { style: 'long', type: 'conjunction' }).formatToParts(a)
+      .map(p => p.type === 'element' ? G.PlayerNames.htmlFor(p.value) : p.value).join('');
     $('lvl-wait').setAttribute('translate', 'no');
-    $('lvl-wait').textContent = !names.length ? ''
+    $('lvl-wait').innerHTML = !names.length ? ''
       : !others.length ? G.T('Elige tu carta')
       : names.includes(me) ? G.I18n.f('Faltan por elegir: {x}', list([...others, G.T('tú')]))
       : G.I18n.f('Esperando a {x}…', list(others));

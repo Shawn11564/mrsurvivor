@@ -654,15 +654,16 @@ G.Player = class Player {
       ctx.stroke();
       ctx.restore();
     }
-    if (this.tag) {
+    const playerUid = this.uid || (!this.remote ? G.PlayerNames.mine() : '');
+    const playerTag = this.tag || (!this.remote && G.PlayerNames.ranks(playerUid).length && G.Social.me ? G.Social.me.name : '');
+    if (playerTag) {
       ctx.save();
       ctx.font = '700 7px Pixelify,"Segoe UI",sans-serif';
       ctx.textAlign = 'center';
       const y = this.y - this.bodyH - 8;
       ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.75)';
-      G.I18n.rawCanvas(ctx, 'strokeText', this.tag, this.x, y);
       ctx.fillStyle = this.dead ? '#ff8a96' : this.tagColor || '#fff';
-      G.I18n.rawCanvas(ctx, 'fillText', this.tag, this.x, y);
+      G.PlayerNames.draw(ctx, playerUid, playerTag, this.x, y, { stroke: true });
       if (this.dead) {
         ctx.font = '700 6px Pixelify,"Segoe UI",sans-serif';
         ctx.strokeText(this.revLabel || '', this.x, y - 8);
