@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [ ] [bug][ui] Make the main-menu Missions button open Missions instead of a remembered Profile or Achievements tab (claimed: cc-tuiai).
+
 - [x] [feat][lab] Bound endless defensive EV stacking so enemy damage eventually overtakes player durability (d76f4d0).
 
 - [x] [feat][ui] Use Nature Mints, Ability Capsules and Ability Patches on a Pokémon with random valid changes, without a result picker (d4132ce).
