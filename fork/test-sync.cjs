@@ -29,7 +29,7 @@ const edit = (f, anchor, insert) => {
 let failures = 0;
 const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); if (!ok) failures++; };
 const FORK_FILES = ['fork/brand.cjs', 'fork/build.cjs', 'fork/sync.cjs', 'fork/test-sync.cjs', 'fork/README.md',
-  'fork/english.cjs', 'assets/fork/og-image.jpg', 'js/core/locales.js', 'README.md',
+  'fork/english.cjs', 'js/fork/en-names.js', 'assets/fork/og-image.jpg', 'js/core/locales.js', 'README.md',
   'css/brand.css', '.gitattributes', 'js/core/firebase-config.js', 'CLAUDE.local.md'];
 
 try {
