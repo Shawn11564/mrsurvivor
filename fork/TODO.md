@@ -11,7 +11,7 @@ How to use it:
 
 ## Inbox
 
-- [ ] [bug][ui] Make the main-menu Missions button open Missions instead of a remembered Profile or Achievements tab (claimed: cc-tuiai).
+- [x] [bug][ui] Make the main-menu Missions button open Missions instead of a remembered Profile or Achievements tab (969d3eb).
 
 - [x] [feat][lab] Bound endless defensive EV stacking so enemy damage eventually overtakes player durability (d76f4d0).
 
