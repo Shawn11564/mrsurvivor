@@ -351,6 +351,7 @@
   ],
   "skip": {
     "8c74cc6": "line endings only",
-    "1674a2b": "code comments translated to English"
+    "1674a2b": "code comments translated to English",
+    "23afbe7": "code comments and the fork README: no more Lab-only claims"
   }
 }
