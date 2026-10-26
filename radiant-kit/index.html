@@ -107,6 +107,8 @@ td.n { white-space: nowrap; color: var(--muted); }
 <script>window.G = {};</script>
 <script src="../js/data/pokedex.js"></script>
 <script src="../js/data/sprites-meta.js"></script>
+<script src="../js/fork/extra-dex-data.js"></script>
+<script src="../js/fork/extra-dex.js"></script>
 <script src="../js/fork/mega-sprites.js"></script>
 <script src="../js/fork/lab/lab-anims.js"></script>
 <script>
@@ -227,7 +229,10 @@ td.n { white-space: nowrap; color: var(--muted); }
     const lines = [];
     const base = rows(await text('CREDITS.md')).filter(r => r.length >= 3 && r[2].split(/,\s*/).includes(String(p.dex)));
     lines.push(`${p.name} (#${p.dex}), from SpriteCollab (https://github.com/PMDCollab/SpriteCollab), CC BY-NC 4.0.`, '', 'Sprites:');
-    lines.push(...(base.length ? base.map(r => `  ${r[0]}${r[1] ? ' (' + r[1] + ')' : ''}`) : ['  see CREDITS.md']));
+    // The fork's extra species and forms (js/fork/extra-dex-data.js) are in CREDITS-EXTRA.md: | No. | Pokémon | artists |
+    const extra = G.FORK_DEX && G.FORK_DEX.some(e => e.dex === p.dex) && rows(await text('CREDITS-EXTRA.md')).find(r => r[0] === String(p.dex));
+    if (extra) lines.push('  ' + extra[2]);
+    else lines.push(...(base.length ? base.map(r => `  ${r[0]}${r[1] ? ' (' + r[1] + ')' : ''}`) : ['  see CREDITS.md']));
     if (G.LAB_ANIMS[p.dex]) {
       const r = rows(await text('CREDITS-LAB.md')).find(r => r[0] === String(p.dex));
       lines.push('', 'Lab animations:', '  ' + (r ? r[2] : 'see CREDITS-LAB.md'));

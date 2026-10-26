@@ -54,12 +54,14 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.waitForSelector('#dex-grid .cell', { timeout: 15000 });
     return page;
   };
-  // The form the cell for `dex` shows, found with the collection's own search.
+  // The form the cell for `dex` shows, found with the collection's own search. A number finds the species
+  // and its forms (Paldean Wooper is Nº 194 too, js/fork/extra-dex.js); the species comes first.
   const cellIs = async (page, dex) => {
     await page.fill('#dex-q', String(dex));
     await page.waitForFunction(d => {
       const c = [...document.querySelectorAll('#dex-grid .cell')];
-      return c.length === 1 && c[0].querySelector('.no').textContent.startsWith(String(d).padStart(3, '0'));
+      return c.length >= 1 && c[0].querySelector('.no').textContent.startsWith(String(d).padStart(3, '0'))
+        && (!c[0].dataset.dex || c[0].dataset.dex === String(d));
     }, dex, { timeout: 5000 });
   };
   const cellForm = async (page, dex) => { await cellIs(page, dex); return page.$eval('#dex-grid .cell canvas', c => c.dataset.form || '?'); };

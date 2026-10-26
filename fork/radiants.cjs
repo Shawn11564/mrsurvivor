@@ -48,6 +48,8 @@ let before = {};
 try { before = JSON.parse(fs.readFileSync(JSON_OUT, 'utf8')); } catch (e) { /* first time */ }
 const DEX = {};
 try { const G = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'data', 'pokedex.js'), 'utf8'), { G }); for (const p of G.DEX) DEX[p.dex] = p; } catch (e) { /* old checkout */ }
+// The fork's extra species and forms (js/fork/extra-dex-data.js).
+try { const G = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'fork', 'extra-dex-data.js'), 'utf8'), { G }); for (const p of G.FORK_DEX) DEX[p.dex] = DEX[p.dex] || p; } catch (e) { /* old checkout */ }
 const rarityOf = d => { const r = before[d] && +before[d].rarity; return r >= 1 && r <= 5 ? r : (DEX[d] && DEX[d].rarity) || 1; };
 
 const list = {}, problems = [];

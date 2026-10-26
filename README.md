@@ -113,7 +113,8 @@ Required Notice: Copyright 2026 JPTER78 (https://github.com/JPTER78/pokesurvivor
 
 - Pokémon sprites: [PMD SpriteCollab](https://github.com/PMDCollab/SpriteCollab), CC BY-NC 4.0, by
   the artists listed in [CREDITS.md](CREDITS.md), [CREDITS-MEGAS.md](CREDITS-MEGAS.md) (Mega
-  Evolutions) and [CREDITS-LAB.md](CREDITS-LAB.md) (Lab mode's extra animations).
+  Evolutions), [CREDITS-EXTRA.md](CREDITS-EXTRA.md) (the extra species and forms) and
+  [CREDITS-LAB.md](CREDITS-LAB.md) (the signature moves' extra animations).
 - Font: Pixelify Sans (SIL Open Font License, `assets/fonts/OFL.txt`).
 - Pokémon data: [PokéAPI](https://pokeapi.co).
 - Game code and original music: PokéSurvivor by JPTER78.

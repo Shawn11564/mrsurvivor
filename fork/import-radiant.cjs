@@ -125,7 +125,8 @@ function decode(buf) {
 /** The game's data (names, frame sizes): the same files the game loads. */
 function gameData() {
   const G = {};
-  for (const f of ['js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/fork/mega-sprites.js', 'js/fork/lab/lab-anims.js']) {
+  for (const f of ['js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/fork/extra-dex-data.js', 'js/fork/extra-dex.js',
+                   'js/fork/mega-sprites.js', 'js/fork/lab/lab-anims.js']) {
     const file = path.join(ROOT, f);
     if (fs.existsSync(file)) vm.runInNewContext(fs.readFileSync(file, 'utf8'), { G });
   }

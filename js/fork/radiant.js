@@ -471,7 +471,7 @@ G.Radiant = (() => {
       const p = G.DEX_BY[d], el = document.createElement('div');
       el.className = 'cell rad-cell' + (chosen.has(d) ? ' on' : '');
       el.dataset.dex = d;
-      el.innerHTML = `<span class="no">${String(d).padStart(3, '0')}</span>` +
+      el.innerHTML = `<span class="no">${String(G.dexNo(d)).padStart(3, '0')}</span>` +
         (p.leg ? '<span class="rad-leg">LEGEND</span>' : d === save().partner ? `<span class="badge-r" title="Partner">${G.Icons.html('crown', 14)}</span>` : '');
       el.appendChild(G.UI.spriteCanvas(d, 92, 80, { scale: 2, shiny: true }));
       el.insertAdjacentHTML('beforeend', `<b>${esc(p.name)}</b>${G.UI.stars(p.rarity, 9)}`);

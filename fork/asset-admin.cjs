@@ -285,7 +285,8 @@ const json = async req => JSON.parse((await body(req, 1 << 20)).toString() || '{
 // Pages and read-only files the tabs use. The rest of the repo isn't served.
 const PAGES = { '/': 'fork/asset-admin.html', '/index.html': 'fork/asset-admin.html', '/radiants.html': 'fork/radiant-admin.html',
   '/radiant-kit/': 'radiant-kit/index.html', '/radiant-kit/index.html': 'radiant-kit/index.html',
-  '/CREDITS.md': 'CREDITS.md', '/CREDITS-LAB.md': 'CREDITS-LAB.md', '/CREDITS-MEGAS.md': 'CREDITS-MEGAS.md' };
+  '/CREDITS.md': 'CREDITS.md', '/CREDITS-LAB.md': 'CREDITS-LAB.md', '/CREDITS-MEGAS.md': 'CREDITS-MEGAS.md',
+  '/CREDITS-EXTRA.md': 'CREDITS-EXTRA.md' };
 const CHANGES = new Set(['stage', 'unstage', 'apply', 'unoverride', 'check', 'import', 'rarity', 'publish']);
 
 const server = http.createServer(async (req, res) => {

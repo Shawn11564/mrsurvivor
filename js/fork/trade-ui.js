@@ -383,7 +383,7 @@ G.TradeUI = (() => {
     const at = it => +((s[{ n: 'owned', s: 'shiny', r: 'radiant' }[it.v]] || {})[it.dex] || {}).at || 0;
     const VO = { r: 0, s: 1, n: 2 };
     const by = {
-      num: (a, b) => a.dex - b.dex || VO[a.v] - VO[b.v],
+      num: (a, b) => G.dexNo(a.dex) - G.dexNo(b.dex) || a.dex - b.dex || VO[a.v] - VO[b.v],
       name: (a, b) => monName(a.dex).localeCompare(monName(b.dex)) || VO[a.v] - VO[b.v],
       rar: (a, b) => G.DEX_BY[b.dex].rarity - G.DEX_BY[a.dex].rarity || a.dex - b.dex,
       pow: (a, b) => (G.DEX_BY[b.dex].bst || 0) - (G.DEX_BY[a.dex].bst || 0) || a.dex - b.dex,
@@ -441,7 +441,7 @@ G.TradeUI = (() => {
     const c = document.createElement('div');
     c.className = 'cell tr-cell' + (on ? ' on' : '') + (why ? ' no' : '');
     c.dataset.key = it.key;
-    c.insertAdjacentHTML('beforeend', `<span class="no">${String(it.dex).padStart(3, '0')}</span><span class="tr-v">${vIcon(it.v)}</span>`);
+    c.insertAdjacentHTML('beforeend', `<span class="no">${String(G.dexNo(it.dex)).padStart(3, '0')}</span><span class="tr-v">${vIcon(it.v)}</span>`);
     c.appendChild(sprite(it, 72, 60));
     c.insertAdjacentHTML('beforeend', `<b>${esc(monName(it.dex))}</b>${why ? `<span class="tr-why">${why}</span>` : G.UI.stars(p.rarity, 9)}`);
     c.onclick = async () => {
@@ -646,7 +646,7 @@ G.TradeUI = (() => {
     } else if (whose === 'mine') arrive = '<p>They get it at Lv. 1 with their own nature and ability; your upgrades and TMs stay with you.</p>';
     return `<div class="hd"><canvas width="72" height="62"></canvas><div>
         <h4>${esc(monName(it.dex))} ${vIcon(it.v, 12)}</h4>
-        <div class="sub" style="margin:0;font-size:12px">Nº ${String(it.dex).padStart(3, '0')} · ${GEN[p.gen - 1] || ''} · ${V_NAME[it.v]}</div>
+        <div class="sub" style="margin:0;font-size:12px">Nº ${String(G.dexNo(it.dex)).padStart(3, '0')} · ${GEN[p.gen - 1] || ''} · ${V_NAME[it.v]}</div>
         <div style="margin-top:3px">${p.types.map(t => `<span class="type" style="background:${G.U.TYPE_COLOR[t]}">${esc(tr(G.U.TYPE_NAME[t]))}</span>`).join('')}</div>
         <div style="color:${G.Gacha.RARITY_COLOR[p.rarity]};font-size:12px">${G.UI.stars(p.rarity, 10)} ${esc(tr(G.Gacha.RARITY_NAME[p.rarity]))}</div>
       </div></div>

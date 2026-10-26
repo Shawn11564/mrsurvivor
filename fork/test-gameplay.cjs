@@ -55,7 +55,8 @@ const check = (ok, what) => { console.log((ok ? '  PASS ' : '  FAIL ') + what); 
   const powLabel = await page.evaluate(() => G.T('Poder'));
   await page.click(`#dex-sort .chip:text-is("${powLabel}")`);
   const pow = await page.evaluate(() => {
-    const nums = [...document.querySelectorAll('#dex-grid .cell .no')].map(n => parseInt(n.textContent, 10));
+    // data-dex: a form's cell shows its species' number (js/fork/extra-dex.js).
+    const nums = [...document.querySelectorAll('#dex-grid .cell')].map(c => +c.dataset.dex || parseInt(c.querySelector('.no').textContent, 10));
     const bst = nums.map(d => G.DEX_BY[d].bst);
     const sorted = bst.every((v, i) => i === 0 || bst[i - 1] >= v);
     const top = Math.max(...G.DEX.filter(p => p.gen === 1).map(p => p.bst));

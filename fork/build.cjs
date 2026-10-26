@@ -46,6 +46,7 @@ try {
 // captured from upstream's files; add the fork's texts the pages show (the evolved stat moves, and
 // the fork's English fixes and review: js/fork/en-fixes.js, js/fork/en-review.js).
 const FORK_TEXTS = ['js/fork/buff-evos.js', 'js/fork/evo-names.js', 'js/fork/en-fixes.js', 'js/fork/en-review.js'];
+const FORM_NO = [];                            // [form's number, its species' dex] for the site's dex cards
 {
   const vm = require('vm'), data = path.join(ROOT, 'tools', 'cache', 'gamedata.json');
   const out = JSON.parse(realRead(data, 'utf8'));
@@ -56,6 +57,20 @@ const FORK_TEXTS = ['js/fork/buff-evos.js', 'js/fork/evo-names.js', 'js/fork/en-
   for (const [id, name] of Object.entries(G.FORK_EVO_NAMES || {})) {
     const m = (out.moves || []).find(x => x.id === id);
     if (m && m.evo) m.evo.name = name;
+  }
+  // The fork's extra species and forms (js/fork/extra-dex-data.js) on the Pokédex and legendary pages, each
+  // next to its species; a form's card shows its species' number (FORM_NO, swapped in below).
+  const extra = path.join(ROOT, 'js', 'fork', 'extra-dex-data.js');
+  if (fs.existsSync(extra)) {
+    vm.runInNewContext(realRead(extra, 'utf8'), { G }, { filename: 'js/fork/extra-dex-data.js' });
+    const have = new Set(out.dex.map(p => p.dex)), no = p => p.base || p.dex;
+    for (const e of G.FORK_DEX) {
+      if (have.has(e.dex)) continue;
+      let i = out.dex.findIndex(p => no(p) > no(e));
+      out.dex.splice(i < 0 ? out.dex.length : i, 0, e);
+      if (e.leg) out.legends.push(e.dex);
+      if (e.base) FORM_NO.push([e.dex, e.base]);
+    }
   }
   fs.writeFileSync(data, JSON.stringify(out));
 }
@@ -104,6 +119,7 @@ for (const file of walk(ROOT)) {
   let out = EN.english(brand(src, r), r);
   if (r === 'CNAME') out = BRAND.domain;       // as GitHub Pages writes it (no newline)
   if (r === '404.html') out = EN.NOT_FOUND;
+  for (const [d, b] of FORM_NO) out = out.split(`<span class="n">#${d}</span>`).join(`<span class="n">#${String(b).padStart(3, '0')}</span>`);
   // Game pages (index.html, en/index.html) get the colour layer.
   out = out.replace(/<link rel="stylesheet" href="css\/brand\.css\?v=[^"]*">\n?/g, '');
   out = out.replace(/(<link rel="stylesheet" href="css\/style\.css\?v=[^"]+">)/, `$1\n${BRAND_LINK}`);

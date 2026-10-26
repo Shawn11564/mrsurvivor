@@ -27,10 +27,11 @@ const contact = BRAND.contactEmail
 const CREDIT_EN = `${BRAND.name} is a fan-made fork of Pok&eacute;Survivor by ${BRAND.upstream.author} ` +
   `(<a href="${BRAND.upstream.repo}" target="_blank" rel="noopener">github.com/JPTER78/pokesurvivor</a>), ` +
   'used under the PolyForm Noncommercial License 1.0.0. Required Notice: Copyright 2026 JPTER78 (https://github.com/JPTER78/pokesurvivor)';
-// Mega Evolution sprites (fork/fetch-megas.py) and Lab mode's extra animations (fork/fetch-lab-anims.py):
-// their SpriteCollab artists, CC BY-NC 4.0.
-const MEGA_CREDIT_EN = 'Mega Evolution sprites and Lab mode\'s extra animations by the SpriteCollab artists (CC BY-NC 4.0), listed in ' +
-  `<a href="${BRAND.repo}/blob/main/CREDITS-MEGAS.md" target="_blank" rel="noopener">CREDITS-MEGAS.md</a> and ` +
+// Mega Evolution sprites (fork/fetch-megas.py), the signature moves' extra animations (fork/fetch-lab-anims.py)
+// and the extra species and forms (fork/fetch-extra-dex.py): their SpriteCollab artists, CC BY-NC 4.0.
+const MEGA_CREDIT_EN = 'Mega Evolution sprites, the extra species and forms, and the signature moves\' extra animations by the SpriteCollab artists (CC BY-NC 4.0), listed in ' +
+  `<a href="${BRAND.repo}/blob/main/CREDITS-MEGAS.md" target="_blank" rel="noopener">CREDITS-MEGAS.md</a>, ` +
+  `<a href="${BRAND.repo}/blob/main/CREDITS-EXTRA.md" target="_blank" rel="noopener">CREDITS-EXTRA.md</a> and ` +
   `<a href="${BRAND.repo}/blob/main/CREDITS-LAB.md" target="_blank" rel="noopener">CREDITS-LAB.md</a>.`;
 
 // [file suffix, from, to]. `file` is matched against the path with forward slashes.

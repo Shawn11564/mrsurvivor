@@ -89,6 +89,13 @@ function gameData() {
   const G = { U: {}, I18n: { add() {} } };
   const ctx = vm.createContext({ G, window: {}, console });
   for (const f of ['js/data/pokedex.js', 'js/data/moves.js', 'js/fork/lab/lab-moves.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  // The fork's extra species and forms (js/fork/extra-dex-data.js, fork/fetch-extra-dex.py), like js/fork/extra-dex.js adds them.
+  const extra = path.join(ROOT, 'js', 'fork', 'extra-dex-data.js');
+  if (fs.existsSync(extra)) {
+    vm.runInContext(fs.readFileSync(extra, 'utf8'), ctx, { filename: 'js/fork/extra-dex-data.js' });
+    const have = new Set(G.DEX.map(p => p.dex));
+    for (const e of G.FORK_DEX) if (!have.has(e.dex)) G.DEX.push(e);
+  }
   return G;
 }
 
@@ -111,10 +118,14 @@ function gameData() {
   if (missing.length) console.warn('lab: moves with no PokeAPI match (never in a learnset): ' + missing.join(', '));
 
   const dexSet = new Set(G.DEX.map(p => p.dex));
+  // PokeAPI's pokemon id -> the game's number: a species' default form is its dex number; the fork's forms
+  // (js/fork/extra-dex-data.js) carry theirs in `pid` (Alolan Raichu: 10100 -> 1503).
+  const gameOf = {};
+  for (const p of G.DEX) gameOf[p.pid || p.dex] = p.dex;
   const learn = {};                       // dex -> { id: 'lv' | 'egg' | 'tutor' | 'tm' } (the best method)
   const RANK = { lv: 0, egg: 1, tutor: 2, tm: 3 };
   for (const r of readCsv(files.pokemon_moves)) {
-    const dex = +r.pokemon_id, how = METHOD[r.pokemon_move_method_id], id = catalogByApi[r.move_id];
+    const dex = gameOf[r.pokemon_id], how = METHOD[r.pokemon_move_method_id], id = catalogByApi[r.move_id];
     if (!dexSet.has(dex) || !how || !id) continue;
     const L = learn[dex] = learn[dex] || {};
     if (!L[id] || RANK[how] < RANK[L[id]]) L[id] = how;
@@ -126,7 +137,7 @@ function gameData() {
   for (const n of readCsv(files.ability_names)) if (+n.local_language_id === EN) abilName[abilIdent[n.ability_id]] = n.name;
   const abil = {};                        // dex -> [[identifier, hidden]] by slot
   for (const r of readCsv(files.pokemon_abilities)) {
-    const dex = +r.pokemon_id;
+    const dex = gameOf[r.pokemon_id];
     if (!dexSet.has(dex)) continue;
     (abil[dex] = abil[dex] || []).push([+r.slot, abilIdent[r.ability_id], r.is_hidden === '1']);
   }
@@ -145,19 +156,31 @@ function gameData() {
   }
   for (const r of readCsv(files.pokemon_evolution)) {
     const d = +r.evolved_species_id, lv = r.minimum_level ? +r.minimum_level : 0;
-    if (!from[d]) continue;
     // Several ways to evolve (by game): the lowest level there is.
     if (!(d in evoLvl) || (lv && (!evoLvl[d] || lv < evoLvl[d]))) evoLvl[d] = lv;
   }
+  // The fork's forms (js/fork/extra-dex-data.js): their species' family, and the evolutions PokeAPI only has
+  // per species (Alolan Rattata -> Alolan Raticate; Pikachu -> Alolan Raichu too; Perrserker only from
+  // Galarian Meowth). A form evolves at its species' level in the games.
+  const speciesOf = d => (G.DEX.find(p => p.dex === +d) || {}).base || +d;
+  for (const p of G.DEX) if (p.base && fam[p.base]) fam[p.dex] = fam[p.base];
+  const edges = Object.keys(from).map(d => [from[d], +d]);
+  const FX = G.FORK_DEX_EVO || { add: [], cut: [] };
+  const cut = new Set(FX.cut.map(([a, b]) => a + '>' + b));
+  const kept = edges.filter(([a, b]) => !cut.has(a + '>' + b));
+  for (const [a, b] of FX.add) if (dexSet.has(a) && dexSet.has(b)) kept.push([a, b]);
   const evo = {};
-  for (const d in from) (evo[from[d]] = evo[from[d]] || []).push(d + ':' + (evoLvl[d] || 0));
+  for (const [a, b] of kept) (evo[a] = evo[a] || []).push(b + ':' + (evoLvl[speciesOf(b)] || 0));
 
   // ---------------- SpriteCollab animations ----------------
   const tracker = JSON.parse(fs.readFileSync(files.tracker, 'utf8'));
   const animNames = new Set();
   const animsOf = {};
+  // The fork's extra entries are drawn from a form folder (G.FORK_DEX_SC: "0026/0001" for Alolan Raichu).
+  const SC = G.FORK_DEX_SC || {};
+  const nodeAt = sc => sc.split('/').reduce((n, k, i) => n && (i ? (n.subgroups || {})[k] : tracker[k]), true);
   for (const dex of dexSet) {
-    const t = tracker[String(dex).padStart(4, '0')];
+    const t = SC[dex] ? nodeAt(SC[dex]) : tracker[String(dex).padStart(4, '0')];
     const a = t && t.sprite_files ? Object.keys(t.sprite_files).filter(k => t.sprite_files[k]) : [];
     animsOf[dex] = a;
     a.forEach(n => animNames.add(n));
