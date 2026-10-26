@@ -78,7 +78,7 @@ How to use it:
 - [x] 90. [feat][infra] Requests: a private panel for the artist (Mello) to send Claude change requests or questions and have changes made, with a watcher on the owner's PC (/requests) · admin (owner, 2026-10-24) (dd2db6c; rules deployed 2026-10-24)
 
 - [x] 91. [feat] World 2 (opt-in switch by Play): Eternatus at 10:00; beating it opens a portal to World 2 (new land, harder Pokémon); staying in World 1 makes it stronger every minute and brings a Gastly/Haunter/Gengar ghost rush; Necrozma moves to 30:00 in World 2; target runs 20-30 min, long ~45, best ~60 · opt-in, co-op (owner, 2026-10-26) (cfea1e4)
-- [ ] 92. [feat] World 2 runs on their own leaderboard boards (like the old Lab boards) · opt-in (owner, 2026-10-26) (claimed: cc-yrzkn)
+- [x] 92. [feat] World 2 runs on their own leaderboard boards (like the old Lab boards) · opt-in (owner, 2026-10-26) (9640bf8)
 
 ## Phase 1: fixes and cheap tuning
 
