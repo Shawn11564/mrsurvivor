@@ -211,7 +211,7 @@ G.LabGrowth = (() => {
         const lab = save.lab = save.lab && typeof save.lab === 'object' ? save.lab : {};
         const c = lab.candy = lab.candy && typeof lab.candy === 'object' ? lab.candy : {};
         for (const r of got) c[r.dex] = Math.min(99, (c[r.dex] | 0) + 1);
-        G.UI.toast('Lab: +' + got.length + ' candy (duplicates): ' + [...new Set(got.map(r => G.DEX_BY[r.dex].name))].join(', '), 3200);
+        G.UI.toast('+' + got.length + ' candy (duplicates): ' + [...new Set(got.map(r => G.DEX_BY[r.dex].name))].join(', '), 3200);
       }
     }
     return res;

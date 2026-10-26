@@ -532,7 +532,6 @@ G.PlayerManager = (() => {
     const bits = [];
     if (st && st.s === 'run') {
       bits.push('Playing ' + monName(st.dex) + (st.rad ? ' (radiant)' : st.sh ? ' (shiny)' : ''));
-      if (st.lab) bits.push('Lab mode');
     }
     if (st && st.rm) bits.push((st.rh ? 'Hosting' : 'In') + ' a lobby with ' + (st.rp || '…'));
     if (st && st.scr && st.s === 'run') bits.push('Screen: ' + st.scr);

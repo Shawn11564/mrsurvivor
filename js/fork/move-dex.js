@@ -163,11 +163,11 @@ G.MoveDex = (() => {
     } catch (err) { /* no evolution */ }
     const types = [m.type];
     const who = [];
-    if (!labOnly(m)) who.push(m.type === 'normal' ? 'Every Pokémon, in normal runs.' : `${esc(G.T(G.U.TYPE_NAME[m.type] || m.type))}-type Pokémon, in normal runs.`);
-    if (G.Lab) {
-      const l = labLearners(id);
-      if (l.length) who.push(`<span class="lab-badge">LAB</span> Learned by ${l.length} Pokémon: ${monNames(l)}.`);
-    }
+    // The species that learn it in the games (G.Lab.learnOf); a type move also tops up the lists of others of its type.
+    const l = G.Lab ? labLearners(id) : [], typeName = esc(G.T(G.U.TYPE_NAME[m.type] || m.type));
+    if (l.length) who.push(`Learned by ${l.length} Pokémon: ${monNames(l)}.`);
+    if (!labOnly(m) && !m.sig) who.push(m.type === 'normal' ? (l.length ? 'Other Pokémon can get it too.' : 'Any Pokémon can get it.')
+      : `${l.length ? 'Other ' : ''}${typeName}-type Pokémon can get it${l.length ? ' too' : ''}.`);
     box.innerHTML = `<div class="mdex-head"><span class="ico" style="background:${col}33">${G.Icons.html('move:' + id, 40)}</span>
         <div><h3>${esc(T(m.name, 'move'))}${badge(m)}</h3>
         <div><span class="tag-chip" style="background:${col}">${types.map(t => esc(G.T(G.U.TYPE_NAME[t] || t))).join(' ')}</span> <small>${CAT[m.cat || null]} · ${esc(m.kind)}</small></div></div></div>

@@ -15,7 +15,8 @@ All existing systems now run in solo and co-op, regardless of the saved `lab` se
 the species pools, TMs, starting picks, candies, contracts and gems. Standard progression handles
 achievements, missions, records and stats; new runs use the regular leaderboard. Historical Lab
 boards remain as an archive. Internal `G.Lab` names and `save.lab` data remain compatible.
-The old opt-in, Experimental tab and Lab-only notices are retired.
+The old opt-in, Experimental tab and Lab-only notices are retired. Players never see the word "Lab": move notes, tags and messages say what a thing does, not
+where it came from (`node fork/test-no-lab-text.cjs` scans every text the game holds; added 2026-10-26).
 
 Regression: `node fork/test-promotion.cjs` (source) and
 `node fork/test-promotion.cjs --release` (built page), with `node fork/serve.cjs` running.

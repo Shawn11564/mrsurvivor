@@ -25,8 +25,6 @@ G.VariantBonus = (() => {
     return null;
   }
 
-  const LAB_ONLY = 'Rerolls: Lab runs only.';
-  G.I18n.add({ [LAB_ONLY]: LAB_ONLY }, 'en');           // (the word pass made it "Lab Runs")
   const bonus = kind => kind === 'radiant' ? G.LabShiny.RBONUS : G.LabShiny.BONUS;
 
   function html(dex, w) {
@@ -36,9 +34,8 @@ G.VariantBonus = (() => {
     const icon = w.kind === 'radiant' ? G.Radiant.icon(14) : G.Icons.html('shiny', 12);
     const base = G.Upgrades.perks(G.DB.upgradesOf(dex)).rerolls || 0;
     const pips = '<i></i>'.repeat(base) + '<i class="vb-x"></i>'.repeat(b.rerolls);
-    const lab = G.Lab.enabled;
     const note = !w.on ? `Pick ${name} above to use it.`
-      : `Every run, ${n} of its ${VS.STATS.length} stats (${G.T(rar)}) ${n === 1 ? 'gets' : 'get'} +${k}%, picked at random.` + (lab ? '' : ' ' + LAB_ONLY) +
+      : `Every run, ${n} of its ${VS.STATS.length} stats (${G.T(rar)}) ${n === 1 ? 'gets' : 'get'} +${k}%, picked at random.` +
         (w.better ? ` Its radiant gives more: +${pct(VS.K.radiant)}% stats, +${G.LabShiny.RBONUS.rerolls} rerolls.` : '');
     return `<div class="vb-box${w.on ? '' : ' off'}" id="vb-box" data-kind="${w.kind}" style="--vb:${C[w.kind]}">
       <div class="vb-head">${icon} <b>${name} bonus</b></div>

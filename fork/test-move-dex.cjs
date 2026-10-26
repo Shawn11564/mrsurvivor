@@ -7,13 +7,13 @@
 //
 //   1. index.html (the built bundle players get): the collection has the switch, and Moves lists
 //      the game's moves.
-//   2. dev.html, Lab off: every normal move is listed (G.Moves.ALL), no Lab-only one; the LAB chip
-//      adds the Lab-only moves, tagged LAB.
+//   2. dev.html, even with the old Lab setting off: one list of every move, the game's and the fork's, with no Lab
+//      chip or LAB tag (every run has them all since 2026-10-25).
 //      Each row says what the move evolves into ("→ Inferno"), the same as its card (G.Moves.evoInfo at max level);
 //      a move that doesn't evolve says nothing (2026-10-24, TODO 83).
 //   3. Filters: search, type, category, and sorting by damage.
 //   4. A move's card (Ember): its Lv.1 and max-level numbers are G.Moves.instance's, one line per
-//      upgrade, its evolution, who learns it (Fire Pokémon); a Lab move's card names Lab learners.
+//      upgrade, its evolution, who learns it (its learners, then other Fire Pokémon); a fork move names its learners.
 //   5. Pokémon brings the dex back; everything shown is English (no Spanish from the data).
 //   6. A phone (390 px): no sideways scroll, and tapping a move scrolls its card into view.
 const { chromium, pastStart } = require('./pw.cjs');
@@ -59,11 +59,10 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     console.log('2. All the moves');
     const want = await page.evaluate(() => ({ all: G.Moves.ALL.map(m => m.id).sort(), labOnly: Object.values(G.Moves.BY_ID).filter(m => m.lab && !G.Moves.ALL.includes(m)).map(m => m.id).sort() }));
     let r = await rows(page);
-    check(JSON.stringify(r.map(x => x.id).sort()) === JSON.stringify(want.all), 'Lab off: exactly the normal moves', { shown: r.length, want: want.all.length });
-    await page.click('#mdex-chips .chip:has-text("moves")');
-    r = await rows(page);
-    const labShown = r.filter(x => x.lab).map(x => x.id).sort();
-    check(r.length === want.all.length + want.labOnly.length && JSON.stringify(labShown) === JSON.stringify(want.labOnly), 'the LAB chip adds every Lab-only move, tagged', { shown: r.length, lab: labShown.length, want: want.labOnly.length });
+    const every = want.all.concat(want.labOnly).sort();
+    check(JSON.stringify(r.map(x => x.id).sort()) === JSON.stringify(every), 'one list: the game\'s moves and the fork\'s, even with the old Lab setting off', { shown: r.length, want: every.length });
+    const tags = await page.evaluate(() => [...document.querySelectorAll('#mdex .chip, #mdex-list .mdex-row')].filter(e => /\bLAB\b|\bLab\b/.test(e.textContent) || e.querySelector('.lab-badge')).length);
+    check(!r.some(x => x.lab) && !tags, 'no Lab chip and no row tagged LAB', tags);
 
     // Each row: what it evolves into, as G.Moves.evoInfo says at max level (and the card), nothing if it doesn't.
     const evo = await page.evaluate(() => {
@@ -114,11 +113,12 @@ const SPANISH = /daño|proyectil|recarga|perforaci|enemig|alcance|duraci|Cualqui
     check(card.text.includes(card.evo) && /Evolves/.test(card.text), 'its evolution: ' + card.evo);
     const rowEvo = await page.textContent('#mdex-list .mdex-row[data-move=ember] .mdex-evo').catch(() => '');
     check(rowEvo.includes(card.evo), 'and its row says the same', rowEvo);
-    check(/Fire-type Pokémon, in normal runs/.test(card.text), 'who learns it: Fire-type Pokémon (and "normal runs" as written)', card.text.slice(-160));
+    check(/Learned by \d+ Pokémon/.test(card.text) && /Other Fire-type Pokémon can get it too/.test(card.text) && !/normal runs|\bLab\b|\bLAB\b/.test(card.text),
+      'who learns it: its learners, then other Fire-type Pokémon (no "normal runs", no Lab tag)', card.text.slice(-160));
     await page.fill('#mdex-q', 'swift'); await page.waitForTimeout(300);
     await page.click('#mdex-list .mdex-row[data-move=swift]');
     const sw = await page.textContent('#mdex-detail');
-    check(/LAB/.test(sw) && /Learned by \d+ Pokémon/.test(sw), 'a Lab move\'s card names its Lab learners', sw.replace(/\s+/g, ' ').slice(-140));
+    check(!/\bLAB\b|\bLab\b/.test(sw) && /Learned by \d+ Pokémon/.test(sw), 'a move the fork added names its learners, with no Lab tag', sw.replace(/\s+/g, ' ').slice(-140));
     await page.fill('#mdex-q', ''); await page.waitForTimeout(300);
 
     console.log('5. Back to Pokémon; English');

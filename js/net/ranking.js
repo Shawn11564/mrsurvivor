@@ -324,11 +324,10 @@ G.Ranking = (() => {
     return better;
   }
 
-  function announce(better, lab) {
+  function announce(better) {
     if (!better.length) return;
     const names = { d: 'de hoy', w: 'de la semana', m: 'del mes', a: 'histórico' };
     const best = PERIODS.map(p => p[0]).filter(p => better.includes(p)).pop();
-    if (lab) { G.UI.toast('New best ' + { d: 'today', w: 'this week', m: 'this month', a: 'of all time' }[best] + ' on the Lab leaderboard!', 3400); return; }
     G.UI.toast('¡Nueva mejor marca ' + names[best] + ' en el ranking!', 3400);
   }
 
@@ -343,7 +342,7 @@ G.Ranking = (() => {
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
     if (r.t >= MIN_T_MON) boards.push([board(m, 'a', r.dex), 'p']);
     const better = await store(boards, fb.uid, entry);
-    announce(better, r.lab);
+    announce(better);
     return better;
   }
 
@@ -360,7 +359,7 @@ G.Ranking = (() => {
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
     if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push([board(m, 'a', d), 'p']);
     const better = await store(boards, id, entry);
-    announce(better, r.lab);
+    announce(better);
     return better;
   }
 

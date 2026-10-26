@@ -181,7 +181,7 @@ G.LabContracts = (() => {
     let el = $('lab-ccoins');
     if (!el) { el = document.createElement('div'); el.id = 'lab-ccoins'; el.className = 'panel'; el.setAttribute('translate', 'no'); box.before(el); }
     const name = G.Lab.esc(G.DEX_BY[dex].name);
-    el.innerHTML = `<span class="ud-tag">LAB</span> <span>Your coins: <span class="coin"></span> <b>${s.coins}</b></span>
+    el.innerHTML = `<span>Your coins: <span class="coin"></span> <b>${s.coins}</b></span>
       <span>${name}'s contract coins: <span class="ccoin"></span> <b class="cc-n">${left}</b></span>
       <small class="sub">${left ? `Used first for ${name}'s upgrades, before your own coins.` : `Earn them with ${name}'s contracts (Missions).`}</small>`;
   }

@@ -96,7 +96,7 @@ G.Prestige = (() => {
     const cost = gemCost(), gems = (save().gems | 0);
     const state = p >= MAX ? G.T('Prestigio máximo: empieza cada run con un objeto al azar.')
       : ok ? G.T('Todo comprado: puede subir de prestigio.')
-      : maxedAll(dex) && gems < cost ? `Lab: prestige costs ${cost} gems (you have ${gems}).`
+      : maxedAll(dex) && gems < cost ? `Prestige costs ${cost} gems (you have ${gems}).`
       : G.T('Compra todas sus mejoras para poder subir de prestigio.');
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">

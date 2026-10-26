@@ -12,7 +12,7 @@
 //      "Pick Shiny above". Pikachu: no box.
 //   2. Mewtwo with its radiant: a Radiant bonus box, +20% to 1 stat and two reroll pips. Viewing its
 //      shiny instead: the shiny box, saying the radiant gives more.
-//   3. Lab off: the box says the rerolls are for Lab runs only.
+//   3. With the old Lab setting off: the box doesn't say the rerolls are Lab-only (every run has them since 2026-10-25).
 //   4. In Lab runs: no XP or coin extra any more (since 2026-10-22), +1 reroll for the shiny and +2 for
 //      the radiant (against the same Pokémon's normal run), and the pause screen says so, with the run's roll.
 const { chromium, pastStart } = require('./pw.cjs');
@@ -92,7 +92,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await page.evaluate(() => G.Settings.set('lab', false));
     await open('Charizard'); await open('Mewtwo');
     b = await box();
-    check(b && /Rerolls: Lab runs only/.test(b.note), 'the box says the rerolls are for Lab runs only', b && b.note);
+    check(b && !/\bLab\b/.test(b.note), 'the box doesn\'t say the rerolls are for Lab runs only', b && b.note);
 
     console.log('4. In Lab runs');
     const run = (dex, shiny, rad) => page.evaluate(([dex, shiny, rad]) => {

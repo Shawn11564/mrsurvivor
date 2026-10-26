@@ -23,7 +23,7 @@ G.LabRelics = (() => {
     titan: { n: "Titan's Heart", icon: 'heart', t: '+25% max HP, and heals you fully.', apply: p => { p.addMaxHp(Math.round(p.maxHp * 0.25)); p.hp = p.maxHp; } },
     might: { n: 'Ancient Might', icon: 'fist', t: '+12% damage with every move.', apply: p => { p.atkMul *= 1.12; } },
     haste: { n: 'Wind Rune', icon: 'clock', t: '-8% cooldown on every move.', apply: p => { p.cdMul *= 0.92; } },
-    ward: { n: 'Stone Ward', icon: 'shield', t: '+15% damage reduction (toughness in Lab).', apply: p => { p.dmgReduce += 0.15; } },
+    ward: { n: 'Stone Ward', icon: 'shield', t: '+15% toughness.', apply: p => { p.dmgReduce += 0.15; } },
     bloom: { n: 'Life Seed', icon: 'sprout', t: 'Regenerate 0.5% of your max HP (as it is now) every second.', apply: p => { p.regenFlat += Math.max(0.5, p.maxHp * 0.005); } },
     keen: { n: 'Keen Eye', icon: 'star', t: '+6% critical-hit chance.', apply: p => { p.critChance = (p.critChance || 0) + 0.06; } },
     fortune: { n: 'Fortune Stone', icon: 'coin', t: '+25% coins and +15% XP.', apply: p => { p.coinMul *= 1.25; p.xpMul *= 1.15; } },
