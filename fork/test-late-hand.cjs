@@ -8,7 +8,8 @@
 //      taking it gives the speed and takes the HP. Reflejos the same past 10.
 //   2. With an Epic roll (js/fork/card-rarity.js) it is painted Epic, gives ×2 and still costs the HP.
 //   3. A normal run: never past the cap.
-//   4. Endless (Eternatus beaten): every hand has a "+1 EV" card; taking it gives its bonus. Not before.
+//   4. Endless (Eternatus beaten): every hand has a "+1 EV" card; HP EVs cap at +100% of the HP when first taken,
+//      and Defense EVs stop at 200% toughness (66.7% damage reduction). The other EVs continue to be offered.
 //   5. The real level-up screen shows "Auto-pick EV cards"; ticking it takes the open hand's EV card
 //      at once (the screen closes); then a real level-up in endless takes the EV card with no menu, and
 //      the run keeps going. Co-op: fork/test-ev-auto-coop.cjs.
@@ -80,9 +81,12 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(late.spd.atEnd === 0 && late.cd.atEnd === 0, 'never past cap + 4', { spd: late.spd.atEnd, cd: late.cd.atEnd });
     check(late.epic.rarity === 4 && late.epic.spd === 1.14 && late.epic.paid && late.epic.taken === 10 && late.epic.cost, 'an Epic one: painted Epic, ×2, still −4% max HP', late.epic);
 
-    console.log('3. A normal run');
-    const normal = await page.evaluate(async () => { const pl = await __run(false); pl.statsTaken.spd = 8; pl.statsTaken.cd = 10; return __find(pl, 'stat:spd').length + __find(pl, 'stat:cd').length; });
-    check(normal === 0, 'never past the cap', normal);
+    console.log('3. Standard gameplay keeps promoted late-hand cards');
+    const normal = await page.evaluate(async () => {
+      const pl = await __run(false); pl.statsTaken.spd = 8; pl.statsTaken.cd = 10;
+      return { lab: !!G.Lab.active, cards: __find(pl, 'stat:spd').length + __find(pl, 'stat:cd').length };
+    });
+    check(normal.lab && normal.cards > 0, 'the promoted late-hand system is active in standard gameplay', normal);
 
     console.log('4. EV cards in endless');
     const ev = await page.evaluate(async () => {
@@ -100,6 +104,24 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     });
     check(ev.before === 0 && ev.every === 100 && ev.kinds.length === 5, 'every endless hand has one +1 EV card (none before Eternatus falls)', ev);
     check(ev.atk === 1.02 && ev.count === 1, 'EV Attack: +2% damage, counted', ev);
+
+    console.log('4b. Endless defensive EV caps');
+    const caps = await page.evaluate(async () => {
+      const pl = G.Game.player, hp = G.LabLateHand.evCard('hp'), def = G.LabLateHand.evCard('def');
+      pl.maxHp = pl.hp = 100; pl._labEV = {}; delete pl._labEVHPBase;
+      for (let i = 0; i < G.LabLateHand.HP_EV_MAX; i++) hp.apply(pl);
+      const hpResult = { max: pl.maxHp, count: pl._labEV.hp, base: pl._labEVHPBase, rejected: hp.apply(pl) === false,
+        unavailable: !G.LabLateHand.evKeys(pl).includes('hp') };
+      pl.dmgReduce = 1.98;
+      def.apply(pl);
+      const defResult = { reduction: pl.dmgReduce, count: pl._labEV.def, rejected: def.apply(pl) === false,
+        unavailable: !G.LabLateHand.evKeys(pl).includes('def') };
+      return { hp: hpResult, def: defResult };
+    });
+    check(caps.hp.max === 200 && caps.hp.count === 50 && caps.hp.base === 100 && caps.hp.rejected && caps.hp.unavailable,
+      'HP EVs add at most 100% of the max HP at the first HP EV pick', caps.hp);
+    check(caps.def.reduction === 2 && caps.def.count === 1 && caps.def.rejected && caps.def.unavailable,
+      'Defense EVs stop at the 200% toughness cap and no longer appear', caps.def);
 
     console.log('5. Auto-pick');
     const ui = await page.evaluate(async () => {

@@ -483,6 +483,7 @@ its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `nod
 painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
 A card may carry its own cap (`c.capMax`: Lab's past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
+Endless EVs in `js/fork/lab/late-hand.js` keep HP growth finite: HP EVs add 2% of max HP at the first HP EV pick, up to 50 picks (+100%); Defense EVs stop at Lab's 200% toughness cap. Enemy damage keeps its exponential late-run scaling. `node fork/test-late-hand.cjs` checks the EV offer and caps through the real level-up system.
 
 `node fork/test-kecleon.cjs` (server) drives Kecleon's shop through the real UI (upstream has no shop test; plan
 D11): buys a Mint, an Ability Capsule and a TM, uses them on the collection card (nature, Snorlax's ability, Teach
