@@ -81,6 +81,7 @@ How to use it:
 - [x] 92. [feat] World 2 runs on their own leaderboard boards (like the old Lab boards) · opt-in (owner, 2026-10-26) (9640bf8)
 - [x] 93. [feat] Import the species and forms SpriteCollab has finished sheets for: Miraidon (Low-Power Mode), Ting-Lu, Gimmighoul (Roaming), Falinks (Brass), Rolycoly, and 97 forms (regional, Rotom, Origin/Therian, Kyurem, female forms...) numbered from 1501, with learnsets, abilities, evolutions and credits · everyone (owner, 2026-10-26) (719ae75)
 - [x] 94. [infra] fork/test-sync.cjs failed before merging (ENOENT js/fork/en-names.js): the replayed fork now copies it (a396504)
+- [x] 97. [infra] fork/test-extra-dex.cjs now and then failed one random sprite sheet (net::ERR_NO_BUFFER_SPACE): fork/serve.cjs's Python server spoke HTTP/1.0, a new socket per file; it serves HTTP/1.1 now (keep-alive) (b1cf6b8)
 - [ ] 95. [infra] fork/test-candy.cjs fails its 2 "Lab off" checks: they test the Lab toggle retired on 2026-10-25 (found 2026-10-26, 719ae75)
 - [x] 96. [feat][lab] World 2 is Lab mode again: the switch by Play says LAB (Lab mode), Lab mode runs go on the Lab leaderboard (the old Lab boards) and the Leaderboard's LAB switch starts as your setting; the World 2 boards go · lab (owner, 2026-10-26) (be50d49c)
 
