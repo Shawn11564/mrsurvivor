@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [x] [bug][ui] Keep older saved move bans visible and removable after the promoted species pool changes (5832986).
+
 - [x] [ui] Public colored names and numbered badges for weekly solo/group top-three players across name displays (a14c2d2).
 
 - [x] [feat] Leaderboards keep each player's final species, Mega form and shiny/radiant skin; appearance rules deployed (526ab16).
