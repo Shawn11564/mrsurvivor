@@ -6,8 +6,8 @@
 //
 //   1. Settings opens on the last tab you looked at, after a reload too, and so does the
 //      Settings button in the pause menu (it used to always open Sound).
-//   2. Missions / Achievements / Profile opens on its last tab after a reload; opening it from
-//      the name pill (Profile) uses and remembers Profile.
+//   2. The menu's Missions button always opens Missions, even if Achievements or Profile was the
+//      last tab; opening it from the name pill (Profile) still uses and remembers Profile.
 //   3. The Pokémon screen keeps its generation, filters and sort after a reload (not the search).
 //   4. The same on the built index.html.
 const { chromium, pastStart, pickStarter } = require('./pw.cjs');
@@ -80,13 +80,13 @@ const dexState = page => page.evaluate(() => ({
   check(await onTab(page, '#set-tabs') === 'ctl', 'Settings opens on Controls');
   await page.click('#set-close');
   await page.click('#scr-menu [data-go="goals"]');
-  check(await onTab(page, '#goals-tabs') === 'ach', 'Missions screen opens on Achievements');
+  check(await onTab(page, '#goals-tabs') === 'missions', 'menu Missions button opens Missions after reload, even though Achievements was last viewed');
   await page.evaluate(() => G.MenuUI.open());
   await page.click('#user-pill');
   check(await onTab(page, '#goals-tabs') === 'profile', 'the name pill opens Profile');
   await page.evaluate(() => G.MenuUI.open());
   await page.click('#scr-menu [data-go="goals"]');
-  check(await onTab(page, '#goals-tabs') === 'profile', 'and the screen remembers Profile');
+  check(await onTab(page, '#goals-tabs') === 'missions', 'menu Missions button returns to Missions after Profile');
   await page.evaluate(() => G.MenuUI.open());
   await page.click('#scr-menu [data-go="dex"]');
   const after = await dexState(page);
@@ -103,10 +103,10 @@ const dexState = page => page.evaluate(() => ({
   await page.waitForSelector('#btn-pause-settings', { state: 'visible', timeout: 10000 });
   await page.click('#btn-pause-settings');
   check(await onTab(page, '#set-tabs') === 'ctl', 'the pause menu\'s Settings button opens Controls too');
-  await page.click('#set-tabs [data-t="lab"]');
+  await page.click('#set-tabs [data-t="gfx"]');
   await page.click('#set-close');
   await page.click('#btn-pause-settings');
-  check(await onTab(page, '#set-tabs') === 'lab', 'and Experimental after picking it there');
+  check(await onTab(page, '#set-tabs') === 'gfx', 'and Graphics after picking it there');
   check(!errors.length, 'no page errors', errors);
 
   console.log('Built page (index.html)');
@@ -115,7 +115,7 @@ const dexState = page => page.evaluate(() => ({
   built.on('pageerror', e => berr.push(String(e)));
   await toMenu(built, 'index.html');
   await built.click('#btn-settings');
-  check(await onTab(built, '#set-tabs') === 'lab', 'Settings opens on the remembered tab (Experimental)');
+  check(await onTab(built, '#set-tabs') === 'gfx', 'Settings opens on the remembered tab (Graphics)');
   await built.click('#set-close');
   await built.click('#scr-menu [data-go="dex"]');
   check((await dexState(built)).type === 'fire', 'the Pokémon screen keeps its type filter');

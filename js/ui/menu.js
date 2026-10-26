@@ -32,7 +32,7 @@ G.MenuUI = (() => {
         else if (go === 'shop') G.ShopUI.open();
         else if (go === 'bag') G.ShopUI.openBag();
         else if (go === 'gacha') G.GachaUI.open();
-        else if (go === 'goals') G.GoalsUI.open();
+        else if (go === 'goals') G.GoalsUI.open('missions');
         else if (go === 'friends') G.FriendsUI.open();
         else if (go === 'rank') G.RankingUI.open();
         else if (go === 'settings') G.SettingsUI.open();
