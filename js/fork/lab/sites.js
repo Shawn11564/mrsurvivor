@@ -798,6 +798,8 @@ G.LabSites = (() => {
     /** A fight (or its reward) is on: the raids, the wild legendaries and the rifts wait. */
     get busy() { return !!site && site.phase !== 'open'; },
     get fighting() { return !!site && site.phase === 'fight'; },
+    /** Off to World 2 (js/fork/lab/worlds.js): a site still waiting on World 1's map goes. */
+    leave() { if (site && site.phase === 'open') close(); },
     /** For the checks: a site of that kind now (authority), and the fight's time left. */
     debugOpen(kind) { if (authority() && !site) return open(kind); return false; },
     debugTimeLeft(s) { if (site && site.phase === 'fight') site.ft = s; },

@@ -28,7 +28,7 @@ G.LabAffixes = (() => {
   const SHIELD = 0.6, SWIFT = 1.4, DRAIN = 0.1, SPLIT_HP = 0.3, SPLIT_DMG = 0.6, SPLIT_XP = 0.25, BLAST_R = 70, BLAST_DELAY = 0.8;
   const lab = () => !!(G.Lab && G.Lab.active);
   const authority = () => !G.Coop.active || G.Coop.isHost;
-  const regular = e => !e.boss && !e.legend && !e.wildLegend && !e.judge && !e.obelisk && !e._split && e.behavior !== 'thief';
+  const regular = e => !e.boss && !e.legend && !e.wildLegend && !e.judge && !e.obelisk && !e._split && !e._ghost && e.behavior !== 'thief';   // (_ghost: World 2's ghost rush, worlds.js)
 
   function send(to, msg) {
     msg.k = 'labaffix';

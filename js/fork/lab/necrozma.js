@@ -1,4 +1,5 @@
 /* ============ necrozma.js — the Necrozma raid at 45:00 (MrSurvivor fork) ============
+ * (At 30:00 in a World 2 run: js/fork/lab/worlds.js.)
  * Once Eternatus is beaten (js/fork/lab/eternatus.js), at 45:00 NECROZMA comes: everyone travels to a
  * psychic arena (like the rift's) of radius R to fight it, and the light is the fight:
  *   - THE LIGHT starts full and Necrozma drinks it, DRAIN % a second; the screen darkens as it falls (each of you sees
@@ -33,6 +34,7 @@ G.Necrozma = (() => {
   const lab = () => !!(G.Lab && G.Lab.active);
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
+  const at = () => (G.Worlds && G.Worlds.on ? G.Worlds.NECRO_AT : AT);   // 30:00 in a World 2 run
   const done = () => !!(G.Game.player && G.Game.player._labNecrozma);
   const eterDone = () => !!(G.Game.player && G.Game.player._labEternatus);
   const SRC = { name: 'Necrozma', dex: DEX, boss: true };
@@ -126,7 +128,7 @@ G.Necrozma = (() => {
 
   function tick(dt, pl, time) {
     if (!raid) {
-      if (authority() && lab() && eterDone() && !done() && time >= AT && !G.Rift.inArena && !(G.Eternatus && G.Eternatus.active)
+      if (authority() && lab() && eterDone() && !done() && time >= at() && !G.Rift.inArena && !(G.Eternatus && G.Eternatus.active)
         && !(G.LabSites && G.LabSites.busy) && G.Game.state === 'playing') start();
       return;
     }
@@ -386,7 +388,7 @@ G.Necrozma = (() => {
   Object.defineProperty(J, 'active', { configurable: true, get() { return jActive.call(J) || !!raid; } });
   // Between the two raids the next one is at 45:00 (rifts stop 2 min before, map sites 190 s before).
   const jAt = Object.getOwnPropertyDescriptor(J, 'AT').get;
-  Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && eterDone() ? (done() ? Infinity : AT) : jAt.call(J); } });
+  Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && eterDone() ? (done() ? Infinity : at()) : jAt.call(J); } });
   const jUpdate = J.update;
   J.update = function (dt, pl, time) {
     const r = jUpdate.apply(this, arguments);

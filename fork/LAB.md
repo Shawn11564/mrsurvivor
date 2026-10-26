@@ -1184,6 +1184,32 @@ doesn't come back (regeneration and heals fill HP only). Berries add up, to max 
 without one, a berry every level at full HP would stack without end). The card says so. HUD: a gold strip under the
 top left's HP bar and over the bar above your Pokémon. Not kept by resume.js. Check: `fork/test-overhealth.cjs`.
 
+## World 2 (2026-10-26, TODO 91)
+
+The owner's design: Megabonk-style stages. Most runs should end at 20-30 min, long ones ~45 and the best ~60,
+and grinding World 1's easier enemies for ever must not work. Opt-in for now (the owner chose it over every run):
+the WORLD 2 switch in the Play button's corner (`js/fork/lab/worlds-toggle.js`, setting `worlds`, off by default;
+the host's decides in co-op). Without it a run is exactly as before. `js/fork/lab/worlds.js`:
+
+| When | What |
+|---|---|
+| 10:00 | the Eternatus raid (was 30:00; `eternatus.js` asks `G.Worlds.on`). Losing ends the run as before |
+| Eternatus beaten | a portal opens 4.5-7 tiles from you. Everyone still standing inside it for 1.5 s: World 2 |
+| from the portal on, in World 1 | every regular enemy that joins: HP ×1.25^min, damage ×1.15^min, XP ×1 (×3 / ×2 after 5 min, ×6 / ×3 after 8) |
+| portal + 60 s, in World 1 | the ghost rush: a wave every max(2, 8 − m) s of min(10, 2 + 1.5m) ghosts (m = minutes past the 60 s, 40 alive at most): Gastly, then Haunter from m 2, Gengar from m 4.5; HP 0.5/0.8/1.3 × the horde's at that time × the ramp, damage 0.8/1/1.3 × the horde's × the ramp, speed 90 × (1 + 0.1m) (Charmander walks at ~105: they pass it at m ~1.7), flying over walls and water, 1 XP, no affixes |
+| World 2 | far away (tile 20 000-24 000), three palettes of its own turning every 4 min (Distortion World: poison pools, Ultra Wastes: sparks, Cinder Ruins: lava); three enemy tiers at 0 / 4 / 8 min after you arrive (BST 480-560 / 520-610 / 560-700; 380 / 560 / 800 HP, 32 / 38 / 46 damage, 50 / 75 / 110 XP, against World 1's last tier: 530-620, 250, 28, 38); every regular enemy ×1.15 HP, ×1.1 damage, 10 % elites; type hordes from its tiers. No ramp, no ghosts |
+| 30:00 | the Necrozma raid (was 45:00) |
+| 20:00 on | the endgame growth (`endgame.js`) as for every run: linear from 20:00, exponential past 30:00 (×13.7 HP at 45:00, ×77 at 60:00) |
+
+The World 2 tiers are pushed onto `G.Enemies.TIERS` with `from` 1 000 000+, so every run rolls them with its cast
+and no World 1 clock reaches them. Boss slots, rifts (until 2 min before the next raid), wild legendaries and map
+sites (from 20:00) run on the run's clock in either world. A site still waiting on World 1's map goes when you
+leave (`G.LabSites.leave`). Resume keeps `pl._labWorlds` (a run without the switch saves `on: 0`, so resuming
+never turns a run into the other kind).
+
+Not tuned against real play yet: the numbers are the starting point for the 20-30 / 45 / 60 targets. All of them
+are constants at the top of `worlds.js`. Check: `node fork/test-worlds.cjs` (solo; co-op with the Firebase emulator).
+
 ## Move badges
 
 The enemy arrows (half size, centred until the enemy has a health bar) are in every run since

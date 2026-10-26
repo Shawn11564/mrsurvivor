@@ -1,5 +1,6 @@
 /* ============ eternatus.js — the Eternatus raid (MrSurvivor fork) ============
- * In a run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS
+ * In a run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS (at 10:00 in a World 2 run,
+ * js/fork/lab/worlds.js, where beating it opens the portal to World 2)
  * does. Everyone travels to a dark arena (like the rift's) to fight it:
  *   - 3 OBELISKS (still enemies: endless stunT, they neither move nor hit) heal it while they're
  *     standing, each HEAL of its HP per second, and while any stands a DYNAMAX BARRIER (a dome over it)
@@ -37,6 +38,7 @@ G.Eternatus = (() => {
   const lab = () => !!(G.Lab && G.Lab.active);
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
+  const at = () => (G.Worlds && G.Worlds.on ? G.Worlds.ETER_AT : AT);   // 10:00 in a World 2 run
   let raid = null;   // { x, y, back, biome, crystals, t, phase, endT, bossId, obs, beamT, beam, fired, stage, ceil, cannonT }
 
   function send(msg) {
@@ -142,7 +144,7 @@ G.Eternatus = (() => {
 
   function tick(dt, pl, time) {
     if (!raid) {
-      if (authority() && lab() && !done() && time >= AT && !G.Rift.inArena && !(G.LabSites && G.LabSites.busy) && G.Game.state === 'playing') start();
+      if (authority() && lab() && !done() && time >= at() && !G.Rift.inArena && !(G.LabSites && G.LabSites.busy) && G.Game.state === 'playing') start();
       return;
     }
     raid.t += dt;
@@ -460,7 +462,7 @@ G.Eternatus = (() => {
   const J = G.Judgment, jActive = Object.getOwnPropertyDescriptor(J, 'active').get;
   Object.defineProperty(J, 'active', { configurable: true, get() { return jActive.call(J) || !!raid; } });
   // Rifts stop opening 2 min before; in a run, after winning, they come back.
-  Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && done() ? Infinity : AT; } });
+  Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && done() ? Infinity : at(); } });
   const jUpdate = J.update;
   J.update = function (dt, pl, time) {
     if (!lab() || jActive.call(J)) return jUpdate.apply(this, arguments);
