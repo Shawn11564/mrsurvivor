@@ -84,6 +84,8 @@ How to use it:
 - [x] 97. [infra] fork/test-extra-dex.cjs now and then failed one random sprite sheet (net::ERR_NO_BUFFER_SPACE): fork/serve.cjs's Python server spoke HTTP/1.0, a new socket per file; it serves HTTP/1.1 now (keep-alive) (b1cf6b8)
 - [ ] 95. [infra] fork/test-candy.cjs fails its 2 "Lab off" checks: they test the Lab toggle retired on 2026-10-25 (found 2026-10-26, 719ae75)
 - [x] 96. [feat][lab] World 2 is Lab mode again: the switch by Play says LAB (Lab mode), Lab mode runs go on the Lab leaderboard (the old Lab boards) and the Leaderboard's LAB switch starts as your setting; the World 2 boards go · lab (owner, 2026-10-26) (be50d49c)
+- [ ] 98. [ui] Discord: a Discord button in the top bar in place of Sound and Settings, a Discord entry in the main menu, and a one-time "We now have a Discord!" banner with the invite (https://discord.gg/VcwVYRXzT5) · everyone (owner, 2026-10-26) (claimed: cc-xy29h)
+- [ ] 99. [infra] fork/test-gameplay.cjs's "100 % crit" check failed once in three runs (one hit drawn white-orange with no "Critical" label, `{"color":"#ff7b3d","big":false,"tag":null}`) and passed on HEAD: find which hit escapes the crit roll, don't retry (found 2026-10-26)
 
 ## Phase 1: fixes and cheap tuning
 
