@@ -11,7 +11,7 @@ How to use it:
 
 ## Inbox
 
-- [ ] [ui] Public colored names and numbered badges for weekly solo/group top-three players across name displays (claimed: cc-tuiai).
+- [x] [ui] Public colored names and numbered badges for weekly solo/group top-three players across name displays (a14c2d2).
 
 - [x] [feat] Leaderboards keep each player's final species, Mega form and shiny/radiant skin; appearance rules deployed (526ab16).
 
