@@ -23,7 +23,7 @@
  * Hooks: G.Judgment.update (in Lab it doesn't let Arceus start; it does measure your damage, for
  * Eternatus's HP), .active, .AT (rifts look at AT − 2 min), .reset, .drawAir and .drawOverlay;
  * G.Events.drawables (the crystals, sorted by Y); G.World.biomeName. pl._labEternatus: already won (comes back with
- * js/fork/lab/resume.js).
+ * js/fork/lab/resume.js). Beating it as Rattata gives the "Rat" title (js/fork/rat-title.js).
  * Co-op: the host decides. { k:'labeter', a } with a = start (cfg), ids (every obelisk so far), beam, stage (n and
  * the crystals left), win, lose, back. Eternatus and the obelisks travel like any other enemy ('ne'), the cannon as
  * hazards ('hz'); the barrier cuts damage on the host (a guest's hit reaches the host's copy), every screen draws it.
@@ -281,6 +281,7 @@ G.Eternatus = (() => {
     G.Pickups.pullAll();
     G.Spawner.say('Eternatus is beaten! The run goes on', 4, true);
     if (G.Rainbow) G.Rainbow.give(1, 'You beat Eternatus.');
+    if (G.RatTitle) G.RatTitle.beat();
   }
 
   function lost() {
