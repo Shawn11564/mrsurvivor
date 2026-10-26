@@ -597,7 +597,7 @@ G.MenuUI = (() => {
   // ---------------- movimiento inicial (Mejoras → Movimiento inicial) ----------------
   let startOpen = false;
   function startPicker() {
-    if (G.LabStart && G.LabStart.on()) return G.LabStart.picker(upgDex, renderUpgrades, banList);   // fork: con el Lab, el suyo (js/fork/lab/start-move.js)
+    if (G.LabStart && G.LabStart.on()) return G.LabStart.picker(upgDex, renderUpgrades, banList);   // fork: its own picker (js/fork/lab/start-move.js)
     const s = G.DB.save, cur = G.startMoveOf(upgDex), base = G.baseStartOf(upgDex);
     const ids = G.startChoices(upgDex).sort((a, b) => G.Moves.BY_ID[a].name.localeCompare(G.Moves.BY_ID[b].name, 'es'));
     const el = document.createElement('div');
@@ -628,7 +628,7 @@ G.MenuUI = (() => {
   // save.pstart2[dex]; sin elegir (o "Al azar"), el segundo sale al azar como siempre.
   let start2Open = false;
   function start2Picker() {
-    if (G.LabStart && G.LabStart.on()) return G.LabStart.picker2(upgDex, renderUpgrades, banList);   // fork: con el Lab, el suyo (js/fork/lab/start-move.js)
+    if (G.LabStart && G.LabStart.on()) return G.LabStart.picker2(upgDex, renderUpgrades, banList);   // fork: its own picker (js/fork/lab/start-move.js)
     const s = G.DB.save, cur = G.startMove2Of(upgDex), first = G.startMoveOf(upgDex);
     const ids = G.startChoices(upgDex).filter(id => id !== first)
       .sort((a, b) => G.Moves.BY_ID[a].name.localeCompare(G.Moves.BY_ID[b].name, 'es'));

@@ -1,5 +1,5 @@
-/* ============ mega-rift.js — Mega Evolved rift legendaries (Lab first, MrSurvivor fork) ============
- * In a Lab run, from minute 15, a rift legendary that has a Mega Evolution or
+/* ============ mega-rift.js — Mega Evolved rift legendaries (MrSurvivor fork) ============
+ * In a run, from minute 15, a rift legendary that has a Mega Evolution or
  * Primal Reversion (sprite in G.MEGA_FORMS, js/fork/mega-sprites.js: Mewtwo, Latias, Latios,
  * Kyogre, Groudon, Rayquaza...) can come in that form: 5 % at 15 min, 15 % at 30 and 30 % at
  * 60 (a straight line in between). It then has ×1.3 HP, ×1.2 damage and ×1.2

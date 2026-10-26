@@ -7,7 +7,7 @@
  * upgrade, so an old copy with everything bought would undo the reset. If the copies don't have the
  * same prestige for a Pokémon, its upgrades come from the copy with more prestige (or, if equal, the one
  * that has reset them with gems more times: save.ureset, js/fork/lab/gems.js).
- * With the Lab setting on (gems, Lab first), prestiging also costs 100 gems.
+ * Prestiging also costs 100 gems.
  * Where: a panel under the Upgrades list, ★ on its cell in the collection (G.Radiant.cell, the
  * hook menu.js already calls) and in the Upgrades picker. In the run: G.Game.startRun.
  * Test: fork/test-prestige.cjs.

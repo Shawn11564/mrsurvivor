@@ -1,5 +1,5 @@
-/* ============ evo-hud.js — how far you are from evolving, on screen (Lab, MrSurvivor fork) ============
- * In a Lab run, if your Pokémon can evolve in it (G.LabGrowth.targets, js/fork/lab/growth.js),
+/* ============ evo-hud.js — how far you are from evolving, on screen (MrSurvivor fork) ============
+ * In a run, if your Pokémon can evolve in it (G.LabGrowth.targets, js/fork/lab/growth.js),
  * top left, right under the HP and before the buffs and the altar power (which
  * move down to make room: G.HUD.belowHp, js/ui/hud.js): its evolution's face, its
  * name, "Lv. N" (the level where the evolution card comes up) and a gold bar from the level where
@@ -7,7 +7,7 @@
  * you have in the current level. With several evolutions (Eevee), the earliest one and "+N more".
  * On reaching the level, the bar fills and blinks ("Evolution ready!"): the card comes up on every
  * level-up until you pick it or pick the Everstone; with the Everstone (or no evolution)
- * nothing is shown. Only your Pokémon. Texts in English only, like the rest of the Lab.
+ * nothing is shown. Only your Pokémon. Texts in English only, in English.
  * Test: fork/test-evo-hud.cjs.
  */
 G.LabEvoHud = (() => {

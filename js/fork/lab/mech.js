@@ -1,15 +1,15 @@
-/* ============ mech.js — move identity and new move mechanics in Lab mode (MrSurvivor fork) ============
- * Phase 10 of fork/LAB.md ("move identity"), plan fork/PLAN-2026-10-22.md B1 and B3. Lab only:
- * outside a Lab run nothing here changes a move.
+/* ============ mech.js — move identity and new move mechanics (MrSurvivor fork) ============
+ * Phase 10 of fork/LAB.md ("move identity"), plan fork/PLAN-2026-10-22.md B1 and B3. Active while
+ * a run is going (G.Lab.active): outside a run nothing here changes a move.
  *
- * 1. Identity for the normal game's moves (ID below). In a Lab run, G.Moves.instance gives a move
- *    its Lab identity (labify): extra fields (`add`), its own upgrade steps where the kind's
+ * 1. Identity for the normal game's moves (ID below). In a run, G.Moves.instance gives a move
+ *    its identity (labify): extra fields (`add`), its own upgrade steps where the kind's
  *    ladder doesn't fit it (`upsAt`: step number → { t, m }; the kind's ladder stays the default),
  *    and its own evolution (`evo`: { t, m (×), add (+), set (=) }) when the evolved name promises
- *    something the kind's evolution doesn't do. A Lab move (js/fork/lab/lab-moves.js) can bring
+ *    something the kind's evolution doesn't do. A move of js/fork/lab/lab-moves.js can bring
  *    `labEvo` the same way. What it does is said in English: `note` / `evoNote` under the type in
  *    the move's box (G.MoveText.tipNotes) and on its new-move card; `evo.t` on the evolution card.
- * 2. Mechanics, for any move that has the field (G.LabMech exposes them for other Lab files):
+ * 2. Mechanics, for any move that has the field (G.LabMech exposes them for the other files in js/fork/lab/):
  *    mark      B3.1  a hit stamps the enemy with `mark` × its damage (Future Sight, Doom Desire,
  *                    Psychic); the next hit on it from ANOTHER move sets the stored damage off
  *                    around it (MARK_R px). Marks are per player (each player's copies).
@@ -70,9 +70,9 @@ G.LabMech = (() => {
   const MARK_R = 70, MARK_T = 6, MARK_CAP = 4;      // detonation radius, seconds a mark lasts, stored ≤ CAP × the hit
   const MARK_COL = '#ff6ad5';
 
-  // ---------------- 1. identity of the normal game's moves (Lab runs) ----------------
+  // ---------------- 1. identity of the normal game's moves (in a run) ----------------
   const ID = {
-    // ---- B1: the normal game's moves that had no field of their own (one each, Lab only) ----
+    // ---- B1: the normal game's moves that had no field of their own (one each) ----
     // The five spins and four shoves first: they were interchangeable.
     'rapid-spin': { add: { haste: 0.2, hasteT: 1.5 },
       upsAt: { 4: { t: '-25% cooldown, +30% damage, and the speed burst lasts 3 s', m: { cd: 0.75, dmg: 1.3, hasteT: 3 } } },
@@ -118,8 +118,8 @@ G.LabMech = (() => {
       evo: { t: '×1.8 damage, a wider, longer beam and -15% cooldown. Future Sight: it marks every enemy it hits, and your next hit on one with another move sets off the stored damage around it.',
              m: { dmg: 1.8, width: 1.5, radius: 1.2, cd: 0.85 }, set: { mark: 1 } },
       evoNote: 'Future Sight: marks every enemy it hits. Your next hit on a marked enemy with another move sets off the stored damage around it.' },
-    // B3.2: hazards that stay. (Spikes and Toxic Spikes burst on the first step again, as in a
-    // normal run: their 60 s stay was taken out on 2026-10-24.)
+    // B3.2: hazards that stay. (Spikes and Toxic Spikes burst on the first step: their 60 s stay
+    // was taken out on 2026-10-24.)
     'string-shot': { add: { persist: 60, web: 1 },
       note: 'The webs stay for 60 s instead of bursting: every enemy in a web is slowed, and hurt when it first walks in.',
       evo: { t: '×1.5 damage, +1 web, bigger webs that slow more. Sticky Web: they stay for 60 s.', m: { dmg: 1.5, radius: 1.3 }, add: { count: 1 }, set: { slow: 0.75 } },
@@ -152,14 +152,14 @@ G.LabMech = (() => {
   };
 
   const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate', 'pull', 'knock', 'stun', 'charge'];
-  /** A Lab evolution { m: ×, add: +, set: = } on an instance. */
+  /** An identity evolution { m: ×, add: +, set: = } on an instance. */
   function evoApply(s, ev) {
     for (const k in ev.m || {}) s[k] = (s[k] != null ? s[k] : (k === 'count' ? 1 : MULT.includes(k) ? 1 : 0)) * ev.m[k];
     for (const k in ev.add || {}) s[k] = (s[k] || 0) + ev.add[k];
     Object.assign(s, ev.set || {});
   }
 
-  /** Gives a fresh instance (level 1) its Lab identity: its own def copy with steps and evolution. */
+  /** Gives a fresh instance (level 1) its identity: its own def copy with steps and evolution. */
   function labify(s) {
     const id = ID[s.id];
     if (!id || s.labId) return s;
@@ -202,7 +202,7 @@ G.LabMech = (() => {
     return true;
   };
 
-  /** What the move does in Lab, in English (or null). */
+  /** What the move's identity adds, in English (or null). */
   function noteOf(m) {
     if (!m) return null;
     const d = m.def || m;
@@ -216,7 +216,7 @@ G.LabMech = (() => {
     if (n) out.push([n, NOTE_COL]);
     return out;
   };
-  // New-move cards: the Lab note under the description.
+  // New-move cards: the identity note under the description.
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {
     const hand = offer.apply(this, arguments);

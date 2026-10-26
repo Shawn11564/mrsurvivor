@@ -6,7 +6,7 @@
  *               sort) on the left; what each of you puts up on the right, with each side's confirmation,
  *               Confirm / Unconfirm, the 3 s countdown and a chat. Hovering any Pokémon (or holding it
  *               on a touch screen) shows its stats at Lv. 1 and what it arrives with.
- * The rules of the trade itself are in js/fork/trade.js. English only (translate="no"), like Lab mode.
+ * The rules of the trade itself are in js/fork/trade.js. English only (translate="no").
  */
 G.TradeUI = (() => {
   const $ = id => document.getElementById(id);

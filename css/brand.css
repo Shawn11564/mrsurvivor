@@ -39,8 +39,8 @@ p.fork-credit { font-size: 0.9em; }
 .mega-hint { color: #9fd3ff; font-size: 13px; margin: 2px 0 6px; }
 .mega-hint img, .mega-chip img { vertical-align: -2px; }
 
-/* Lab mode (js/fork/lab/lab.js, fork/LAB.md): the "LAB" tag, on the HUD during a Lab run, in
-   the co-op lobby, the pause screen and the run summary. Teal, so it doesn't read as a reward. */
+/* The teal pill (js/fork/lab/lab.js): the run's ability on the HUD, the TM tag in Kecleon's shop and the
+   leaderboard's archive switch. Teal, so it doesn't read as a reward. */
 .lab-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; vertical-align: middle;
   font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #c9fff4; background: rgba(46,196,170,.22); border: 1px solid rgba(46,196,170,.7); }
 .lab-hud { position: fixed; left: 50%; top: 6px; transform: translateX(-50%); z-index: 5; pointer-events: none; letter-spacing: .03em; }
@@ -95,7 +95,7 @@ p.fork-credit { font-size: 0.9em; }
 #scr-bond .card.bond-skip .ico { background: rgba(255,255,255,.12); }
 #scr-bond .card.bond-skip .ds, #scr-bond .card.bond-skip .key { color: rgba(244,248,255,.85); }
 
-/* Leaderboard: the LAB switch next to Solo / Group (js/ui/ranking-ui.js). */
+/* Leaderboard: the archive switch next to Solo / Group (js/ui/ranking-ui.js). */
 #rk-mode .rk-lab { margin-left: auto; }
 #rk-mode .rk-lab:not(.on) .lab-badge { opacity: .55; }
 #rk-mode .rk-lab.on { border-color: #2ec4aa; background: rgba(46,196,170,.14); }

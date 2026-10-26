@@ -1,5 +1,5 @@
-/* ============ sites.js — temples, dungeons and wormholes on the map (Lab first, MrSurvivor fork) ============
- * From 20:00 in a Lab run, now and then (a check every CHECK s, CHANCE more likely after each miss, at least GAP s
+/* ============ sites.js — temples, dungeons and wormholes on the map (MrSurvivor fork) ============
+ * From 20:00 in a run, now and then (a check every CHECK s, CHANCE more likely after each miss, at least GAP s
  * after the last one, never while a raid is coming) a SITE rises on the map 1100-1500 px from one of you: you have to
  * get there (a gold arrow with the distance points to it) within TTL s. Walk into it and a SEAL closes around it,
  * radius R: the horde is driven off (G.EnemyMgr.stash, as in the rift), nothing else spawns, everyone is pulled in,
@@ -26,7 +26,7 @@
  * Hooks: G.Events.update (the clock; and the game's own events wait during a fight), .drawables, .drawHud,
  * G.Spawner.update (nothing spawns during a fight), G.Judgment.drawAir, G.Enemy.prototype.hurt (the seal, the
  * exposure, the Lord's allies, the dive); js/fork/lab/wild-legends.js and eternatus.js check G.LabSites.busy.
- * Texts in English, like the Lab. Test: fork/test-sites.cjs.
+ * Texts in English. Test: fork/test-sites.cjs.
  */
 G.LabSites = (() => {
   const FROM = 1200, CHECK = 30, CHANCE = 0.14, GAP = 200, TTL = 150, ENTER_R = 60, R = 300, RAID_CLEAR = 190;

@@ -5,7 +5,7 @@
  *    reach: with a boss 250 px away and enemies at your feet (not quite touching), a melee move just
  *    stood there (upstream issues #186 and #208). Now, when the picked target is out of reach, the
  *    target becomes a boss in reach if there is one, else the nearest enemy in reach.
- *  - Movers (dash, Lab's recoil and leap, and a rolling ramp) never fire at a rock or a chest. With no
+ *  - Movers (dash, recoil and leap, and a rolling ramp) never fire at a rock or a chest. With no
  *    enemy near, Player.update aims at the nearest breakable prop, and a dash at it dragged you across
  *    the map. Their clock is held just above 0 (like js/fork/manual-fire.js) while the target is a prop,
  *    so the first enemy gets them at once. Other moves still break props.

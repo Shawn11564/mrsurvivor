@@ -2,14 +2,14 @@
  * Pestañas Solo / Grupo, periodo (diario ... histórico), todos o sólo amigos,
  * filtro por Pokémon (sólo en el histórico) y tu puesto abajo aunque no salgas
  * en el top. Lo leído se guarda 2 h (ver ranking.js).
- * Fork: a LAB switch next to Solo / Group shows the Lab copy of every board
- * (Lab runs only; mode 'ls' / 'lg' in ranking.js). It starts as the Lab setting.
+ * Fork: a switch next to Solo / Group shows the old Lab copy of every board
+ * (read-only; mode 'ls' / 'lg' in ranking.js). It starts off.
  */
 G.RankingUI = (() => {
   const $ = G.UI.$;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let mode = 's', period = 'w', scope = 'all', dex = null, lab = null;
-  const m = () => (lab ? 'l' : '') + mode;            // the board's mode (fork: Lab)
+  const m = () => (lab ? 'l' : '') + mode;            // the board's mode (fork: old Lab boards)
   let token = 0;
 
   function init() {
@@ -58,7 +58,7 @@ G.RankingUI = (() => {
     };
     mk($('rk-mode'), [['s', `<b>${G.Icons.html('user', 16)} Solo</b>`], ['g', `<b>${G.Icons.html('friends', 16)} Grupo</b>`]],
        mode, k => { mode = k; }, 'gen-tab');
-    // Fork: the Lab boards (Lab runs only), a switch at the end of the row.
+    // Fork: the old Lab boards, a switch at the end of the row.
     const lb = document.createElement('button');
     lb.className = 'gen-tab rk-lab' + (lab ? ' on' : '');
     lb.title = 'Archived Lab runs from before promotion';

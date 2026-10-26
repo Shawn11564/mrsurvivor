@@ -1,5 +1,5 @@
-/* ============ branches.js — branching upgrades in Lab runs (MrSurvivor fork) ============
- * Plan B2 (fork/PLAN-2026-10-22.md), fork/LAB.md "Phase 11: builds". In a Lab run, a move from
+/* ============ branches.js — branching upgrades (MrSurvivor fork) ============
+ * Plan B2 (fork/PLAN-2026-10-22.md), fork/LAB.md "Phase 11: builds". In a run, a move from
  * TABLE at level 3 doesn't get its plain upgrade to level 4: the hand shows two "Branch" cards for it
  * instead (keys up:<id>:a / up:<id>:b), and the one you take changes how the move works for the rest
  * of the run (stored as m.branch, with m.branchName). Each move has three branches; each run only
@@ -21,7 +21,7 @@
  *   - G.Moves.instance(id, lvl, br): builds a move with its branch (resume.js keeps `br`).
  *   - Co-op: G.Coop.cast sends the branch in the level's tens (lvl + 10 × branch: 1 a, 2 b, 3 c) and
  *     G.Combat.ghostCast reads it back, so a teammate's branched move draws as it is.
- *   - A Lab evolution of the Pokémon (growth.js evolveTo) keeps its moves: the branch stays.
+ *   - An evolution of the Pokémon (growth.js evolveTo) keeps its moves: the branch stays.
  * Test: fork/test-builds.cjs (solo) and fork/test-builds-coop.cjs (two players).
  */
 G.LabBranches = (() => {
@@ -117,7 +117,7 @@ G.LabBranches = (() => {
     const b = TABLE[m.id] && TABLE[m.id][key];
     if (!b || m.branch) return false;
     if (b.like) {
-      // Only the other move's own fields (and what its ladder changes): not what another Lab file adds to it.
+      // Only the other move's own fields (and what its ladder changes): not what another fork file adds to it.
       const ref = G.Moves.instance(b.like, BR_LVL + 1), d = G.Moves.BY_ID[b.like];
       const its = new Set(Object.keys(d).concat(Object.keys(BASE), ...d.ups.map(u => Object.keys(u.m))));
       for (const k of Object.keys(ref)) if (!OWN.has(k) && its.has(k)) m[k] = ref[k];

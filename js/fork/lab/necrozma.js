@@ -1,5 +1,5 @@
-/* ============ necrozma.js — the Necrozma raid at 45:00 (Lab first, MrSurvivor fork) ============
- * In a Lab run, once Eternatus is beaten (js/fork/lab/eternatus.js), at 45:00 NECROZMA comes: everyone travels to a
+/* ============ necrozma.js — the Necrozma raid at 45:00 (MrSurvivor fork) ============
+ * Once Eternatus is beaten (js/fork/lab/eternatus.js), at 45:00 NECROZMA comes: everyone travels to a
  * psychic arena (like the rift's) of radius R to fight it, and the light is the fight:
  *   - THE LIGHT starts full and Necrozma drinks it, DRAIN % a second; the screen darkens as it falls (each of you sees
  *     only a shrinking circle around your Pokémon; the prisms glimmer through). At 0 the DARKNESS hurts every one of
@@ -23,7 +23,7 @@
  * Co-op: the host decides. { k:'labnecro', a } with a = start (cfg), ids (boss, a prism id per slot, 0 = broken),
  * st (light, exposed, stage: 4 a second), shatter (slot), stage, win, lose, back. Necrozma and the prisms travel like
  * any enemy ('ne'), its attacks as hazards ('hz'); each computer hurts its own Pokémon in the dark.
- * Texts in English, like the Lab. Test: fork/test-necrozma.cjs.
+ * Texts in English. Test: fork/test-necrozma.cjs.
  */
 G.Necrozma = (() => {
   const AT = 2700, DEX = 800, R = 15, TIME = 210, PRISMS = 4;

@@ -1,19 +1,19 @@
-/* ============ growth.js — making weak Pokémon worth playing too, in Lab mode (MrSurvivor fork) ============
- * Phase 6 of fork/LAB.md. In a Lab run:
+/* ============ growth.js — making weak Pokémon worth playing too (MrSurvivor fork) ============
+ * Phase 6 of fork/LAB.md. In a run:
  *   - EVOLVING during the run: on reaching its level (the games' level, G.LabData.evo, turned into
  *     run levels: levelFor) a gold "Evolve into X" card comes up (one per evolution, at
  *     most two), plus an Everstone card: don't evolve and keep extra defence and HP instead
  *     (like Eviolite). The evolution brings its stats, its look, its moves (its
- *     Lab list) and its ability; starters get their finisher (phase 5, sig.final).
+ *     own move list) and its ability; starters get their finisher (phase 5, sig.final).
  *   - The games' ITEMS for weak Pokémon (ITEMS): Eviolite (if it can still evolve),
  *     Light Ball (Pikachu), Thick Club (Cubone and Marowak), Leek (Farfetch'd), Metal Powder
  *     and Quick Powder (Ditto)... They drop from chests and bosses (G.Items.roll), 1 time in 3 if it's yours.
  *   - EXPERIENCE for weak Pokémon: up to +60 % depending on their base stats (underdog).
- *   - CANDIES: with the Lab setting on, each gacha duplicate gives a candy for its evolution
- *     line (save.lab.candy[dex]). They're spent on the Upgrades screen (with Lab on) on the
+ *   - CANDIES: each gacha duplicate gives a candy for its evolution
+ *     line (save.lab.candy[dex]). They're spent on the Upgrades screen on the
  *     stat you choose: HP, Attack, Sp. Atk, Defense or Speed, up to 10 points per
  *     evolution line (save.lab.cpts[line]); point n of a stat costs n candies, and
- *     Reset gives them all back. In a Lab run, per point: +3 % HP, +3 % physical or
+ *     Reset gives them all back. In a run, per point: +3 % HP, +3 % physical or
  *     special damage, +2 % damage reduction or +2 % speed (until 21-10-2026 each candy gave
  *     +3 % HP and damage, with no choice).
  *
@@ -25,7 +25,7 @@ G.LabGrowth = (() => {
   const esc = s => G.Lab.esc(s);
   const UNDERDOG_REF = 480, UNDERDOG_K = 1.1, UNDERDOG_MAX = 0.6;
   const CANDY_K = 0.03, CANDY_MAX = 10;     // points per line
-  // What each point gives in a Lab run.
+  // What each point gives in a run.
   const CSTAT = {
     hp:   { name: 'HP', per: 0.03, text: k => `+${Math.round(k * 100)}% HP` },
     atk:  { name: 'Attack', per: 0.03, text: k => `+${Math.round(k * 100)}% physical damage` },
@@ -280,7 +280,7 @@ G.LabGrowth = (() => {
     return roll.apply(this, arguments);
   };
 
-  // ---------------- on starting a Lab run ----------------
+  // ---------------- on starting a run ----------------
   function start(pl) {
     pl._labStay = false;
     underdog(pl, 0);

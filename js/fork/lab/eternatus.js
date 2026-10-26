@@ -1,5 +1,5 @@
-/* ============ eternatus.js — the Eternatus raid (Lab first, MrSurvivor fork) ============
- * In a Lab run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS
+/* ============ eternatus.js — the Eternatus raid (MrSurvivor fork) ============
+ * In a run, at 30:00 Arceus's Judgment (js/systems/judgment.js) doesn't come: ETERNATUS
  * does. Everyone travels to a dark arena (like the rift's) to fight it:
  *   - 3 OBELISKS (still enemies: endless stunT, they neither move nor hit) heal it while they're
  *     standing, each HEAL of its HP per second, and while any stands a DYNAMAX BARRIER (a dome over it)
@@ -20,14 +20,14 @@
  * While it lasts, G.Judgment.active is true: nothing else spawns (waves, events, weather, biome
  * change, wild legendaries) and speed has the Judgment's soft cap.
  * A map site's fight (js/fork/lab/sites.js) that runs into 30:00 finishes first.
- * Hooks: G.Judgment.update (in Lab it doesn't let Arceus start; it does measure your damage, for
+ * Hooks: G.Judgment.update (in a run it doesn't let Arceus start; it does measure your damage, for
  * Eternatus's HP), .active, .AT (rifts look at AT − 2 min), .reset, .drawAir and .drawOverlay;
  * G.Events.drawables (the crystals, sorted by Y); G.World.biomeName. pl._labEternatus: already won (comes back with
  * js/fork/lab/resume.js). Beating it as Rattata gives the "Rat" title (js/fork/rat-title.js).
  * Co-op: the host decides. { k:'labeter', a } with a = start (cfg), ids (every obelisk so far), beam, stage (n and
  * the crystals left), win, lose, back. Eternatus and the obelisks travel like any other enemy ('ne'), the cannon as
  * hazards ('hz'); the barrier cuts damage on the host (a guest's hit reaches the host's copy), every screen draws it.
- * Texts in English, like the Lab. Test: fork/test-eternatus.cjs.
+ * Texts in English. Test: fork/test-eternatus.cjs.
  */
 G.Eternatus = (() => {
   const AT = 1800, DEX = 890, R = 15, TIME = 210;
@@ -459,7 +459,7 @@ G.Eternatus = (() => {
 
   const J = G.Judgment, jActive = Object.getOwnPropertyDescriptor(J, 'active').get;
   Object.defineProperty(J, 'active', { configurable: true, get() { return jActive.call(J) || !!raid; } });
-  // Rifts stop opening 2 min before; in Lab, after winning, they come back.
+  // Rifts stop opening 2 min before; in a run, after winning, they come back.
   Object.defineProperty(J, 'AT', { configurable: true, get() { return lab() && done() ? Infinity : AT; } });
   const jUpdate = J.update;
   J.update = function (dt, pl, time) {

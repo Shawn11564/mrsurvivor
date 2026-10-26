@@ -4,11 +4,11 @@
 G.Lab = (() => {
   const D = G.LabData;
   const $ = id => document.getElementById(id);
-  let run = false;                      // is the current run a Lab run? (begin)
+  let run = false;                      // is a run going? (begin)
   let info = null;                      // its ability: G.LabAbilities.of
   const active = () => run && !!(G.Game && G.Game.player);
 
-  // ---------------- moves that only exist in the Lab ----------------
+  // ---------------- the fork's own moves (G.LabMoves) ----------------
   // Upgrades: those of its new family (js/fork/lab/kinds.js) or those of a game move of the same family.
   const BALLS = ['projectile', 'homing', 'bounce'];
   for (const d of G.LabMoves) {
@@ -23,19 +23,19 @@ G.Lab = (() => {
     // without evolving, they fell far behind late in the run (fork/balance-lab.cjs).
     if (d.evo) G.Moves.EVO[m.id] = d.evo;
     else if (d.sig) G.Moves.EVO[m.id] = [d.name + ' ★', null];
-    // Phase 8: promote = it moves to the normal game (cards, starting move, veto). Signatures, only to their line (poolFor).
+    // Phase 8: promote = it also joins the general move pool (cards, starting move, veto). Signatures, only to their line (poolFor).
     if (d.promote && !d.sig) { G.Moves.ALL.push(m); (G.Moves.POOL[m.type] = G.Moves.POOL[m.type] || []).push(m.id); }
   }
   // Its own look (look) wins over its type's.
   const forMove = G.VFX.forMove;
   G.VFX.forMove = m => m && m.look ? Object.assign(forMove(m), m.look) : forMove(m);
 
-  // Version of the Lab content: if the host's isn't yours, you wouldn't both see the same thing.
+  // Version of the fork's move/ability content: if the host's isn't yours, you wouldn't both see the same thing.
   const VERSION = (() => {
     const s = JSON.stringify([G.LabMoves, D.MOVES, Object.keys(G.LabAbilities.DEF)]);
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-    return 'main-' + (h >>> 0).toString(36); // Promotion differs from pre-promotion co-op clients.
+    return 'main-' + (h >>> 0).toString(36); // The 'main-' prefix keeps it different from older co-op clients' versions.
   })();
 
   // ---------------- signature moves (phase 5) ----------------
@@ -80,7 +80,7 @@ G.Lab = (() => {
     return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
 
-  /** Moves of one type: the game's and the Lab's (without signatures, which belong to each line, nor the
+  /** Moves of one type: upstream's and the fork's (without signatures, which belong to each line, nor the
    *  co-op support moves, which only come on support.js's co-op cards). */
   function ofType(t) {
     return (G.Moves.POOL[t] || []).concat(G.LabMoves.filter(m => m.type === t && !m.sig && !m.coop && G.Moves.BY_ID[m.id]).map(m => m.id));
@@ -88,14 +88,14 @@ G.Lab = (() => {
   const labOnly = id => !!G.Moves.BY_ID[id].lab;
 
   /**
-   * What it can learn in a Lab run:
+   * What a species can learn in a run:
    *   - the Normal-type moves it learns in the games
    *   - the moves of its own types that it learns; if fewer than MIN_OWN, topped up with others of its types
    *   - up to MAX_COVER moves of other types it learns (coverage), each of a different type: first those
    *     learned by level, then egg or tutor, then TM; and first those on its stronger side
    *   - if still fewer than MIN_TOTAL, more of its types and then Normal type
    *   - and its signature moves (SIG), always
-   * Normal-type moves that only exist in the Lab (Protect, Double-Edge...) count only if it
+   * Normal-type moves that only the fork adds (Protect, Double-Edge...) count only if it
    * learns them by level, egg or tutor: almost everyone learns them by TM.
    * Fixed per species (rng(dex)): Charmander always learns the same.
    * Scored on the species itself (G.DEX_BY), never on a copy with its nature applied (G.Mons.monFor):
@@ -133,11 +133,11 @@ G.Lab = (() => {
   }
 
   /**
-   * The Lab list plus the TMs it was taught at Kecleon's (G.Mons.taught), like upstream's poolFor does for
-   * normal runs (plan D4: they never showed in Lab runs). In a run, after a Lab evolution, the TMs taught
+   * The species' list (labPool) plus the TMs it was taught at Kecleon's (G.Mons.taught), like upstream's
+   * poolFor does (plan D4). In a run, after an evolution, the TMs taught
    * to the Pokémon it started as count too. `natural`: without the TMs.
    */
-  let startDex = 0;                     // the species the current Lab run started as
+  let startDex = 0;                     // the species the current run started as
   function labList(mon, natural) {
     const ids = labPool(mon);
     if (natural || !G.Mons || !mon || !mon.dex) return ids;
@@ -147,7 +147,7 @@ G.Lab = (() => {
   }
   // `natural` (no TMs) goes through: G.Mons.natural asks for it ("does it know this without a TM?").
   // All taught moves are available in menus and runs.
-  G.Moves.poolFor = labList; // Promoted: menus and runs share species pools and taught TMs.
+  G.Moves.poolFor = labList; // Menus and runs share species pools and taught TMs.
 
   // Level-up cards: a signature shows up gold ("Signature") and, if you can learn it and it isn't in the
   // hand, in 1 hand out of 3 it takes the place of the last new-move card.
@@ -174,9 +174,9 @@ G.Lab = (() => {
 
   // ---------------- start and end ----------------
 
-  /** At the start of any run: is it Lab? (in a group, the host says so in cfg). */
+  /** At the start of any run: a run is going, and a co-op guest is warned if its content version isn't the host's (cfg). */
   function begin(coop) {
-    run = true; // All currently implemented Lab gameplay is standard in every run.
+    run = true; // Every run uses these systems.
     info = null;
     if (coop && coop.labV !== VERSION && coop.host !== G.Net.uid) {
       G.UI.toast('Your game is a different version from the host\'s. Reload the page so you both see the same moves.', 6000);
@@ -205,7 +205,7 @@ G.Lab = (() => {
     };
   });
 
-  // Promoted runs use normal progression, achievements and records.
+  // Runs use the regular progression, achievements and records.
   // New runs use regular boards; explicitly tagged historical queued records keep their category.
   // game.js calls these at the end of the run, before the next begin(), so `run` is still this run's.
   // (The anti-cheat clean() still applies.) A run sent later (js/fork/run-record.js: the tab closed mid-run)
@@ -218,7 +218,7 @@ G.Lab = (() => {
   // ---------------- co-op ----------------
   const broadcast = G.Net.broadcast;
   G.Net.broadcast = function (msg) {
-    // The host's 'start' (social-ui.js LobbyUI.start) carries its setting; it's the same
+    // The host's 'start' (social-ui.js LobbyUI.start) carries the content version (msg.lab stays true for old clients); it's the same
     // object G.Flow.startCoop then receives, so the host sees it too.
     if (msg && msg.k === 'start') { msg.lab = true; msg.labV = VERSION; }
     return broadcast.apply(this, arguments);
@@ -235,7 +235,7 @@ G.Lab = (() => {
       const d = G.Moves.BY_ID[id];
       return `<span class="${d.sig ? 'lab-sig' : ''}" data-move="${id}" title="${esc(G.T(d.name, 'move') + (d.sig ? ' (signature)' : !own.includes(id) ? ' (TM)' : ''))}">${G.Icons.html('move:' + id, 18)}</span>`;
     }).join('');
-    // More lines from the other Lab files (evolution, candies, shiny...).
+    // More lines from the other js/fork/lab files (evolution, candies, shiny...).
     const more = pauseExtra.map(f => f(pl)).filter(Boolean).map(t => `<div class="lab-more"><small>${t}</small></div>`).join('');
     return `<div class="lab-pause"><div>${info
         ? `Ability: <b>${esc(info.name)}</b> <small>${esc(info.desc)}</small>` : ''}</div>
@@ -249,7 +249,7 @@ G.Lab = (() => {
     if (active()) $('pause-sum').insertAdjacentHTML('afterbegin', pauseBlock());
     return r;
   };
-  // "LAB" in the run (and its ability).
+  // The badge in the run: its ability.
   const hud = document.createElement('div');
   hud.id = 'lab-hud';
   hud.className = 'lab-badge lab-hud hidden';
@@ -263,12 +263,12 @@ G.Lab = (() => {
   return {
     enabled: true, VERSION, begin, learnOf, settingsRow, SIG, esc,
     poolFor: labList,
-    /** Another line for the Lab block in the pause menu: f(pl) → HTML or ''. */
+    /** Another line for the ability/moves block in the pause menu: f(pl) → HTML or ''. */
     pauseLine(f) { pauseExtra.push(f); },
     /** The ability the HUD and the pause menu show (it can change on evolving). */
     setAbility(a) { info = a; badge(); },
     get active() { return active(); },
-    /** In a group room: will the run be Lab? (js/fork/lab/underdog.js shows its ladder in the lobby then) */
+    /** In a group room (js/fork/lab/underdog.js shows its ladder in the lobby then). */
     get roomLab() { return roomLab(); },
     get ability() { return info; }
   };

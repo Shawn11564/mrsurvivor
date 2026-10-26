@@ -1,8 +1,8 @@
-/* ============ abilities.js — Lab mode abilities (MrSurvivor fork) ============
- * Phase 3 of fork/LAB.md. In a Lab run your Pokémon has the ability upstream picked for it
+/* ============ abilities.js — abilities (MrSurvivor fork) ============
+ * Phase 3 of fork/LAB.md. In a run your Pokémon has the ability upstream picked for it
  * (G.Mons.abilityOf: rolled per account, Ability Capsules, 1 in 20 hidden). If it's one implemented
- * here, Lab's version runs instead of upstream's (setAbility, at the end); if not, upstream's runs.
- * Never both (plan D2, 2026-10-22; until then Lab gave the first of its abilities implemented here,
+ * here, this version runs instead of upstream's (setAbility, at the end); if not, upstream's runs.
+ * Never both (plan D2, 2026-10-22; until then the first of the abilities implemented here was given
  * on top of upstream's).
  *
  * Each ability is a DEF entry with whatever it needs:
@@ -17,7 +17,7 @@
  *   sw(pl)                   when you switch the active move (Player.setActive)
  *   buff(pl)                 × to the strength of your stat boosts (Player.addBuff)
  * The hooks are set once, on load, and only do something with pl.labAbility (set by
- * setAbility on your Pokémon in a Lab run; never on your teammates').
+ * setAbility on your Pokémon in a run; never on your teammates').
  *
  * Co-op: it all belongs to your Pokémon. What it does to enemies that touch you (Static,
  * Rough Skin...) uses applyStun/applyPoison/hurt, which on a guest are already sent to the host.
@@ -281,12 +281,12 @@ G.LabAbilities = (() => {
 
   // ---------------- one ability per run (plan D2, resolver A) ----------------
   // Upstream picks the run's ability (game.js: pl.setAbility(G.Mons.abilityOf(dex).id), which honours
-  // Ability Capsules and the 1-in-20 hidden roll). In a Lab run, if Lab implements that same ability,
-  // Lab's version runs and upstream's doesn't (pl.abil = null: every upstream reader allows null);
-  // otherwise upstream's runs and Lab adds nothing. Before, both ran: Blaze x1.5 and x1.35 (x2.0),
+  // Ability Capsules and the 1-in-20 hidden roll). For your own Pokémon in a run, if this file implements that
+  // same ability, this version runs and upstream's doesn't (pl.abil = null: every upstream reader allows null);
+  // otherwise upstream's runs and this file adds nothing. Before, both ran: Blaze x1.5 and x1.35 (x2.0),
   // Thick Fat x0.5 and x0.6 (x0.3), two Sturdies. Test: fork/test-lab-abilities.cjs.
   // What an ability's start can change on the player (upstream's ability-fx.js and DEF above): the change is
-  // kept (pl._abilFx) so off() can take it back when a Lab evolution brings another ability (plan D3).
+  // kept (pl._abilFx) so off() can take it back when an evolution brings another ability (plan D3).
   const ADD = ['critChance', 'regenFlat'], MUL = ['coinMul', 'magnet', 'cdMul', 'maxHp'];
   const setAbility = P.setAbility;
   P.setAbility = function (id) {
@@ -313,7 +313,7 @@ G.LabAbilities = (() => {
     return r;
   };
 
-  /** Takes the current ability off: Lab's changes to the moves, and what its start did (both engines). */
+  /** Takes the current ability off: this file's changes to the moves, and what its start did (both engines). */
   function off(pl) {
     const d = def(pl);
     if (d && d.unlearn) for (const m of pl.moves) d.unlearn(pl, m);
@@ -325,7 +325,7 @@ G.LabAbilities = (() => {
   }
 
   /**
-   * A Lab evolution (js/fork/lab/growth.js): the new species' ability in the same slot as the run's
+   * An evolution (js/fork/lab/growth.js): the new species' ability in the same slot as the run's
    * (Charmander's hidden Solar Power stays Solar Power; Venonat's Compound Eyes becomes Venomoth's
    * Shield Dust), resolved again like at the start. → its describe() for the HUD.
    */
@@ -338,8 +338,8 @@ G.LabAbilities = (() => {
     return describe(pl.abilId, pl.mon);
   }
 
-  /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = Lab's version runs).
-   *  upstream: upstream's text even when Lab has its own (a normal run, js/fork/ability-show.js). */
+  /** What the HUD and the pause menu show for an ability id: { id, name, desc, lab } (lab = this file's version runs).
+   *  upstream: upstream's text even when this file has its own (js/fork/ability-show.js, outside G.Lab.active). */
   function describe(id, mon, upstream) {
     if (!id) return null;
     if (DEF[id] && !upstream) return { id, name: DEF[id].name, desc: DEF[id].desc, on: true, lab: true };
@@ -347,8 +347,8 @@ G.LabAbilities = (() => {
     return { id, name: G.Mons.abilityName(id) || D.abilName[id] || id, desc: [fx.d, fx.d2].filter(Boolean).map(t => G.T(t)).join(' '), on: true, lab: false };
   }
 
-  // The collection card: with the Lab setting on, an "In Lab: ..." line under the ability when Lab has its
-  // own version (its numbers differ from upstream's). Hook: G.VariantBonus.detail (showDetail in menu.js).
+  // The collection card: when this file has its own version of the ability (its numbers differ from upstream's),
+  // its text replaces upstream's under the ability. Hook: G.VariantBonus.detail (showDetail in menu.js).
   document.addEventListener('DOMContentLoaded', () => {
     const detail = G.VariantBonus && G.VariantBonus.detail;
     if (!detail) return;

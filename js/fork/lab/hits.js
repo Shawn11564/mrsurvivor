@@ -1,5 +1,5 @@
 /* ============ hits.js — "after each of your hits" for the Lab's build layer (MrSurvivor fork) ============
- * fork/LAB.md "Phase 11: builds". G.LabHits.on(f): in a Lab run, f(pl, e, m, dmg) runs right after
+ * fork/LAB.md "Phase 11: builds". G.LabHits.on(f): in a run, f(pl, e, m, dmg) runs right after
  * each hit of YOUR Pokémon lands on enemy e with move m (dmg: what Combat dealt, before Lab's hit
  * effects). Like kinds2.js and mech.js, it notes the move in G.RunStats.tag (Combat calls it on each of
  * your hits right before Enemy.hurt) and acts in Enemy.hurt. Burns, poison ticks and a teammate's hits

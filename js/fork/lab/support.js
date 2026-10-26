@@ -1,7 +1,7 @@
-/* ============ support.js — co-op support moves in Lab mode (MrSurvivor fork) ============
+/* ============ support.js — co-op support moves (MrSurvivor fork) ============
  * fork/TODO.md item 46, fork/LAB.md "Co-op support moves". Moves that help teammates, so a build in a
- * co-op run can turn into a support or a tank. They only exist in co-op Lab runs: they are never in a
- * species' Lab list (lab.js leaves `coop` moves out, lab-tms.js doesn't sell them, Metronome never
+ * co-op run can turn into a support or a tank. They only exist in co-op runs: they are never in a
+ * species' learnset list (lab.js leaves `coop` moves out, lab-tms.js doesn't sell them, Metronome never
  * calls them); the only way to get one is the co-op card this file deals into the level-up hand, for a
  * species that learns the move in the games (G.Lab.learnOf, from fork/fetch-lab.cjs).
  *
@@ -28,7 +28,7 @@
  *
  * Hooks (chained): G.Combat.tick (the clocks), G.Combat.EXTRA.ally, Player.cast/hurt/atkFor/draw,
  * Combat.updateFields/clearFields, G.LevelUp.offer (the co-op card), G.Lab.pauseLine.
- * Texts in English only. Test: fork/test-lab-support.cjs (solo Lab, normal and co-op runs).
+ * Texts in English only. Test: fork/test-lab-support.cjs (solo and co-op runs).
  */
 G.LabSupport = (() => {
   const C = G.Combat, X = C.EXTRA, P = G.Player.prototype;
@@ -253,8 +253,8 @@ G.LabSupport = (() => {
     return { w: 10, type: 'new', key: 'new:' + id, coop: true, icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
       tag, cat: '', title: G.T(d.name, 'move'), desc: d.desc, apply: p => p.addMove(id) };
   }
-  // In a co-op Lab run with a free slot, in 1 hand of 2 a co-op move it learns takes the last new-move card's
-  // place (else the last stat card's). Never in solo or in a normal run.
+  // In a co-op run with a free slot, in 1 hand of 2 a co-op move it learns takes the last new-move card's
+  // place (else the last stat card's). Never in a solo run.
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {
     const hand = offer.apply(this, arguments);
@@ -269,7 +269,7 @@ G.LabSupport = (() => {
     return hand;
   };
 
-  // Pause: in a co-op Lab run, the support moves it can learn here.
+  // Pause: in a co-op run, the support moves it can learn here.
   G.Lab.pauseLine(pl => {
     if (!coop()) return '';
     const L = G.Lab.learnOf(pl.mon.dex), ids = [...COOP].filter(id => L[id]);

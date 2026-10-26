@@ -1,4 +1,4 @@
-/* ============ kinds2.js — close range and sustain in Lab mode (MrSurvivor fork) ============
+/* ============ kinds2.js — close range and sustain (MrSurvivor fork) ============
  * Phase 9 of fork/LAB.md. Like kinds.js: new families in G.Combat.EXTRA and new effects for
  * any family, wrapping functions the game calls as G.X.y. Moves in
  * js/fork/lab/lab-moves.js (section "phase 9"). Texts in English only.
@@ -33,8 +33,8 @@
  *   flinch    the first hit on each enemy stuns it for that many s (Fake Out)
  * And in boosters (buff): `also` [{ stat, amount }] raises more stats at once (Bulk Up,
  * Calm Mind...); `drum` (Fillet Away) costs that share of your HP and fills the stacks.
- * With grab, bind, focus, ramp or recoil active you take 25 % less, as with melee (player.js); in Lab
- * runs with spin or dash too (CLOSE).
+ * With grab, bind, focus, ramp or recoil active you take 25 % less, as with melee (player.js); with spin or dash
+ * too while a run is going (CLOSE).
  *
  * Co-op: what happens to enemies goes through hit, applyStun and applySlow (the guest already
  * sends it to the host). A teammate's screens and cries arrive as a ghost
@@ -48,11 +48,11 @@ G.LabKinds2 = (() => {
   const boss = e => e.boss || e.judge;
   const PASSIVE = new Set(['heal', 'screen', 'shout', 'endure']);
   // Close-range kinds: with one active you take 25 % less (like melee, player.js). Spin and dash are
-  // upstream kinds that normal runs have too: they get it in Lab runs only (fork/PLAN-2026-10-22.md
-  // A1.1) until G.LabKinds2.promoteCut is set (G12). CLOSE.has(kind) is what everything reads.
+  // upstream kinds that exist without the fork: they get it while a run is going (G.Lab.active; fork/PLAN-2026-10-22.md
+  // A1.1), or always once G.LabKinds2.promoteCut is set (G12). CLOSE.has(kind) is what everything reads.
   const CLOSE_ALL = new Set(['ramp', 'grab', 'bind', 'focus', 'recoil']), CLOSE_LAB = new Set(['spin', 'dash']);
   let promoteCut = false;
-  // In Lab runs the close-range cut is 35 %, not 25 % (stream A's A4 tuning: close builds lasted 95-140 s
+  // In a run the close-range cut is 35 %, not 25 % (stream A's A4 tuning: close builds lasted 95-140 s
   // in fork/survival-lab.cjs against ~190 for the best ranged move): this on top of the 25 %.
   let LAB_CLOSE = 0.65 / 0.75;
   const CLOSE = { has: k => CLOSE_ALL.has(k) || (CLOSE_LAB.has(k) && (promoteCut || !!(G.Lab && G.Lab.active))) };

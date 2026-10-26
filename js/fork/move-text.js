@@ -60,7 +60,7 @@
   const BUFF_CAT = { patk: 'physical', satk: 'special' };
   const BOTH = 'Potencia tus ataques físicos y especiales.';
   const COL = { physical: '#ff9a7a', special: '#c9a2ff', weak: '#ffb35c', good: '#7be08f', close: '#9fd3ff' };
-  // Melee (player.js hurt) and the Lab's close-range families (G.LabKinds2.CLOSE): -25 % damage taken.
+  // Melee (player.js hurt) and the close-range families (G.LabKinds2.CLOSE): -25 % damage taken.
   const CLOSE = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
   // The weak side, by category (it used to be "Peor para X: sólo hace un N %", which read as if it were about the move;
   // then "hits for only 71 %"; since 2026-10-22 it says how much less: "-29% damage"). English only (English first).
@@ -86,7 +86,7 @@
       if (mon && f < 0.95) out.push([offNote(mon, m.cat), COL.weak]);
       if (close(m)) out.push([CLOSE, COL.close]);
     } else if (BUFF[m.stat] && (m.also || []).some(a => BUFF_CAT[a.stat] && BUFF_CAT[a.stat] !== BUFF_CAT[m.stat])) {
-      out.push([BOTH, COL.good]);                        // Work Up, Fillet Away (Lab): both sides
+      out.push([BOTH, COL.good]);                        // Work Up, Fillet Away: both sides
     } else if (BUFF[m.stat]) {
       out.push([BUFF[m.stat], COL[BUFF_CAT[m.stat]]]);
       if (mon && G.Stats.sideOf(mon) === BUFF_CAT[m.stat])

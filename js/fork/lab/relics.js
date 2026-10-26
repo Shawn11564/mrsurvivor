@@ -1,10 +1,10 @@
-/* ============ relics.js — relics: a lasting reward for the run (Lab first, MrSurvivor fork) ============
+/* ============ relics.js — relics: a lasting reward for the run (MrSurvivor fork) ============
  * Beating a map site's guardian (js/fork/lab/sites.js) or a late raid gives each player a RELIC PICK: their next
  * level-up hand is three relics instead of cards (a reroll draws three others), each a bonus for the rest of the
  * run, and they stack. One of the three comes from the pool of what was beaten (temple: staying alive, dungeon:
  * treasure and training, wormhole: offence), the other two from the rest:
  *   Titan's Heart  +25 % max HP, and heals you fully          Ancient Might  +12 % damage with every move
- *   Wind Rune      −8 % cooldown on every move                Stone Ward     +15 % damage reduction (toughness in Lab)
+ *   Wind Rune      −8 % cooldown on every move                Stone Ward     +15 % damage reduction (as toughness)
  *   Life Seed      +0.5 % of your max HP (as now) regenerated a second
  *   Keen Eye       +6 % critical-hit chance                   Fortune Stone  +25 % coins and +15 % XP
  *   Swift Feather  +10 % speed                                Training Scroll every move +1 level (if it has one left)

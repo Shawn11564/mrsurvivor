@@ -61,7 +61,7 @@ G.AssetOverrides = (() => {
   const native = n => { const o = icons[n]; return o && o.own ? { width: o.w, height: o.h } : oCanvas.call(I, n); };
   // The on-screen width for `size`: the sharp multiple of the code one (×1, ×2...), and with own that same
   // multiple of the PNG (an 18×18 shows at 18 where the code one is at 13, at 36 where it's at 26). With own,
-  // below half the code one, ½ or ¼ of the PNG (the Lab arrows, at 9: js/fork/lab/badges.js).
+  // below half the code one, ½ or ¼ of the PNG (the move arrows, at 9: js/fork/lab/badges.js).
   const mult = (n, size) => {
     const k = size / oCanvas.call(I, n).width;
     return k < 0.75 && icons[n] && icons[n].own ? 2 ** Math.max(-2, Math.round(Math.log2(k))) : Math.max(1, Math.round(k));

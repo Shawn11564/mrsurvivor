@@ -1,12 +1,12 @@
-/* ============ lab-tms.js — Kecleon sells Lab TMs with Lab on (MrSurvivor fork) ============
+/* ============ lab-tms.js — Kecleon sells an extra daily TM (MrSurvivor fork) ============
  * Plan D7 (owner's answer G5). Upstream's Kecleon shop (js/data/shop.js) sells 8 TMs a day from its own
- * moves (G.TM_MOVES). With the Lab setting on, a 9th daily slot sells one of the Lab moves that species
+ * moves (G.TM_MOVES). A 9th daily slot sells one of the fork's moves that species
  * learn by TM in the games and upstream doesn't sell (Protect, Reflect, Surf, Fly, Flare Blitz, Stored
  * Power...: LAB_TMS, built from G.LabData.learn's TM group). Same one for everyone each day (the date in
  * Kecleon's timezone, G.Shop.today), priced like upstream's (300 + 6 x its power in the games, status 400).
- * A Lab TM is taught like any other (collection card → Teach TM; G.TM_OF lists it with Lab on, unless its
- * Lab list already has it), and it stays Lab-only: it joins the Lab list (lab.js labList), never a normal
- * run's (lab.js filters Lab moves out of the normal pool). Its shop row says so ("LAB" and a note).
+ * An extra TM is taught like any other (collection card → Teach TM; G.TM_OF lists it, unless the species'
+ * own list already has it), and it joins that species' list (lab.js labList), not the general move pool
+ * (only moves with promote are added to that, lab.js). Its shop row is tagged "TM" with a note.
  * Hooks: G.Shop.dailyTms, G.TM_OF, G.TM_PRICE (data), #shop-body (a MutationObserver marks the rows).
  * Texts in English. Test: fork/test-kecleon.cjs.
  */
@@ -15,7 +15,7 @@ G.LabTms = (() => {
   const on = () => G.Lab.enabled;
   const isLab = id => !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].lab && !G.Moves.BY_ID[id].sig && !G.Moves.BY_ID[id].coop);   // (co-op moves: support.js's cards only)
 
-  // LAB_TMS[id] = the species that learn it by TM in the games (Lab moves upstream doesn't sell).
+  // LAB_TMS[id] = the species that learn it by TM in the games (the fork's moves that upstream doesn't sell).
   const LAB_TMS = {}, BY_DEX = {};
   for (const mon of G.DEX) {
     const L = G.Lab.learnOf(mon.dex);
@@ -31,7 +31,7 @@ G.LabTms = (() => {
     G.TM_PRICE[id] = p ? Math.round((300 + 6 * p) / 10) * 10 : 400;
   }
 
-  /** What this species can be taught with Lab on: upstream's TMs plus the Lab TMs its Lab list doesn't have. */
+  /** What this species can be taught: upstream's TMs plus the extra TMs its own list doesn't have. */
   const tmOf = G.TM_OF;
   G.TM_OF = dex => {
     const l = tmOf(dex), extra = on() && BY_DEX[dex];
@@ -47,7 +47,7 @@ G.LabTms = (() => {
     h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
     return (h >>> 0) / 4294967296;
   }
-  /** Today's Lab TM (the same for everyone). */
+  /** Today's extra TM (the same for everyone). */
   function today(skip = []) {
     const all = Object.keys(LAB_TMS).sort().filter(id => !skip.includes(id));
     return all.length ? all[Math.floor(hash('kecleon-lab:' + G.Shop.today()) * all.length)] : null;
@@ -58,7 +58,7 @@ G.LabTms = (() => {
     const id = on() && today(list);
     return id ? list.concat([id]) : list;
   };
-  // shop.js buy() checks its own dailyTms (not G.Shop's), so today's Lab TM is bought here, the way buy() does it.
+  // shop.js buy() checks its own dailyTms (not G.Shop's), so today's extra TM is bought here, the way buy() does it.
   const buy = G.Shop.buy;
   G.Shop.buy = function (key) {
     const id = typeof key === 'string' && key.startsWith('tm:') ? key.slice(3) : null, s = G.DB.save;
@@ -72,7 +72,7 @@ G.LabTms = (() => {
     return { ok: true };
   };
 
-  // The shop: a LAB tag on a Lab TM's row, and what that means.
+  // The shop: a TM tag on an extra TM's row, and what that means.
   const NOTE = 'Extra daily TM: available in every run.';
   G.I18n.add({ [NOTE]: NOTE }, 'en');
   function mark(box) {

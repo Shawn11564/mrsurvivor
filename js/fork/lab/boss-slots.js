@@ -1,6 +1,6 @@
-/* ============ boss-slots.js — bosses after 15:00 (Lab first, MrSurvivor fork) ============
+/* ============ boss-slots.js — bosses after 15:00 (MrSurvivor fork) ============
  * Upstream's boss slots (G.Enemies.BOSS_SLOTS) end at 15:00, so the second half of a run had no boss
- * (plan C1.1). In a Lab run there are four more, at 18:00, 21:00, 24:00 and 27:00, and in Lab's
+ * (plan C1.1). In a run there are four more, at 18:00, 21:00, 24:00 and 27:00, and in
  * endless (after Eternatus, js/fork/lab/eternatus.js) one every 3 minutes from 33:00 on.
  *   - Picked the way rollRun picks the earlier ones: rollRun itself picks them (the extra slots are
  *     pushed onto BOSS_SLOTS for that one call), so a non-legendary in the slot's BST band, never one
@@ -10,8 +10,8 @@
  *     +400 XP per 3 minutes); bossScale(t) does the rest when they spawn, as for every boss.
  *   - Only as many as rollRun can pick without running out of Pokémon (16 with BST ≥ 580); later
  *     endless slots reuse one of the run's late bosses with that slot's numbers.
- * Lab-only: the extra slots wait on the bosses array (bosses.lab) and join it on the first spawner
- * update of a Lab run, so a normal run keeps upstream's five. The spawner only runs where the
+ * The extra slots wait on the bosses array (bosses.lab) and join it on the first spawner
+ * update of a run (while G.Lab.active), after upstream's five. The spawner only runs where the
  * enemies are decided (solo, or the co-op host); guests get the bosses like any enemy ('ne').
  * A run that starts late (js/fork/lab/resume.js puts the clock back) skips the slots already past,
  * upstream's included, instead of spawning all of them in the first frames.
@@ -50,7 +50,7 @@ G.LabBossSlots = (() => {
     if (r && Array.isArray(r.bosses) && r.bosses.length > N) {
       const extra = r.bosses.splice(N);
       extra.forEach(b => { b.labSlot = true; });
-      r.bosses.lab = extra;       // waiting: they join on a Lab run's first spawner update (join)
+      r.bosses.lab = extra;       // waiting: they join on a run's first spawner update (join)
       r.bosses.labK = extra.length;   // the next slot to make (next)
     }
     return r;

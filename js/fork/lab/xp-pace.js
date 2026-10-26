@@ -1,8 +1,8 @@
-/* ============ xp-pace.js — XP per kill keeps pace with the run (Lab first, MrSurvivor fork) ============
+/* ============ xp-pace.js — XP per kill keeps pace with the run (MrSurvivor fork) ============
  * An enemy's XP comes from its tier (js/data/enemies.js) and the spawner's ×5.6 (elites ×1.6), with no
  * time term, while its HP grows ×(1 + t/95) and the spawn cap binds from about minute 8: kills per
  * second, so XP per second, fall off after the last tier arrives (8:20) and levels dry up (plan C1.2).
- * In a Lab run, each enemy that joins the fight brings
+ * In a run, each enemy that joins the fight brings
  *   XP × (1 + max(0, t − 500) / 600)     ×1 until 8:20, ×1.67 at 15:00, ×2.67 at 25:00, ×3.17 at 30:00
  * Regular enemies only (horde, summoned and shiny ones included): bosses (their table grows already,
  * js/fork/lab/boss-slots.js), rift legendaries (js/fork/rift-scaling.js), wild legendaries, Arceus's

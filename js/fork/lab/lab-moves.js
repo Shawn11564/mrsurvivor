@@ -1,8 +1,9 @@
-/* ============ lab-moves.js — moves that only exist in Lab mode (MrSurvivor fork) ============
- * Registered in G.Moves.BY_ID on load (js/fork/lab/lab.js), in every run: that way a
- * teammate's ghost (Combat.ghostCast) and its aura show even when you're not in Lab. But
- * they don't go into G.Moves.ALL or G.Moves.POOL: outside a Lab run they never show up in the
- * cards, the starting move choice or the veto.
+/* ============ lab-moves.js — the fork's own moves, not in upstream's moves.js (MrSurvivor fork) ============
+ * Registered in G.Moves.BY_ID on load (js/fork/lab/lab.js), whether or not a run is going: that way a
+ * teammate's ghost (Combat.ghostCast) and its aura always show. But
+ * they don't go into G.Moves.ALL or G.Moves.POOL on their own: they reach the cards, the starting
+ * move choice and the veto through the species' lists (G.Moves.poolFor, lab.js), unless `promote`
+ * also puts them in the general pool.
  *
  * Same fields as js/data/moves.js, plus:
  *   cat    'physical' | 'special' (in moves.js its PHYSICAL table sets it); null = it doesn't hit itself
@@ -590,7 +591,7 @@ G.LabMoves = [
     cd: 1.4, dmg: 18, count: 5, radius: 30, look: { proj: 'drop' }, evo: ['Water Sport', 'atk'] },
 
   // ================= co-op support (js/fork/lab/support.js) =================
-  // `coop`: never in a species' Lab list; only on the co-op cards of a co-op Lab run, for the species
+  // `coop`: never in a species' learnset list; only on the co-op cards of a co-op run, for the species
   // that learn them in the games. Kind 'ally': on their own from any slot; `ally` says what they do.
   { id: 'heal-pulse', name: 'Heal Pulse', type: 'psychic', kind: 'ally', cat: null, coop: true, ally: 'heal', below: 0.6,
     desc: 'Co-op: when a teammate within 300 px falls below 60% HP, a pulse restores 22% of the max HP of every teammate in range (not you). Works from any slot.',

@@ -1,4 +1,4 @@
-/* ============ badge-art.js — the move arrows (Lab, MrSurvivor fork) ============
+/* ============ badge-art.js — the move arrows (MrSurvivor fork) ============
  * The 4 arrows of js/fork/lab/badges.js, in G.Icons.UI: 'lb-g' (green, up), 'lb-m' (magenta,
  * up: x4), 'lb-y' (yellow, down), 'lb-r' (red, down). This is the code drawing (13×13); the
  * artist's goes over it as a PNG from the Asset Admin (js/fork/icon-overrides.json, js/fork/asset-overrides.js).

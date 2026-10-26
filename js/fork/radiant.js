@@ -30,7 +30,7 @@
  *             collection's Radiant filter (dexF.rad). If you have the radiant, it beats the shiny
  *             unless you've picked Normal or Shiny for that Pokémon (radOff).
  *   Roll      the 1-ticket gacha one (js/ui/slots.js in #pull-fx): it stops on its rarity's ball.
- * Texts in English only, like Lab mode. Test: fork/test-radiant.cjs.
+ * Texts in English only, like the rest of the fork. Test: fork/test-radiant.cjs.
  */
 G.Radiant = (() => {
   const NEED = 10;                 // shinies per roll

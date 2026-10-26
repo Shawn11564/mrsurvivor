@@ -5,7 +5,7 @@
  * The effect and its text scale by the multiplier (Epic Potencia: "+20% de daño"), the chip names the
  * rarity and the card wears its colour (the gacha's rarity colours). The caps don't change: a card
  * counts its multiplier in statsTaken (Potencia has 40), and if it doesn't fit whole it drops a rarity.
- * A card can carry its own cap (c.capMax: Lab's past-the-cap cards, js/fork/lab/late-hand.js).
+ * A card can carry its own cap (c.capMax: the past-the-cap cards, js/fork/lab/late-hand.js).
  * Cards that ask for an evolution (gold ones) and common ones stay as they were.
  * Each card's effect is repeated here (S) with the game card's number: if upstream changes
  * a card (its text is no longer the one in S), that card always comes common, so the text never lies.

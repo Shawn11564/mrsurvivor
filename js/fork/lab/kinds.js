@@ -1,7 +1,7 @@
-/* ============ kinds.js — new move families for Lab mode (MrSurvivor fork) ============
+/* ============ kinds.js — new move families (MrSurvivor fork) ============
  * Phase 4 of fork/LAB.md. They hook into G.Combat.EXTRA (js/systems/combat.js: run, reach and whether
  * they need a target); the rest wraps functions the game calls as G.X.y. Their moves
- * are in js/fork/lab/lab-moves.js and only show up in a Lab run (G.Lab).
+ * are in js/fork/lab/lab-moves.js and show up in runs through the species' lists (G.Lab.poolFor).
  *
  *   leap       Fly, Dig, Bounce, Dive: you leave (you can't be hit) and the blast lands on the target; you
  *              stay untouchable LEAP_GRACE s after landing by the target (LEAP_UPTIME). Where you come down is the move's `land`: 'stay' (Fly,

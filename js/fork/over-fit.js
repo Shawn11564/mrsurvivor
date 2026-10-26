@@ -1,5 +1,5 @@
 /* ============ over-fit.js — the run's end screen fits the screen (MrSurvivor fork) ============
- * The end box (#scr-over, js/ui/run-ui.js showOver, plus what death-cause.js, run-stats.js and Lab add)
+ * The end box (#scr-over, js/ui/run-ui.js showOver, plus what death-cause.js and run-stats.js add)
  * was a 480 px column: a long run (what knocked you out, Arceus, coins, tickets, the moves table,
  * shinies, the record) was about 1.4 times the screen's height, so it scrolled on any monitor. Now:
  *   wide    with room (900 px; ui-scale.js always leaves 1400 when it zooms), the box is wider and the
@@ -24,7 +24,7 @@
 
   const box = () => document.querySelector('#scr-over > .box');
   // The rows that take the full width but don't need it: not the table, the shinies, the record,
-  // what knocked you out, the support note or the Lab note.
+  // what knocked you out, the support note or a .lab-over note.
   function halves() {
     const rows = [...document.getElementById('over-stats').children].filter(el =>
       /1\s*\/\s*-1/.test(el.style.gridColumn) && !el.querySelector('table, .caught-row') &&

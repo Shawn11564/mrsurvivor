@@ -1,5 +1,5 @@
-/* ============ fly-water.js — Flying types fly over water (MrSurvivor Lab) ============
- * In a Lab run your Pokémon flies over water and swamp if it's Flying type: no slowdown (it was x0.6 in
+/* ============ fly-water.js — Flying types fly over water (MrSurvivor fork) ============
+ * In a run your Pokémon flies over water and swamp if it's Flying type: no slowdown (it was x0.6 in
  * water, x0.45 in swamp) and no splashing. Lava, poison, sparks and ice work as before (only the water
  * kinds, the ones that just slow you). Enemies that hover already ignore the terrain (enemy.js flying).
  * How: a biome has one liquid kind, so while the run's liquid only slows (G.World.liquidEffect: slow) the

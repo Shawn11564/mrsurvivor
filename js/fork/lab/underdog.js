@@ -1,11 +1,11 @@
-/* ============ underdog.js — showing the weak Pokémon's extra XP (Lab, MrSurvivor fork) ============
+/* ============ underdog.js — showing the weak Pokémon's extra XP (MrSurvivor fork) ============
  * The extra XP (G.LabGrowth.underdogK, js/fork/lab/growth.js: up to +60 % based on base
  * stats) shows in two places:
  *   - On the XP bar (G.HUD.draw): the part that comes from the extra, in gold at the end
  *     of the filled part, with "Underdog +N% XP" under it; it flashes for a moment when you gain XP.
  *     The extra multiplies all XP (xpMul), so its part of the bar is always
  *     k / (1 + k) of the filled part: no need to keep count of each gem.
- *   - Before starting: on pressing Play or Random Pokémon with the Lab on (solo), a
+ *   - Before starting: on pressing Play or Random Pokémon (solo), a
  *     ladder by rarity (the extra's range in each one, computed from G.DEX) with
  *     your Pokémon's highlighted and its exact extra, and the button to start. Only once per Pokémon:
  *     it doesn't come back until you play another one (G.Settings 'underdogSeen' = the last dex that saw it),
@@ -13,12 +13,12 @@
  *     (G.Settings 'underdogLadder', for this device). Only those two buttons arm it, so
  *     whoever calls G.Game.startRun on their own (tests, group) doesn't see it.
  *   - In a group, the run starts for everyone at once and can't wait for it: the ladder shows in the
- *     lobby instead, as soon as the room is a Lab one (G.Lab.roomLab: the host's setting), for the Pokémon
+ *     lobby instead, as soon as you are in a room (G.Lab.roomLab), for the Pokémon
  *     you'll play (the lobby's random pick, or your partner), with "Got it" instead of "Start run".
  *     Same rules: once per Pokémon, and not if it was turned off (fork/test-underdog-coop.cjs).
- *   - Always, on the menu's Play button (with the Lab on): your partner's "LAB · Underdog +N% XP"
+ *   - Always, on the menu's Play button: your partner's "Underdog +N% XP"
  *     (#ud-play), so it's known without the ladder.
- * Texts in English only, like the rest of the Lab. Test: fork/test-underdog.cjs.
+ * Texts in English only, like the rest of js/fork/lab/. Test: fork/test-underdog.cjs.
  */
 G.LabUnderdog = (() => {
   const GOLD = '#ffd23f';
@@ -53,7 +53,7 @@ G.LabUnderdog = (() => {
     ctx.font = '700 10px Pixelify,"Segoe UI",system-ui,sans-serif';
     ctx.textBaseline = 'top';
     const text = `Underdog +${pct(u)}% XP`, tw = ctx.measureText(text).width;
-    // Under the gold part, without going off screen or over the "LAB · ability" tag
+    // Under the gold part, without going off screen or over the ability tag
     // in the middle (js/fork/lab/lab.js): if it lands on it, to whichever side is closer to the gold.
     let x = G.U.clamp(end - tw, 6, w - tw - 6);
     const [L, R] = tagSpan(ctx, w);
@@ -65,7 +65,7 @@ G.LabUnderdog = (() => {
     ctx.restore();
   }
 
-  /** Where the Lab tag (#lab-hud) is across the canvas width; without it, the middle. */
+  /** Where the ability tag (#lab-hud) is across the canvas width; without it, the middle. */
   function tagSpan(ctx, w) {
     const tag = $('lab-hud'), cv = ctx.canvas.getBoundingClientRect();
     if (!tag || tag.classList.contains('hidden') || !cv.width) return [w / 2 - 130, w / 2 + 130];
@@ -157,12 +157,12 @@ G.LabUnderdog = (() => {
     $('ud-go').focus();
   }
 
-  // Only Play and Random Pokémon (solo, with the Lab on) arm it.
+  // Only Play and Random Pokémon (solo) arm it.
   let armed = false;
   document.addEventListener('click', e => {
     if (e.target.closest('#scr-menu [data-go=play], #rand-go')) armed = true;
   }, true);
-  // Outside all the other startRun wrappers (Lab, radiant...): they're installed on
+  // Outside all the other startRun wrappers (js/fork/lab/lab.js, radiant...): they're installed on
   // DOMContentLoaded and this on load, which comes after.
   addEventListener('load', () => {
     const startRun = G.Game.startRun;
@@ -178,7 +178,7 @@ G.LabUnderdog = (() => {
   });
 
   // ---------------- in a group lobby ----------------
-  // Checked a few times a second while the lobby is open: the host's Lab setting reaches a guest by message.
+  // Checked a few times a second while the lobby is open, so it shows as soon as the room exists.
   setInterval(() => {
     const room = G.Social && G.Social.room, box = $('ud-ladder');
     if (!room || !G.UI.isOpen('scr-lobby') || !G.Lab.roomLab || !on() || (box && !box.classList.contains('hidden'))) return;
@@ -191,7 +191,7 @@ G.LabUnderdog = (() => {
 
   // ---------------- on the Play button ----------------
 
-  /** Your partner's "LAB · Underdog +N% XP" on the Play button, with the Lab on and some extra. */
+  /** Your partner's "Underdog +N% XP" on the Play button, when there is some extra. */
   function playTag() {
     const btn = document.querySelector('#scr-menu [data-go=play]');
     if (!btn) return;

@@ -1,15 +1,16 @@
 /* ============ ability-show.js — the run's ability, shown in every run (MrSurvivor fork) ============
  * Plan D6. Upstream picks an ability for every run (game.js: pl.setAbility(G.Mons.abilityOf(dex).id)) but never
- * shows it during the run. Lab runs already did ("LAB · Blaze" at the top, "Ability: ..." in the pause menu,
- * js/fork/lab/lab.js); this does the same for normal runs, for everyone:
+ * shows it during the run. js/fork/lab/lab.js shows it in a run ("Ability: Blaze" at the top and in the
+ * pause menu). This file does the same when G.Lab is not active:
  *   - a small tag at the top of the screen: "Ability · Blaze"
  *   - the pause menu: "Ability: Blaze" and what it does (upstream's text, js/data/ability-fx.js)
- * In a Lab run nothing is added (Lab's tag and block say it). Only your own Pokémon (pl.abilId).
+ * While G.Lab.active (a run is going) nothing is added (Lab's tag and block say it), so this
+ * shows nothing in a run today. Only your own Pokémon (pl.abilId).
  * Texts in English. Test: fork/test-lab-abilities.cjs part 9.
  */
 G.AbilityShow = (() => {
   const esc = s => G.Lab.esc(s);
-  /** { name, desc } of the run's ability, or null (none, or a Lab run: Lab shows its own). */
+  /** { name, desc } of the run's ability, or null (none, or G.Lab.active: Lab shows its own). */
   function info() {
     const pl = G.Game && G.Game.player;
     if (!pl || !pl.abilId || G.Lab.active) return null;

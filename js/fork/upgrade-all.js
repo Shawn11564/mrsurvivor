@@ -1,9 +1,9 @@
-/* ============ upgrade-all.js — buy every upgrade at once (MrSurvivor fork, Lab first) ============
- * With the Lab setting on, Upgrades has an "Upgrade all" button for the chosen Pokémon: it raises
+/* ============ upgrade-all.js — buy every upgrade at once (MrSurvivor fork) ============
+ * Upgrades has an "Upgrade all" button for the chosen Pokémon: it raises
  * every upgrade to its max in one go. Before spending, it asks to confirm with the total in coins. If
  * you can't afford it, it says how much is missing. The coins go out as in a normal purchase (G.DB.commit notes the
  * spend in the ledger). The panel repaints when menu.js rebuilds the list (#upg-list): that way the total
- * stays right after buying a single one. Texts in English, like Lab. Test: fork/test-upgrade-all.cjs.
+ * stays right after buying a single one. Texts in English. Test: fork/test-upgrade-all.cjs.
  */
 G.UpgradeAll = (() => {
   const $ = id => document.getElementById(id);

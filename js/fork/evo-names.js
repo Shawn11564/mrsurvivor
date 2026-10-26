@@ -1,12 +1,12 @@
 /* ============ evo-names.js — evolutions without other moves' names (MrSurvivor fork) ============
  * Upstream, each move takes the name of another move from the games when it evolves (Bola Sombra
- * -> Golpe Fantasma, Placaje -> Derribo...). In this fork many of those are real moves in
- * Lab mode, and several are SIGNATURES (Ho-Oh's Sacred Fire, Pikachu's Volt Tackle, Giratina's
+ * -> Golpe Fantasma, Placaje -> Derribo...). In this fork many of those are real moves
+ * (the Lab moves, js/fork/lab/lab-moves.js), and several are SIGNATURES (Ho-Oh's Sacred Fire, Pikachu's Volt Tackle, Giratina's
  * Shadow Force...): the same name was two different moves, one a signature and one not.
  * Here those evolutions switch to another real move of the same type that the game uses nowhere
- * else (neither upstream nor in Lab), with the official name in each language (PokeAPI; for Brazilian
+ * else (neither upstream nor in the Lab moves), with the official name in each language (PokeAPI; for Brazilian
  * Portuguese, the games' English). Only the name: what it gains on evolving doesn't change. The ★ on "was" marks signatures.
- * Lab's evolution of Vuelo (Fly) (js/fork/lab/lab-moves.js) is set there: Dual Wingbeat, not Sky Attack.
+ * The evolution of Vuelo (Fly) (js/fork/lab/lab-moves.js) is set there: Dual Wingbeat, not Sky Attack.
  * fork/build.cjs also reads this for the site's pages (FORK_TEXTS and FORK_EVO_NAMES).
  * Test: fork/test-shadow-force.cjs (no evolution is named like a Lab move).
  */

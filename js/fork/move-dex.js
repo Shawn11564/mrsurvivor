@@ -1,12 +1,12 @@
 /* ============ move-dex.js — the move dex: every move and what it does (MrSurvivor fork) ============
  * The collection screen (#scr-dex) gets a Pokémon / Moves switch in its header. Moves lists every
- * move in the game (G.Moves.BY_ID: the normal ones, and with the LAB chip the Lab-only ones, tagged),
+ * move in the game (G.Moves.BY_ID: upstream's and the fork's own, signature moves tagged),
  * searchable by name, filtered by type and category (physical / special / status), sorted by type,
  * name, damage or cooldown. Picking one shows its card: how its kind works, its numbers at level 1
  * and at max level (G.Moves.instance), each upgrade on the way, its evolution and what it needs (the row in the
  * list says what it evolves into too: "→ Fire Blast")
- * (G.Moves.evoInfo), and who learns it: Pokémon of its type in normal runs (G.Moves.POOL; Normal
- * moves, everyone), the Lab learnsets (G.Lab.learnOf) and signature lines in Lab.
+ * (G.Moves.evoInfo), and who learns it: Pokémon of its type (G.Moves.POOL; Normal
+ * moves, everyone), the learnsets (G.Lab.learnOf) and signature lines.
  * Everything is drawn here; menu.js's own dex isn't touched (its view is hidden while Moves shows).
  * Test: fork/test-move-dex.cjs.
  */
@@ -30,7 +30,7 @@ G.MoveDex = (() => {
     spin: 'You spin, hitting everything around you several times.', quake: 'A wave runs along the ground in a line of blasts.',
     vortex: 'A whirlpool pulls enemies to its centre and hurts them.', shove: 'A wave around you that hurts and pushes enemies away.',
     stun: 'A marked zone that hurts and leaves enemies stunned.',
-    // Lab families (js/fork/lab/kinds.js, kinds2.js)
+    // The fork's families (js/fork/lab/kinds.js, kinds2.js)
     leap: 'You leave the ground (nothing can hit you) and the blast lands on the target.',
     recoil: 'A very strong charge that costs you some HP.', ramp: 'Each hit that lands hits harder than the last.',
     guard: 'Protects you for a moment, or hits back at what hits you.', sleep: 'A marked zone that puts whoever it catches to sleep.',
@@ -133,7 +133,7 @@ G.MoveDex = (() => {
     detail(sel);
   }
 
-  // Lab learnsets, reversed (move → Pokémon), built the first time a Lab move is opened.
+  // The learnsets (G.Lab.learnOf), reversed (move → Pokémon), built the first time a move is opened.
   let learners = null;
   function labLearners(id) {
     if (!G.Lab || !G.Lab.learnOf) return [];

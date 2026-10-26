@@ -1,9 +1,9 @@
 /* ============ variant-stats.js — shiny and radiant stat rolls (MrSurvivor fork) ============
- * At the start of every run (normal and Lab), playing a shiny gives N of its 6 stats +10 %, a radiant
+ * At the start of every run, playing a shiny gives N of its 6 stats +10 %, a radiant
  * +20 %, picked at random each run. N goes by the Pokémon's rarity (G.DEX_BY rarity): Common 4,
  * Uncommon 3, Rare 2, Epic 1, Legendary 1. A banner at the start says which (after Lab's, if it has one); the pause screen too.
- * (Until 2026-10-22 they gave XP and coins in Lab runs instead: js/fork/lab/shiny.js keeps only the rerolls.)
- * The boosts are on the player, not on its stat sheet, so they stay through a Lab evolution:
+ * (Until 2026-10-22 they gave XP and coins instead: js/fork/lab/shiny.js keeps only the rerolls.)
+ * The boosts are on the player, not on its stat sheet, so they stay through an evolution:
  *   HP       max HP × (1 + k) at the start (addMaxHp)
  *   Attack   physical moves' damage × (1 + k)       Sp. Atk   special moves' (Player.atkFor)
  *   Defense  physical hits ÷ (1 + k)                Sp. Def   special hits (Player.hurt's cat)

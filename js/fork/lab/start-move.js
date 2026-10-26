@@ -1,31 +1,30 @@
-/* ============ start-move.js — the starting move in Lab runs (MrSurvivor fork) ============
- * Upgrades → Starting move keeps two picks per Pokémon: save.pstart (upstream's, for normal runs)
- * and save.pstartLab (for Lab runs). With the Lab setting on (in the menus) or in a Lab run, the
- * picker lists the Lab list (G.Lab.poolFor: Pyro Ball for Scorbunny...) and writes the Lab pick.
- * A Lab run starts with its Lab pick, else the normal pick if the Lab list has it, else the default.
- * (Before, a Lab run checked the normal pick against the Lab list and silently dropped it, and the
- * picker never showed the Lab moves.)
+/* ============ start-move.js — the starting move (MrSurvivor fork) ============
+ * Upgrades → Starting move keeps two picks per Pokémon: save.pstart (upstream's picker's)
+ * and save.pstartLab (this one's). In the menus and in a run, the picker lists the species' list
+ * (G.Lab.poolFor: Pyro Ball for Scorbunny...) and writes save.pstartLab. A run starts with that pick,
+ * else the save.pstart pick if the list has it, else the default. (When on() is false, upstream's
+ * choices and pick are used as they were.)
  * Hooks: G.startChoices / G.startMoveOf (js/data/starters.js), a one-line hook in startPicker
  * (js/ui/menu.js), G.forkMerge (the newer copy's picks win, like pstart). Test: fork/test-start-move.cjs.
  *
  * The second starting move (Upgrades → Second starting move, with Repertorio) works the same way since
- * 2026-10-22 (plan D5): save.pstartLab2 next to upstream's pstart2 ('' = random, so the normal pick
- * doesn't come back), G.startMove2Of wrapped, a one-line hook in start2Picker. Before, the picker
- * listed the Lab list with Lab on and wrote upstream's pstart2, so a Lab-only pick was silently
- * dropped in normal runs (random instead), and a normal pick not in the Lab list in Lab runs.
+ * 2026-10-22 (plan D5): save.pstartLab2 next to upstream's pstart2 ('' = random, so the pstart2 pick
+ * doesn't come back), G.startMove2Of wrapped, a one-line hook in start2Picker. (Writing upstream's
+ * pstart2 from this picker would have lost a pick that only the species' list has, and a pstart2
+ * pick the list doesn't have is ignored.)
  */
 G.LabStart = (() => {
   const choices = G.startChoices, moveOf = G.startMoveOf;
   let starting = false;                              // inside G.Game.startRun
 
-  /** Lab picks? While a run starts or goes on: whether it's a Lab run. In the menus: the Lab setting. */
+  /** The fork's picks? While a run starts or goes on: whether a run is active. In the menus: G.Lab.enabled (always true). */
   function on() {
     const idle = !starting && ['ui', 'over'].includes(G.Game.state);
     return idle ? G.Lab.enabled : !!G.Lab.active;
   }
   const bought = dex => { const s = G.DB.save; return !!(s && s.pupg && s.pupg[dex] && s.pupg[dex].start); };
 
-  /** What a Lab run can start with: its Lab list without boosters, and always the default. */
+  /** What a run can start with: the species' list without boosters, and always the default. */
   function labChoices(dex) {
     const ids = G.Lab.poolFor(G.DEX_BY[dex]).filter(id => G.Moves.BY_ID[id] && G.Moves.BY_ID[id].kind !== 'buff');
     const base = G.baseStartOf(dex);
@@ -43,7 +42,7 @@ G.LabStart = (() => {
   // ---- the second starting move (with Repertorio) ----
   const moveOf2 = G.startMove2Of;
   const bought2 = dex => { const s = G.DB.save, u = s && s.pupg && s.pupg[dex]; return !!(u && u.start2 && u.moves); };
-  /** A Lab run's second move: its Lab pick ('' = random), else the normal pick if the Lab list has it, else random (null). */
+  /** A run's second move: the save.pstartLab2 pick ('' = random), else the save.pstart2 pick if the list has it, else random (null). */
   function labMove2Of(dex) {
     const s = G.DB.save;
     if (!bought2(dex)) return null;
@@ -62,7 +61,7 @@ G.LabStart = (() => {
     };
   });
 
-  /** The picker with the Lab on (menu.js startPicker hands over to this). redraw = renderUpgrades. */
+  /** The picker (menu.js startPicker hands over to this when on()). redraw = renderUpgrades. */
   function picker(dex, redraw, banList) {
     const s = G.DB.save, cur = G.startMoveOf(dex), base = G.baseStartOf(dex), normal = choices(dex);
     const name = id => G.T(G.Moves.BY_ID[id].name, 'move');
@@ -76,7 +75,7 @@ G.LabStart = (() => {
       b.onclick = () => {
         const id = b.dataset.id;
         s.pstartLab = s.pstartLab || {};
-        s.pstartLab[dex] = id;                         // the default too: otherwise the normal pick would come back
+        s.pstartLab[dex] = id;                         // the default too: otherwise the save.pstart pick would come back
         const l = banList(), i = l.indexOf(id);        // the starting move can't be banned
         if (i >= 0) l.splice(i, 1);
         G.DB.commit();
@@ -88,7 +87,7 @@ G.LabStart = (() => {
     return el;
   }
 
-  /** The second-move picker with the Lab on (menu.js start2Picker hands over to this). */
+  /** The second-move picker (menu.js start2Picker hands over to this when on()). */
   function picker2(dex, redraw, banList) {
     const s = G.DB.save, cur = labMove2Of(dex), first = labMoveOf(dex), normal = choices(dex);
     const name = id => G.T(G.Moves.BY_ID[id].name, 'move');
@@ -102,7 +101,7 @@ G.LabStart = (() => {
       b.onclick = () => {
         const id = b.dataset.id;
         s.pstartLab2 = s.pstartLab2 || {};
-        s.pstartLab2[dex] = id;                        // '' (random) too: otherwise the normal pick would come back
+        s.pstartLab2[dex] = id;                        // '' (random) too: otherwise the save.pstart2 pick would come back
         const l = banList(), i = id ? l.indexOf(id) : -1;   // the starting moves can't be banned
         if (i >= 0) l.splice(i, 1);
         G.DB.commit();

@@ -1,5 +1,5 @@
-/* ============ revive-card.js — the Revive card (Lab first, MrSurvivor fork) ============
- * In a Lab run, rarely (RATE per batch, from level 5, if you don't already carry one) the last
+/* ============ revive-card.js — the Revive card (MrSurvivor fork) ============
+ * In a run, rarely (RATE per batch, from level 5, if you don't already carry one) the last
  * level-up card is "Revive": you keep it in its own slot (a heart next to your HP).
  * It's a Legendary card: the Legendary odds of js/fork/card-rarity.js (1 %) and its gold look
  * (card-rarity's paint does the chip and border, from rarity 5).
@@ -8,7 +8,7 @@
  *   - In co-op: when you fall you choose when to use it (R, or the on-screen button) or wait for a
  *     teammate to revive you, as always (and then it isn't used up).
  * Hooks: G.LevelUp.offer (the card), Player.hurt (solo), G.HUD.draw (the slot and the button, before
- * js/fork/ui-scale.js). Texts in English, like Lab. Test: fork/test-revive-card.cjs.
+ * js/fork/ui-scale.js). Texts in English. Test: fork/test-revive-card.cjs.
  */
 G.ReviveCard = (() => {
   const LEGEND = G.CardRarity.TIERS[4], RATE = LEGEND.w / 100, MIN_LEVEL = 5, HP = 0.5, SAFE = 3, PUSH_R = 150;

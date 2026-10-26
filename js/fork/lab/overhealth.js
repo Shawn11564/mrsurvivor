@@ -1,5 +1,5 @@
-/* ============ overhealth.js — the Sitrus Berry's extra becomes Overhealth (MrSurvivor Lab) ============
- * In a Lab run, the level-up's Sitrus Berry (G.LevelUp.STATS 'heal', with card-rarity.js's tiers: 45% and up)
+/* ============ overhealth.js — the Sitrus Berry's extra becomes Overhealth (MrSurvivor fork) ============
+ * In a run, the level-up's Sitrus Berry (G.LevelUp.STATS 'heal', with card-rarity.js's tiers: 45% and up)
  * heals as before, and what it would heal past your max HP becomes Overhealth: hits take it first
  * (Player.hurt, a one-line hook: G.Overhealth.absorb), and once lost it doesn't come back (regeneration
  * and heals fill HP only). Berries add up, to your max HP at most. pl._oh, so a new run starts at 0.
@@ -27,7 +27,7 @@ G.Overhealth = (() => {
     if (got >= 1) G.FX.dmgText(pl.x, pl.y - pl.bodyH - 18, '+' + got + ' Overhealth', GOLD);
   }
 
-  // The berry card in the hand: in Lab, its heal past max HP is noted (heal() as the card calls it, with
+  // The berry card in the hand: in a run, its heal past max HP is noted (heal() as the card calls it, with
   // Gluttony's healMul) and given as Overhealth, and its text says so.
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (pl) {

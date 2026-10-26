@@ -1,6 +1,6 @@
-/* ============ boss-power.js — late bosses keep up with your build (Lab first, MrSurvivor fork) ============
+/* ============ boss-power.js — late bosses keep up with your build (MrSurvivor fork) ============
  * A strong build one-shot rift and wild legendaries at 45:00: their HP grows with the clock (rift.js 3200 + 9 HP a
- * second, wild-legends.js 2600 + 6) while a build's damage grows far faster. In a Lab run, on the machine that
+ * second, wild-legends.js 2600 + 6) while a build's damage grows far faster. In a run, on the machine that
  * runs the enemies:
  *   - A POWER METER: every hit lands in G.Judgment.noteDmg (Enemy.hurt calls it on that machine, the guests' hits
  *     included), so each second keeps the most damage one enemy took and the biggest single hit; power() is the
@@ -11,7 +11,7 @@
  *     a wild legendary 7 + 9u (11.5 / 16 / 20.5 s), the rift's legendary 14 + 16u (22 / 30 / 38 s), and never
  *     less than HITS of your biggest hits.
  *   - From 20:00 they can't be burst: one hit takes at most HIT_CAP of a boss's max HP (Enemy.hurt, this file
- *     loads before every Lab file that changes a hit's damage, so the cap applies to the final number).
+ *     loads before every js/fork/lab file that changes a hit's damage, so the cap applies to the final number).
  *   - From 30:00 they grow like the horde (js/fork/lab/endgame.js): HP × 1.2^((t − 30:00)/2 min) (×3.9 at 45:00)
  *     and the full horde damage factor (×8.1 at 45:00, ×34 at 60:00), their XP × √(the HP gained),
  *     at most ×3. Wild legendaries also get the bosses' own clock, which they lacked: HP × (1 + t/10 min) and

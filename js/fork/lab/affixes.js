@@ -1,6 +1,6 @@
-/* ============ affixes.js — elite affixes (Lab first, MrSurvivor fork) ============
+/* ============ affixes.js — elite affixes (MrSurvivor fork) ============
  * Once the spawner is near its cap (85 % of 64: 55+ enemies alive, js/systems/spawner.js), what it sends are elites:
- * ×1.6 HP, ×1.25 damage, ×1.6 XP, and nothing on screen says so (plan C1.3). In a Lab run, one elite in
+ * ×1.6 HP, ×1.25 damage, ×1.6 XP, and nothing on screen says so (plan C1.3). In a run, one elite in
  * CHANCE also gets an AFFIX, a readable threat with its name over it and a coloured ring at its feet:
  *   Shielded   a shield of 60 % of its HP that doesn't wear off (blue bubble, like a shielder's)
  *   Swift      ×1.4 speed

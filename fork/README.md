@@ -45,7 +45,6 @@ As of 2026-10-25, all implemented Lab gameplay is standard in solo and co-op. Th
 is retired; historical Lab leaderboards remain an archive. See [LAB.md](LAB.md) for the promotion
 inventory and approved rule deployment. Run `node fork/test-promotion.cjs` and
 `node fork/test-promotion.cjs --release` against `node fork/serve.cjs` to check the source and build.
-Earlier Lab sections below document implementation history rather than a separate current mode.
 
 MrSurvivor is a fork of [PokéSurvivor](https://github.com/JPTER78/pokesurvivor) by JPTER78,
 used under the PolyForm Noncommercial License 1.0.0 (`LICENSE`, `LICENSE-NONCOMMERCIAL.md`).
@@ -69,8 +68,8 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `js/core/firebase-config.js` | the one upstream file we edit (our Firebase project) |
 | `fork/fetch-megas.py` | downloads the Mega/Primal sprites from SpriteCollab into `assets/pokemon/m{dex}/`, writes `js/fork/mega-sprites.js` and `CREDITS-MEGAS.md` (rerun it to pick up new Megas) |
 | `fork/fetch-lab.cjs` | downloads PokeAPI's learnsets/abilities/evolutions and SpriteCollab's animation list into `tools/cache/lab/`, writes `js/fork/lab/lab-data.js` for Lab mode (rerun it when upstream adds moves) |
-| `fork/fetch-lab-anims.py` | downloads the extra PMD animations Lab mode's signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
-| `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (Lab mode, phase 8) |
+| `fork/fetch-lab-anims.py` | downloads the extra PMD animations the signature moves use into `assets/pokemon/{dex}/lab/`, writes `js/fork/lab/lab-anims.js` and `CREDITS-LAB.md` |
+| `fork/balance-lab.cjs` | measures every move's damage per second in headless Edge and writes `fork/BALANCE-LAB.md` (phase 8 of fork/LAB.md) |
 | `radiant-kit/index.html` | the Radiant Sprite Kit page (`/radiant-kit/`, linked from the admin menu's Tools): search a Pokémon and download its default sheets in a .zip laid out for the artist: one folder per Pokémon, `assets/0150_mewtwo/` (Lab sheets in `lab/`, the Mega in `mega/`, ticked by default), with `README.txt` (the rules) and `CREDITS.txt` |
 | `fork/asset-admin.cjs` | **Asset Admin**, for us and the artist (`fork/ARTIST.md`): double-click `Asset Admin.bat` (root, calls `fork/Asset Admin.bat`) / `fork/Asset Admin.command`, or `node fork/asset-admin.cjs`. A page on this PC only (127.0.0.1, random key in the link), never on the site, with three tabs: **Gallery** (`fork/asset-gallery.cjs`: every PNG in `assets/pokemon` and `assets/icons`, and every icon `G.Icons` draws with code; download, upload new versions by name or onto a file (any image, renamed and turned into a PNG), staged with old and new side by side, then **Apply** writes them into the checkout), **Radiants** (`fork/radiant-admin.html`) and the **Sprite Kit**. One **Publish** for all of it commits only the files the tool manages and pushes main. It syncs with GitHub at start (the page is locked until it's done), every minute and before publishing, merging the version lists when both sides changed them; a file changed on both sides stops it, naming the file, with an Undo. Who can publish: whoever can push to the repo (its collaborators with write access) |
 | `fork/radiant-admin.cjs` | the Radiants tab's side of the Asset Admin (`node fork/radiant-admin.cjs` opens it on that tab): drop the artists' zips, see every Pokémon in them checked (the importer's code) with an animated preview of each sheet, normal next to radiant, pick which to import and each one's rarity (its tier in the ritual's odds, with the resulting odds), change the rarity of radiants already in. Players get them once Pages has deployed, with no rebuild (below). A sheet imported over an old one gets a new hash in `asset-rev.json` |
@@ -81,22 +80,22 @@ upstream doesn't have, so `git merge upstream/main` never touches it:
 | `js/fork/radiant-glow.js` | the **Radiant glow** slider (Settings > Graphics, 0-100 %, 10 % by default; `G.Settings` `radGlow`, with a preview): radiants glow in their standout colour, the one the vibrancy vote picks for their moves (`G.LabShiny.paletteFrom`, `fork/LAB.md` Phase 7). Each radiant sheet gets two blurred masks once (that hue counts fully, the rest of the body a little): a halo under the sprite and additive light over it. Wraps `Animator.draw`, so the run, co-op, menus and the ritual all get it; at 0 % it draws exactly as before. Hook: one line in `js/ui/settings-ui.js` |
 | `js/fork/ui-scale.js` | the interface sized to the screen: scale k = screen ÷ 1400×850 (1 up to that, as before; ≈1.27 at 1080p, ≈1.69 at 1440p, ≈2.5 at 4K, 3 at most). The canvas HUD is drawn with `ctx.scale(k)`, and while it draws, the mouse, drag, safe area and camera map into its coordinates and the touch buttons it registers map back to CSS px. The HTML (menus, cards, top bar, toasts) gets CSS `zoom` (`--ui-k`) on everything under `<body>` except the game canvas and the touch-layout editor (`#scr-layout`, which places its pieces in window px). Wraps `G.HUD.draw` outermost, so it loads after the other HUD wrappers. The zoom would scale viewport units too (100dvh became 2.5 windows tall at 4K, so Settings ran off the screen with its Close button), so every rule using vh/vw/dvh is divided by `--ui-vu`, measured under the zoom (`fork/test-settings-fit.cjs`). By default k is 0.85 × that fit (≈2.16 at 4K; 1 up to 1400×850). **GUI scale** (Settings > Graphics > GUI, with Icon size): a slider that starts in the middle, down to 70 % on the left, up to the fit (never past it) on the right, applied on release. A box that only just doesn't fit is zoomed down (to 0.75) instead of scrolling for one row (`fork/test-gui-scale.cjs`) |
 | `js/fork/end-run.js` | **End run** in the pause menu from 20:00 on the clock: solo, the run ends at once like Quit run (rewards, leaderboard, end screens); co-op ("Vote to end run"), a vote the host runs: everyone gets a Yes / No prompt for 30 s, the asker has said yes, every connected player must say yes; one No or the time running out and it goes on (30 s before the next ask). Then the host ends it like when everyone falls (`G.Coop.over` with why 'vote', which `js/game.js`'s coopApi.over takes as not fallen): team summary and end screens for all (`fork/test-end-run.cjs`, emulator) |
-| `js/fork/move-dex.js` | the **move dex**: a Pokémon / Moves switch in the collection's header. Moves lists every move (`G.Moves.BY_ID`; the Lab-only ones with the LAB chip, which starts as the Lab setting), with search, type, category (physical / special / status) and sort; a move's card has how its kind plays, its numbers at Lv.1 and max level (`G.Moves.instance`), its upgrades, its evolution (`G.Moves.evoInfo`) and who learns it (its type in normal runs, the Lab learnsets). Drawn by itself (`translate="no"`, its data through `G.T`); menu.js's dex is only hidden while it shows (`fork/test-move-dex.cjs`) |
+| `js/fork/move-dex.js` | the **move dex**: a Pokémon / Moves switch in the collection's header. Moves lists every move (`G.Moves.BY_ID`, the game's and the fork's), with search, type, category (physical / special / status) and sort; a move's card has how its kind plays, its numbers at Lv.1 and max level (`G.Moves.instance`), its upgrades, its evolution (`G.Moves.evoInfo`) and who learns it (the species that learn it in the games, then other Pokémon of its type). Drawn by itself (`translate="no"`, its data through `G.T`); menu.js's dex is only hidden while it shows (`fork/test-move-dex.cjs`) |
 | `js/fork/choice-lock.js` | the **Choice Band** asks which move it locks into: picking it up with two or more slots keeps the game stopped and the item screen (`#scr-item`, its 1-4 keys) lists your slots; that one becomes the active slot and the band keeps it (upstream locked whatever was active). Hook: `offerItem` in `js/game.js` (`fork/test-choice-lock.cjs`) |
 | `js/fork/boss-bars.js` | a health bar per boss under the clock, for every boss within 1100 world px of the camera (about 1.4 screen widths; you, or the teammate you watch while down), nearest first, at most 4 and then "+N MORE"; one off screen is dimmer. Upstream showed only the first living boss, wherever it was. `js/ui/hud.js` draws them (one line) and puts the rift timer under them, `js/systems/judgment.js` its counter (`G.BossBars.below`) (`fork/test-boss-bars.cjs`) |
 | `js/fork/sheet-budget.js` | sprite sheets that are no longer needed can go: past a run's start the spawner's preload list (`G.Enemies.upcomingDex`) is what starts within the next minute or started under 30 s ago, plus the species alive now (a spawned enemy asks for all its animations at once); upstream's list was every tier and boss so far, and preloading counts as use, so the whole cast stayed loaded (337 sheets at 15-19 min against the cap of 200). Two lines in `js/core/sprites.js` let the idle sheets go whenever there are more than 200, not only when a new one is asked for. Late run: ~240 sheets, about 70 MB less image memory (`fork/test-perf.cjs`, which also guards the late-run frame cost; see its header for the numbers) |
 | `js/fork/revive-grace.js` | 3 s without damage after any revive (a teammate's, the rift, Eternatus, the Revive card): `Player.hurt` does nothing and you blink; traps, explosions, lava, Arceus and the Eternabeam clear the old 2 s invuln before they hit, this they can't. Counts in game time (`fork/test-revive-grace.cjs`) |
-| `js/fork/lab/candy-name.js` | the collection shows "🍬 N" next to a Pokémon's name: the candies its line has left to spend (`G.LabGrowth.left`), with earned/spent in the tooltip; shown if the line has earned any or Lab is on. Hook: `G.VariantBonus.detail` (`fork/test-candy.cjs` part 5) |
+| `js/fork/lab/candy-name.js` | the collection shows "🍬 N" next to a Pokémon's name: the candies its line has left to spend (`G.LabGrowth.left`), with earned/spent in the tooltip; shown always (🍬 0 too). Hook: `G.VariantBonus.detail` (`fork/test-candy.cjs` part 5) |
 | `js/fork/bond-skip.js` | the bond screen's **Keep them apart** button: the bond is spent without joining moves and every move gets +2.5 % damage for the rest of the run (`pl.atkMul`; they stack), the first 5 times in a run (`pl.bondsKept`, kept by Lab's resume); after that it keeps them apart with no bonus, and the button says how many are left (was +10 % with no limit until 2026-10-23). Per player, so co-op needs nothing more (`offerBond`'s callback in `js/game.js` gets null). The bond cards also keep their move's description, with the bond note under it (`renderBond` in `js/ui/run-ui.js`) (`fork/test-bond-skip.cjs`) |
 | `js/fork/regen-pct.js` | the **Synthesis** upgrade heals +0.25 % of max HP a second a level (1.25 %/s at 5) instead of a flat +0.2 HP/s, on the live max HP: `G.Upgrades.perks` gives `regenPct`, the run's player gets it (`G.Game.startRun`) and `Player.regen` adds `regenPct × maxHp` (`fork/test-regen.cjs`) |
-| `js/fork/variant-stats.js` | **shiny and radiant stat rolls**, every run (normal and Lab): N of HP, Attack, Sp. Atk, Defense, Sp. Def, Speed get +10 % (shiny) or +20 % (radiant), picked at random each run; N by rarity (Common 4, Uncommon 3, Rare 2, Epic 1, Legendary 1). On the player, so they survive a Lab evolution; a banner at the start and a pause line say which. Replaced the Lab-only +10 %/+20 % XP and coins (the Lab rerolls stay) (`fork/test-variant-stats.cjs`) |
-| `js/fork/lab/lab-toggle.js` | a **LAB** switch and an **i** in the Play button's top-right corner. The switch is the Lab mode setting itself (Settings → Experimental follows it and it follows Settings; greyed out for a guest in a room, where the host decides); the i shows what Lab mode is and what it doesn't count for on hover, focus or tap. The Play button moves into a row (`#lab-play`) that spans the menu's two columns on short screens (`fork/test-lab-toggle.cjs`) |
+| `js/fork/variant-stats.js` | **shiny and radiant stat rolls**, every run: N of HP, Attack, Sp. Atk, Defense, Sp. Def, Speed get +10 % (shiny) or +20 % (radiant), picked at random each run; N by rarity (Common 4, Uncommon 3, Rare 2, Epic 1, Legendary 1). On the player, so they survive an evolution; a banner at the start and a pause line say which. Replaced the old +10 %/+20 % XP and coins (the rerolls stay) (`fork/test-variant-stats.cjs`) |
+| `js/fork/lab/lab-toggle.js` | empty: the Play button has no switch of its own any more (kept so the script list and old checks still load it) |
 | `js/fork/effect-tips.js` | in a run, hovering an effect chip shows what it does right now: a stat boost (the stat, its total with stacks, time left), the weather (type multipliers for everyone, the HP or speed it takes from you, your moves it changes, your ability's speed) or an altar power. `js/ui/hud.js` says where it drew each chip (one hook line per chip); wraps `G.HUD.draw` inside `ui-scale.js` (`fork/test-effect-tips.cjs`) |
 | `js/fork/rift-scaling.js` | rift legendaries get harder with run time, on top of `rift.js`'s linear numbers: HP × (1 + t/600) (the regular bosses' curve), damage and shots × (1 + t/1800), XP × (1 + t/1200): 28k HP / 122 damage at 15:00, 78k / 252 at 30:00 (was 11k / 81 and 19k / 126). Hooks `G.EnemyMgr.add` for the arena's `e.legend` (`fork/test-rift-scaling.cjs`) |
 | `js/fork/open-another.js` | **Open Another** next to Continue after a roll: the same gacha pull again (×1, ×10 with tickets or a ×10 ticket, rainbow ×25) if you can still pay for it, or, after the Radiant Ritual, the next 10 shinies "Fill with Most Common" would take (never legendaries or your partner; `G.Radiant.again`) if you have 10. Notes the last pull by wrapping `G.Gacha.pull` (`fork/test-open-another.cjs`) |
 | `js/fork/over-fit.js` | the run's end screen fits the screen: wider with four tiles to a row on a wide window, zoomed down (to 0.7) if a long run still doesn't fit; phones keep upstream's scrolling layout (`fork/test-over-fit.cjs`) |
-| `js/fork/close-target.js` | close-range moves aim at what they can reach: melee, spin (and Lab's grab, bind, ramp, focus) pick a boss in reach, else the nearest enemy in reach, instead of waiting for a boss 330 px away to walk up (upstream #186, #208); a dash (and Lab's recoil, leap, roll) never fires at a rock or chest, only at enemies. Your own Pokémon, not with Manual aim (`fork/test-close-range.cjs`) |
-| `js/fork/manual-fire.js` | **Auto-shoot** (Settings > Accessibility, under Manual aim, on by default): off, the active slot's attacks only go off while you hold the left mouse button on the map, Space or the right stick; stat boosts, orbiting moves and Lab's support moves still go off on their own from any slot and **Fire mobility moves manually** (Accessibility, off by default, with or without Manual aim; plan A2.4): dashes, leaps, recoil charges and rolls only go off while that button is held, every other attack keeps firing on its own (`fork/test-manual-fire.cjs`) |
+| `js/fork/close-target.js` | close-range moves aim at what they can reach: melee, spin (and grab, bind, ramp, focus) pick a boss in reach, else the nearest enemy in reach, instead of waiting for a boss 330 px away to walk up (upstream #186, #208); a dash (and recoil, leap, roll) never fires at a rock or chest, only at enemies. Your own Pokémon, not with Manual aim (`fork/test-close-range.cjs`) |
+| `js/fork/manual-fire.js` | **Auto-shoot** (Settings > Accessibility, under Manual aim, on by default): off, the active slot's attacks only go off while you hold the left mouse button on the map, Space or the right stick; stat boosts, orbiting moves and support moves still go off on their own from any slot and **Fire mobility moves manually** (Accessibility, off by default, with or without Manual aim; plan A2.4): dashes, leaps, recoil charges and rolls only go off while that button is held, every other attack keeps firing on its own (`fork/test-manual-fire.cjs`) |
 | `js/fork/trait-names.js`, `js/fork/en-fixes.js` | English for upstream texts its English dictionary never got (the personality traits, the end screen's shinies, save-dot tooltips, move levels...); `fork/test-english.cjs` checks that no Spanish is left in the game's texts and data |
 | `js/fork/en-names.js` | the Pokémon's English names: `js/data/pokedex.js` has PokeAPI's Spanish ones, which differ for Type: Null and the Paradox Pokémon ("Bramaluna" for Roaring Moon). In English the dex carries the English name (screens marked `translate="no"` skip the dictionary), the dictionary has them too, and `fork/english.cjs` puts them in the English site pages |
 | `js/fork/en-review.js` | better English for upstream's texts (2026-10-23 review, TODO 67): its entries, keyed on upstream's Spanish, replace English that was literal, wrong or inconsistent ("Choose de Partner", "Leave the game", "room" for the lobby, "A Eevee is lost!"). One word per thing: run, lobby, coins, cooldown, moves. A context entry gives the fullscreen button "Exit" (`'Salir'` is also Log out). The site pages use it too (`fork/build.cjs` FORK_TEXTS) |
@@ -138,16 +137,14 @@ Never run `node tools/build.js` directly: it writes an unbranded `index.html` an
 Play `index.html` (the branded build). `dev.html` is upstream's raw source page and still
 says PokéSurvivor.
 
-## Lab mode
+## Moves, abilities and growth (`js/fork/lab/`)
 
-Settings → Experimental → **Lab mode** tries moves and abilities still in testing:
-each Pokémon gets the moves it learns in the games and one of its abilities, new kinds of moves
-(Fly, Double-Edge, Protect, Hypnosis, Rain Dance, Surf, Metronome...), signature moves for 70
-lines, evolving during the run, the games' items for weak Pokémon, candies from duplicates, shiny
-move colours, and **Mega Evolution** (in every run since 2026-10-21). In co-op the host's setting decides. Lab runs
-keep coins, tickets and shinies, but don't count for leaderboards, missions, achievements or
-records. The plan, the decisions and what's done are in [`fork/LAB.md`](LAB.md). The code is in
-`js/fork/lab/`; `node fork/balance-lab.cjs` compares every move's damage.
+Every run: each Pokémon gets the moves it learns in the games and one of its abilities, new kinds
+of moves (Fly, Double-Edge, Protect, Hypnosis, Rain Dance, Surf, Metronome...), signature moves for
+70 lines, evolving during the run, the games' items for weak Pokémon, candies from duplicates, shiny
+move colours and **Mega Evolution**. Runs count for the leaderboards, missions, achievements and
+records. The plan, the decisions and their history are in [`fork/LAB.md`](LAB.md) (the code keeps
+the `Lab` names: `G.Lab`, `js/fork/lab/`); `node fork/balance-lab.cjs` compares every move's damage.
 
 ## When a sync stops
 
@@ -413,12 +410,12 @@ generation, filters and sort, across reloads and runs (`js/fork/remember.js`, `d
   `EVO`/`EVO_MODS.buff` in `js/data/moves.js`, texts in `js/fork/buff-evos.js`): evolved, they
   cast on their own from any slot (`m.passive` in `Combat.tick`)
 - evolved moves renamed so none reuses a real move's name (`js/fork/evo-names.js`): upstream names
-  23 evolutions after moves that are real Lab moves here, 11 of them signatures (Fire Spin → Sacred
+  23 evolutions after moves that are real moves here, 11 of them signatures (Fire Spin → Sacred
   Fire, Thunder Wave → Volt Tackle, Ominous Wind → Shadow Force...). Each now takes another real move
   of its type the game doesn't use (Fiery Dance, Electroweb, Infernal Parade...), with official names
-  in every language (PokeAPI); only the name changes. Fly's Lab evolution is Dual Wingbeat, not Sky
+  in every language (PokeAPI); only the name changes. Fly's evolution is Dual Wingbeat, not Sky
   Attack (`lab-moves.js`). `fork/build.cjs` applies the names to the site pages too. Checked by
-  `fork/test-shadow-force.cjs` (no evolved name matches a Lab move)
+  `fork/test-shadow-force.cjs` (no evolved name matches a real move)
 
 Pass a folder as the second argument to save screenshots, and `TEST_VIEW=1920x1080` to
 change the window size.
@@ -451,7 +448,7 @@ own again (`Player.handAim`). `node fork/test-aim-style.cjs` (server).
 
 **Stats panel** (everyone, `js/fork/stats-panel.js`): a Settings → Graphics switch (off by default) that
 draws, under the HP bar in a run, your damage, speed, HP, defense, cooldown, regen and crits as they are
-now, and the upgrade cards you've taken (in `G.HUD.belowHp`, after Lab's evolution bar).
+now, and the upgrade cards you've taken (in `G.HUD.belowHp`, after the evolution bar).
 `node fork/test-stats-panel.cjs` (server).
 
 **A secret** (`js/fork/bewear.js`): in every run a Bewear waits about 3000 px south of the start;
@@ -459,11 +456,11 @@ walking up to it unlocks "Hearts" in Settings → Graphics (`save.hearts`; the r
 glow's), which draws every shot you fire as a heart (only on your screen). `node fork/test-bewear.cjs`
 (server) checks where it stands, the unlock, the hearts and the switch.
 
-**Half are new** (Lab first, `js/fork/half-new.js`): with Lab on, half of the Legendaries you pull are ones
+**Half are new** (`js/fork/half-new.js`): half of the Legendaries you pull are ones
 you don't have yet, while the banner has any (`G.GachaPick`, a one-line hook in `js/systems/gacha.js`);
 the odds screen says so. `node fork/test-half-new.cjs` (server) measures it over 4000 pulls.
 
-**Upgrade all** (Lab first, `js/fork/upgrade-all.js`): with Lab on, Upgrades has a button that maxes every
+**Upgrade all** (`js/fork/upgrade-all.js`): Upgrades has a button that maxes every
 upgrade of the Pokémon at once, after confirming the total in coins (or saying how many more it needs);
 it repaints when the list does. `node fork/test-upgrade-all.cjs` (server).
 
@@ -482,8 +479,8 @@ its tile in the collection (`G.Radiant.cell`) and in the Upgrades selector. `nod
 (an Epic or Legendary Potencia: "+20% damage", ×1.2, counts 2 towards its cap of 40), never past a cap, and the
 painted chip and border, also after a reroll. Each card's effect is repeated there with the game's
 number; a card upstream changes (its text no longer the expected one) stays Common, so the text never lies.
-A card may carry its own cap (`c.capMax`: Lab's past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
-Endless EVs in `js/fork/lab/late-hand.js` keep HP growth finite: HP EVs add 2% of max HP at the first HP EV pick, up to 50 picks (+100%); Defense EVs stop at Lab's 200% toughness cap. Enemy damage keeps its exponential late-run scaling. `node fork/test-late-hand.cjs` checks the EV offer and caps through the real level-up system.
+A card may carry its own cap (`c.capMax`: the past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
+Endless EVs in `js/fork/lab/late-hand.js` keep HP growth finite: HP EVs add 2% of max HP at the first HP EV pick, up to 50 picks (+100%); Defense EVs stop at the 200% toughness cap. Enemy damage keeps its exponential late-run scaling. `node fork/test-late-hand.cjs` checks the EV offer and caps through the real level-up system.
 
 `node fork/test-kecleon.cjs` (server) drives Kecleon's shop through the real UI (upstream has no shop test; plan
 D11): buys a Mint, an Ability Capsule and a TM, uses them on the collection card (nature, Snorlax's ability, Teach
@@ -492,18 +489,18 @@ see `fork/LAB.md`) is bought, taught, works in a Lab run and not in a normal one
 checks don't depend on which.
 
 The run's ability is shown in every run (`js/fork/ability-show.js`, plan D6): upstream picks one per run but
-never showed it; a normal run now has "Ability · Blaze" at the top and "Ability: Blaze" with upstream's effect in
-the pause menu (Lab runs keep Lab's tag and block). `node fork/test-lab-abilities.cjs` part 9, the built page too.
+never showed it; every run has "Ability · Blaze" at the top and "Ability: Blaze" with its effect in
+the pause menu. `node fork/test-lab-abilities.cjs` part 9, the built page too.
 `node fork/test-pool-bloat.cjs` (server) checks the pool-bloat fix after TMs (`js/fork/pool-bloat.js`, plan G7,
 everyone): Veto (Upgrades) has 5 levels instead of 3 (`G.Upgrades.BY.ban.max`; `js/core/db.js` keeps that many,
 a one-line hook), and while a Pokémon has fewer than 2 moves each TM-taught move enters a level-up hand's draw
-40 % of the time, so TM cards come about 0.45× as often until its own moves are in (normal and Lab runs).
+40 % of the time, so TM cards come about 0.45× as often until its own moves are in.
 Note: prestige needs every upgrade maxed, so it now needs Veto 5 too.
 `node fork/test-death-cause.cjs` (server; co-op part with the Firebase emulator) checks what knocked
 you out (`js/fork/death-cause.js`): `Player.hurt` doesn't know who hits, so hooks just before each hit
 say it (`Enemy.strike` for a touch, `Enemy.shoot` marks its shots, `Enemy.hazard` its area attacks,
 also in the host's 'hz' message to guests, `G.Interact.trapEffect`, Arceus's Judgment, and
-`G.DeathCause.by(source, fn)` for a hit that says it itself: the Lab's Eternabeam). Three runs
+`G.DeathCause.by(source, fn)` for a hit that says it itself: Eternatus's Eternabeam). Three runs
 ended by a touch, a shot and an area attack: the popup ("Knocked out by X (contact)") and the
 game-over screen's "What knocked you out" with the last hits; and a co-op guest knocked out by the
 host's boss.

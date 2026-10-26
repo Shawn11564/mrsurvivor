@@ -3,9 +3,9 @@
  * stats, in the shiny's colour (light blue) or the radiant's (orange):
  *   Stats     every run, N of its 6 stats get +10 % (shiny) or +20 % (radiant), picked at random;
  *             N by rarity (js/fork/variant-stats.js): six pips, N of them in the colour.
- *   Rerolls   in Lab runs, one more card reroll (shiny) or two (radiant) (js/fork/lab/shiny.js): the
+ *   Rerolls   in a run, one more card reroll (shiny) or two (radiant) (js/fork/lab/shiny.js): the
  *             Upgrades ones (that Pokémon's) in grey and the shiny's or radiant's in its colour.
- * (Until 2026-10-22: +10 % / +20 % XP and coins in Lab runs, shown as bars.)
+ * (Until 2026-10-22: +10 % / +20 % XP and coins in a run, shown as bars.)
  * It shows the one you're looking at (the radiant if you use it; if not, the shiny if you view it). If you
  * view the normal one and own its shiny or radiant, it shows dimmed ("Pick ... above to use it"). Viewing the
  * shiny when you also own the radiant, a line says the radiant gives more.

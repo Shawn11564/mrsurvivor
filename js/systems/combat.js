@@ -15,7 +15,7 @@
 G.Combat = (() => {
   let ghost = false;
   let fields = [];
-  // Familias de fuera (fork MrSurvivor: el modo Lab, js/fork/lab/kinds.js): kind -> { run(pl, m, ghost), reach(m), target }.
+  // Familias de fuera (fork MrSurvivor: js/fork/lab/kinds.js): kind -> { run(pl, m, ghost), reach(m), target }.
   const EXTRA = {};
 
   // ---------------- ejecutar el movimiento activo ----------------
@@ -51,7 +51,7 @@ G.Combat = (() => {
   }
 
   function run(pl, m) {
-    if (EXTRA[m.kind] && EXTRA[m.kind].over && EXTRA[m.kind].over(pl, m, ghost)) return;   // fork: Lab's dash (js/fork/lab/mobility.js)
+    if (EXTRA[m.kind] && EXTRA[m.kind].over && EXTRA[m.kind].over(pl, m, ghost)) return;   // fork: the fork's dash (js/fork/lab/mobility.js)
     switch (m.kind) {
       case 'projectile': fireProjectiles(pl, m); break;
       case 'melee':      melee(pl, m); break;
@@ -925,6 +925,6 @@ G.Combat = (() => {
   }
 
   return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields,
-           EXTRA, run, hit, reach, spotFor, segDist2, inArc,           // fork: para las familias del Lab
+           EXTRA, run, hit, reach, spotFor, segDist2, inArc,           // fork: for the extra families (js/fork/lab/kinds.js)
            get fieldCount() { return fields.length; }, get fields() { return fields; } };   // fork: fields (js/fork/move-looks.js)
 })();

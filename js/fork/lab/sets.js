@@ -1,5 +1,5 @@
-/* ============ sets.js — set bonuses in Lab runs (MrSurvivor fork) ============
- * Plan B4 (Brotato's sets), fork/LAB.md "Phase 11: builds". In a Lab run, what your move slots hold
+/* ============ sets.js — set bonuses (MrSurvivor fork) ============
+ * Plan B4 (Brotato's sets), fork/LAB.md "Phase 11: builds". In a run, what your move slots hold
  * turns on bonuses for as long as it holds them:
  *   3 damaging moves of one type:
  *     Fire       every Fire hit adds one more burn stack
@@ -36,7 +36,7 @@ G.LabSets = (() => {
   const counts = (s, moves) => moves.filter(m => s.prio ? PRIORITY.has(m.id) : m.cat && (s.type ? m.type === s.type : m.cat === s.cat)).length;
   /** The sets these moves turn on: Set of ids. */
   const compute = moves => new Set(SETS.filter(s => counts(s, moves) >= s.need).map(s => s.id));
-  /** Active sets of a player (your own Pokémon in a Lab run), counted again whenever its moves change. */
+  /** Active sets of a player (your own Pokémon in a run), counted again whenever its moves change. */
   const NONE = new Set();
   function active(pl) {
     if (!lab() || api.off || !pl || pl.remote || !pl.moves) return NONE;

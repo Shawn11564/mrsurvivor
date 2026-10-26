@@ -1,6 +1,6 @@
-/* ============ recipes.js — bond recipes in Lab runs (MrSurvivor fork) ============
+/* ============ recipes.js — bond recipes (MrSurvivor fork) ============
  * Plan B4 (Vampire Survivors' unions), fork/LAB.md "Phase 11: builds". A bond (a legendary's reward,
- * js/game.js offerBond → Player.fuse) puts moves in one slot so they cast together. In a Lab run some
+ * js/game.js offerBond → Player.fuse) puts moves in one slot so they cast together. In a run some
  * pairs in the same slot also change how a move works, for as long as they share it:
  *   Sunny Day + Solar Beam       Solar Beam fires at once: no charge
  *   Rain Dance + Thunder Shock   the bolts home in (never miss) and each hit jumps to 2 more enemies (40 %)

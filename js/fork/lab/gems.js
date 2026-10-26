@@ -1,13 +1,13 @@
-/* ============ gems.js — gems (Lab first, MrSurvivor fork) ============
- * A rare currency from Lab runs (save.gems, in the coins-and-tickets ledger: CUR in
+/* ============ gems.js — gems (MrSurvivor fork) ============
+ * A rare currency from runs (save.gems, in the coins-and-tickets ledger: CUR in
  * js/core/db.js): defeating an enemy drops one 0.7 % of the time; a boss, always one; a legendary,
- * two (G.Progress.kill). With the Lab setting on, in Upgrades:
+ * two (G.Progress.kill). In Upgrades:
  *   - 100 gems: reset the Pokémon's upgrades and get back all the coins they cost
  *     (save.ureset[dex] counts the resets: merging two copies keeps the upgrades of the one
  *     with more, as with prestige; js/fork/prestige.js);
  *   - 100 gems: go up a prestige level (js/fork/prestige.js charges it).
  * The top bar's coin bubble also shows your gems (pill, below), for everyone.
- * Texts in English, like the Lab. Test: fork/test-gems.cjs.
+ * Texts in English. Test: fork/test-gems.cjs.
  */
 G.Gems = (() => {
   const $ = id => document.getElementById(id);

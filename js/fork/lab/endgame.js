@@ -1,7 +1,7 @@
-/* ============ endgame.js — the horde keeps getting stronger (Lab first, MrSurvivor fork) ============
- * Lab's endless (after Eternatus, js/fork/lab/eternatus.js) had no wall: the horde's numbers grow linearly
+/* ============ endgame.js — the horde keeps getting stronger (MrSurvivor fork) ============
+ * The endless (after Eternatus, js/fork/lab/eternatus.js) has no wall of its own: the horde's numbers grow linearly
  * (js/data/enemies.js scale(t): HP ×(1 + t/95), damage ×(1 + t/420), speed capped at ×1.35 by 8:00) while
- * a strong build's damage grows much faster, so a good run could go on for ever. In a Lab run, every
+ * a strong build's damage grows much faster, so a good run could go on for ever. In a run, every
  * regular enemy that joins the fight from 20:00 on gets, on top of the spawner's numbers:
  *   HP      × (1 + (t − 20:00)/10 min) × 1.2 ^ ((t − 30:00)/2 min)      ×2 at 30:00, ×13.7 at 45:00, ×77 at 60:00
  *   damage  × (1 + (t − 20:00)/15 min) × 1.16 ^ ((t − 30:00)/2 min)     ×1.67 at 30:00, ×8.1 at 45:00, ×34 at 60:00

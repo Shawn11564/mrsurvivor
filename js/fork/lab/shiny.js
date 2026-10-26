@@ -1,5 +1,5 @@
-/* ============ shiny.js — shinies, more than just another colour, in Lab mode (MrSurvivor fork) ============
- * Phase 7 of fork/LAB.md. In a Lab run with your Pokémon shiny:
+/* ============ shiny.js — shinies, more than just another colour (MrSurvivor fork) ============
+ * Phase 7 of fork/LAB.md. In a run with your Pokémon shiny:
  *   - its attacks come out in ITS colours: the normal and shiny Idle sheets are compared, the
  *     pixels that change are taken and their most STRIKING colour gives a 5-tone palette (G.VFX.PAL 'shiny{dex}');
  *     each of its moves carries it in m.look (lab.js puts it above the type's).

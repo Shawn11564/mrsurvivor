@@ -1,5 +1,5 @@
-/* ============ badges.js — "good / bad for you" arrows on moves (Lab, MrSurvivor fork) ============
- * In a Lab run, everything that changes how good a move is for YOUR Pokémon gets a
+/* ============ badges.js — "good / bad for you" arrows on moves (MrSurvivor fork) ============
+ * In a run, everything that changes how good a move is for YOUR Pokémon gets a
  * small arrow stuck to the word it judges ("Fire ▲ · Special ▲"): green up (good), yellow
  * down (a bit worse), red down (much worse); over enemies, the type chart's: magenta
  * (x4), green (x2), yellow (1/2), red (1/4 and immune). There are 4 arrows (js/fork/lab/badge-art.js);
@@ -13,9 +13,9 @@
  * (one-line hook in hud.js drawTip) and the type-chart arrows over enemies
  * (one-line hook in enemy.js: enemyMark). At half their size (the 18×18 PNG, at 9; the level-up
  * cards' at 2/3, 12, since 22-10-2026): left of the enemy's health bar, or centred above it if it has none yet.
- * The enemy ones in every run since 21-10-2026 (the game's, bigger and always
- * left of where the bar would go, covered the enemy); the move ones only in the Lab.
- * Texts in English only, like the rest of the Lab. Test: fork/test-badges.cjs.
+ * The enemy ones replace the game's own (bigger and always
+ * left of where the bar would go, which covered the enemy).
+ * Texts in English only. Test: fork/test-badges.cjs.
  */
 G.LabBadges = (() => {
   const F = (w, s) => `${w} ${s}px Pixelify,"Segoe UI",system-ui,sans-serif`;

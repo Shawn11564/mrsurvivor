@@ -1,6 +1,6 @@
-/* ============ move-traits.js — the close-range and mobility moves' own identity, in Lab runs (MrSurvivor fork) ============
+/* ============ move-traits.js — the close-range and mobility moves' own identity (MrSurvivor fork) ============
  * fork/PLAN-2026-10-22.md A3 (stream A). The one ladder per kind makes every melee move a 360° swing at
- * level 5, and most upstream moves differ from their kind only in numbers. In a Lab run these get a trait
+ * level 5, and most upstream moves differ from their kind only in numbers. In a run these get a trait
  * from fields the game already has, registered in G.LabMech.ID (js/fork/lab/mech.js, Phase 10: `add`
  * fields, `upsAt` steps, `evo`, `note`), so there is one identity table for every stream:
  *
@@ -17,8 +17,8 @@
  *   Flame Charge  `rush`: each cast stacks a speed boost (+8 %, 4 s, up to 3)
  *
  * Also here: the moves a run starts with are made before G.Lab.active (in G.Game.startRun), so they
- * missed their Lab identity; right after the run starts they're swapped for Lab copies (retrofit, for
- * every G.LabMech.ID move). And the move's box says a Lab mover comes back (policy (a)).
+ * missed their identity; right after the run starts they're swapped for copies that have it (retrofit, for
+ * every G.LabMech.ID move). And the move's box says a mover comes back (policy (a)).
  * Hooks: G.LabMech.ID entries, wraps G.Game.startRun, G.MoveText.tipNotes, G.Player.prototype.cast and
  * hurt. Test: fork/test-close-range.cjs.
  */
@@ -55,12 +55,12 @@ G.LabTraits = (() => {
   const M = G.LabMech;
   for (const id in TRAITS) M.ID[id] = TRAITS[id](G.Moves.BY_ID[id]);
   const MOVER = 'It goes the way you\'re walking (toward your target when you stand still), hits everything in its path, and you stay where you are.';
-  // In Lab the close-range cut is 35 % (js/fork/lab/kinds2.js LAB_CLOSE): the box says so.
+  // In a run the close-range cut is 35 % (js/fork/lab/kinds2.js LAB_CLOSE), not upstream's 25 %: the box says so.
   const CLOSE_ES = 'Cuerpo a cuerpo: mientras está activo recibes un 25 % menos de daño.';
   const CLOSE_LAB = 'Close range: you take 35% less damage while it’s active.';
   M.keep(...Object.values(TEXT), STEP4.t, EVO.t, MOVER, CLOSE_LAB);
 
-  /** The run's first moves were made before G.Lab.active: swap them for their Lab copies. */
+  /** The run's first moves were made before G.Lab.active: swap them for copies that have their identity. */
   function retrofit(pl) {
     const swap = new Map();
     for (const m of pl.moves) {
@@ -83,7 +83,7 @@ G.LabTraits = (() => {
     };
   });
 
-  // The move's box (js/fork/move-text.js): a Lab mover comes back.
+  // The move's box (js/fork/move-text.js): a mover comes back.
   const tipNotes = G.MoveText.tipNotes;
   G.MoveText.tipNotes = function (m) {
     const out = tipNotes.apply(this, arguments);

@@ -3,7 +3,7 @@
  * HP bar: damage, speed, max HP, defense, cooldown, regeneration and crits as they
  * stand right now (upgrades, cards, items and boosters included), and the upgrade cards taken
  * (Potencia 3 · Carrera 2...). It's drawn in the G.HUD.belowHp slot (js/ui/hud.js), after whatever
- * was already there (Lab's evolution), and the interface scale (ui-scale.js) enlarges it with the
+ * was already there (the evolution bar, js/fork/lab/evo-hud.js), and the interface scale (ui-scale.js) enlarges it with the
  * rest. Test: fork/test-stats-panel.cjs.
  */
 G.StatsPanel = (() => {

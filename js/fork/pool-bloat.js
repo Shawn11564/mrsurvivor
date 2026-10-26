@@ -1,6 +1,6 @@
 /* ============ pool-bloat.js — fewer new-move cards from TMs early on, and 5 vetoes (MrSurvivor fork) ============
  * Plan G7 (upstream #281, #232; doofcraft went 3 -> 5 bans). TMs taught at Kecleon's add moves of other
- * types to what a Pokémon can learn, in every run (and in Lab runs since plan D4), so a dual-type with a
+ * types to what a Pokémon can learn, in every run, so a dual-type with a
  * few TMs got so many new-move cards that it never reached the stat cards. For everyone:
  *   - Veto (Upgrades) goes to 5 levels instead of 3 (G.Upgrades.BY.ban.max; levels 4 and 5 cost
  *     2,060 and 3,910 coins with upstream's formula). js/core/db.js keeps up to that many per Pokémon
@@ -9,7 +9,7 @@
  *     draw TM_KEEP of the time (the moves it knows without a TM always do): TM cards come about 40 %
  *     as often until its own moves are in. From the 2nd move on, as before.
  * Hooks: G.LevelUp.offer (marks whose hand is being drawn, chained) and G.Moves.poolFor (outermost: it
- * loads after js/fork/lab/lab.js, so it sees the Lab list too). Test: fork/test-pool-bloat.cjs.
+ * loads after js/fork/lab/lab.js, so it sees lab.js's list too). Test: fork/test-pool-bloat.cjs.
  */
 G.PoolBloat = (() => {
   const BANS = 5, TM_KEEP = 0.4, EARLY = 2;

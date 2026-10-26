@@ -1,23 +1,23 @@
-/* ============ contracts.js — per-Pokémon contracts (Lab first, MrSurvivor fork) ============
+/* ============ contracts.js — per-Pokémon contracts (MrSurvivor fork) ============
  * Maxing one Pokémon costs ~40 800 coins, earned at the same rate whoever you play, so nothing rewards a
  * different build or a different Pokémon (plan root cause 5, C1.5). A CONTRACT is a goal for one Pokémon
  * (matched on its dex: the strong side, the types) whose reward is coins for THAT Pokémon's upgrades and,
  * since 2026-10-23, 1 candy of it (save.lab.candy, js/fork/lab/growth.js):
  *   side20   Reach 20:00 with 3 physical (or special: its strong side) moves      1500
  *   mono15   Reach 15:00 with 3 moves of its own type (others may come too; a type
- *            its Lab evolution brings counts)                                       1200
+ *            its evolution in the run brings counts)                                1200
  *            (until 2026-10-23: 3+ moves and EVERY one of its type, the run's first species')
  *   rift     Win a rift fight without switching your active move                    1000
  * Progress: for the two timed ones, prog is the furthest the clock got (÷ its time) while you had the 3
- * moves; Missions draws it and the Lab pause menu says where each stands now (G.Lab.pauseLine).
- * Lab first: they show (Missions, a "Contracts" block for your partner) and progress only with the Lab
- * on; Lab runs count for missions since 2026-10-22 (fork/LAB.md). The run's Pokémon is the one you
- * started with (a Lab evolution keeps its contracts).
+ * moves; Missions draws it and the run's pause menu says where each stands now (G.Lab.pauseLine).
+ * They show (Missions, a "Contracts" block for your partner) on the menus, and progress only while a run
+ * is going (G.Lab.active). The run's Pokémon is the one you
+ * started with (an evolution during the run keeps its contracts).
  * The save: save.contracts[dex][id] = { prog, done, claimed } and save.cspent[dex] (contract coins
  * spent). The balance is what the claimed ones paid minus cspent, so it merges cleanly: G.forkMerge
  * keeps prog's max, done and claimed if either copy has them, and cspent's max.
  * Spending: Upgrades with that Pokémon selected has a banner over the list with your coins and its
- * contract coins side by side (with Lab on, also at 0, saying where they come from), and its buy buttons
+ * contract coins side by side (also at 0, saying where they come from), and its buy buttons
  * use them first and say how much they cover; js/ui/menu.js's own buy does the purchase.
  * The defs also go into G.MissionDefs (contracts list and BY, before the first G.Progress.ensure), so
  * G.Progress.text / rewardText work on them. Hooks: G.Progress.event ('rift'), G.Player.prototype.setActive,
@@ -31,7 +31,7 @@ G.LabContracts = (() => {
   const side = mon => G.Stats.sideOf(mon);
   const attacks = pl => pl.moves.filter(m => m.kind !== 'buff' && m.cat);
   const typeName = t => G.T(G.U.TYPE_NAME[t] || t);
-  /** Its types: the contract's Pokémon's, and the run's species' (a Lab evolution can bring one). */
+  /** Its types: the contract's Pokémon's, and the run's species' (an evolution during the run can bring one). */
   const typesOf = (mon, pl) => [...new Set([...mon.types, ...((pl && pl.mon && pl.mon.types) || [])])];
   const NEED = 3, CANDY = 1;
   // Timed ones: T seconds on the clock while you have NEED of the moves `has` gives.
@@ -85,7 +85,7 @@ G.LabContracts = (() => {
   }
   const mmss = t => G.U.mmss(Math.floor(t));
 
-  // ---------------- progress (Lab runs) ----------------
+  // ---------------- progress (while a run is going) ----------------
   let runDex = 0, wasIn = false, switched = false;
   function wrapRun() {
     const start = G.Game.startRun;
@@ -216,7 +216,7 @@ G.LabContracts = (() => {
       };
     });
   }
-  // In a Lab run, the pause menu: where each contract stands now.
+  // In a run, the pause menu: where each contract stands now.
   G.Lab.pauseLine(pl => {
     if (!runDex || !G.DEX_BY[runDex] || !save()) return '';
     const mon = G.DEX_BY[runDex], t = G.Game.st.time;

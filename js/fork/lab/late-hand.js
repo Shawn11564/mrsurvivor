@@ -1,5 +1,5 @@
-/* ============ late-hand.js — decisions for a late hand (Lab first, MrSurvivor fork) ============
- * Late in a run the level-up hand collapses to the same few cards (plan root cause 3, C1.4). In a Lab run:
+/* ============ late-hand.js — decisions for a late hand (MrSurvivor fork) ============
+ * Late in a run the level-up hand collapses to the same few cards (plan root cause 3, C1.4). In a run:
  *   - PAST THE CAP, AT A PRICE: Carrera (speed, capped at 8) and Reflejos (cooldown, capped at 10) keep
  *     coming after their cap, up to EXTRA more each, and each of those cards costs COST of your max HP.
  *     A real choice: more speed or cooldown for a smaller health bar. The card is a normal upgrade card
@@ -13,7 +13,7 @@
  *     on, an endless run's level-ups take the EV card by themselves, with no menu. In co-op the cards
  *     don't open either: the EV card is your pick (G.Coop.localPicked, through the game's own callback)
  *     and a small banner says which, and who you're waiting for, until everyone has picked (closeLevelUp).
- *     Ticking it with a hand open takes that hand's EV card at once. A hand without an EV card (a Lab
+ *     Ticking it with a hand open takes that hand's EV card at once. A hand without an EV card (an
  *     evolution's) still opens: that one is a real choice.
  * Hooks: G.LevelUp.offer, G.RunUI.showLevelUp / setWaiting / closeLevelUp. Texts in English. Test: fork/test-late-hand.cjs.
  */

@@ -1,10 +1,10 @@
-/* ============ candy-name.js — how many candies, next to the name (Lab, MrSurvivor fork) ============
+/* ============ candy-name.js — how many candies, next to the name (MrSurvivor fork) ============
  * In the collection, a Pokémon's page shows "🍬 N" right after its name: the candies its evolution
  * line has left to spend on stats (G.LabGrowth.left: earned minus spent; the whole line shares them,
  * so Charmander and Charizard show the same). The tooltip says how many were earned and spent and
- * where they go. Shown when the line has earned some, or with the Lab setting on (then 🍬 0 too).
+ * where they go. Always shown, 🍬 0 too when the line has earned none.
  * Hook: G.VariantBonus.detail, which js/ui/menu.js showDetail calls once the page is drawn.
- * English only, like the rest of Lab. Test: fork/test-candy.cjs part 5.
+ * English only. Test: fork/test-candy.cjs part 5.
  */
 (() => {
   const L = G.LabGrowth, detail = G.VariantBonus.detail;

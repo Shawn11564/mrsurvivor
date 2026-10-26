@@ -7,8 +7,8 @@
  *     clean; a run tainted since loses its record),
  *   - when the run ends and is sent (G.Ranking.submitSolo / submitGroup): that final record, until the
  *     server has it.
- * Whatever is left is sent on the next visit, once signed in (to the Lab boards if it was a Lab run: lab.js
- * keeps r.lab). A Lab run resumed after a reload (js/fork/lab/resume.js) counts as well when it ends.
+ * Whatever is left is sent on the next visit, once signed in (to the board the record names: lab.js
+ * keeps r.lab, so an old record queued as a Lab run keeps its Lab archive category). A run resumed after a reload (js/fork/lab/resume.js) counts as well when it ends.
  * Loaded before js/fork/lab/lab.js, so lab.js's wrapper of the submissions sits outside this one.
  * Checked by fork/test-run-record.cjs.
  */

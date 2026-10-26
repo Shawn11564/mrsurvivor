@@ -1,4 +1,4 @@
-/* ============ anims.js — animations for Lab mode's signature moves (MrSurvivor fork) ============
+/* ============ anims.js — animations for the signature moves (MrSurvivor fork) ============
  * Phase 5 of fork/LAB.md. Each signature (js/fork/lab/lab-moves.js) says which Mystery Dungeon
  * animations it prefers (anim: ['Kick', 'Attack']). The usual 7 are already there; the rest are
  * downloaded by fork/fetch-lab-anims.py to assets/pokemon/{dex}/lab/ and their geometry is in G.LAB_ANIMS
@@ -40,7 +40,7 @@ G.LabAnims = (() => {
     return g ? g.d.reduce((s, d) => s + d, 0) / 60 : 0;
   }
 
-  /** Your Pokémon's signature sheets (G.Lab, when a Lab run starts). */
+  /** Your Pokémon's signature sheets (G.Lab, when a run starts). */
   function preload(pl) {
     const m = pl && G.SPRITE_META[pl.dex];
     if (!m) return;

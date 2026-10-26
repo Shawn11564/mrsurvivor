@@ -77,7 +77,7 @@ G.HUD = (() => {
     ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), px + 48 + 84, py + 26);
     }
 
-    // Fork: lo que va entre la vida y los buffs (la evolución del Lab, js/fork/lab/evo-hud.js): su alto.
+    // Fork: lo que va entre la vida y los buffs (the evolution bar, js/fork/lab/evo-hud.js): su alto.
     const by = py + 34 + (G.HUD.belowHp ? G.HUD.belowHp(ctx, pl, px, py + 34) : 0);
 
     // buffs activos

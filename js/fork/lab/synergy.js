@@ -1,5 +1,5 @@
-/* ============ synergy.js — synergy cards in Lab runs (MrSurvivor fork) ============
- * Plan B4 (20 Minutes Till Dawn's synergies), fork/LAB.md "Phase 11: builds". In a Lab run, a
+/* ============ synergy.js — synergy cards (MrSurvivor fork) ============
+ * Plan B4 (20 Minutes Till Dawn's synergies), fork/LAB.md "Phase 11: builds". In a run, a
  * red-bordered "Synergy" level-up card only exists once you own its prerequisites (two moves of the
  * right kinds); taking it adds a rule for the rest of the run (pl._labSyn, kept by resume.js):
  *   Frost Fire   an Ice move + a Fire move        your Ice hits also burn

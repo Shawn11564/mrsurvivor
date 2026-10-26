@@ -1,4 +1,4 @@
-/* ============ mobility.js — moves that move you, in Lab runs (MrSurvivor fork) ============
+/* ============ mobility.js — moves that move you (MrSurvivor fork) ============
  * fork/PLAN-2026-10-22.md section A (stream A); fork/LAB.md "Close range and mobility".
  *
  * The way you walk, and back (A2, policy (a), the owner's choice G1): a dash or a recoil charge
@@ -7,7 +7,7 @@
  * of Vampire Survivors: the move is directional, you're never displaced. It only fires when an enemy
  * lies on that line within its length (the clock waits, like js/fork/manual-fire.js). No camera kick.
  * The dash is drawn here (G.Combat.EXTRA.dash.over, a one-line hook in combat.js run); recoil and roll
- * are Lab kinds (js/fork/lab/kinds.js) and use the aim this file sets when they fire. A teammate's
+ * are kinds of js/fork/lab/kinds.js and use the aim this file sets when they fire. A teammate's
  * copy (ghost) draws the line from its aim, which the cast message carries, as before.
  * Per move (A3): `pivot` (U-turn, Volt Switch, Flip Turn, Parting Shot): after the hit you switch to the
  * next slot (pl.cycle(1)); `rush` (Flame Charge): each cast stacks a speed boost; `meek` on a dash
@@ -20,8 +20,8 @@
  * at most once per RELOC_EVERY s: an evolved Quick Attack recharges in under 0.5 s and would otherwise
  * never be hit at all.
  *
- * Only your own Pokémon, only in Lab runs. Hooks: G.Combat.EXTRA.dash.over, wraps G.Combat.tick,
- * G.Player.prototype.cast (after Lab's kinds), hurt and update. Test: fork/test-close-range.cjs.
+ * Only your own Pokémon, only while a run is going. Hooks: G.Combat.EXTRA.dash.over, wraps G.Combat.tick,
+ * G.Player.prototype.cast (after kinds.js's kinds), hurt and update. Test: fork/test-close-range.cjs.
  */
 G.LabMobility = (() => {
   const C = G.Combat;
@@ -75,7 +75,7 @@ G.LabMobility = (() => {
     return tick.apply(this, arguments);
   };
 
-  /** Lab's dash: along pl.aim, hit, and you stay where you were. */
+  /** The dash: along pl.aim, hit, and you stay where you were. */
   function dash(pl, m) {
     const c = col(m), v = G.VFX.forMove(m), a = pl.aim, ca = Math.cos(a), sa = Math.sin(a);
     const sx = pl.x, sy = pl.y, len = lineLen(pl, m, a), ex = sx + ca * len, ey = sy + sa * len;
@@ -101,7 +101,7 @@ G.LabMobility = (() => {
   C.EXTRA.dash = {
     target: true, reach: m => m.radius + 60,                           // as combat.js reach
     over(pl, m, ghost) {
-      if (ghost || !lab()) return false;                                // a teammate's copy, a normal run: combat.js
+      if (ghost || !lab()) return false;                                // a teammate's copy, or no run going: combat.js
       dash(pl, m);
       after(pl, m);
       return true;

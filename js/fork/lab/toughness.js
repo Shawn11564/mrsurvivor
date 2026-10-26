@@ -1,12 +1,12 @@
-/* ============ toughness.js — defense as toughness, and a speed cap (Lab first, MrSurvivor fork) ============
- * In a Lab run:
+/* ============ toughness.js — defense as toughness, and a speed cap (MrSurvivor fork) ============
+ * In a run:
  *   - Defense (dmgReduce from upgrades, cards, items, prestige, and the defense booster) is
  *     TOUGHNESS: you take 1 / (1 + toughness) of the damage. +100 % is half; capped at +200 % (a third).
  *     Before, it was subtracted as is (up to 80 % less), and stacking it got close to taking no damage.
  *   - Speed has a cap: ×2.5 of yours (upgrades, cards and boosters together). Once the cap
  *     is reached, the Carrera card (+speed) doesn't come up.
  *   - The Coraza card says "toughness" instead of "damage reduction".
- * Hooks: G.Player's reduction and spd getters, G.LevelUp.offer. Outside Lab nothing changes.
+ * Hooks: G.Player's reduction and spd getters, G.LevelUp.offer. Outside a run (the menus) nothing changes.
  * Test: fork/test-toughness.cjs.
  */
 G.Toughness = (() => {

@@ -1,5 +1,5 @@
-/* ============ wild-legends.js — wild legendaries roaming the map (Lab first, MrSurvivor fork) ============
- * In a Lab run, from minute 15, a wild legendary appears on the map (not in the rift)
+/* ============ wild-legends.js — wild legendaries roaming the map (MrSurvivor fork) ============
+ * In a run, from minute 15, a wild legendary appears on the map (not in the rift)
  * every GAP seconds while fewer than MAX are alive: a random one among those with a sprite,
  * 650-850 px from a player, with its own HP and damage (they grow with the minute; more HP in co-op, like
  * bosses). It acts as a boss (HP bar, boss reward), but doesn't count as beating that

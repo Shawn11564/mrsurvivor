@@ -1,5 +1,5 @@
-/* ============ resume.js — carry on with the run after a reload (Lab first, MrSurvivor fork) ============
- * In a solo Lab run, every 5 s (and when the tab closes) this browser saves (localStorage
+/* ============ resume.js — carry on with the run after a reload (MrSurvivor fork) ============
+ * In a solo run, every 5 s (and when the tab closes) this browser saves (localStorage
  * ms.resume) what it takes to carry on: the time, the map seed, where you
  * are, your Pokémon (its current form), level and experience, HP, the multipliers (cards,
  * upgrades, item, prestige, Lab), the cards taken, the moves with their level and whether they have
@@ -10,7 +10,7 @@
  * and no end-of-run coins; tickets were banked when picked up, so those stay).
  * Tickets were already saved when picked up: they don't count again. The save is deleted when the run ends:
  * the moment you fall and when the summary shows (see below), so a reload after that offers nothing.
- * The clock is set with G.Game.resumeAt (since 2026-10-24: a resumed run counts on the Lab leaderboard like any
+ * The clock is set with G.Game.resumeAt (since 2026-10-24: a resumed run counts on the leaderboard like any
  * other; it used to be G.Game.debugTime, which tainted it). A run already tainted when saved (s.ok false) stays so.
  * Not in co-op: the run belongs to the host. Texts in English. Test: fork/test-resume.cjs.
  */

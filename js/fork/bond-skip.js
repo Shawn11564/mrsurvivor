@@ -1,7 +1,7 @@
 /* ============ bond-skip.js — "Keep them apart" on the bond screen (MrSurvivor fork) ============
  * A bond (js/ui/run-ui.js showBond) can be turned down: the "Keep them apart" button spends it without
  * joining any moves and gives +2.5 % damage to every move for the rest of the run (pl.atkMul, which
- * Lab's resume keeps; several stack: ×1.050625...), the first MAX times in a run (pl.bondsKept counts
+ * js/fork/lab/resume.js keeps; several stack: ×1.050625...), the first MAX times in a run (pl.bondsKept counts
  * them; was +10 % with no limit until 2026-10-23). After that the button still keeps them apart, with no
  * bonus, and says so. Per player, so co-op needs nothing more: the
  * screen closes as after a pick and game.js offerBond's callback, given null, just carries on.
