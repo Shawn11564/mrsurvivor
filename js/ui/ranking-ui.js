@@ -2,15 +2,14 @@
  * Pestañas Solo / Grupo, periodo (diario ... histórico), todos o sólo amigos,
  * filtro por Pokémon (sólo en el histórico) y tu puesto abajo aunque no salgas
  * en el top. Lo leído se guarda 2 h (ver ranking.js).
- * Fork: a switch next to Solo / Group shows the old Lab copy of every board
- * (read-only; mode 'ls' / 'lg' in ranking.js). It starts off. Another one shows the World 2 boards ('ws' / 'wg',
- * js/fork/lab/worlds.js); the two are never on together.
+ * Fork: a LAB switch next to Solo / Group shows the Lab copy of every board (mode 'ls' / 'lg' in ranking.js:
+ * runs played with Lab mode on, js/fork/lab/worlds-toggle.js). It starts as your Lab mode setting.
  */
 G.RankingUI = (() => {
   const $ = G.UI.$;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let mode = 's', period = 'w', scope = 'all', dex = null, lab = null, w2 = false;
-  const m = () => (lab ? 'l' : w2 ? 'w' : '') + mode; // the board's mode (fork: old Lab boards, World 2 boards)
+  let mode = 's', period = 'w', scope = 'all', dex = null, lab = null;
+  const m = () => (lab ? 'l' : '') + mode;            // the board's mode (fork: Lab boards)
   let token = 0;
 
   function init() {
@@ -41,7 +40,7 @@ G.RankingUI = (() => {
     G.UI.show('scr-rank', true);
     if (!G.Social.started) G.Social.start();
     $('rk-mod').classList.toggle('hidden', !G.Ranking.isAdmin());
-    if (lab === null) lab = false;
+    if (lab === null) lab = !!G.Settings.get('worlds');   // fork: starts as the Lab mode setting
     tabs();
     load();
   }
@@ -59,27 +58,19 @@ G.RankingUI = (() => {
     };
     mk($('rk-mode'), [['s', `<b>${G.Icons.html('user', 16)} Solo</b>`], ['g', `<b>${G.Icons.html('friends', 16)} Grupo</b>`]],
        mode, k => { mode = k; }, 'gen-tab');
-    // Fork: the old Lab boards, a switch at the end of the row.
+    // Fork: the Lab boards, a switch at the end of the row.
     const lb = document.createElement('button');
     lb.className = 'gen-tab rk-lab' + (lab ? ' on' : '');
-    lb.title = 'Archived Lab runs from before promotion';
-    lb.innerHTML = '<span class="lab-badge">Lab archive</span>';
-    lb.onclick = () => { lab = !lab; if (lab) w2 = false; tabs(); load(); };
+    lb.id = 'rk-lab';
+    lb.title = 'The Lab leaderboard: runs played with Lab mode on';
+    lb.setAttribute('translate', 'no');
+    lb.innerHTML = '<span class="lab-badge">LAB</span>';
+    lb.onclick = () => { lab = !lab; tabs(); load(); };
     $('rk-mode').appendChild(lb);
-    // Fork: World 2 runs (js/fork/lab/worlds.js) have their own boards.
-    const wb = document.createElement('button');
-    wb.className = 'gen-tab rk-w2' + (w2 ? ' on' : '');
-    wb.id = 'rk-w2';
-    wb.title = 'Runs with the World 2 switch on';
-    wb.setAttribute('translate', 'no');
-    wb.innerHTML = '<b>World 2</b>';
-    wb.onclick = () => { w2 = !w2; if (w2) lab = false; tabs(); load(); };
-    $('rk-mode').appendChild(wb);
     let note = $('rk-labnote');
     if (!note) { $('rk-mode').insertAdjacentHTML('afterend', '<p id="rk-labnote" class="note lab-note"></p>'); note = $('rk-labnote'); }
-    note.classList.toggle('hidden', !lab && !w2);
-    note.innerHTML = lab ? 'Lab archive: past runs before promotion. New runs are on the regular leaderboard.'
-      : 'World 2: runs with the WORLD 2 switch on (by Play). They count here, not on the regular boards.';
+    note.classList.toggle('hidden', !lab);
+    note.innerHTML = 'Lab leaderboard: runs played with Lab mode on (the LAB switch by Play). They count here, not on the regular leaderboard.';
     mk($('rk-period'), G.Ranking.PERIODS, period, k => {
       period = k;
       if (k !== 'a' && dex) { dex = null; $('rk-poke').value = ''; $('rk-clear').classList.add('hidden'); }
@@ -129,7 +120,7 @@ G.RankingUI = (() => {
     const pn = en ? { d: 'today', w: 'this week', m: 'this month', y: 'this year', a: 'of all time' }[period]
                   : { d: 'de hoy', w: 'de esta semana', m: 'de este mes', y: 'de este año', a: 'de siempre' }[period];
     const mon = dex ? G.DEX_BY[dex].name : '';
-    const where = (lab ? 'Lab ' : w2 ? 'World 2 ' : '') + (en ? (mode === 's' ? 'solo' : 'group') + (dex ? ' with ' + mon : '')
+    const where = (lab ? 'Lab ' : '') + (en ? (mode === 's' ? 'solo' : 'group') + (dex ? ' with ' + mon : '')
                      : (mode === 's' ? 'en solitario' : 'en grupo') + (dex ? ' con ' + mon : ''));
     $('rk-me').removeAttribute('translate');
     $('rk-me').innerHTML = !G.Social.me ? 'Elige un apodo (en Amigos) para salir en el ranking.'

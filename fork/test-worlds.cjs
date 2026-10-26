@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// World 2 (js/fork/lab/worlds.js and its switch, js/fork/lab/worlds-toggle.js), in headless Edge on dev.html:
+// Lab mode: World 2 (js/fork/lab/worlds.js and its LAB switch, js/fork/lab/worlds-toggle.js), in headless Edge on dev.html:
 //
 //   node fork/serve.cjs                 (or python -m http.server 8123 in the repo root)
 //   node fork/test-worlds.cjs [base-url]
 //   (co-op part: npx firebase-tools emulators:start --project demo-ps --only auth,firestore,database)
 //
-//   1. The WORLD 2 switch by Play is the 'worlds' setting, and clicking it doesn't start a run.
+//   1. The LAB switch by Play is the 'worlds' setting (Lab mode), and clicking it doesn't start a run.
 //   2. A World 2 run: rifts stop 2 min before 10:00; nothing at 9:50, the Eternatus raid at 10:00.
 //   3. Beating it opens the portal near you; the next raid is Necrozma at 30:00.
 //   4. World 1 grows stronger from then on (×1.25 HP, ×1.15 damage a minute) and, after 60 s, the ghost rush:
@@ -94,8 +94,10 @@ const probe = page => page.evaluate(() => {
     const s0 = await page.evaluate(() => !!G.Settings.get('worlds'));
     await page.click('#w2-q');
     await page.waitForTimeout(300);
-    const s1 = await page.evaluate(() => ({ on: !!G.Settings.get('worlds'), box: document.getElementById('w2-q-on').checked, state: G.Game.state }));
-    check(!s0 && s1.on && s1.box && s1.state === 'ui', 'off by default; clicking WORLD 2 turns the setting on, and doesn\'t start a run', { s0, s1 });
+    const s1 = await page.evaluate(() => ({ on: !!G.Settings.get('worlds'), box: document.getElementById('w2-q-on').checked, state: G.Game.state,
+      label: document.getElementById('w2-q').textContent.trim(), tip: document.querySelector('.w2-tip').textContent }));
+    check(!s0 && s1.on && s1.box && s1.state === 'ui' && s1.label === 'LAB' && /Lab mode/.test(s1.tip) && /Lab leaderboard/.test(s1.tip),
+      'off by default; the switch says LAB and its tip Lab mode / Lab leaderboard; clicking it turns Lab mode on, and doesn\'t start a run', { s0, s1: Object.assign({}, s1, { tip: s1.tip.slice(0, 60) }) });
 
     const run = worlds => page.evaluate(w => { G.Settings.set('underdogLadder', false); G.Settings.set('worlds', w); if (G.Game.player && G.Game.state !== 'ui') G.Game.quit(); G.UI.hideAll(); G.Game.toUI(); G.Game.startRun(null, { dex: 4, shiny: false }); }, worlds)
       .then(() => page.waitForFunction(() => G.Game.state === 'playing' && G.Game.player, null, { timeout: 15000 }))

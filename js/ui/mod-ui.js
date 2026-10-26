@@ -54,8 +54,8 @@ G.ModUI = (() => {
   /** "s_w2026-42" -> "Solo · Semana" */
   function boardName(b) {
     const [m, p0] = b.split('_');
-    const lab = p0.startsWith('L'), w2 = p0.startsWith('W'), p = lab || w2 ? p0.slice(1) : p0;   // a Lab or World 2 board (fork, ranking.js)
-    const mode = (lab ? 'Lab archive · ' : w2 ? 'World 2 · ' : '') + (m === 'g' ? 'Grupo' : 'Solo');
+    const lab = p0.startsWith('L'), p = lab ? p0.slice(1) : p0;   // a Lab board (fork, ranking.js)
+    const mode = (lab ? 'Lab · ' : '') + (m === 'g' ? 'Grupo' : 'Solo');
     const per = p.startsWith('d') ? 'Hoy' : p.startsWith('w') ? 'Semana' : p.startsWith('m') ? 'Mes' : 'Histórico';
     const dex = (b.match(/_p(\d+)$/) || [])[1];
     return mode + ' · ' + per + (dex && G.DEX_BY[dex] ? ' · sólo ' + G.DEX_BY[dex].name : '');
@@ -69,7 +69,7 @@ G.ModUI = (() => {
     for (const g of groups) {
       const row = document.createElement('div');
       row.className = 'rk-row mod-row rep';
-      const mode = (g.board[2] === 'L' ? 'l' : g.board[2] === 'W' ? 'w' : '') + (g.board.startsWith('g_') ? 'g' : 's');
+      const mode = (g.board[2] === 'L' ? 'l' : '') + (g.board.startsWith('g_') ? 'g' : 's');
       // Lo que se ve de la marca ahora en su tabla (nivel, derrotados, Pokémon).
       const info = await G.Ranking.entryInfo(g.board, g.e).catch(() => null);
       const t = info ? info.t : g.t;

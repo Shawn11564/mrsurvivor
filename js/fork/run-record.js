@@ -8,7 +8,7 @@
  *   - when the run ends and is sent (G.Ranking.submitSolo / submitGroup): that final record, until the
  *     server has it.
  * Whatever is left is sent on the next visit, once signed in (to the board the record names: lab.js
- * keeps r.lab, so an old record queued as a Lab run keeps its Lab archive category). A run resumed after a reload (js/fork/lab/resume.js) counts as well when it ends.
+ * keeps r.lab, so a Lab mode run, js/fork/lab/worlds.js, stays on the Lab boards). A run resumed after a reload (js/fork/lab/resume.js) counts as well when it ends.
  * Loaded before js/fork/lab/lab.js, so lab.js's wrapper of the submissions sits outside this one.
  * Checked by fork/test-run-record.cjs.
  */
@@ -31,7 +31,7 @@ G.RunRecord = (() => {
     if (group && !pl.coopHost) return null;              // a group run goes up from its host
     const rid = runId(pl);
     if (!G.Game.isClean || !G.Game.isClean()) return { id: rid, tainted: true };
-    const r = { t: Math.floor(G.Game.st.time), lv: pl.level, kills: pl.kills, lab: false, w2: !!(G.Worlds && G.Worlds.on) };   // w2: World 2 boards
+    const r = { t: Math.floor(G.Game.st.time), lv: pl.level, kills: pl.kills, lab: !!(G.Worlds && G.Worlds.on) };   // lab: a Lab mode run
     if (group) r.members = G.RunAppearance.members();
     else Object.assign(r, G.RunAppearance.of(pl));
     return { id: rid, who: uid, at: Date.now(), group, r };

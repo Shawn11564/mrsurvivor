@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// No "Lab" wording in what players read. Every Lab system has been part of every run since 2026-10-25
-// (fork/LAB.md, "Promotion"), so a text that says something is "Lab"-only, or tags it "LAB", is wrong.
+// No "Lab" wording in what players read, except for Lab mode itself. Every earlier Lab system has been part of
+// every run since 2026-10-25 (fork/LAB.md, "Promotion"), so a text that says one of those is "Lab"-only, or tags it
+// "LAB", is wrong. Since 2026-10-26 Lab mode is an opt-in again (the LAB switch by Play: World 2,
+// js/fork/lab/worlds.js), and only its switch and the Lab leaderboard may name it.
 //
 //   node fork/test-no-lab-text.cjs
 //
@@ -13,9 +15,10 @@ const ROOT = path.join(__dirname, '..');
 const acorn = require(require.resolve('acorn', { paths: require('./pw.cjs').NODE_DIRS }));
 
 const ALLOW = [
-  // The leaderboard's archive of the runs played while Lab was a separate mode (and its moderation view).
-  [/js\/ui\/ranking-ui\.js$/, /Lab archive|Archived Lab runs|^Lab $/],
-  [/js\/ui\/mod-ui\.js$/, /^Lab archive · $/],
+  // Lab mode (2026-10-26): its switch by Play, the Lab leaderboard and its moderation view.
+  [/js\/fork\/lab\/worlds-toggle\.js$/, /Lab mode|Lab runs|Lab leaderboard/],
+  [/js\/ui\/ranking-ui\.js$/, /Lab leaderboard|^Lab $|lab-badge">LAB</],
+  [/js\/ui\/mod-ui\.js$/, /^Lab · $/],
   // The admin's change log: past days' entries keep the tag they had then.
   [/js\/fork\/change-log\.js$/, /./],
   // Console messages for developers.

@@ -1,17 +1,18 @@
-/* ============ worlds-toggle.js — the World 2 switch next to Play (MrSurvivor fork) ============
- * On the main menu, in the Play button's top-right corner: a small "WORLD 2" switch and an "i" (where the old Lab
- * switch was). The switch is the setting G.Settings 'worlds' (off by default) that js/fork/lab/worlds.js reads when a
- * run starts. In a group room the host's setting decides: the host tells the guests ({ k:'worlds', a:'set', on }
+/* ============ worlds-toggle.js — the LAB switch next to Play (MrSurvivor fork) ============
+ * On the main menu, in the Play button's top-right corner: a small "LAB" switch and an "i", as the first Lab mode had.
+ * The switch is Lab mode: the setting G.Settings 'worlds' (off by default; a new key, so nobody who had the first Lab
+ * mode on comes back in it) that js/fork/lab/worlds.js reads when a run starts, and the Leaderboard's LAB switch
+ * starts from. In a group room the host's setting decides: the host tells the guests ({ k:'worlds', a:'set', on }
  * when they connect and when it changes) and a guest's switch shows it, greyed out.
- * The "i" says what a World 2 run is, on hover or focus, and on a tap (a tap elsewhere closes it).
+ * The "i" says what a Lab mode run is, on hover or focus, and on a tap (a tap elsewhere closes it).
  * Styles here: dev.html doesn't load css/brand.css. Test: fork/test-worlds.cjs.
  */
 (() => {
   const $ = id => document.getElementById(id);
-  const TIP = `<b>World 2</b> (preview): Eternatus comes at <b>10:00</b>. Beat it and a portal to World 2 opens:
+  const TIP = `<b>Lab mode</b> (experimental): Eternatus comes at <b>10:00</b>. Beat it and a portal to World 2 opens:
     a new land with stronger Pokémon. Step in when you're ready, but from the moment it opens World 1 grows stronger
     every minute and a ghost horde comes for you. Necrozma waits in World 2 at 30:00.
-    <span class="w2-tip-r">World 2 runs go on the <b>World 2 leaderboard</b> (Leaderboard → World 2), not the regular one.</span>
+    <span class="w2-tip-r">Lab runs go on the <b>Lab leaderboard</b> (Leaderboard → LAB), not the regular one.</span>
     <span class="w2-tip-r">In co-op, the host's setting decides for everyone.</span>`;
   const CSS = `
 #w2-play { position: relative; grid-column: 1 / -1; }
@@ -47,8 +48,8 @@
     play.parentNode.insertBefore(row, play);
     row.appendChild(play);
     row.insertAdjacentHTML('beforeend', `<div class="w2-q" translate="no">
-      <label class="w2-sw" id="w2-q"><input type="checkbox" id="w2-q-on"><span class="w2-sw-t"></span>WORLD 2</label>
-      <button class="w2-i" type="button" aria-label="About World 2">i</button></div>
+      <label class="w2-sw" id="w2-q"><input type="checkbox" id="w2-q-on"><span class="w2-sw-t"></span>LAB</label>
+      <button class="w2-i" type="button" aria-label="About Lab mode">i</button></div>
       <div class="w2-tip" role="tooltip" translate="no">${TIP}</div>`);
     const input = $('w2-q-on');
     input.onchange = () => { G.Settings.set('worlds', input.checked); G.Audio.sfx('select'); };
@@ -67,7 +68,7 @@
     input.checked = guest ? !!hostOn.get(room.host) : !!G.Settings.get('worlds');
     input.disabled = guest;
     $('w2-q').classList.toggle('off', guest);
-    $('w2-q').title = guest ? 'In co-op, the host\'s World 2 setting decides for everyone' : 'World 2 runs: Eternatus at 10:00, then a portal to World 2';
+    $('w2-q').title = guest ? 'In co-op, the host\'s Lab mode decides for everyone' : 'Lab mode: Eternatus at 10:00, then a portal to World 2';
   }
 
   /** The host tells its setting (to one player or to all). */

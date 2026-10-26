@@ -1184,12 +1184,13 @@ doesn't come back (regeneration and heals fill HP only). Berries add up, to max 
 without one, a berry every level at full HP would stack without end). The card says so. HUD: a gold strip under the
 top left's HP bar and over the bar above your Pokémon. Not kept by resume.js. Check: `fork/test-overhealth.cjs`.
 
-## World 2 (2026-10-26, TODO 91)
+## Lab mode: World 2 (2026-10-26, TODO 91, 92, 96)
 
 The owner's design: Megabonk-style stages. Most runs should end at 20-30 min, long ones ~45 and the best ~60,
-and grinding World 1's easier enemies for ever must not work. Opt-in for now (the owner chose it over every run):
-the WORLD 2 switch in the Play button's corner (`js/fork/lab/worlds-toggle.js`, setting `worlds`, off by default;
-the host's decides in co-op). Without it a run is exactly as before. `js/fork/lab/worlds.js`:
+and grinding World 1's easier enemies for ever must not work. It is LAB MODE, opt-in as the first Lab mode was
+(the owner's call, TODO 96): the LAB switch in the Play button's corner (`js/fork/lab/worlds-toggle.js`, setting
+`worlds`, off by default: a new key, so nobody who had the first Lab mode's `lab` setting on lands in it; the host's
+decides in co-op). Without it a run is exactly as before. `js/fork/lab/worlds.js`:
 
 | When | What |
 |---|---|
@@ -1207,10 +1208,12 @@ sites (from 20:00) run on the run's clock in either world. A site still waiting 
 leave (`G.LabSites.leave`). Resume keeps `pl._labWorlds` (a run without the switch saves `on: 0`, so resuming
 never turns a run into the other kind).
 
-Leaderboard (TODO 92): World 2 runs go on their own copy of every board, a "W" before the period id (`s_Wall3`,
-`g_Wd20261026r`; modes `ws` / `wg` in `js/net/ranking.js`), never on the regular ones; the rules need no change (they read
-the `s_` / `g_` prefix). The Leaderboard screen has a World 2 button after the Lab archive one. `js/fork/run-record.js`
-records `w2` so a run sent after the tab closed lands on the right board. Check: `node fork/test-worlds-ranking.cjs`.
+Leaderboard (TODO 96): Lab mode runs go on the Lab boards, an "L" before the period id (`s_Lall3`, `g_Ld20261026r`;
+modes `ls` / `lg` in `js/net/ranking.js`, where the first Lab mode's runs from before 2026-10-25 still are), never on
+the regular ones. The Leaderboard screen's LAB switch (after Solo / Group) starts as your Lab mode setting.
+`js/fork/run-record.js` records `lab` so a run sent after the tab closed lands on the right board. (For an hour on
+2026-10-26 these runs had boards of their own, `s_W...` / `g_W...`, TODO 92; nothing reads those any more.)
+Check: `node fork/test-lab-mode-ranking.cjs`.
 
 Not tuned against real play yet: the numbers are the starting point for the 20-30 / 45 / 60 targets. All of them
 are constants at the top of `worlds.js`. Check: `node fork/test-worlds.cjs` (solo; co-op with the Firebase emulator).

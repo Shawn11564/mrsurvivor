@@ -1,6 +1,6 @@
-/* ============ worlds.js — World 2 (MrSurvivor fork) ============
- * Opt-in (the "WORLD 2" switch by Play, js/fork/lab/worlds-toggle.js: G.Settings 'worlds'; in co-op the host's
- * setting decides, sent in its 'start' message). A World 2 run is timed like Megabonk's stages:
+/* ============ worlds.js — Lab mode: World 2 (MrSurvivor fork) ============
+ * LAB MODE, opt-in (the "LAB" switch by Play, js/fork/lab/worlds-toggle.js: G.Settings 'worlds'; in co-op the host's
+ * setting decides, sent in its 'start' message). A Lab mode run is timed like Megabonk's stages:
  *   - ETERNATUS comes at ETER_AT (10:00) instead of 30:00 (js/fork/lab/eternatus.js asks G.Worlds.on). Losing still
  *     ends the run.
  *   - Beating it opens a PORTAL near where you come back out. All of you (everyone still standing) inside it for
@@ -18,14 +18,14 @@
  *   - NECROZMA (js/fork/lab/necrozma.js) comes at NECRO_AT (30:00) instead of 45:00. The late-game horde growth
  *     (js/fork/lab/endgame.js: from 20:00, exponential past 30:00) is unchanged, so runs aim at 20-30 min, long ones
  *     ~45 and the best ~60.
- * A run without the setting is unchanged (Eternatus 30:00, Necrozma 45:00, no portal).
+ * A run without Lab mode is unchanged (Eternatus 30:00, Necrozma 45:00, no portal).
  * State: pl._labWorlds = { on (0|1), w (1|2), px, py, pat (the portal's place and opening time), wt (arrival time) }:
  * js/fork/lab/resume.js keeps every pl._lab* key, so a resumed run comes back in its world (and a run without the
  * setting stays without it, whatever the switch says when you resume).
  * Co-op: the host decides. { k:'worlds', a } with a = portal (x, y, at), go (tx, ty, t), st (every 2 s: w, p, wt,
  * ch, n, m: so a lost message or a late joiner catches up), set (the lobby: the host's switch). The ghosts travel
  * like any enemy ('ne').
- * Leaderboard: World 2 runs go on their own boards (r.w2: s_W... / g_W..., js/net/ranking.js), not the regular ones.
+ * Leaderboard: Lab mode runs go on the Lab boards (r.lab: s_L... / g_L..., js/net/ranking.js), not the regular ones.
  * Hooks: G.Game.startRun, G.Net.broadcast ('start'), G.Ranking.submitSolo / submitGroup, G.EnemyMgr.add, G.Enemies.bagAt / hordeTypes / hordeDefs /
  * upcomingDex, G.World.setBiome / biomeName, G.Events.update / drawables / drawHud. Load order: after necrozma.js.
  * Texts in English. Test: fork/test-worlds.cjs.
@@ -396,13 +396,13 @@ G.Worlds = (() => {
     if (msg && msg.k === 'start' && msg.worlds == null) msg.worlds = !!G.Settings.get('worlds');
     return broadcast.apply(this, arguments);
   };
-  // A World 2 run goes on the World 2 boards (js/net/ranking.js: r.w2, modes 'ws' / 'wg'). game.js sends it at the
+  // A Lab mode run goes on the Lab boards (js/net/ranking.js: r.lab, modes 'ls' / 'lg'). game.js sends it at the
   // run's end, while G.Game.player is still that run's; a record sent later (js/fork/run-record.js) says it itself.
   for (const k of ['submitSolo', 'submitGroup']) {
     const f = G.Ranking[k];
     G.Ranking[k] = function (r) {
-      const s = st(), w2 = r && typeof r.w2 === 'boolean' ? r.w2 : !!(s && s.on);
-      return f.call(this, Object.assign({}, r, { w2 }));
+      const s = st(), lab = r && typeof r.lab === 'boolean' ? r.lab : !!(s && s.on);
+      return f.call(this, Object.assign({}, r, { lab }));
     };
   }
   document.addEventListener('DOMContentLoaded', () => {
