@@ -13,11 +13,11 @@
 G.Shop = (() => {
   const ITEMS = {
     mint: { name: 'Menta', icon: 'mint', price: 1500,
-            desc: 'Cambia la naturaleza de un Pokémon por la que tú elijas.' },
+            desc: 'Cambia al azar la naturaleza de un Pokémon.' },
     cap:  { name: 'Cápsula Habilidad', icon: 'capsule', price: 1500,
-            desc: 'Cambia la habilidad de un Pokémon por otra de las suyas (no la oculta).' },
+            desc: 'Cambia al azar la habilidad de un Pokémon por otra de las suyas (no la oculta).' },
     caph: { name: 'Cápsula Habilidad Oculta', icon: 'capsuleh', price: 5000, hidden: true,
-            desc: 'Cambia la habilidad de un Pokémon por cualquiera de las suyas, también la oculta.' }
+            desc: 'Cambia al azar la habilidad de un Pokémon por cualquiera de las suyas, también la oculta.' }
   };
   const ORDER = ['mint', 'cap', 'caph'];
   const DAILY = 8;

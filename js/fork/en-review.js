@@ -234,6 +234,9 @@ G.I18n.add({
   'Has vuelto a tu sala': 'Back in your lobby',
   'Q/E o A/D: cambiar de compañero': 'Q/E or A/D: watch another teammate',
   'Toca las flechas para cambiar de compañero': 'Tap the arrows to watch another teammate',
+  'Cambia al azar la naturaleza de un Pokémon.': 'Randomly changes a Pokémon\'s nature.',
+  'Cambia al azar la habilidad de un Pokémon por otra de las suyas (no la oculta).': 'Randomly changes a Pokémon\'s ability to another of its regular abilities.',
+  'Cambia al azar la habilidad de un Pokémon por cualquiera de las suyas, también la oculta.': 'Randomly changes a Pokémon\'s ability to any of its abilities, including its hidden ability.',
   'Aún no ha aprendido ninguna': 'None learned yet'
 }, 'en');
 // The Settings > Graphics fullscreen button says 'Salir' while in fullscreen: the same word as Log out.

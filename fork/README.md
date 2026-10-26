@@ -23,6 +23,12 @@ requests accept the existing pending request and prevents duplicate writes from 
 Regression: `node fork/test-friend-flow.cjs` uses two real Firebase emulator accounts to cover
 mutual requests before opening Friends, duplicate requests, ordinary acceptance, and both lists.
 
+Nature Mints and ability items (`js/ui/menu.js`) choose and apply a random valid result as soon
+as the player uses them on a Pokémon's collection card. Mints exclude the current nature;
+Capsules exclude the current regular ability; Patches may select any different ability,
+including the hidden slot. Regression: `node fork/test-random-collection-items.cjs` checks the
+real collection UI, saved changes, item use, and the absence of choice dialogs.
+
 Leaderboard appearance snapshots (`js/fork/run-appearance.js`) keep final species, Mega/Primal
 form and shiny/radiant skin for solo and every co-op member. Co-op snapshots its runtime players
 before teardown; interrupted-run checkpoints carry the same fields. `js/net/ranking.js` stores

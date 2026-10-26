@@ -419,7 +419,7 @@ G.MenuUI = (() => {
   // ---------------- naturaleza, habilidad y MT (Tienda Kecleon, 20-10-2026) ----------------
   // Se ven en la ficha de cada Pokémon y aquí se usan la Menta, las Cápsulas y las MT de la Mochila.
   const STAT_NAME = { pa: 'Ataque', sa: 'At. Esp.', df: 'Defensa', sd: 'Def. Esp.', spd: 'Velocidad' };
-  let extraOpen = '';          // 'nat' | 'cap' | 'caph' | 'tm' | '' (qué selector está abierto)
+  let extraOpen = '';          // 'tm' | '' (qué selector está abierto)
   const natLine = n => (n.up ? `+${G.T(STAT_NAME[n.up])} −${G.T(STAT_NAME[n.down])}` : G.T('neutra'));
 
   function monExtras(dex) {
@@ -446,7 +446,10 @@ G.MenuUI = (() => {
 
   function wireExtras(dex, box) {
     box.querySelectorAll('[data-extra]').forEach(b => {
-      b.onclick = () => { extraOpen = extraOpen === b.dataset.extra ? '' : b.dataset.extra; G.Audio.sfx('select'); showDetail(dex); };
+      b.onclick = () => {
+        if (b.dataset.extra === 'tm') { extraOpen = extraOpen === 'tm' ? '' : 'tm'; G.Audio.sfx('select'); showDetail(dex); }
+        else useRandomExtra(dex, b.dataset.extra);
+      };
     });
     const host = box.querySelector('#mx-picker');
     if (!host || !extraOpen) return;
@@ -456,26 +459,30 @@ G.MenuUI = (() => {
       host.querySelectorAll('[data-v]').forEach(c => { c.onclick = () => onPick(c.dataset.v); });
     };
     const done = msg => { extraOpen = ''; G.DB.commit(); G.Audio.sfx('buy'); G.UI.toast(msg, 2600); showDetail(dex); };
-    if (extraOpen === 'nat' && G.Shop.count('mint')) {
-      const cur = G.Mons.natureOf(dex).id;
-      chips(G.NATURES.filter(n => n.id !== cur).map(n => ({ v: n.id, html: `<b translate="no">${G.Mons.name(n.n)}</b> <small>${natLine(n)}</small>` })), '', id => {
-        if (!G.Shop.take('mint')) return;
-        G.Mons.setNature(dex, id);
-        done(G.I18n.f('{x} ahora tiene naturaleza {x}', mon.name, G.Mons.name(G.NATURE_BY[id].n)));
-      });
-    } else if ((extraOpen === 'cap' || extraOpen === 'caph') && G.Shop.count(extraOpen)) {
-      const l = G.Mons.slots(dex);
-      chips(G.Mons.abilityChoices(dex, extraOpen === 'caph').map(i => ({ v: i, html: `<b translate="no">${G.Mons.abilityName(l[i])}</b>${i === 2 ? ` <small class="gold">${G.T('oculta')}</small>` : ''}` })), '', v => {
-        if (!G.Shop.take(extraOpen)) return;
-        G.Mons.setAbility(dex, +v);
-        done(G.I18n.f('{x} ahora tiene la habilidad {x}', mon.name, G.Mons.abilityName(l[+v])));
-      });
-    } else if (extraOpen === 'tm') {
+    if (extraOpen === 'tm') {
       const list = G.Mons.learnable(dex).filter(id => G.Shop.tmCount(id) > 0);
       chips(list.map(id => ({ v: id, html: `${G.Icons.html('move:' + id, 16)} ${G.T(G.Moves.BY_ID[id].name, 'move')} <small>×${G.Shop.tmCount(id)}</small>` })), '', id => {
         if (!G.Mons.teach(dex, id)) return;
         done(G.I18n.f('¡{x} ha aprendido {x}!', mon.name, G.T(G.Moves.BY_ID[id].name, 'move')));
       });
+    }
+  }
+
+  function useRandomExtra(dex, key) {
+    const mon = G.DEX_BY[dex], done = msg => { extraOpen = ''; G.DB.commit(); G.Audio.sfx('buy'); G.UI.toast(msg, 2600); showDetail(dex); };
+    if (key === 'nat' && G.Shop.count('mint')) {
+      const choices = G.NATURES.filter(n => n.id !== G.Mons.natureOf(dex).id);
+      const nature = G.U.pick(choices);
+      if (!nature || !G.Shop.take('mint')) return;
+      G.Mons.setNature(dex, nature.id);
+      done(G.I18n.f('{x} ahora tiene naturaleza {x}', mon.name, G.Mons.name(nature.n)));
+    } else if ((key === 'cap' || key === 'caph') && G.Shop.count(key)) {
+      const choices = G.Mons.abilityChoices(dex, key === 'caph');
+      const slot = G.U.pick(choices);
+      if (slot == null || !G.Shop.take(key)) return;
+      const ability = G.Mons.slots(dex)[slot];
+      G.Mons.setAbility(dex, slot);
+      done(G.I18n.f('{x} ahora tiene la habilidad {x}', mon.name, G.Mons.abilityName(ability)));
     }
   }
 
