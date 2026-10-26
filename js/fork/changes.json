@@ -2,6 +2,13 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-10-26",
+      "title": "Saved move bans stay accessible",
+      "items": [
+        { "k": "fix", "s": "all", "a": "Move bans", "t": "The Upgrades screen keeps showing saved move bans after a Pokémon's move pool changes, including moves no longer offered and moves selected as starting moves. You can remove them to free those ban slots." }
+      ]
+    },
+    {
       "d": "2026-10-25",
       "title": "All existing Lab features join the main game",
       "items": [

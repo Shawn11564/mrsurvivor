@@ -12,6 +12,11 @@ Regression: `node fork/test-player-names.cjs` against local Firebase emulators a
 profiles, lobbies, co-op rendering, team summaries, live standings/cache updates, ties,
 weekly rollover, logout, and exclusion of all-time and Lab archive standings.
 
+The Upgrades ban picker (`js/ui/menu.js`) retains valid saved bans outside a species' current
+move pool and bans matching its starting move, so players can remove old entries and reclaim
+slots. Regression: `node fork/test-ban-access.cjs` checks the real Upgrades screen with saved
+legacy bans.
+
 Leaderboard appearance snapshots (`js/fork/run-appearance.js`) keep final species, Mega/Primal
 form and shiny/radiant skin for solo and every co-op member. Co-op snapshots its runtime players
 before teardown; interrupted-run checkpoints carry the same fields. `js/net/ranking.js` stores

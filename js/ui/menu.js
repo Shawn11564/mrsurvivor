@@ -659,9 +659,12 @@ G.MenuUI = (() => {
   function banPicker(max) {
     const mon = G.DEX_BY[upgDex];
     const start = G.startMoveOf(upgDex), start2 = G.startMove2Of(upgDex);
-    const ids = G.Moves.poolFor(mon).filter(id => id !== start && id !== start2)
-      .sort((a, b) => G.Moves.BY_ID[a].name.localeCompare(G.Moves.BY_ID[b].name, 'es'));
     const list = banList();
+    // Keep bans from the older, wider pool reachable after the promoted species pool changes.
+    // Existing bans stay editable even when a move is no longer offered or is now a start move.
+    const available = new Set(G.Moves.poolFor(mon).filter(id => id !== start && id !== start2));
+    for (const id of list) if (G.Moves.BY_ID[id]) available.add(id);
+    const ids = [...available].sort((a, b) => G.Moves.BY_ID[a].name.localeCompare(G.Moves.BY_ID[b].name, 'es'));
     const el = document.createElement('div');
     el.className = 'panel ban-picker';
     el.innerHTML = `<p class="sub" style="margin:0 0 8px">Toca los movimientos que no quieres que te salgan en las cartas (${list.length}/${max}). El movimiento de inicio no se puede vetar.</p>
