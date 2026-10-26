@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [x] [feat][ui] Use Nature Mints, Ability Capsules and Ability Patches on a Pokémon with random valid changes, without a result picker (d4132ce).
+
 - [x] [bug] Resolve friend requests against the shared record so mutual requests work before the friend list loads (4b23103).
 
 - [x] [bug][ui] Keep older saved move bans visible and removable after the promoted species pool changes (5832986).
