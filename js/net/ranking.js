@@ -25,6 +25,8 @@
  * period id with an "L" in front (s_Ld20261023r, g_Lall3, s_Lall3_p25). Their
  * modes are 'ls' / 'lg' (read-only; new runs go to 's' / 'g'); the rules see the s_ / g_ as usual (firestore.rules).
  * Check: fork/test-lab-ranking.cjs.
+ * World 2 boards (MrSurvivor fork, js/fork/lab/worlds.js): World 2 runs (r.w2) go on their own copy, a "W" in
+ * front of the period id (s_Wd20261026r, g_Wall3), modes 'ws' / 'wg'. Check: fork/test-worlds-ranking.cjs.
  *
  * Ahorros:
  *   - Lo leído se guarda 2 h en el navegador (cambiar de pestaña y volver: 0).
@@ -99,14 +101,15 @@ G.Ranking = (() => {
   }
 
   // Old Lab boards (fork): mode 'ls' / 'lg' = the old Lab copy of 's' / 'g' (see above).
-  const LAB = 'L';
+  const LAB = 'L', W2 = 'W';                         // (fork) old Lab boards, World 2 boards ('ws' / 'wg')
   const base = mode => mode.slice(-1);
-  /** Is board b (its period part) one of now's (or all-time), regular or old Lab? */
-  const isCur = (b, cur) => { const s = b.split('_')[1] || ''; return cur.some(p => s === p || s === LAB + p); };
+  const pre = mode => (mode.length > 1 ? (mode[0] === 'w' ? W2 : LAB) : '');
+  /** Is board b (its period part) one of now's (or all-time), regular, old Lab or World 2? */
+  const isCur = (b, cur) => { const s = b.split('_')[1] || ''; return cur.some(p => s === p || s === LAB + p || s === W2 + p); };
 
   /** El filtro por Pokémon sólo existe en el histórico. */
   function board(mode, period, dex) {
-    return base(mode) + '_' + (mode.length > 1 ? LAB : '') + boardIds()[period] + (dex && period === 'a' ? '_p' + dex : '');
+    return base(mode) + '_' + pre(mode) + boardIds()[period] + (dex && period === 'a' ? '_p' + dex : '');
   }
 
   const col = b => fbx().fs.collection('lb').doc(b).collection('e');
@@ -336,7 +339,7 @@ G.Ranking = (() => {
     const fb = fbx();
     if (!fb || !G.Social.me || r.t < MIN_T) return [];
     flushDeferred();
-    const m = r.lab ? 'ls' : 's';                      // r.lab: an old Lab record goes to the old Lab boards (fork)
+    const m = r.lab ? 'ls' : r.w2 ? 'ws' : 's';        // r.lab: an old Lab record goes to the old Lab boards; r.w2: World 2 (fork)
     const entry = { t: r.t, uids: [fb.uid], names: [G.Social.me.name], dex: [r.dex], shiny: [!!r.shiny],
       mega: [!!r.mega], radiant: [!!r.radiant], lv: r.lv, kills: r.kills };
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
@@ -355,7 +358,7 @@ G.Ranking = (() => {
     const id = ms.map(m => m.uid).join('_');
     const entry = { t: r.t, uids: ms.map(m => m.uid), names: ms.map(m => m.name), dex: ms.map(m => m.dex),
                     shiny: ms.map(m => !!m.shiny), mega: ms.map(m => !!m.mega), radiant: ms.map(m => !!m.radiant), lv: r.lv, kills: r.kills };
-    const m = r.lab ? 'lg' : 'g';                      // r.lab: an old Lab record goes to the old Lab boards (fork)
+    const m = r.lab ? 'lg' : r.w2 ? 'wg' : 'g';        // r.lab: an old Lab record goes to the old Lab boards; r.w2: World 2 (fork)
     const boards = PERIODS.map(([p]) => [board(m, p), p]);
     if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push([board(m, 'a', d), 'p']);
     const better = await store(boards, id, entry);
@@ -481,7 +484,7 @@ G.Ranking = (() => {
     const fb = fbx();
     if (!fb) return;
     const boards = new Set();
-    for (const m of ['s', 'g', 'ls', 'lg']) for (const [p] of PERIODS) boards.add(board(m, p));
+    for (const m of ['s', 'g', 'ls', 'lg', 'ws', 'wg']) for (const [p] of PERIODS) boards.add(board(m, p));
     for (const k of Object.keys(bests())) boards.add(k.split(':')[0]);
     await Promise.all([...boards].map(b => fb.fs.runTransaction(async tx => {
       const s = await tx.get(sumRef(b));
@@ -591,7 +594,7 @@ G.Ranking = (() => {
       mem.delete('s:' + d.id); try { localStorage.removeItem('ps.rk.c.s:' + d.id); } catch (e) { /* nada */ }
     }
     // Las marcas del histórico que no están en el top 50 (sirven para el puesto exacto).
-    for (const b of ['s_' + ALL, 'g_' + ALL, 's_' + LAB + ALL, 'g_' + LAB + ALL]) {
+    for (const b of ['s_' + ALL, 'g_' + ALL, 's_' + LAB + ALL, 'g_' + LAB + ALL, 's_' + W2 + ALL, 'g_' + W2 + ALL]) {
       const q = await col(b).where('t', '>', maxT).get();
       await Promise.all(q.docs.map(e => e.ref.delete().catch(() => {})));
       rows += q.size;

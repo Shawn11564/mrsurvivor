@@ -25,7 +25,8 @@
  * Co-op: the host decides. { k:'worlds', a } with a = portal (x, y, at), go (tx, ty, t), st (every 2 s: w, p, wt,
  * ch, n, m: so a lost message or a late joiner catches up), set (the lobby: the host's switch). The ghosts travel
  * like any enemy ('ne').
- * Hooks: G.Game.startRun, G.Net.broadcast ('start'), G.EnemyMgr.add, G.Enemies.bagAt / hordeTypes / hordeDefs /
+ * Leaderboard: World 2 runs go on their own boards (r.w2: s_W... / g_W..., js/net/ranking.js), not the regular ones.
+ * Hooks: G.Game.startRun, G.Net.broadcast ('start'), G.Ranking.submitSolo / submitGroup, G.EnemyMgr.add, G.Enemies.bagAt / hordeTypes / hordeDefs /
  * upcomingDex, G.World.setBiome / biomeName, G.Events.update / drawables / drawHud. Load order: after necrozma.js.
  * Texts in English. Test: fork/test-worlds.cjs.
  */
@@ -395,6 +396,15 @@ G.Worlds = (() => {
     if (msg && msg.k === 'start' && msg.worlds == null) msg.worlds = !!G.Settings.get('worlds');
     return broadcast.apply(this, arguments);
   };
+  // A World 2 run goes on the World 2 boards (js/net/ranking.js: r.w2, modes 'ws' / 'wg'). game.js sends it at the
+  // run's end, while G.Game.player is still that run's; a record sent later (js/fork/run-record.js) says it itself.
+  for (const k of ['submitSolo', 'submitGroup']) {
+    const f = G.Ranking[k];
+    G.Ranking[k] = function (r) {
+      const s = st(), w2 = r && typeof r.w2 === 'boolean' ? r.w2 : !!(s && s.on);
+      return f.call(this, Object.assign({}, r, { w2 }));
+    };
+  }
   document.addEventListener('DOMContentLoaded', () => {
     const startRun = G.Game.startRun;
     G.Game.startRun = function (coop = null) {

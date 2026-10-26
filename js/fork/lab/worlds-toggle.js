@@ -11,6 +11,7 @@
   const TIP = `<b>World 2</b> (preview): Eternatus comes at <b>10:00</b>. Beat it and a portal to World 2 opens:
     a new land with stronger Pokémon. Step in when you're ready, but from the moment it opens World 1 grows stronger
     every minute and a ghost horde comes for you. Necrozma waits in World 2 at 30:00.
+    <span class="w2-tip-r">World 2 runs go on the <b>World 2 leaderboard</b> (Leaderboard → World 2), not the regular one.</span>
     <span class="w2-tip-r">In co-op, the host's setting decides for everyone.</span>`;
   const CSS = `
 #w2-play { position: relative; grid-column: 1 / -1; }

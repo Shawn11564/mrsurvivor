@@ -1207,6 +1207,11 @@ sites (from 20:00) run on the run's clock in either world. A site still waiting 
 leave (`G.LabSites.leave`). Resume keeps `pl._labWorlds` (a run without the switch saves `on: 0`, so resuming
 never turns a run into the other kind).
 
+Leaderboard (TODO 92): World 2 runs go on their own copy of every board, a "W" before the period id (`s_Wall3`,
+`g_Wd20261026r`; modes `ws` / `wg` in `js/net/ranking.js`), never on the regular ones; the rules need no change (they read
+the `s_` / `g_` prefix). The Leaderboard screen has a World 2 button after the Lab archive one. `js/fork/run-record.js`
+records `w2` so a run sent after the tab closed lands on the right board. Check: `node fork/test-worlds-ranking.cjs`.
+
 Not tuned against real play yet: the numbers are the starting point for the 20-30 / 45 / 60 targets. All of them
 are constants at the top of `worlds.js`. Check: `node fork/test-worlds.cjs` (solo; co-op with the Firebase emulator).
 

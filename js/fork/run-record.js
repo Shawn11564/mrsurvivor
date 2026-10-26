@@ -31,7 +31,7 @@ G.RunRecord = (() => {
     if (group && !pl.coopHost) return null;              // a group run goes up from its host
     const rid = runId(pl);
     if (!G.Game.isClean || !G.Game.isClean()) return { id: rid, tainted: true };
-    const r = { t: Math.floor(G.Game.st.time), lv: pl.level, kills: pl.kills, lab: false };
+    const r = { t: Math.floor(G.Game.st.time), lv: pl.level, kills: pl.kills, lab: false, w2: !!(G.Worlds && G.Worlds.on) };   // w2: World 2 boards
     if (group) r.members = G.RunAppearance.members();
     else Object.assign(r, G.RunAppearance.of(pl));
     return { id: rid, who: uid, at: Date.now(), group, r };
