@@ -5,7 +5,7 @@
 //   node fork/serve.cjs                  (or python -m http.server 8123, in the repo root)
 //   node fork/test-rat-title.cjs [base-url]
 //
-// A Lab run with the clock set to 30:00 (G.Game.debugTime); the raid starts by itself, and the check breaks the
+// A run with the clock set to 30:00 (G.Game.debugTime); the raid starts by itself, and the check breaks the
 // obelisks and knocks Eternatus out, so the raid's own win (and its call into the title) does the rest. Checks:
 //   1. Rattata: no title at the raid's start; once Eternatus falls, the achievement and the "Rat" title, with
 //      its pop-up, mid-run.

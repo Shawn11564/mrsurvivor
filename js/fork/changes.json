@@ -5,7 +5,7 @@
       "d": "2026-10-26",
       "title": "Missions open directly, endless health growth is bounded, random nature and ability items, the Rat title comes from Eternatus",
       "items": [
-        { "k": "change", "s": "all", "a": "Titles", "t": "The \"Rat\" title is now earned by beating the Eternatus raid as Rattata (Lab runs, at 30:00) instead of reaching 15:00 as Rattata. Players who already have it keep it.", "n": "Reach 15:00 as Rattata → beat Eternatus as Rattata" },
+        { "k": "change", "s": "all", "a": "Titles", "t": "The \"Rat\" title is now earned by beating the Eternatus raid as Rattata (at 30:00 in a run) instead of reaching 15:00 as Rattata. Players who already have it keep it.", "n": "Reach 15:00 as Rattata → beat Eternatus as Rattata" },
         { "k": "fix", "s": "all", "a": "Missions", "t": "The main-menu Missions button now opens Missions directly, even if you last viewed Achievements or Profile. The top name button still opens Profile." },
         { "k": "nerf", "s": "all", "a": "Endless EVs", "t": "HP EVs now add a fixed 2% of the max HP you had when you first chose one, up to 50 picks (+100% total). Defense EVs stop at the existing 200% toughness cap, where you take one-third damage.", "n": "HP EV: +2% of current max HP, uncapped → +2% of first-pick max HP, capped at +100%; Defense EV: uncapped picks → capped at +200% toughness" },
         { "k": "change", "s": "all", "a": "Kecleon items", "t": "Nature Mints, Ability Capsules and Ability Patches now immediately choose a random eligible nature or ability for the selected Pokémon. The items are consumed on use; there is no result picker." },
