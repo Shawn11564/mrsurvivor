@@ -11,6 +11,8 @@ How to use it:
 
 ## Inbox
 
+- [x] [bug] Resolve friend requests against the shared record so mutual requests work before the friend list loads (4b23103).
+
 - [x] [bug][ui] Keep older saved move bans visible and removable after the promoted species pool changes (5832986).
 
 - [x] [ui] Public colored names and numbered badges for weekly solo/group top-three players across name displays (a14c2d2).
