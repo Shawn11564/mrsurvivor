@@ -86,7 +86,7 @@ How to use it:
 - [x] 96. [feat][lab] World 2 is Lab mode again: the switch by Play says LAB (Lab mode), Lab mode runs go on the Lab leaderboard (the old Lab boards) and the Leaderboard's LAB switch starts as your setting; the World 2 boards go · lab (owner, 2026-10-26) (be50d49c)
 - [x] 98. [ui] Discord: a Discord button in the top bar in place of Sound and Settings, a Discord entry in the main menu, and a one-time "We now have a Discord!" banner with the invite (https://discord.gg/VcwVYRXzT5) · everyone (owner, 2026-10-26) (c5d9865)
 - [ ] 99. [infra] fork/test-gameplay.cjs's "100 % crit" check failed once in three runs (one hit drawn white-orange with no "Critical" label, `{"color":"#ff7b3d","big":false,"tag":null}`) and passed on HEAD: find which hit escapes the crit roll, don't retry (found 2026-10-26)
-- [ ] 100. [ui] Discord reward: opening the invite gives 5 ×10 (purple) tickets once per account (no check that they joined); a purple ticket with +5 by the Discord button and on the banner until claimed · everyone (owner, 2026-10-26) (claimed)
+- [x] 100. [ui] Discord reward: opening the invite gives 5 ×10 (purple) tickets once per account (no check that they joined); a purple ticket with +5 by the Discord button and on the banner until claimed · everyone (owner, 2026-10-26) (1c9c03ca)
 - [ ] 101. [infra] fork/test-guest-save.cjs's 4th part ("Logging in to an existing account adds to it") failed "uploaded" once in two runs (syncState never reached ok in 15 s; firestore.rules refuses a save within 20 s of the last one): find the race, don't retry (found 2026-10-26)
 
 ## Phase 1: fixes and cheap tuning
