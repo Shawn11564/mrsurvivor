@@ -17,6 +17,12 @@ move pool and bans matching its starting move, so players can remove old entries
 slots. Regression: `node fork/test-ban-access.cjs` checks the real Upgrades screen with saved
 legacy bans.
 
+Friend requests (`js/net/social.js`) resolve the pair's friendship document in a Firestore
+transaction instead of relying on the lazily loaded local friend list. This lets mutual
+requests accept the existing pending request and prevents duplicate writes from being denied.
+Regression: `node fork/test-friend-flow.cjs` uses two real Firebase emulator accounts to cover
+mutual requests before opening Friends, duplicate requests, ordinary acceptance, and both lists.
+
 Leaderboard appearance snapshots (`js/fork/run-appearance.js`) keep final species, Mega/Primal
 form and shiny/radiant skin for solo and every co-op member. Co-op snapshots its runtime players
 before teardown; interrupted-run checkpoints carry the same fields. `js/net/ranking.js` stores

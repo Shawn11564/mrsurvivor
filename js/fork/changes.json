@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-10-26",
-      "title": "Saved move bans stay accessible",
+      "title": "Friend requests work reliably, saved move bans stay accessible",
       "items": [
+        { "k": "fix", "s": "all", "a": "Friends", "t": "Sending a friend request now checks the shared friendship record directly. If both players request each other before opening Friends, the second request accepts the first instead of failing; duplicate requests also return the right status." },
         { "k": "fix", "s": "all", "a": "Move bans", "t": "The Upgrades screen keeps showing saved move bans after a Pokémon's move pool changes, including moves no longer offered and moves selected as starting moves. You can remove them to free those ban slots." }
       ]
     },

@@ -253,21 +253,36 @@ G.Social = (() => {
     if (!n || !n.exists) return { ok: false, error: 'No hay ningún jugador con ese apodo.' };
     const other = n.data().uid;
     if (other === uid) return { ok: false, error: 'Ese eres tú.' };
-    const f = friends.get(other);
-    if (f && f.status === 'ok') return { ok: false, error: 'Ya sois amigos.' };
-    if (f && f.status === 'out') return { ok: false, error: 'Ya le enviaste una solicitud.' };
-    if (f && f.status === 'in') return accept(other);
     const prof = await fb.fs.collection('profiles').doc(other).get().catch(() => null);
     const otherName = prof && prof.exists ? prof.data().name : name;
     const users = [uid, other].sort();
+    const ref = fb.fs.collection('friendships').doc(users[0] + '_' + users[1]);
     try {
-      await fb.fs.collection('friendships').doc(users[0] + '_' + users[1]).set({
-        users, from: uid, to: other, status: 'pending',
-        names: { [uid]: me.name, [other]: otherName },
-        at: firebase.firestore.FieldValue.serverTimestamp()
+      const outcome = await fb.fs.runTransaction(async tx => {
+        const existing = await tx.get(ref);
+        if (existing.exists) {
+          const f = existing.data();
+          if (f.status === 'ok') return 'friends';
+          if (f.status === 'pending' && f.from === uid) return 'sent-existing';
+          if (f.status === 'pending' && f.to === uid) {
+            tx.update(ref, { status: 'ok', at: fts(), ['names.' + uid]: me.name });
+            return 'accepted';
+          }
+          throw new Error('invalid-friendship');
+        }
+        tx.set(ref, {
+          users, from: uid, to: other, status: 'pending',
+          names: { [uid]: me.name, [other]: otherName },
+          at: fts()
+        });
+        return 'sent';
       });
-      return { ok: true, msg: 'Solicitud enviada a ' + otherName };
+      if (outcome === 'friends') return { ok: false, error: 'Ya sois amigos.' };
+      if (outcome === 'sent-existing') return { ok: true, msg: 'Ya le enviaste una solicitud.' };
+      if (outcome === 'accepted') return { ok: true, msg: 'Ahora eres amigo de ' + otherName };
+      if (outcome === 'sent') return { ok: true, msg: 'Solicitud enviada a ' + otherName };
     } catch (e) { return { ok: false, error: 'No se pudo enviar (' + (e.code || 'error') + ').' }; }
+    return { ok: false, error: 'No se pudo enviar (error).' };
   }
 
   async function accept(other) {
