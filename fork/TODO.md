@@ -79,6 +79,9 @@ How to use it:
 
 - [x] 91. [feat] World 2 (opt-in switch by Play): Eternatus at 10:00; beating it opens a portal to World 2 (new land, harder Pokémon); staying in World 1 makes it stronger every minute and brings a Gastly/Haunter/Gengar ghost rush; Necrozma moves to 30:00 in World 2; target runs 20-30 min, long ~45, best ~60 · opt-in, co-op (owner, 2026-10-26) (cfea1e4)
 - [x] 92. [feat] World 2 runs on their own leaderboard boards (like the old Lab boards) · opt-in (owner, 2026-10-26) (9640bf8)
+- [x] 93. [feat] Import the species and forms SpriteCollab has finished sheets for: Miraidon (Low-Power Mode), Ting-Lu, Gimmighoul (Roaming), Falinks (Brass), Rolycoly, and 97 forms (regional, Rotom, Origin/Therian, Kyurem, female forms...) numbered from 1501, with learnsets, abilities, evolutions and credits · everyone (owner, 2026-10-26) (719ae75)
+- [x] 94. [infra] fork/test-sync.cjs failed before merging (ENOENT js/fork/en-names.js): the replayed fork now copies it (a396504)
+- [ ] 95. [infra] fork/test-candy.cjs fails its 2 "Lab off" checks: they test the Lab toggle retired on 2026-10-25 (found 2026-10-26, 719ae75)
 
 ## Phase 1: fixes and cheap tuning
 
