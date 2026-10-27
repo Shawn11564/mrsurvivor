@@ -88,6 +88,8 @@ How to use it:
 - [ ] 99. [infra] fork/test-gameplay.cjs's "100 % crit" check failed once in three runs (one hit drawn white-orange with no "Critical" label, `{"color":"#ff7b3d","big":false,"tag":null}`) and passed on HEAD: find which hit escapes the crit roll, don't retry (found 2026-10-26)
 - [x] 100. [ui] Discord reward: opening the invite gives 5 ×10 (purple) tickets once per account (no check that they joined); a purple ticket with +5 by the Discord button and on the banner until claimed · everyone (owner, 2026-10-26) (1c9c03ca)
 - [ ] 101. [infra] fork/test-guest-save.cjs's 4th part ("Logging in to an existing account adds to it") failed "uploaded" once in two runs (syncState never reached ok in 15 s; firestore.rules refuses a save within 20 s of the last one): find the race, don't retry (found 2026-10-26)
+- [ ] 103. [fix] Two tabs of the game could each roll the gacha (keep the one you like, or both: the merge keeps both pulls and counts one spend); the game now runs in one tab at a time, the others say "Open in another tab" with Play here (js/fork/one-tab.js, fork/test-one-tab.cjs) · everyone (owner, 2026-10-27)
+- [ ] 104. [infra] fork/test-remember.cjs clicks the top bar's Settings button (#btn-settings), which the Discord change (c5d9865) took out of the top bar, so it times out before its first check: open Settings from the main menu instead (found 2026-10-27)
 
 ## Phase 1: fixes and cheap tuning
 

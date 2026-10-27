@@ -12,6 +12,13 @@ Regression: `node fork/test-player-names.cjs` against local Firebase emulators a
 profiles, lobbies, co-op rendering, team summaries, live standings/cache updates, ties,
 weekly rollover, logout, and exclusion of all-time and Lab archive standings.
 
+The game runs in one tab at a time (`js/fork/one-tab.js`). Each tab holds its own copy of the save and the
+merge keeps both copies' pulls while it counts a browser's spending once, so two tabs could roll the gacha twice on
+the same tickets. A tab that finds another one playing (BroadcastChannel ping before `G.DB.ready`) shows "Open in
+another tab" and never opens the save; Play here takes over and the old tab stops writing and reloads parked.
+Regression: `node fork/test-one-tab.cjs` (two tabs in one browser, dev.html and the built page). A check that needs
+two game pages open at once must give them separate browser contexts.
+
 The Upgrades ban picker (`js/ui/menu.js`) retains valid saved bans outside a species' current
 move pool and bans matching its starting move, so players can remove old entries and reclaim
 slots. Regression: `node fork/test-ban-access.cjs` checks the real Upgrades screen with saved

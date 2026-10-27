@@ -2,6 +2,13 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-10-27",
+      "title": "The game runs in one tab at a time",
+      "items": [
+        { "k": "fix", "s": "all", "a": "Gacha", "t": "With the game open in two tabs you could roll the gacha in both with the same tickets and keep the tab you liked (or both rolls). Now the game runs in one tab at a time: a second tab says \"Open in another tab\" and has a Play here button, which moves the game there and pauses the first tab." }
+      ]
+    },
+    {
       "d": "2026-10-26",
       "title": "A Discord server (top bar, main menu, a one-time banner and 5 ×10 tickets for joining),102 new Pokémon (Miraidon, Ting-Lu and 97 regional and other forms), World 2 preview (Eternatus at 10:00, a portal, the ghost rush), Missions open directly, endless health growth is bounded, random nature and ability items, the Rat title comes from Eternatus, no more \"Lab\" wording",
       "items": [

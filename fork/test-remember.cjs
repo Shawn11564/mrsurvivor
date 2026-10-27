@@ -110,6 +110,7 @@ const dexState = page => page.evaluate(() => ({
   check(!errors.length, 'no page errors', errors);
 
   console.log('Built page (index.html)');
+  await page.close();                 // one tab at a time (js/fork/one-tab.js)
   const built = await ctx.newPage();
   const berr = [];
   built.on('pageerror', e => berr.push(String(e)));
