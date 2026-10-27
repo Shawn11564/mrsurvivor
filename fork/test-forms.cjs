@@ -16,7 +16,7 @@
 //      it all back. Its texts stay English.
 //   5. A level up on the luckiest roll offers one too; Pikachu never gets one.
 //   6. Floette holding the Eternal Flower evolves into Florges: Florges' sheets and types, no form bonus left.
-//   7. The built index.html: the collection counts 1044 and "479" finds only Rotom.
+//   7. The built index.html: the collection counts 1040 and "479" finds only Rotom.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -182,7 +182,7 @@ const RUN = async d => {
     await built.click('#scr-menu [data-go="dex"]');
     await built.waitForSelector('#dex-grid .cell', { timeout: 15000 });
     const total = await built.$eval('#dex-total', e => e.textContent);
-    check(/\/ 1044$/.test(total.trim()), 'the collection counts 1044', total);
+    check(/\/ 1040$/.test(total.trim()), 'the collection counts 1040', total);
     await built.fill('#dex-q', '479');
     await built.waitForFunction(() => document.querySelectorAll('#dex-grid .cell').length === 1, null, { timeout: 5000 }).catch(() => {});
     const bcells = await built.$$eval('#dex-grid .cell', cs => cs.map(c => c.dataset.dex));

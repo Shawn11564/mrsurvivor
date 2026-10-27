@@ -63,12 +63,15 @@ const FORM_NO = [];                            // [form's number, its species' d
   const extra = path.join(ROOT, 'js', 'fork', 'extra-dex-data.js');
   if (fs.existsSync(extra)) {
     vm.runInNewContext(realRead(extra, 'utf8'), { G }, { filename: 'js/fork/extra-dex-data.js' });
-    // (Not the forms that are a held item, js/fork/form-items.js: Origin Giratina, Rotom's appliances...)
-    const items = path.join(ROOT, 'js', 'fork', 'form-items.js');
-    if (fs.existsSync(items)) vm.runInNewContext(realRead(items, 'utf8'), { G }, { filename: 'js/fork/form-items.js' });
+    // (Not the forms that are a held item, js/fork/form-items.js: Origin Giratina, Rotom's appliances..., nor the
+    // ones taken out of the game, js/fork/dex-gone.js)
+    for (const f of ['form-items.js', 'dex-gone.js']) {
+      const p = path.join(ROOT, 'js', 'fork', f);
+      if (fs.existsSync(p)) vm.runInNewContext(realRead(p, 'utf8'), { G }, { filename: 'js/fork/' + f });
+    }
     const have = new Set(out.dex.map(p => p.dex)), no = p => p.base || p.dex;
     for (const e of G.FORK_DEX) {
-      if (have.has(e.dex) || (G.FORM_ITEMS && G.FORM_ITEMS[e.dex])) continue;
+      if (have.has(e.dex) || (G.FORM_ITEMS && G.FORM_ITEMS[e.dex]) || (G.FORK_DEX_GONE && G.FORK_DEX_GONE[e.dex])) continue;
       let i = out.dex.findIndex(p => no(p) > no(e));
       out.dex.splice(i < 0 ? out.dex.length : i, 0, e);
       if (e.leg) out.legends.push(e.dex);

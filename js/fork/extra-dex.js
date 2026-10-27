@@ -14,12 +14,14 @@
  * The forms in G.FORM_ITEMS (js/fork/form-items.js: Origin Giratina, Black Kyurem, Rotom's appliances...) are a held
  * item instead (js/fork/forms.js): they stay out of G.DEX, so out of the gacha, collection, pools and trades, but keep
  * their G.DEX_BY row and sheets (the item's look, old leaderboard scores). A save that owns one gets its base
- * Pokémon instead, with what it had on the form (G.forkMigrate, called by migrate() in js/core/db.js).
+ * Pokémon instead, with what it had on the form (G.forkMigrate, called by migrate() in js/core/db.js). The forms in
+ * G.FORK_DEX_GONE (js/fork/dex-gone.js: the Pumpkaboo and Gourgeist sizes) are out of the game: the same, but no item.
  *   G.dexNo(p or dex)  the number to show and sort by: a form shows its species' (Alolan Raichu is Nº 026)
  * Test: fork/test-extra-dex.cjs, fork/test-forms.cjs.
  */
 (() => {
   const D = G.FORK_DEX || [], SPR = G.FORK_DEX_SPRITES || {}, AB = G.FORK_DEX_ABIL || {}, FI = G.FORM_ITEMS || {};
+  const GONE = G.FORK_DEX_GONE || {}, to = d => FI[d] ? FI[d][0] : GONE[d];
   const no = p => p.base || p.dex;
   const added = [];
   for (const e of D) {
@@ -27,7 +29,7 @@
     // Next to its species: after every row with the same or a lower number.
     let i = G.DEX.findIndex(p => no(p) > no(e));
     if (i < 0) i = G.DEX.length;
-    if (!FI[e.dex]) G.DEX.splice(i, 0, e);
+    if (!FI[e.dex] && !GONE[e.dex]) G.DEX.splice(i, 0, e);
     G.DEX_BY[e.dex] = e;
     G.SPRITE_META[e.dex] = SPR[e.dex];
     if (G.DEX_ABIL && AB[e.dex]) G.DEX_ABIL[e.dex] = AB[e.dex];
@@ -53,7 +55,7 @@
   // Their names are English already: kept as they are (the word-by-word pass would change "Heat" or "Sky").
   if (G.I18n) G.I18n.add(Object.fromEntries(added.map(e => [e.name, e.name])), 'en');
 
-  // A save that owns a held-item form (they were Pokémon of their own on 2026-10-26) gets its base Pokémon: every
+  // A save that owns a held-item or removed form (they were Pokémon of their own on 2026-10-26) gets its base: every
   // per-Pokémon entry moves to the base when the base has none; when it has one, numbers keep the higher, lists join
   // and objects add the keys the base lacks (upgrades keep the higher level). The partner and favourites follow.
   const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -66,14 +68,14 @@
   };
   const toBase = (map) => {
     if (!isObj(map)) return;
-    for (const d of Object.keys(map)) if (FI[d]) { map[FI[d][0]] = join(map[FI[d][0]], map[d]); delete map[d]; }
+    for (const d of Object.keys(map)) if (to(d)) { map[to(d)] = join(map[to(d)], map[d]); delete map[d]; }
   };
   const migrate = G.forkMigrate;
   G.forkMigrate = s => {
     if (migrate) migrate(s);
     for (const k of Object.keys(s)) toBase(s[k]);
     if (isObj(s.lab)) for (const k of Object.keys(s.lab)) toBase(s.lab[k]);
-    for (const k of ['partner', 'starter']) if (FI[s[k]]) s[k] = FI[s[k]][0];
-    if (isObj(s.profile) && Array.isArray(s.profile.favs)) s.profile.favs = [...new Set(s.profile.favs.map(d => FI[d] ? FI[d][0] : d))];
+    for (const k of ['partner', 'starter']) if (to(s[k])) s[k] = to(s[k]);
+    if (isObj(s.profile) && Array.isArray(s.profile.favs)) s.profile.favs = [...new Set(s.profile.favs.map(d => to(d) || d))];
   };
 })();
