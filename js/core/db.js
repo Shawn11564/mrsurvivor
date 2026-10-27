@@ -120,6 +120,7 @@ G.DB = (() => {
       s.pupgDone = true;
     }
     s.tickets = Object.assign({ t1: 0, t10: 0 }, s.tickets);
+    if (G.forkMigrate) G.forkMigrate(s);          // fork: formas que son un objeto (js/fork/extra-dex.js)
     sanitize(s);
     s.v = VERSION;
     return s;

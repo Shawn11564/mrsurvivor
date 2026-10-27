@@ -44,10 +44,11 @@ G.Admin = (() => {
   // Shape and size: a new Animator with another Pokémon or another scale (looks
   // only; hits and speed stay the player's own). It wears off by itself.
   // (Mega Evolution uses it too, js/fork/mega.js: p.megaKey is its Mega's sprite;
-  // and radiants, js/fork/radiant.js: with p.radiant, its radiant sheet.)
+  // and radiants, js/fork/radiant.js: with p.radiant, its radiant sheet; and a form's item, js/fork/forms.js: p.formKey.)
   function paint(p) {
     if (!p || !p.anim) return;
-    const L = p.admLook || {}, now = performance.now(), base = G.Radiant ? G.Radiant.look(p, p.megaKey || p.dex) : p.megaKey || p.dex;
+    const own = p.formKey || p.megaKey || p.dex;
+    const L = p.admLook || {}, now = performance.now(), base = G.Radiant ? G.Radiant.look(p, own) : own;
     const dex = L.dexT > now ? L.dex : base;
     const k = L.kT > now ? L.k : 1;
     const sc = G.Sprites.playerScale(dex) * k;

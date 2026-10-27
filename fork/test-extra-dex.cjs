@@ -4,12 +4,13 @@
 //   node fork/serve.cjs            (or python -m http.server 8123 in the main checkout)
 //   node fork/test-extra-dex.cjs [base-url]
 //
-//   1. dev.html: every row of js/fork/extra-dex-data.js is in G.DEX next to its species, with its sprite geometry,
+//   1. dev.html: every row of js/fork/extra-dex-data.js is in G.DEX next to its species (but the held-item forms of
+//      js/fork/form-items.js, which only have their G.DEX_BY row: fork/test-forms.cjs), with its sprite geometry,
 //      ability slots, learnset and family; every sheet it names loads (normal and shiny).
 //   2. They are real Pokémon: in the gacha banner of the generation that introduced them, with run abilities and
 //      TMs; evolutions follow the games (Pikachu -> Raichu or Alolan Raichu, Perrserker only from Galarian Meowth).
 //   3. The collection: searching "26" shows Raichu and Alolan Raichu, both as Nº 026; the card says Nº 026.
-//   4. Runs as Alolan Raichu, Miraidon and Origin Giratina play without errors and draw their own sheets;
+//   4. Runs as Alolan Raichu, Miraidon and Hisuian Typhlosion play without errors and draw their own sheets;
 //      Galarian Meowth evolves into Perrserker mid-run.
 //   5. The built index.html: the collection counts them and finds them (G is sealed there, so through the page).
 const { chromium, pastStart } = require('./pw.cjs');
@@ -38,6 +39,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const data = await page.evaluate(() => {
       const rows = G.FORK_DEX, bad = [];
       for (const e of rows) {
+        if (G.FORM_ITEMS[e.dex]) { if (G.DEX.includes(e) || G.DEX_BY[e.dex] !== e) bad.push(e.dex + ' (held item) in G.DEX or not in G.DEX_BY'); continue; }
         const i = G.DEX.indexOf(e), prev = G.DEX[i - 1];
         if (G.DEX_BY[e.dex] !== e) bad.push(e.dex + ' not in G.DEX_BY');
         if (!G.SPRITE_META[e.dex]) bad.push(e.dex + ' no sprite meta');
@@ -46,10 +48,10 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         if (e.base && G.LabData.fam[e.dex] !== G.LabData.fam[e.base]) bad.push(e.dex + ' not in its species\' family');
         if (i < 1 || G.dexNo(prev) > G.dexNo(e) || (G.DEX[i + 1] && G.dexNo(G.DEX[i + 1]) < G.dexNo(e))) bad.push(e.dex + ' out of order');
       }
-      return { n: rows.length, total: G.DEX.length, forms: rows.filter(e => e.base).length, bad,
+      return { n: rows.length, total: G.DEX.length, forms: rows.filter(e => e.base).length, items: Object.keys(G.FORM_ITEMS).length, bad,
         names: [1008, 1003, 999, 870, 837, 1503, 1567].map(d => G.DEX_BY[d] && G.DEX_BY[d].name) };
     });
-    check(data.n >= 102 && data.total === 966 + data.n, 'all of them are in the dex', { n: data.n, total: data.total, forms: data.forms });
+    check(data.n >= 102 && data.items === 24 && data.total === 966 + data.n - data.items, 'all of them are in the dex but the 24 held-item forms', { n: data.n, total: data.total, forms: data.forms });
     check(!data.bad.length, 'each with sprites, abilities, learnset, family, next to its species', data.bad.slice(0, 8));
     check(data.names.join() === 'Miraidon,Ting-Lu,Gimmighoul,Falinks,Rolycoly,Alolan Raichu,Origin Giratina', 'names', data.names);
 
@@ -72,7 +74,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const inPool = (d) => { const p = G.DEX_BY[d]; return G.Gacha.pool(p.rarity, p.gen).some(x => x.dex === d); };
       const tg = d => G.LabGrowth.targets(d).map(t => t[0]);
       return {
-        pools: [1503, 1519, 1541, 1553, 1008, 1003, 999, 870, 837, 1567].filter(d => !inPool(d)),
+        pools: [1503, 1519, 1541, 1553, 1008, 1003, 999, 870, 837].filter(d => !inPool(d)),
         abil: G.Mons.abilityOf(1503).id, labAbil: G.LabData.abil[1503],
         tm: G.TM_OF(1503).length, tmBase: G.TM_OF(26).length,
         pool: G.Moves.poolFor(G.DEX_BY[1503], true).map(id => G.Moves.BY_ID[id].type),
@@ -89,7 +91,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(!sys.wooper.includes(980) && sys.pwooper.includes(980), 'Clodsire only from Paldean Wooper', [sys.wooper, sys.pwooper]);
 
     console.log('3. Collection');
-    await page.evaluate(() => { const s = G.DB.save; for (const d of [26, 1503, 1008, 1567, 1519]) s.owned[d] = s.owned[d] || { at: Date.now() }; s.partner = 1503; G.DB.commit(); G.UI.hideAll(); G.Flow.goMenu(); });
+    await page.evaluate(() => { const s = G.DB.save; for (const d of [26, 1503, 1008, 1519]) s.owned[d] = s.owned[d] || { at: Date.now() }; s.partner = 1503; G.DB.commit(); G.UI.hideAll(); G.Flow.goMenu(); });
     await page.waitForSelector('#scr-menu', { state: 'visible', timeout: 30000 });
     await page.click('#scr-menu [data-go="dex"]');
     await page.waitForSelector('#dex-grid .cell', { timeout: 15000 });
@@ -102,7 +104,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       .then(() => check(true, 'its card: Alolan Raichu, Nº 026'), () => check(false, 'its card: Alolan Raichu, Nº 026'));
 
     console.log('4. Runs');
-    for (const [dex, name] of [[1503, 'Alolan Raichu'], [1008, 'Miraidon'], [1567, 'Origin Giratina']]) {
+    for (const [dex, name] of [[1503, 'Alolan Raichu'], [1008, 'Miraidon'], [1541, 'Hisuian Typhlosion']]) {
       const r = await page.evaluate(async d => {
         const wait = async (f, ms = 20000) => { const end = Date.now() + ms; while (!f()) { if (Date.now() > end) return false; await new Promise(r => setTimeout(r, 50)); } return true; };
         if (G.Game.state === 'playing') { G.Game.quit(); await wait(() => G.UI.isOpen('scr-over')); document.getElementById('btn-again').click(); await wait(() => G.Game.state === 'ui'); }
@@ -137,7 +139,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await built.click('#scr-menu [data-go="dex"]');
     await built.waitForSelector('#dex-grid .cell', { timeout: 15000 });
     const total = await built.$eval('#dex-total', e => e.textContent);
-    check(/\/ 1068$/.test(total.trim()), 'the collection counts them', total);
+    check(/\/ 1044$/.test(total.trim()), 'the collection counts them', total);
     await built.fill('#dex-q', '1008');
     await built.waitForFunction(() => document.querySelectorAll('#dex-grid .cell').length === 1, null, { timeout: 5000 }).catch(() => {});
     const mira = await built.$$eval('#dex-grid .cell', cs => cs.map(c => [c.dataset.dex, c.querySelector('.no').textContent.trim()]));

@@ -92,8 +92,8 @@ G.LabGrowth = (() => {
     if (!G.DEX_BY[to]) return;
     if (p._labTf) { p.mon = p._labTf.mon0; delete p._labTf; }
     // Whatever depends on which Pokémon it is gets removed and put back.
-    const item = p.item;
-    if (item === 'megastone' || item === 'eviolite') p.equip(null);
+    const item = p.item, swap = item === 'megastone' || item === 'eviolite' || !!(G.Items.BY[item] && G.Items.BY[item].form);   // form: js/fork/forms.js
+    if (swap) p.equip(null);
     const old = p.mon, mon = natured(to, old.nature);
     const under0 = p._labUnder || 0;
     p.mon = mon; p.dex = to;
@@ -110,7 +110,7 @@ G.LabGrowth = (() => {
     // Its ability in the run's slot (Charmander and Charizard: both Blaze), the old one taken off first.
     const a = G.LabAbilities.evolve(p);
     if (a) G.Lab.setAbility(a);
-    if (item === 'megastone' || item === 'eviolite') p.equip(item);
+    if (swap) p.equip(item);
     G.LabAnims.preload(p);
     G.FX.ring(p.x, p.y, 8, 160, '#ffffff', 0.9, 6);
     G.FX.burst(p.x, p.y - p.bodyH * 0.5, '#ffffff', 60, 280);
