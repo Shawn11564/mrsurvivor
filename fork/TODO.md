@@ -91,7 +91,7 @@ How to use it:
 - [ ] 105. [infra] fork/test-lab.cjs stops at its first part: it clicks Settings → `#set-tabs [data-t="lab"]`, a tab retired with the Lab toggle on 2026-10-25 (the switch is by Play now), like item 95 (found 2026-10-27)
 - [ ] 101. [infra] fork/test-guest-save.cjs's 4th part ("Logging in to an existing account adds to it") failed "uploaded" once in two runs (syncState never reached ok in 15 s; firestore.rules refuses a save within 20 s of the last one): find the race, don't retry (found 2026-10-26)
 - [x] 103. [fix] Two tabs of the game could each roll the gacha (keep the one you like, or both: the merge keeps both pulls and counts one spend); the game now runs in one tab at a time, the others say "Open in another tab" with Play here (js/fork/one-tab.js, fork/test-one-tab.cjs) · everyone (owner, 2026-10-27) (c0873e61)
-- [ ] 104. [infra] fork/test-remember.cjs clicks the top bar's Settings button (#btn-settings), which the Discord change (c5d9865) took out of the top bar, so it times out before its first check: open Settings from the main menu instead (found 2026-10-27)
+- [x] 104. [infra] fork/test-remember.cjs clicks the top bar's Settings button (#btn-settings), which the Discord change (c5d9865) took out of the top bar, so it times out before its first check: open Settings from the main menu instead (found 2026-10-27) (a4dc78f3)
 
 ## Phase 1: fixes and cheap tuning
 
