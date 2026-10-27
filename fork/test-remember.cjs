@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Screens remember their state across reloads (js/fork/remember.js, js/ui/menu.js), in headless Edge.
 //
-//   python -m http.server 8123          (in the repo root, in another terminal)
+//   node fork/serve.cjs                 (in another terminal)
 //   node fork/test-remember.cjs [base-url]
 //
 //   1. Settings opens on the last tab you looked at, after a reload too, and so does the
@@ -32,6 +32,8 @@ async function toMenu(page, file) {
   }
   await page.waitForSelector('#scr-menu', { state: 'visible', timeout: 15000 });
 }
+// Settings from the main menu (the top bar's Settings button went with the Discord button, c5d9865).
+const SETTINGS = '#scr-menu [data-go="settings"]';
 const onTab = (page, sel) => page.evaluate(s => { const b = document.querySelector(s + ' .on'); return b && (b.dataset.t || b.dataset.tab); }, sel);
 const dexState = page => page.evaluate(() => ({
   gen: [...document.querySelectorAll('#dex-gens .gen-tab')].findIndex(b => b.classList.contains('on')),
@@ -50,11 +52,11 @@ const dexState = page => page.evaluate(() => ({
   await toMenu(page, 'dev.html');
 
   console.log('Before the reload');
-  await page.click('#btn-settings');
+  await page.click(SETTINGS);
   check(await onTab(page, '#set-tabs') === 'sound', 'Settings opens on Sound the first time');
   await page.click('#set-tabs [data-t="ctl"]');
   await page.click('#set-close');
-  await page.click('#btn-settings');
+  await page.click(SETTINGS);
   check(await onTab(page, '#set-tabs') === 'ctl', 'reopened: Controls');
   await page.click('#set-close');
 
@@ -76,7 +78,7 @@ const dexState = page => page.evaluate(() => ({
 
   console.log('After a reload');
   await toMenu(page, 'dev.html');
-  await page.click('#btn-settings');
+  await page.click(SETTINGS);
   check(await onTab(page, '#set-tabs') === 'ctl', 'Settings opens on Controls');
   await page.click('#set-close');
   await page.click('#scr-menu [data-go="goals"]');
@@ -115,7 +117,7 @@ const dexState = page => page.evaluate(() => ({
   const berr = [];
   built.on('pageerror', e => berr.push(String(e)));
   await toMenu(built, 'index.html');
-  await built.click('#btn-settings');
+  await built.click(SETTINGS);
   check(await onTab(built, '#set-tabs') === 'gfx', 'Settings opens on the remembered tab (Graphics)');
   await built.click('#set-close');
   await built.click('#scr-menu [data-go="dex"]');
