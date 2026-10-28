@@ -2,8 +2,8 @@
  * Upstream's shop is js/data/shop.js (G.Shop), js/ui/shop-ui.js (G.ShopUI) and the collection card's
  * Mint / Capsule buttons (js/ui/menu.js monExtras). The owner's picks of 2026-10-28, from a player's and
  * the artist's ideas:
- *   - The random Mint (1,500, always on sale) never gives a neutral nature (Hardy, Docile, Bashful,
- *     Quirky, Serious: they change no stat).
+ *   - The random Mint never gives a neutral nature (Hardy, Docile, Bashful, Quirky, Serious: they change
+ *     no stat). Since the chosen-nature Mints below it isn't sold any more; ones already in a bag still work.
  *   - The stock (the 8 TMs, and Lab's extra TM in js/fork/lab/lab-tms.js) changes every 12 h, at midnight
  *     and noon in Spain, instead of every 24 h; the TM heading says when.
  *   - Chosen-nature Mints: each stock sells 3 of the 20 natures that raise a stat (never a neutral one),
@@ -146,19 +146,21 @@ G.Kecleon = (() => {
     return PER_STOCK - (k && k.p === period() ? +(k.n || {})[MINTS[id]] || 0 : 0);
   }
 
-  // The shop and the bag list G.Shop.ORDER: the random Mint, this stock's chosen ones, the ones in your bag,
-  // then the Capsules. The shop drops the rows of those not on sale (mark below); the bag shows the ones you have.
+  // The shop and the bag list G.Shop.ORDER: this stock's chosen Mints, the ones in your bag, random Mints you
+  // still have, then the Capsules. The shop drops the rows of those not on sale (mark below; the random Mint
+  // isn't sold any more, owner 2026-10-28); the bag shows the ones you have.
   const base = G.Shop.ORDER.slice();
   Object.defineProperty(G.Shop, 'ORDER', {
     configurable: true,
     get() {
       const sale = onSale(), have = Object.keys(MINTS).filter(id => !sale.includes(id) && G.Shop.count(id) > 0);
-      return base.slice(0, 1).concat(sale, have, base.slice(1));
+      return sale.concat(have, base.slice(0, 1).filter(id => G.Shop.count(id) > 0), base.slice(1));
     }
   });
 
   const buyBase = G.Shop.buy;
   G.Shop.buy = function (key) {
+    if (key === 'mint') return { ok: false, error: "Kecleon doesn't sell random Mints any more: pick one of his Nature Mints." };
     if (!MINTS[key]) return buyBase.apply(this, arguments);
     if (!onSale().includes(key)) return { ok: false, error: `Kecleon isn't selling ${G.Shop.ITEMS[key].name}s right now.` };
     if (left(key) <= 0) return { ok: false, error: `That's all the ${G.Shop.ITEMS[key].name}s you can buy until the shop changes (in ${until()}).` };
@@ -186,12 +188,12 @@ G.Kecleon = (() => {
     };
   });
 
-  // The shop's rows: only this stock's chosen Mints, each saying how many you can still buy.
+  // The shop's rows: only this stock's chosen Mints (no random Mint), each saying how many you can still buy.
   function markMints(box) {
     const sale = onSale();
     for (const b of box.querySelectorAll('[data-buy^="mint"]')) {
       const id = b.dataset.buy, row = b.closest('.upg-item');
-      if (!MINTS[id] || !row) continue;
+      if (!row || (!MINTS[id] && id !== 'mint')) continue;
       if (!sale.includes(id)) { row.remove(); continue; }
       if (row.querySelector('.kec-left')) continue;
       const n = left(id), sub = row.querySelector('.sub');

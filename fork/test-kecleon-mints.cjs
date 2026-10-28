@@ -5,10 +5,10 @@
 //   node fork/test-kecleon-mints.cjs [base-url]
 //
 //   1. The random Mint, used 40 times from Charmander's card: a new nature every time, never a neutral one,
-//      40 Mints gone; its shop text says so.
+//      40 Mints gone; the shop doesn't sell it any more, but one in the bag is listed there with its text.
 //   2. The stock changes at noon and midnight in Spain (a fixed clock): the 8 TMs, the heading's "new ones in", an
 //      afternoon TM bought, a morning-only one refused, summer time, and Lab's extra TM with it.
-//   3. Chosen-nature Mints: 3 on sale (none neutral) at 4,000, 3 of each per player per stock (a 4th refused, one not on
+//   3. Chosen-nature Mints: 3 on sale (none neutral, no random Mint) at 4,000, 3 of each per player per stock (a 4th refused, one not on
 //      sale refused), kept over a reload, new ones and a fresh limit after noon, listed in the bag, used from the
 //      card's Nature Mint pick (and in runs), and two copies of the save merged.
 const { chromium, pastStart } = require('./pw.cjs');
@@ -70,8 +70,16 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(r1.neutral.length === 0 && r1.same === 0 && r1.kinds >= 10, `40 uses: a new nature each time, never a neutral one (${r1.kinds} different)`, r1);
     check(r1.left === 0 && !r1.button, 'the 40 Mints are used up and the button is gone', r1);
     await openShop();
-    const desc = await page.$eval('#shop-body [data-buy="mint"]', b => b.closest('.upg-item').querySelector('.sub').textContent);
-    check(/never a neutral one/.test(desc), 'the shop says it never gives a neutral nature', desc);
+    // Not sold any more (owner, 2026-10-28): one already in the bag still shows there, with its text.
+    await page.evaluate(() => { G.DB.save.bag = { mint: 1 }; G.DB.commit(); });
+    await openShop();
+    const noMint = await page.evaluate(() => { const c0 = G.DB.save.coins, r = G.Shop.buy('mint'); return { row: !!document.querySelector('#shop-body [data-buy="mint"]'), r, spent: c0 - G.DB.save.coins, have: G.Shop.count('mint') }; });
+    check(!noMint.row && !noMint.r.ok && noMint.spent === 0 && noMint.have === 1, "the shop doesn't sell the random Mint any more", noMint);
+    await menu();
+    await page.click('#scr-menu [data-go="bag"]');
+    await page.waitForSelector('#bag-body .upg-item', { timeout: 8000 });
+    const desc = await page.$eval('#bag-body', e => e.textContent.replace(/\s+/g, ' '));
+    check(/Mint ?.*never a neutral one/.test(desc), 'one already in the bag is listed there, saying it never gives a neutral nature', desc.slice(0, 300));
 
     console.log('2. The stock changes every 12 h (midnight and noon in Spain)');
     const at = async iso => { await page.clock.setFixedTime(new Date(iso)); };
@@ -114,8 +122,8 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const rowOf = id => page.$eval(`#shop-body [data-buy="${id}"]`, b => ({ text: b.closest('.upg-item').textContent.replace(/\s+/g, ' '), price: b.textContent.replace(/\D/g, ''), off: b.disabled }));
     const r0 = await rowOf(sale[0]);
     const natures = await page.evaluate(sale => sale.map(id => G.NATURE_BY[G.Kecleon.MINTS[id]]).map(n => n.id + (n.up ? '' : '!')), sale);
-    check(sale.length === 3 && JSON.stringify(items) === JSON.stringify(['mint', ...sale, 'cap', 'caph']) && !natures.some(n => n.endsWith('!')),
-      'the shop sells 3 chosen-nature Mints, after the random one, none neutral', { items, natures });
+    check(sale.length === 3 && JSON.stringify(items) === JSON.stringify([...sale, 'cap', 'caph']) && !natures.some(n => n.endsWith('!')),
+      'the shop sells 3 chosen-nature Mints (and no random one), none neutral', { items, natures });
     check(r0.price === '4000' && /3 of 3 left for you · new stock in 1 h 30 min/.test(r0.text) && /Sets a Pokémon's nature to/.test(r0.text), 'each costs 4,000 and says 3 of 3 left', r0);
     for (let i = 0; i < 3; i++) { await page.click(`#shop-body [data-buy="${sale[0]}"]`); await page.waitForTimeout(250); }
     await page.click(`#shop-body [data-buy="${sale[1]}"]`); await page.waitForTimeout(250);
@@ -141,7 +149,7 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     check(JSON.stringify(sale2) !== JSON.stringify(sale) && left2 === 3, 'after noon: other natures on sale, and the limit starts again', { sale, sale2, left2 });
     await openShop();
     const items2 = await page.$$eval('#shop-body [data-buy]', l => l.map(b => b.dataset.buy).filter(k => !k.startsWith('tm:')));
-    check(JSON.stringify(items2) === JSON.stringify(['mint', ...sale2, 'cap', 'caph']), 'the shop lists only the new ones (not the ones in your bag)', items2);
+    check(JSON.stringify(items2) === JSON.stringify([...sale2, 'cap', 'caph']), 'the shop lists only the new ones (not the ones in your bag)', items2);
     await menu();
     await page.click('#scr-menu [data-go="bag"]');
     await page.waitForSelector('#bag-body .upg-item', { timeout: 8000 });
