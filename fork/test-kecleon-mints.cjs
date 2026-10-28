@@ -8,6 +8,9 @@
 //      40 Mints gone; its shop text says so.
 //   2. The stock changes at noon and midnight in Spain (a fixed clock): the 8 TMs, the heading's "new ones in", an
 //      afternoon TM bought, a morning-only one refused, summer time, and Lab's extra TM with it.
+//   3. Chosen-nature Mints: 3 on sale (none neutral) at 4,000, 3 of each per player per stock (a 4th refused, one not on
+//      sale refused), kept over a reload, new ones and a fresh limit after noon, listed in the bag, used from the
+//      card's Nature Mint pick (and in runs), and two copies of the save merged.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -101,6 +104,76 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     const labs = [];
     for (const iso of ['2026-10-28T09:30:00Z', '2026-10-28T11:30:00Z', '2026-10-29T09:30:00Z', '2026-10-29T11:30:00Z', '2026-10-30T09:30:00Z', '2026-10-30T11:30:00Z']) { await at(iso); labs.push((await stock()).lab); }
     check(new Set(labs).size >= 3, 'Lab\'s extra TM changes with it', labs);
+
+    console.log('3. Chosen-nature Mints');
+    await at('2026-10-28T09:30:00Z');
+    await page.evaluate(() => { const s = G.DB.save; s.bag = {}; s.coins = 100000; delete s.kmint; s.pnat = { 4: ['hardy', Date.now()] }; G.DB.commit(); });
+    await openShop();
+    const sale = await page.evaluate(() => G.Kecleon.onSale());
+    const items = await page.$$eval('#shop-body [data-buy]', l => l.map(b => b.dataset.buy).filter(k => !k.startsWith('tm:')));
+    const rowOf = id => page.$eval(`#shop-body [data-buy="${id}"]`, b => ({ text: b.closest('.upg-item').textContent.replace(/\s+/g, ' '), price: b.textContent.replace(/\D/g, ''), off: b.disabled }));
+    const r0 = await rowOf(sale[0]);
+    const natures = await page.evaluate(sale => sale.map(id => G.NATURE_BY[G.Kecleon.MINTS[id]]).map(n => n.id + (n.up ? '' : '!')), sale);
+    check(sale.length === 3 && JSON.stringify(items) === JSON.stringify(['mint', ...sale, 'cap', 'caph']) && !natures.some(n => n.endsWith('!')),
+      'the shop sells 3 chosen-nature Mints, after the random one, none neutral', { items, natures });
+    check(r0.price === '4000' && /3 of 3 left for you · new stock in 1 h 30 min/.test(r0.text) && /Sets a Pokémon's nature to/.test(r0.text), 'each costs 4,000 and says 3 of 3 left', r0);
+    for (let i = 0; i < 3; i++) { await page.click(`#shop-body [data-buy="${sale[0]}"]`); await page.waitForTimeout(250); }
+    await page.click(`#shop-body [data-buy="${sale[1]}"]`); await page.waitForTimeout(250);
+    const after3 = await rowOf(sale[0]), after1 = await rowOf(sale[1]);
+    const st = await page.evaluate(([a, b]) => ({ coins: G.DB.save.coins, a: G.Shop.count(a), b: G.Shop.count(b), fourth: G.Shop.buy(a), kmint: G.DB.save.kmint }), [sale[0], sale[1]]);
+    check(st.coins === 100000 - 16000 && st.a === 3 && st.b === 1, '3 of the first and 1 of the second are in the bag, for 16,000', st);
+    check(after3.off && /Sold out for you/.test(after3.text) && !st.fourth.ok && /until the shop changes/.test(st.fourth.error || ''), 'a 4th of the first is refused (sold out for you)', { after3, fourth: st.fourth });
+    check(/2 of 3 left/.test(after1.text) && !after1.off, 'the second says 2 of 3 left', after1);
+    const notSale = await page.evaluate(sale => { const id = Object.keys(G.Kecleon.MINTS).find(x => !sale.includes(x)); return { id, r: G.Shop.buy(id) }; }, sale);
+    check(!notSale.r.ok, `one not on sale (${notSale.id}) can't be bought`, notSale);
+
+    // A reload keeps them (the bag's ledger and the count).
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => G.DB.save && G.MenuUI && G.Kecleon, null, { timeout: 30000 });
+    await at('2026-10-28T09:30:00Z');
+    const kept = await page.evaluate(([a, b]) => ({ a: G.Shop.count(a), b: G.Shop.count(b), leftA: G.Kecleon.left(a), leftB: G.Kecleon.left(b), led: Object.keys((G.DB.save.led || {})[Object.keys(G.DB.save.led || {})[0]] || {}).filter(k => k.startsWith('b:mint')) }), [sale[0], sale[1]]);
+    check(kept.a === 3 && kept.b === 1 && kept.leftA === 0 && kept.leftB === 2, 'after a reload: still in the bag, still 0 and 2 left', kept);
+
+    // The next stock: new natures, and the limit starts again; the bag lists the ones you have.
+    await at('2026-10-28T11:30:00Z');
+    const sale2 = await page.evaluate(() => G.Kecleon.onSale());
+    const left2 = await page.evaluate(id => G.Kecleon.left(id), sale[0]);
+    check(JSON.stringify(sale2) !== JSON.stringify(sale) && left2 === 3, 'after noon: other natures on sale, and the limit starts again', { sale, sale2, left2 });
+    await openShop();
+    const items2 = await page.$$eval('#shop-body [data-buy]', l => l.map(b => b.dataset.buy).filter(k => !k.startsWith('tm:')));
+    check(JSON.stringify(items2) === JSON.stringify(['mint', ...sale2, 'cap', 'caph']), 'the shop lists only the new ones (not the ones in your bag)', items2);
+    await menu();
+    await page.click('#scr-menu [data-go="bag"]');
+    await page.waitForSelector('#bag-body .upg-item', { timeout: 8000 });
+    const bag = await page.$eval('#bag-body', e => e.textContent.replace(/\s+/g, ' '));
+    const names = await page.evaluate(([a, b]) => [G.Shop.ITEMS[a].name, G.Shop.ITEMS[b].name], [sale[0], sale[1]]);
+    check(bag.includes(names[0] + ' ×3') || (bag.includes(names[0]) && bag.includes(names[1])), `the bag lists ${names.join(' and ')}`, bag.slice(0, 300));
+
+    // The collection card: Nature Mint, pick one, Charmander gets that nature.
+    await card('Charmander');
+    await page.click('#dex-detail [data-kmint]');
+    await page.waitForSelector('#mx-picker [data-kmint-v]', { timeout: 5000 });
+    const chips = await page.$$eval('#mx-picker [data-kmint-v]', l => l.map(c => c.dataset.kmintV));
+    await page.click(`#mx-picker [data-kmint-v="${sale[0]}"]`);
+    await page.waitForTimeout(400);
+    const set = await page.evaluate(id => ({ nature: G.Mons.natureOf(4).id, want: G.Kecleon.MINTS[id], left: G.Shop.count(id), run: G.Mons.monFor(4).nature }), sale[0]);
+    const chips2 = await page.$$eval('#dex-detail [data-kmint]', l => l.length).then(n => n ? page.click('#dex-detail [data-kmint]').then(() => page.$$eval('#mx-picker [data-kmint-v]', l => l.map(c => c.dataset.kmintV))) : []);
+    check(chips.includes(sale[0]) && chips.includes(sale[1]), 'Nature Mint lists the chosen Mints in the bag', chips);
+    check(set.nature === set.want && set.run === set.want && set.left === 2, `Charmander is now ${set.want} (in runs too), 2 of that Mint left`, set);
+    check(!chips2.includes(sale[0]) && chips2.includes(sale[1]), 'the pick no longer offers the nature it already has', chips2);
+
+    // Two copies of the save (two devices) merged.
+    const merged = await page.evaluate(([a, b]) => {
+      const s = JSON.parse(JSON.stringify(G.DB.save)), p = G.Shop.today();
+      const x = JSON.parse(JSON.stringify(s)), y = JSON.parse(JSON.stringify(s));
+      x.kmint = { p, n: { [G.Kecleon.MINTS[a]]: 3 } }; y.kmint = { p, n: { [G.Kecleon.MINTS[a]]: 1, [G.Kecleon.MINTS[b]]: 2 } }; y.updated = (x.updated || 0) + 1;
+      const r = G.DB.merge(x, y);
+      const z = JSON.parse(JSON.stringify(s)); z.kmint = { p: '20261027pm', n: { calm: 3 } }; z.updated = (x.updated || 0) + 2;
+      const r2 = G.DB.merge(x, z);
+      return { kmint: r.kmint, bag: r.bag[a], old: r2.kmint };
+    }, [sale[0], sale[1]]);
+    check(merged.kmint.n[await page.evaluate(id => G.Kecleon.MINTS[id], sale[0])] === 3 && merged.bag === 2 && merged.old.p === '20261028pm',
+      'merging two copies keeps the higher count of the same stock, the later stock, and the bag', merged);
 
     check(errors.length === 0, 'no page errors', errors.slice(0, 3));
   } finally {

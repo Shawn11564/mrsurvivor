@@ -6,6 +6,9 @@
  *     Quirky, Serious: they change no stat).
  *   - The stock (the 8 TMs, and Lab's extra TM in js/fork/lab/lab-tms.js) changes every 12 h, at midnight
  *     and noon in Spain, instead of every 24 h; the TM heading says when.
+ *   - Chosen-nature Mints: each stock sells 3 of the 20 natures that raise a stat (never a neutral one),
+ *     4,000 coins each, up to 3 of each per player per stock. They stay in the bag (and its ledger) and
+ *     the card's Nature Mint button sets that nature on any Pokémon.
  * Hooks: a capture-phase click on the card's Mint button (upstream's handler doesn't run),
  * G.Radiant.detail, to catch the card's redraw (the showDetail callback menu.js passes it),
  * G.Shop.today / dailyTms / buy (loaded before lab-tms.js, which wraps them), and #shop-body
@@ -113,5 +116,130 @@ G.Kecleon = (() => {
     if (box) new MutationObserver(() => mark(box)).observe(box, { childList: true });
   });
 
-  return { useful, period, nextChange };
+  // ---------------- chosen-nature Mints ----------------
+  // One bag item per nature that raises a stat: 'mint' + its id ('mintjolly'; the bag's ledger in
+  // core/db.js takes ids of 12 letters at most). Each stock sells 3 of them (the same for everyone), and a
+  // player can buy 3 of each in that stock: save.kmint = { p: the stock's key, n: { nature: bought } }.
+  const PRICE = 4000, ON_SALE = 3, PER_STOCK = 3;
+  const STAT = { pa: 'Attack', sa: 'Sp. Atk', df: 'Defense', sd: 'Sp. Def', spd: 'Speed' };
+  const MINTS = {};                                   // item id -> nature
+  const en = n => n.n[1];
+  const effect = n => `+${STAT[n.up]} −${STAT[n.down]}`;
+  const words = {};
+  for (const n of useful()) {
+    const id = 'mint' + n.id, name = `${en(n)} Mint`, desc = `Sets a Pokémon's nature to ${en(n)} (${effect(n)}).`;
+    MINTS[id] = n.id;
+    G.Shop.ITEMS[id] = { name, icon: 'mint', price: PRICE, desc, nature: n.id };
+    words[name] = name; words[desc] = desc;          // (as they are: the word-by-word pass mustn't touch them)
+  }
+  G.I18n.add(words, 'en');
+
+  /** The 3 chosen-nature Mints on sale in this stock (item ids). */
+  function onSale() {
+    const all = Object.keys(MINTS).sort(), r = rng('kecleon-mints:' + period());
+    for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+    return all.slice(0, ON_SALE);
+  }
+  /** How many more of a chosen-nature Mint this player can buy in this stock. */
+  function left(id) {
+    const k = G.DB.save && G.DB.save.kmint;
+    return PER_STOCK - (k && k.p === period() ? +(k.n || {})[MINTS[id]] || 0 : 0);
+  }
+
+  // The shop and the bag list G.Shop.ORDER: the random Mint, this stock's chosen ones, the ones in your bag,
+  // then the Capsules. The shop drops the rows of those not on sale (mark below); the bag shows the ones you have.
+  const base = G.Shop.ORDER.slice();
+  Object.defineProperty(G.Shop, 'ORDER', {
+    configurable: true,
+    get() {
+      const sale = onSale(), have = Object.keys(MINTS).filter(id => !sale.includes(id) && G.Shop.count(id) > 0);
+      return base.slice(0, 1).concat(sale, have, base.slice(1));
+    }
+  });
+
+  const buyBase = G.Shop.buy;
+  G.Shop.buy = function (key) {
+    if (!MINTS[key]) return buyBase.apply(this, arguments);
+    if (!onSale().includes(key)) return { ok: false, error: `Kecleon isn't selling ${G.Shop.ITEMS[key].name}s right now.` };
+    if (left(key) <= 0) return { ok: false, error: `That's all the ${G.Shop.ITEMS[key].name}s you can buy until the shop changes (in ${until()}).` };
+    const r = buyBase.apply(this, arguments);
+    if (r.ok) {
+      const s = G.DB.save, p = period();
+      if (!s.kmint || s.kmint.p !== p) s.kmint = { p, n: {} };
+      s.kmint.n[MINTS[key]] = (+s.kmint.n[MINTS[key]] || 0) + 1;
+      G.DB.commit();
+    }
+    return r;
+  };
+
+  // Two copies of the save: the later stock's count, the higher of the two in the same stock.
+  document.addEventListener('DOMContentLoaded', () => {
+    const merge = G.forkMerge;
+    G.forkMerge = function (r, a, b) {
+      if (merge) merge.apply(this, arguments);
+      const ka = a && a.kmint, kb = b && b.kmint;
+      if (!ka || !kb || !ka.p || !kb.p) { if (ka || kb) r.kmint = ka || kb; return; }
+      if (ka.p !== kb.p) { r.kmint = ka.p > kb.p ? ka : kb; return; }
+      const n = {};
+      for (const k of new Set(Object.keys(ka.n || {}).concat(Object.keys(kb.n || {})))) n[k] = Math.max(+(ka.n || {})[k] || 0, +(kb.n || {})[k] || 0);
+      r.kmint = { p: ka.p, n };
+    };
+  });
+
+  // The shop's rows: only this stock's chosen Mints, each saying how many you can still buy.
+  function markMints(box) {
+    const sale = onSale();
+    for (const b of box.querySelectorAll('[data-buy^="mint"]')) {
+      const id = b.dataset.buy, row = b.closest('.upg-item');
+      if (!MINTS[id] || !row) continue;
+      if (!sale.includes(id)) { row.remove(); continue; }
+      if (row.querySelector('.kec-left')) continue;
+      const n = left(id), sub = row.querySelector('.sub');
+      if (sub) sub.insertAdjacentHTML('beforeend', `<br><span class="kec-left ${n ? 'gold' : ''}">${n
+        ? `${n} of ${PER_STOCK} left for you · new stock in ${until()}` : `Sold out for you · new stock in ${until()}`}</span>`);
+      if (!n) b.disabled = true;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const box = document.getElementById('shop-body');
+    if (box) new MutationObserver(() => markMints(box)).observe(box, { childList: true });
+  });
+
+  // The collection card: a Nature Mint button next to the random Mint, with a pick of the ones in your bag.
+  let pickOpen = false, pickDex = null;
+  function cardMints(dex) {
+    const row = document.querySelector('#dex-detail .mon-extra .mx-row');
+    if (dex !== pickDex) { pickOpen = false; pickDex = dex; }
+    if (!row || !G.DB.save.owned[dex] || row.querySelector('[data-kmint]')) return;
+    const now = G.Mons.natureOf(dex).id;
+    const have = Object.keys(MINTS).filter(id => MINTS[id] !== now && G.Shop.count(id) > 0);
+    if (!have.length) return;
+    const total = have.reduce((a, id) => a + G.Shop.count(id), 0);
+    row.insertAdjacentHTML('beforeend', `<button class="btn small" data-kmint>${G.Icons.html('mint', 14)} <span>Nature Mint</span> <small>×${total}</small></button>`);
+    const host = document.getElementById('mx-picker');
+    if (!pickOpen || !host) return;
+    host.innerHTML = `<div class="panel ban-picker kmint-pick"><div class="ban-moves">${have.map(id => {
+      const n = G.NATURE_BY[MINTS[id]];
+      return `<button class="chip" data-kmint-v="${id}" translate="no">${G.Icons.html('mint', 16)} ${en(n)} <small>${effect(n)} ×${G.Shop.count(id)}</small></button>`;
+    }).join('')}</div></div>`;
+  }
+  const detailBase = G.Radiant.detail;
+  G.Radiant.detail = function (dex) {
+    const r = detailBase.apply(this, arguments);
+    cardMints(dex);
+    return r;
+  };
+  document.addEventListener('click', e => {
+    if (!e.target.closest || cardDex == null) return;
+    const open = e.target.closest('#dex-detail [data-kmint]'), pick = e.target.closest('#dex-detail [data-kmint-v]');
+    if (open) { pickOpen = !pickOpen; G.Audio.sfx('select'); if (redraw) redraw(); return; }
+    if (!pick) return;
+    const dex = cardDex, id = pick.dataset.kmintV, n = G.NATURE_BY[MINTS[id]];
+    if (!n || !G.Shop.take(id)) return;
+    G.Mons.setNature(dex, n.id);
+    pickOpen = false;
+    used(G.I18n.f('{x} ahora tiene naturaleza {x}', G.DEX_BY[dex].name, G.Mons.name(n.n)));
+  });
+
+  return { useful, period, nextChange, onSale, left, MINTS, PRICE, PER_STOCK };
 })();
