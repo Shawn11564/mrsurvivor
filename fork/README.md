@@ -516,6 +516,10 @@ ended by a touch, a shot and an area attack: the popup ("Knocked out by X (conta
 game-over screen's "What knocked you out" with the last hits; and a co-op guest knocked out by the
 host's boss.
 
+`node fork/test-played-as.cjs` (server) checks the end screen's "You played as" row
+(`js/fork/played-as.js`, everyone): real runs as a shiny Charizard (knocked out: the row sits above "What
+knocked you out"), a Mega, a radiant and a Pokémon holding its form's item; and that the built bundle has the file.
+
 `node fork/test-slow-look.cjs` (server; co-op part with the Firebase emulator) checks Mist Ball's
 40 % slow for 2 s (`js/fork/slow-look.js`: a `slowDur` field, passed to `applySlow` through
 `G.RunStats.tag`, and to the host as the optional 5th field of `G.Coop.status` in `js/net/coop.js`),

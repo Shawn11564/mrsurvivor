@@ -129,10 +129,11 @@ G.UIScale = (() => {
 
   // ---------------- squeeze ----------------
 
-  function squeeze(b, min = SQUEEZE) {
+  // always: zoom down to min even when the box is shorter than TOO_LONG of its content (js/fork/over-fit.js).
+  function squeeze(b, min = SQUEEZE, always = false) {
     b.style.zoom = '';
     // A box shorter than TOO_LONG of its content scrolls as it is (squeezing would only make the scroll bar shorter).
-    if (b.scrollHeight <= b.clientHeight + 1 || b.clientHeight / b.scrollHeight < TOO_LONG) return;
+    if (b.scrollHeight <= b.clientHeight + 1 || (!always && b.clientHeight / b.scrollHeight < TOO_LONG)) return;
     for (let z = 1, i = 0; i < 12 && b.scrollHeight > b.clientHeight + 1 && z > min; i++) {
       z = Math.max(min, z * Math.max(0.9, b.clientHeight / b.scrollHeight));
       b.style.zoom = String(z);

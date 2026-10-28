@@ -24,18 +24,18 @@
 
   const box = () => document.querySelector('#scr-over > .box');
   // The rows that take the full width but don't need it: not the table, the shinies, the record,
-  // what knocked you out, the support note or a .lab-over note.
+  // what knocked you out, the Pokémon you played as, the support note or a .lab-over note.
   function halves() {
     const rows = [...document.getElementById('over-stats').children].filter(el =>
       /1\s*\/\s*-1/.test(el.style.gridColumn) && !el.querySelector('table, .caught-row') &&
-      !el.matches('.death-cause, .caught, .support-ask, .lab-over') && el.style.textAlign !== 'center');
+      !el.matches('.death-cause, .played-as, .caught, .support-ask, .lab-over') && el.style.textAlign !== 'center');
     rows.forEach((el, i) => el.classList.toggle('over-half', i < rows.length - (rows.length % 2)));
   }
   function fit() {
     const b = box();
     if (!b || !G.UI.isOpen('scr-over')) return;
     b.dataset.fit = 'own';                                   // not ui-scale's squeeze (it stops at 0.8)
-    if (matchMedia(WIDE).matches) G.UIScale.squeeze(b, MIN); else b.style.zoom = '';
+    if (matchMedia(WIDE).matches) G.UIScale.squeeze(b, MIN, true); else b.style.zoom = '';
   }
 
   const showOver = G.RunUI.showOver;
