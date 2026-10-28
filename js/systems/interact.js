@@ -25,8 +25,15 @@ G.Interact = (() => {
   const TRAP_R = 74;
   const authority = () => !G.Coop.active || G.Coop.isHost;
   let healShown = 0, healAcc = 0;
+  // Springs (MrSurvivor): they refill only while you're away, and once dry they heal nothing until
+  // full again. A dry spring used to work again at 2 % charge, so standing on it healed ~3.5 % of
+  // max HP a second for ever. `clock` counts the time a spring spends out of range too, where
+  // update() doesn't visit it. fork/test-spring-afk.cjs.
+  const SPRING_REFILL = 45, SPRING_NEAR = 160;
+  let clock = 0;
 
   function update(dt, pl) {
+    clock += dt;
     if (!pl) return;
     for (const p of G.World.specialsNear(pl.x, pl.y, 720)) {
       const d2 = G.U.dist2(pl.x, pl.y, p.x, p.type === 'spring' || p.type === 'trap' ? p.y - 8 : p.y);
@@ -53,8 +60,13 @@ G.Interact = (() => {
   }
 
   function spring(dt, pl, p, d2) {
-    if (p.charge < 1) p.charge = Math.min(1, p.charge + dt / 45);
-    if (pl.dead || d2 > 26 * 26 || p.charge <= 0.02 || pl.hp >= pl.maxHp) return;
+    // Time away: this frame unless you're close by, plus any time it spent out of update()'s range.
+    const near = !pl.dead && d2 < SPRING_NEAR * SPRING_NEAR;
+    const away = Math.max(0, clock - (p.seenT != null ? p.seenT : clock) - (near ? dt : 0));
+    p.seenT = clock;
+    if (p.charge < 1) p.charge = Math.min(1, p.charge + away / SPRING_REFILL);
+    if (p.dry && p.charge >= 1) p.dry = false;
+    if (pl.dead || d2 > 26 * 26 || p.dry || pl.hp >= pl.maxHp) return;
     const before = pl.hp;
     pl.hp = Math.min(pl.maxHp, pl.hp + pl.maxHp * 0.14 * dt);
     healAcc += pl.hp - before;
@@ -67,7 +79,7 @@ G.Interact = (() => {
       healAcc = 0;
       G.Audio.sfx('xp');
     }
-    if (p.charge <= 0.02) G.Spawner.say('El manantial se ha secado (se recarga solo)', 2.2, true);
+    if (p.charge <= 0.02) { p.dry = true; G.Spawner.say('El manantial se ha secado (se recarga solo)', 2.2, true); }
   }
 
   function usePower(pl, p) {

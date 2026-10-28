@@ -494,14 +494,14 @@ G.World = (() => {
     const variant = p.type === 'grass' ? (Math.sin(t * 2.4 + p.wiggle) > 0.55 ? 1 : 0)
                   : p.type === 'rock' ? (p.hp < p.maxHp * 0.5 ? 1 : 0)
                   : p.type === 'altar' ? p.kind * 2 + (p.used ? 1 : 0)
-                  : p.type === 'spring' ? (p.charge < 0.15 ? 1 : 0)
+                  : p.type === 'spring' ? (p.dry || p.charge < 0.15 ? 1 : 0)
                   : p.type === 'trap' ? p.kind : 0;
     const img = G.Tiles.propSprite(biome, p.type, variant);
     const w = img.width * P, h = img.height * P;
     if (p.flat) {
       // Planos (manantial, trampa): pegados al suelo, centrados en su casilla.
       ctx.drawImage(img, Math.round(p.x - w / 2), Math.round(p.y - 8 - h / 2), w, h);
-      if (p.type === 'spring' && p.charge >= 0.15 && Math.sin(t * 3 + p.wiggle) > 0.92) {
+      if (p.type === 'spring' && !p.dry && p.charge >= 0.15 &&Math.sin(t * 3 + p.wiggle) > 0.92) {
         G.FX.twinkle(p.x + G.U.rand(-20, 20), p.y - 8 + G.U.rand(-6, 6));
       }
       return;

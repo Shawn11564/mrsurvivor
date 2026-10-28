@@ -2,6 +2,15 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-10-28",
+      "title": "Healing springs can't be camped",
+      "items": [
+        { "k": "nerf", "s": "all", "a": "Map", "t": "Healing springs can't be camped: once a spring dries up it heals nothing until it's full again, and it only refills while you're away from it (not standing on it or right beside it). A dry spring used to start healing again almost at once, so standing on one healed you for ever.", "n": "dry spring: ~3.5% max HP/s for ever -> nothing until full; refill: always -> only 160+ px away (45 s from dry to full)" },
+        { "k": "fix", "s": "all", "a": "Map", "t": "A spring you walk far away from refills while you're gone; it stopped refilling once you were off screen." },
+        { "k": "change", "s": "all", "a": "Text", "t": "A dry spring says \"The spring has dried up: leave it and it refills in 45 s\"." }
+      ]
+    },
+    {
       "d": "2026-10-27",
       "title": "The game runs in one tab at a time, the end screen shows the Pokémon you played as, Lab's endless has a wall again (EVs and relics no longer stack for ever), 24 special forms (Origin Giratina, Black/White Kyurem, Ogerpon's masks, Rotom's appliances...) become held items like the Mega Stone instead of Pokémon of their own, the Pumpkaboo and Gourgeist sizes are removed",
       "items": [

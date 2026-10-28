@@ -239,5 +239,7 @@ G.I18n.add({
   'Cambia al azar la habilidad de un Pokémon por cualquiera de las suyas, también la oculta.': 'Randomly changes a Pokémon\'s ability to any of its abilities, including its hidden ability.',
   'Aún no ha aprendido ninguna': 'None learned yet'
 }, 'en');
+// A dry spring only refills while you're away from it (js/systems/interact.js spring).
+G.I18n.add({ 'El manantial se ha secado (se recarga solo)': 'The spring has dried up: leave it and it refills in 45 s' }, 'en');
 // The Settings > Graphics fullscreen button says 'Salir' while in fullscreen: the same word as Log out.
 G.I18n.add({ 'Salir': 'Exit' }, 'en', 'fullscreen');
