@@ -6,6 +6,8 @@
 //
 //   1. The random Mint, used 40 times from Charmander's card: a new nature every time, never a neutral one,
 //      40 Mints gone; its shop text says so.
+//   2. The stock changes at noon and midnight in Spain (a fixed clock): the 8 TMs, the heading's "new ones in", an
+//      afternoon TM bought, a morning-only one refused, summer time, and Lab's extra TM with it.
 const { chromium, pastStart } = require('./pw.cjs');
 const BASE = process.argv[2] || require('./pw.cjs').BASE;
 
@@ -67,6 +69,38 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
     await openShop();
     const desc = await page.$eval('#shop-body [data-buy="mint"]', b => b.closest('.upg-item').querySelector('.sub').textContent);
     check(/never a neutral one/.test(desc), 'the shop says it never gives a neutral nature', desc);
+
+    console.log('2. The stock changes every 12 h (midnight and noon in Spain)');
+    const at = async iso => { await page.clock.setFixedTime(new Date(iso)); };
+    const stock = () => page.evaluate(() => ({ key: G.Shop.today(), tms: G.Shop.dailyTms().slice(0, 8), lab: G.LabTms.today() }));
+    await at('2026-10-28T09:30:00Z');                     // 10:30 in Spain (winter time)
+    const am = await stock();
+    await openShop();
+    const shown = await page.$$eval('#shop-body [data-buy^="tm:"]', l => l.map(b => b.dataset.buy.slice(3)));
+    const head = await page.$eval('#shop-body .kec-next', e => e.closest('h3').textContent).catch(() => null);
+    check(am.key === '20261028' && am.tms.length === 8, 'before noon: the day\'s stock, under upstream\'s key', am);
+    check(am.tms.every(id => shown.includes(id)), 'the shop shows those 8 TMs', { shown });
+    check(/TMs on sale · new ones in 1 h 30 min/.test(head || ''), 'the heading says when they change', head);
+    await at('2026-10-28T11:30:00Z');                     // 12:30
+    const pm = await stock();
+    const fresh = pm.tms.filter(id => !am.tms.includes(id)), gone = am.tms.filter(id => !pm.tms.includes(id));
+    check(pm.key === '20261028pm' && fresh.length >= 3, `after noon: a new stock (${fresh.length} TMs new)`, pm);
+    await openShop();
+    const c0 = await page.evaluate(() => G.DB.save.coins);
+    await page.click(`#shop-body [data-buy="tm:${fresh[0]}"]`);
+    await page.waitForTimeout(250);
+    const got = await page.evaluate(([id, c0]) => ({ n: (G.DB.save.tms || {})[id] || 0, spent: c0 - G.DB.save.coins, price: G.Shop.tmPrice(id) }), [fresh[0], c0]);
+    check(got.n === 1 && got.spent === got.price, `an afternoon TM (${fresh[0]}) can be bought`, got);
+    const old = gone.length ? await page.evaluate(id => G.Shop.buy('tm:' + id), gone[0]) : { ok: false };
+    check(!old.ok, `a morning-only TM (${gone[0]}) can't any more`, old);
+    await at('2026-10-28T23:30:00Z');                     // 00:30 on the 29th
+    const next = await stock();
+    await at('2026-07-01T10:30:00Z');                     // 12:30 in summer time
+    const summer = await page.evaluate(() => G.Shop.today());
+    check(next.key === '20261029' && summer === '20260701pm', 'midnight starts the next day\'s; Spain\'s summer time is followed', { next: next.key, summer });
+    const labs = [];
+    for (const iso of ['2026-10-28T09:30:00Z', '2026-10-28T11:30:00Z', '2026-10-29T09:30:00Z', '2026-10-29T11:30:00Z', '2026-10-30T09:30:00Z', '2026-10-30T11:30:00Z']) { await at(iso); labs.push((await stock()).lab); }
+    check(new Set(labs).size >= 3, 'Lab\'s extra TM changes with it', labs);
 
     check(errors.length === 0, 'no page errors', errors.slice(0, 3));
   } finally {

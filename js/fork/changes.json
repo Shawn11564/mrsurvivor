@@ -3,13 +3,14 @@
   "days": [
     {
       "d": "2026-10-28",
-      "title": "Healing springs can't be camped, no more closed-off rooms in the rocks, Kecleon's Mint never gives a neutral nature",
+      "title": "Healing springs can't be camped, no more closed-off rooms in the rocks, Kecleon's Mint never gives a neutral nature and his stock changes every 12 hours",
       "items": [
         { "k": "nerf", "s": "all", "a": "Map", "t": "Healing springs can't be camped: once a spring dries up it heals nothing until it's full again, and it only refills while you're away from it (not standing on it or right beside it). A dry spring used to start healing again almost at once, so standing on one healed you for ever.", "n": "dry spring: ~3.5% max HP/s for ever -> nothing until full; refill: always -> only 160+ px away (45 s from dry to full)" },
         { "k": "fix", "s": "all", "a": "Map", "t": "A spring you walk far away from refills while you're gone; it stopped refilling once you were off screen." },
         { "k": "change", "s": "all", "a": "Text", "t": "A dry spring says \"The spring has dried up: leave it and it refills in 45 s\"." },
         { "k": "fix", "s": "all", "a": "Map", "t": "The rocks no longer wall off little rooms of ground nobody can walk into (sometimes with a spring or a chest inside): they're solid rock now. About 7 in every 600×600 tiles of map." },
-        { "k": "buff", "s": "all", "a": "Kecleon", "t": "The random Mint never gives a neutral nature (Hardy, Docile, Bashful, Quirky or Serious, which change no stat): it always picks one that raises a stat.", "n": "Mint: any of the other 24 natures -> one of the other 19 or 20 that raise a stat; price 1,500 (same)" }
+        { "k": "buff", "s": "all", "a": "Kecleon", "t": "The random Mint never gives a neutral nature (Hardy, Docile, Bashful, Quirky or Serious, which change no stat): it always picks one that raises a stat.", "n": "Mint: any of the other 24 natures -> one of the other 19 or 20 that raise a stat; price 1,500 (same)" },
+        { "k": "change", "s": "all", "a": "Kecleon", "t": "Kecleon's stock changes every 12 hours, at midnight and noon (Spain's time), still the same for everyone: the 8 TMs and Lab's extra TM. The morning's TMs are the ones the whole day used to have. The TM list is now called \"TMs on sale\" and says when the next ones come.", "n": "new TMs: every 24 h -> every 12 h" }
       ]
     },
     {
