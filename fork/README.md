@@ -493,6 +493,17 @@ number; a card upstream changes (its text no longer the expected one) stays Comm
 A card may carry its own cap (`c.capMax`: the past-the-cap Carrera and Reflejos, `js/fork/lab/late-hand.js`).
 Endless EVs in `js/fork/lab/late-hand.js` keep HP growth finite: HP EVs add 2% of max HP at the first HP EV pick, up to 50 picks (+100%); Defense EVs stop at the 200% toughness cap. Enemy damage keeps its exponential late-run scaling. `node fork/test-late-hand.cjs` checks the EV offer and caps through the real level-up system.
 
+The endless has a wall (2026-10-27, after a 103-minute run reached level 3,768 and ×10^18 damage): Attack EVs add up
+(× 1 + 0.02 n, not ×1.02 each), Cooldown EVs stop at -30%, endless XP is × √(1 + (t − 20:00)/10 min) without the
+horde's exponential term (`js/fork/lab/endgame.js`), and a relic stacks 3 times at most (`js/fork/lab/relics.js`).
+Player power then grows in a line while the horde grows ×1.2 every 2 min, so the horde wins: the aim is a top run
+ending around 60 min. `node fork/test-endless-wall.cjs` (server; about 3 min) puts the owner's 103-minute Mewtwo
+build (five evolved moves at their top level, capped cards, relics, the EV cards it would have by then) in World 2
+at 40-80 min and counts its kills a minute: it passes when they fall under a quarter of the 40-minute rate between
+50 and 70 min (55 on 2026-10-27; under the old rules they kept rising, 636 to 2,268 a minute) and the level and
+damage multiplier stay under the anti-cheat's lines. It can't say when a person dies: a script doesn't dodge (its
+header has the numbers). `test-late-hand` checks the EV maths, `test-endgame` the XP, `test-sites` part 3b the relic cap.
+
 `node fork/test-kecleon.cjs` (server) drives Kecleon's shop through the real UI (upstream has no shop test; plan
 D11): buys a Mint, an Ability Capsule and a TM, uses them on the collection card (nature, Snorlax's ability, Teach
 TM), and a run started with Play has the nature and the TM; with Lab on, the 9th Lab TM (`js/fork/lab/lab-tms.js`,

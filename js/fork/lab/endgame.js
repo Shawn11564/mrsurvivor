@@ -7,7 +7,9 @@
  *   damage  × (1 + (t − 20:00)/15 min) × 1.16 ^ ((t − 30:00)/2 min)     ×1.67 at 30:00, ×8.1 at 45:00, ×34 at 60:00
  *   speed   × (1 + 0.3 × (t − 20:00)/30 min + 0.3 × (t − 30:00)/30 min), at most ×1.6
  *                                                                        ×1.1 at 30:00, ×1.4 at 45:00, ×1.6 at 55:00
- *   XP      × √(the HP factor), so levels keep coming, just not as fast as the horde grows
+ *   XP      × √(1 + (t − 20:00)/10 min): the HP factor's linear part only ×1.41 at 30:00, ×2 at 50:00, ×2.65 at 80:00
+ *           (until 2026-10-27 √ of the whole HP factor: exponential, so a long run's levels sped up for ever and
+ *           a 100-minute run reached level 3,768; with uncapped EV cards that was ×10^10 damage)
  * (the exponential terms only past 30:00: the "regime change" of plan C2.6, like Megabonk or Vampire
  * Survivors' late game: it doesn't stop until you do). Past 30:00 a growing share of them are also elites
  * (×1.6 HP, ×1.25 damage, ×1.6 XP, the spawner's own elite numbers) without the horde being at its cap,
@@ -27,7 +29,9 @@ G.LabEndgame = (() => {
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const after = (t, from) => Math.max(0, t - from);
 
-  const hp = t => (1 + after(t, FROM) / 600) * Math.pow(HP_EXP, after(t, REGIME) / STEP);
+  const lin = t => 1 + after(t, FROM) / 600;
+  const hp = t => lin(t) * Math.pow(HP_EXP, after(t, REGIME) / STEP);
+  const xp = t => Math.sqrt(lin(t));
   const dmg = t => (1 + after(t, FROM) / 900) * Math.pow(DMG_EXP, after(t, REGIME) / STEP);
   const spd = t => Math.min(SPD_MAX, 1 + 0.3 * after(t, FROM) / 1800 + 0.3 * after(t, REGIME) / 1800);
   const eliteShare = t => Math.min(ELITE, ELITE * after(t, REGIME) / LATE);
@@ -45,7 +49,7 @@ G.LabEndgame = (() => {
         e.maxHp = e.hp = Math.max(1, Math.round(e.maxHp * k));
         e.dmg *= dmg(t);
         e.spd *= spd(t);
-        e.xp = Math.round(e.xp * Math.sqrt(k));
+        e.xp = Math.round(e.xp * xp(t));
         if (Math.random() < eliteShare(t)) { e.maxHp = e.hp = Math.round(e.maxHp * 1.6); e.dmg *= 1.25; e.xp = Math.round(e.xp * 1.6); e._elite = true; }
         if (G.LabAffixes && Math.random() < affixShare(t)) affix = true;
       }
@@ -80,5 +84,5 @@ G.LabEndgame = (() => {
     return r;
   };
 
-  return { FROM, REGIME, hp, dmg, spd, eliteShare, affixShare };
+  return { FROM, REGIME, hp, dmg, spd, xp, eliteShare, affixShare };
 })();

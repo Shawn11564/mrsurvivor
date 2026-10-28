@@ -1,7 +1,7 @@
 /* ============ relics.js — relics: a lasting reward for the run (MrSurvivor fork) ============
  * Beating a map site's guardian (js/fork/lab/sites.js) or a late raid gives each player a RELIC PICK: their next
  * level-up hand is three relics instead of cards (a reroll draws three others), each a bonus for the rest of the
- * run, and they stack. One of the three comes from the pool of what was beaten (temple: staying alive, dungeon:
+ * run, and they stack, up to MAX_EACH (3) of each. One of the three comes from the pool of what was beaten (temple: staying alive, dungeon:
  * treasure and training, wormhole: offence), the other two from the rest:
  *   Titan's Heart  +25 % max HP, and heals you fully          Ancient Might  +12 % damage with every move
  *   Wind Rune      −8 % cooldown on every move                Stone Ward     +15 % damage reduction (as toughness)
@@ -36,7 +36,8 @@ G.LabRelics = (() => {
   const POOL = { temple: ['titan', 'ward', 'bloom', 'phoenix'], dungeon: ['fortune', 'training', 'keen'], wormhole: ['might', 'swift', 'haste'] };
   const KEYS = Object.keys(DEF);
   const lab = () => !!(G.Lab && G.Lab.active);
-  const fits = (p, id) => !DEF[id].ok || DEF[id].ok(p);
+  const MAX_EACH = 3;                   // stacks of one relic (Ancient Might ×1.40 at most; they stacked for ever before 2026-10-27)
+  const fits = (p, id) => ((p._labRelics && p._labRelics[id]) || 0) < MAX_EACH && (!DEF[id].ok || DEF[id].ok(p));
 
   /** This player gets a relic pick (from what was beaten: temple, dungeon, wormhole, or any). */
   function grant(p, from) {
@@ -68,7 +69,11 @@ G.LabRelics = (() => {
 
   const offer = G.LevelUp.offer;
   G.LevelUp.offer = function (p) {
-    if (p && lab() && Array.isArray(p._labRelicPick) && p._labRelicPick.length) return hand(p, p._labRelicPick[0]);
+    if (p && lab() && Array.isArray(p._labRelicPick) && p._labRelicPick.length) {
+      const h = hand(p, p._labRelicPick[0]);
+      if (h.length) return h;
+      p._labRelicPick.length = 0;      // every relic at MAX_EACH: the picks are spent, a normal hand
+    }
     return offer.apply(this, arguments);
   };
 
@@ -100,7 +105,7 @@ G.LabRelics = (() => {
   // The names as they are (the dictionary's word-by-word pass would touch "Swift", "Ward"...).
   if (G.I18n && G.I18n.add) G.I18n.add(Object.fromEntries(KEYS.flatMap(id => [[DEF[id].n, DEF[id].n], [DEF[id].t, DEF[id].t]]).concat([['Relic', 'Relic']])), 'en');
 
-  return { DEF, POOL, grant, hand, card,
+  return { DEF, POOL, MAX_EACH, grant, hand, card,
     /** What this player took ({ id: n }). */
     of: p => Object.assign({}, (p && p._labRelics) || {}) };
 })();

@@ -174,6 +174,22 @@ async function solo(browser) {
   check(Object.keys(t3.got).length === 1 && t3.left === 0, 'taking one applies it and counts it (pause menu)', t3.got);
   check(t3.back && t3.horde > 0, 'then the seal opens and the horde comes back', t3);
 
+  console.log('3b. Three of each relic at most');
+  const t3b = await page.evaluate(() => {
+    const pl = G.Game.player, R = G.LabRelics, was = pl._labRelics;
+    pl._labRelics = { might: R.MAX_EACH };
+    let might = 0;
+    for (let i = 0; i < 60; i++) if (R.hand(pl, 'wormhole').some(c => c.relic === 'might')) might++;
+    pl._labRelics = Object.fromEntries(Object.keys(R.DEF).map(id => [id, R.MAX_EACH]));
+    pl._labRelicPick = ['any'];
+    const h = G.LevelUp.offer(pl);
+    const r = { max: R.MAX_EACH, might, normal: h.length > 0 && !h.some(c => c.type === 'relic'), left: pl._labRelicPick.length };
+    pl._labRelics = was; pl._labRelicPick = [];
+    return r;
+  });
+  check(t3b.max === 3 && t3b.might === 0, 'with 3 Ancient Mights a relic hand never offers a fourth (60 hands, from the wormhole pool)', t3b);
+  check(t3b.normal && t3b.left === 0, 'with every relic at 3, a relic pick gives a normal hand and is spent', t3b);
+
   console.log('4. The dungeon');
   const t4 = await page.evaluate(async () => {
     await __run(true, 1300);

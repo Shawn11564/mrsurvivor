@@ -5,7 +5,7 @@
 //   node fork/test-endgame.cjs [base-url]
 //
 //   1. The same enemy joining a Lab run and a normal run: at 15:00 the same numbers; at 25:00, 30:00, 45:00 and
-//      60:00 the Lab one has HP × hp(t), damage × dmg(t), speed × spd(t) and XP × √hp(t) (× the XP pace both
+//      60:00 the Lab one has HP × hp(t), damage × dmg(t), speed × spd(t) and XP × xp(t) = √(the HP factor's linear part) (× the XP pace both
 //      runs don't share), elites × 1.6 more HP (a Swift affix × 1.4 speed). The curve's own values: ×2 HP at 30:00, ×13.7 at 45:00.
 //   2. A normal run at 45:00: nothing changes.
 //   3. Bosses, wild legendaries, Eternatus's obelisks, thieves and split copies keep their numbers.
@@ -67,16 +67,17 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
         await __run(true, t);
         const b = []; for (let i = 0; i < 12; i++) b.push(__one());
         const E = G.LabEndgame;
-        return { t, a, b, hp: E.hp(t), dmg: E.dmg(t), spd: E.spd(t), pace: G.LabXpPace.factor(t) };
+        return { t, a, b, hp: E.hp(t), dmg: E.dmg(t), spd: E.spd(t), xp: E.xp(t), pace: G.LabXpPace.factor(t) };
       }, t);
       const ok = r.b.every(x => {
         const ek = x.elite ? 1.6 : 1;
         const near = (v, w) => Math.abs(v - w) <= Math.max(1.5, w * 0.01);
         return near(x.hp, r.a.hp * r.hp * ek) && near(x.dmg, r.a.dmg * r.dmg * (x.elite ? 1.25 : 1)) && near(x.spd, r.a.spd * r.spd * (x.affix === 'swift' ? 1.4 : 1))
-          && Math.abs(x.xp - r.a.xp * r.pace * Math.sqrt(r.hp) * ek) <= Math.max(2, x.xp * 0.02);
+          && Math.abs(x.xp - r.a.xp * r.pace * r.xp * ek) <= Math.max(2, x.xp * 0.02);
       });
-      check(ok, `Lab at ${t / 60}:00: HP ×${r.hp.toFixed(2)}, damage ×${r.dmg.toFixed(2)}, speed ×${r.spd.toFixed(2)}, XP ×√HP`, { normal: r.a, lab: r.b.slice(0, 3) });
+      check(ok, `Lab at ${t / 60}:00: HP ×${r.hp.toFixed(2)}, damage ×${r.dmg.toFixed(2)}, speed ×${r.spd.toFixed(2)}, XP ×${r.xp.toFixed(2)} (no exponential term)`, { normal: r.a, lab: r.b.slice(0, 3) });
       if (t === 900) check(r.hp === 1 && r.dmg === 1 && r.spd === 1, 'at 15:00 the curve is still ×1');
+      if (t === 3600) check(Math.abs(r.xp - Math.sqrt(5)) < 1e-9 && r.hp > 70, 'at 60:00 XP ×√5 = ×2.24 while HP is ×77: levels no longer follow the exponential', { xp: r.xp, hp: r.hp });
     }
     const curve = await page.evaluate(() => { const E = G.LabEndgame; return [E.hp(1800), E.hp(2700), E.hp(3600), E.dmg(2700), E.spd(2700), E.spd(3600)].map(v => +v.toFixed(2)); });
     check(curve[0] === 2 && Math.abs(curve[1] - 13.74) < 0.05 && curve[2] > 75 && Math.abs(curve[3] - 8.12) < 0.05 && curve[4] === 1.4 && curve[5] === 1.6,

@@ -8,7 +8,9 @@
  *   - EV CARDS IN ENDLESS: once Eternatus is beaten (pl._labEternatus, js/fork/lab/eternatus.js), every
  *     hand has one "+1 EV" card: a small permanent bonus to one stat (EV below), so hour-long runs always
  *     have something to take. HP EVs add 2% of the max HP at the first HP EV pick, at most 50 times;
- *     Defense EVs stop at the existing 200% toughness cap. Under the cards, "Auto-pick EV cards"
+ *     Defense EVs stop at the existing 200% toughness cap; Attack EVs add up (+2% each: × 1 + 0.02 n, so
+ *     damage grows in a line, where ×1.02 each compounded to ×10^10 in a 100-minute run); Cooldown EVs
+ *     are -1.5% each, adding up, at most CD_EV_MAX (-30%). Under the cards, "Auto-pick EV cards"
  *     (G.Settings 'labEvAuto', this device):
  *     on, an endless run's level-ups take the EV card by themselves, with no menu. In co-op the cards
  *     don't open either: the EV card is your pick (G.Coop.localPicked, through the game's own callback)
@@ -19,7 +21,8 @@
  */
 G.LabLateHand = (() => {
   const COST = 0.04, EXTRA = 4, CHANCE = 0.25, LATE = ['spd', 'cd'];
-  const HP_EV_MAX = 50, HP_EV_RATE = 0.02, DEF_CAP = 2;
+  const HP_EV_MAX = 50, HP_EV_RATE = 0.02, DEF_CAP = 2, ATK_EV = 0.02, CD_EV = 0.015, CD_EV_MAX = 20;
+  const evN = (pl, x) => (pl._labEV && pl._labEV[x]) || 0;
   const EV = {
     hp: { name: 'HP', text: '+2% of your max HP when you first take an HP EV, up to +100% total. Heals that amount.', apply: pl => {
       const n = (pl._labEV && pl._labEV.hp) || 0;
@@ -27,17 +30,26 @@ G.LabLateHand = (() => {
       if (!(pl._labEVHPBase > 0)) pl._labEVHPBase = pl.maxHp;
       pl.addMaxHp(Math.max(1, Math.round(pl._labEVHPBase * HP_EV_RATE)));
     } },
-    atk: { name: 'Attack', text: '+2% damage with every move.', apply: pl => { pl.atkMul *= 1.02; } },
+    // Adds up (n of them: × 1 + 0.02 n), so a long run's damage grows in a line, not ×1.02 compounding (×10^10 by 1,200).
+    atk: { name: 'Attack', text: '+2% damage with every move (they add up: 10 Attack EVs are +20%).', apply: pl => {
+      const n = evN(pl, 'atk');
+      pl.atkMul *= (1 + ATK_EV * (n + 1)) / (1 + ATK_EV * n);
+    } },
     def: { name: 'Defense', text: '+2% toughness, up to +200% (you take one-third damage).', apply: pl => {
       if (pl.dmgReduce >= DEF_CAP) return false;
       pl.dmgReduce = Math.min(DEF_CAP, pl.dmgReduce + 0.02);
     } },
-    cd: { name: 'Cooldown', text: '-1.5% cooldown on every move.', apply: pl => { pl.cdMul *= 0.985; } },
+    cd: { name: 'Cooldown', text: '-1.5% cooldown on every move, up to -30%.', apply: pl => {
+      const n = evN(pl, 'cd');
+      if (n >= CD_EV_MAX) return false;
+      pl.cdMul *= (1 - CD_EV * (n + 1)) / (1 - CD_EV * n);
+    } },
     rgn: { name: 'Regeneration', text: '+0.3 HP regenerated per second.', apply: pl => { pl.regenFlat += 0.3; } }
   };
   const EV_KEYS = Object.keys(EV);
   function evKeys(pl) {
-    return EV_KEYS.filter(id => id !== 'hp' || ((pl._labEV && pl._labEV.hp) || 0) < HP_EV_MAX)
+    return EV_KEYS.filter(id => id !== 'hp' || evN(pl, 'hp') < HP_EV_MAX)
+      .filter(id => id !== 'cd' || evN(pl, 'cd') < CD_EV_MAX)
       .filter(id => id !== 'def' || pl.dmgReduce < DEF_CAP);
   }
   const lab = () => !!(G.Lab && G.Lab.active);
@@ -169,5 +181,5 @@ G.LabLateHand = (() => {
     row.querySelector('input').checked = auto();
   }
 
-  return { COST, EXTRA, CHANCE, EV, HP_EV_MAX, HP_EV_RATE, DEF_CAP, evKeys, lateCard, evCard };
+  return { COST, EXTRA, CHANCE, EV, HP_EV_MAX, HP_EV_RATE, DEF_CAP, ATK_EV, CD_EV, CD_EV_MAX, evKeys, lateCard, evCard };
 })();

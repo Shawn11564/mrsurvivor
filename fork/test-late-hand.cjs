@@ -100,10 +100,20 @@ const check = (ok, what, extra) => { console.log((ok ? '  PASS ' : '  FAIL ') + 
       const atk = pl.atkMul;
       const atkCard = G.LabLateHand.evCard('atk');
       atkCard.apply(pl);
-      return { before, every, kinds: [...kinds], atk: +(pl.atkMul / atk).toFixed(4), count: pl._labEV && pl._labEV.atk, title: c && c.title };
+      const one = +(pl.atkMul / atk).toFixed(4);
+      for (let i = 0; i < 9; i++) atkCard.apply(pl);
+      const ten = +(pl.atkMul / atk).toFixed(4);
+      for (let i = 0; i < 990; i++) atkCard.apply(pl);
+      const thousand = +(pl.atkMul / atk).toFixed(4);
+      const cd = pl.cdMul, cdCard = G.LabLateHand.evCard('cd');
+      for (let i = 0; i < 30; i++) cdCard.apply(pl);
+      return { before, every, kinds: [...kinds], atk: one, ten, thousand, count: pl._labEV && pl._labEV.atk, title: c && c.title,
+        cd: +(pl.cdMul / cd).toFixed(4), cdN: pl._labEV.cd, cdOffered: G.LabLateHand.evKeys(pl).includes('cd') };
     });
     check(ev.before === 0 && ev.every === 100 && ev.kinds.length === 5, 'every endless hand has one +1 EV card (none before Eternatus falls)', ev);
-    check(ev.atk === 1.02 && ev.count === 1, 'EV Attack: +2% damage, counted', ev);
+    check(ev.atk === 1.02 && ev.count === 1000, 'EV Attack: +2% damage, counted', ev);
+    check(ev.ten === 1.2 && ev.thousand === 21, 'EV Attack adds up: 10 are +20%, 1,000 are ×21 (not ×1.02^1000 = ×4×10^8)', { ten: ev.ten, thousand: ev.thousand });
+    check(ev.cd === 0.7 && ev.cdN === 20 && !ev.cdOffered, 'EV Cooldown: -1.5% each, adding up, stops at 20 (-30%) and is not offered after', { cd: ev.cd, n: ev.cdN, offered: ev.cdOffered });
 
     console.log('4b. Endless defensive EV caps');
     const caps = await page.evaluate(async () => {

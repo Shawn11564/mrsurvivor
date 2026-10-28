@@ -3,8 +3,12 @@
   "days": [
     {
       "d": "2026-10-27",
-      "title": "The game runs in one tab at a time, the end screen shows the Pokémon you played as, 24 special forms (Origin Giratina, Black/White Kyurem, Ogerpon's masks, Rotom's appliances...) become held items like the Mega Stone instead of Pokémon of their own, the Pumpkaboo and Gourgeist sizes are removed",
+      "title": "The game runs in one tab at a time, the end screen shows the Pokémon you played as, Lab's endless has a wall again (EVs and relics no longer stack for ever), 24 special forms (Origin Giratina, Black/White Kyurem, Ogerpon's masks, Rotom's appliances...) become held items like the Mega Stone instead of Pokémon of their own, the Pumpkaboo and Gourgeist sizes are removed",
       "items": [
+        { "k": "nerf", "s": "lab", "a": "EV cards", "t": "Attack EVs add up instead of multiplying: each is still +2% damage, but 10 are +20% and 1,000 are ×21 (it was ×1.02 each, compounding: ×400,000,000 at 1,000).", "n": "×1.02^n -> ×(1 + 0.02n)" },
+        { "k": "nerf", "s": "lab", "a": "EV cards", "t": "Cooldown EVs stop at -30% (20 cards); they kept going down to the cooldown floor.", "n": "×0.985^n, no cap -> -1.5% each, adding up, max -30%" },
+        { "k": "nerf", "s": "lab", "a": "Endless", "t": "Late-run XP no longer follows the horde's exponential HP: levels keep coming past 30:00 but stop speeding up (a 100-minute run reached level 3,768). Level 869 instead of 1,187 at 60:00, 1,541 instead of 3,768 at 104:00 in the same run.", "n": "XP × √(HP factor) -> × √(1 + (t − 20:00)/10 min): ×8.8 -> ×2.2 at 60:00" },
+        { "k": "nerf", "s": "lab", "a": "Relics", "t": "Each relic stacks 3 times at most (Ancient Might ×1.40 at most); with every relic at 3, a relic pick is a normal level-up.", "n": "no limit -> 3 of each" },
         { "k": "new", "s": "all", "a": "End screen", "t": "The run's end screen says which Pokémon you played as, with its sprite: shiny or radiant, and its Mega or form if it had one." },
         { "k": "fix", "s": "all", "a": "End screen", "t": "A very long end screen on a small window (many shinies, a long run at 720p) scrolled at full size; it now zooms down as far as the other end screens before it scrolls." },
         { "k": "fix", "s": "all", "a": "Gacha", "t": "With the game open in two tabs you could roll the gacha in both with the same tickets and keep the tab you liked (or both rolls). Now the game runs in one tab at a time: a second tab says \"Open in another tab\" and has a Play here button, which moves the game there and pauses the first tab." },
