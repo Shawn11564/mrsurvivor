@@ -82,6 +82,11 @@ G.World = (() => {
       if (th.pools && ad < arena.r - 1.5 && fbm(tx / 3.2, ty / 3.2, seed + 37 + arena.tx) < th.pools) return LIQUID;
       return FLOOR;
     }
+    return terrainNoise(tx, ty);
+  }
+
+  /** The map's noise alone, without the arena (pockets are judged on this). */
+  function terrainNoise(tx, ty) {
     const d = Math.hypot(tx, ty);
     if (d < 9) return FLOOR;                          // claro inicial
     const ramp = G.U.clamp((d - 9) / 8, 0, 1);       // aparición suave
@@ -101,14 +106,53 @@ G.World = (() => {
           props: [], propAt: new Map(), liquids: [] };
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
       const tx = cx * N + i, ty = cy * N + j;
-      const t = terrainRaw(tx, ty);
-      c.terr[j * N + i] = t;
-      if (t === LIQUID) c.liquids.push(tx, ty);
+      c.terr[j * N + i] = terrainRaw(tx, ty);
     }
+    sealPockets(c);
+    for (let k = 0; k < N * N; k++)
+      if (c.terr[k] === LIQUID) c.liquids.push(c.cx * N + k % N, c.cy * N + (k / N | 0));
     if (data.size > MAX_DATA) data.delete(data.keys().next().value);
     data.set(k, c);
     placeProps(c);
     return c;
+  }
+
+  /*
+   * Closed pockets: the noise sometimes rings a few floor tiles with rock, a room
+   * nobody can walk into (a spring or a chest in there can't be reached). They're
+   * filled with rock. A 4-way flood fill (rock touching only at a corner leaves no
+   * gap to walk through) that reaches POCKET_MAX tiles or the starting clearing is
+   * open ground; the largest pocket in 12 seeds × 600×600 tiles was 50 tiles.
+   * It reads the noise only, not the arena, so a chunk comes out the same whether
+   * it's made before or after an arena opens (co-op peers agree on the map).
+   * fork/test-map-pockets.cjs
+   */
+  const POCKET_MAX = 400;
+  const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+
+  function sealPockets(c) {
+    const x0 = c.cx * N, y0 = c.cy * N, done = new Uint8Array(N * N);
+    for (let k = 0; k < N * N; k++) {
+      if (done[k] || c.terr[k] === WALL) continue;
+      const sx = x0 + k % N, sy = y0 + (k / N | 0);
+      if (arenaDist(sx, sy) < arena_outer()) { done[k] = 1; continue; }
+      const seen = new Set([sx + ',' + sy]), q = [sx, sy];
+      let open = false;
+      for (let i = 0; i < q.length && !open; i += 2) {
+        for (let d = 0; d < 4; d++) {
+          const nx = q[i] + DX[d], ny = q[i + 1] + DY[d], key = nx + ',' + ny;
+          if (seen.has(key) || terrainNoise(nx, ny) === WALL) continue;
+          seen.add(key); q.push(nx, ny);
+          if (q.length > POCKET_MAX * 2 || Math.hypot(nx, ny) < 9) { open = true; break; }
+        }
+      }
+      for (let i = 0; i < q.length; i += 2) {
+        const lx = q[i] - x0, ly = q[i + 1] - y0;
+        if (lx < 0 || ly < 0 || lx >= N || ly >= N) continue;
+        done[ly * N + lx] = 1;
+        if (!open && arenaDist(q[i], q[i + 1]) >= arena_outer()) c.terr[ly * N + lx] = WALL;
+      }
+    }
   }
 
   function terrainAt(tx, ty) {
