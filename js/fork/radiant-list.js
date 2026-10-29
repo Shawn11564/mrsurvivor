@@ -3,4 +3,4 @@
  * ritual rolls from (js/fork/radiant.js). lab: its Lab sheets in r/lab/; mega: m{dex}/r/ too;
  * rarity: its weight in the ritual. Same list as js/fork/radiants.json.
  */
-G.RADIANTS = {"59":{"lab":["QuickStrike"],"rarity":4},"150":{"lab":["SpAttack"],"rarity":5},"194":{"rarity":1},"195":{"rarity":3},"492":{"lab":["SpAttack"],"rarity":5},"833":{"rarity":1},"834":{"rarity":3},"890":{"rarity":5},"935":{"rarity":1},"936":{"rarity":4},"937":{"rarity":4},"980":{"rarity":3},"1019":{"rarity":4}};
+G.RADIANTS = {"19":{"rarity":1},"20":{"rarity":3},"56":{"rarity":1},"57":{"rarity":3},"59":{"lab":["QuickStrike"],"rarity":4},"150":{"lab":["SpAttack"],"mega":true,"rarity":5},"194":{"rarity":1},"195":{"rarity":3},"280":{"rarity":1},"281":{"rarity":1},"282":{"mega":true,"rarity":4},"475":{"mega":true,"rarity":4},"492":{"lab":["SpAttack"],"rarity":5},"833":{"rarity":1},"834":{"rarity":3},"885":{"rarity":1},"886":{"rarity":3},"887":{"rarity":5},"890":{"rarity":5},"935":{"rarity":1},"936":{"rarity":4},"937":{"rarity":4},"979":{"rarity":4},"980":{"rarity":3},"1019":{"rarity":4},"1556":{"rarity":1}};
