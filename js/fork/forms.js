@@ -83,6 +83,7 @@ G.Forms = (() => {
     G.Camera.kick(0.6);
     G.Spawner.say(nameOf(f) + '!', 2.8, true);
     share(f);
+    cudgel(p);
   }
 
   /** Goes back to how it was (when the item comes off). */
@@ -94,6 +95,24 @@ G.Forms = (() => {
     p.form = null;
     look(p, 0);
     share(0);
+    cudgel(p);
+  }
+
+  // ---------------- Ivy Cudgel ----------------
+  // Ogerpon's Ivy Cudgel (its evolved Wood Hammer) takes the type of the mask it wears, as in the games:
+  // Wellspring Water, Hearthflame Fire, Cornerstone Rock, drawn in that type's look; Grass again without
+  // one (TODO 122). Run on changing form and every 250 ms (a Wood Hammer that evolves under a mask).
+  const OGERPON = 1017;
+  function cudgel(p) {
+    const f = p && p.form && p.form.f, t = f && FI[f][0] === OGERPON ? G.DEX_BY[f].types[1] : null;
+    for (const m of (p && p.moves) || []) {
+      if (m.id !== 'wood-hammer' || !m.evolved) continue;
+      if (!m._cudgel) m._cudgel = { type: m.type, look: m.look };
+      const want = t || m._cudgel.type;
+      if (m.type === want) continue;
+      m.type = want;
+      m.look = t ? null : m._cudgel.look;          // the leaves are Grass's look; a mask's type brings its own
+    }
   }
 
   /** The form's sprite or the usual one (on your Pokémon or on a teammate's puppet). */
@@ -143,6 +162,7 @@ G.Forms = (() => {
     if (!pl || G.Game.state === 'ui' || G.Game.state === 'over') { pending = 0; lastPl = null; return; }
     // Each level up, 1 in 500 (a new run starts counting from its level).
     if (pl !== lastPl) { lastPl = pl; lastLv = pl.level; }
+    cudgel(pl);
     for (; lastLv < pl.level; lastLv++) if (forms(pl.dex).length && Math.random() < LEVEL_P) pending++;
     // It's offered back on the map, with no other screen in front (bond, cards...).
     if (!pending || G.Game.state !== 'playing' || G.Rift.inArena || pl.dead) return;
