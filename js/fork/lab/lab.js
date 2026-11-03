@@ -86,6 +86,7 @@ G.Lab = (() => {
     return (G.Moves.POOL[t] || []).concat(G.LabMoves.filter(m => m.type === t && !m.sig && !m.coop && G.Moves.BY_ID[m.id]).map(m => m.id));
   }
   const labOnly = id => !!G.Moves.BY_ID[id].lab;
+  const SMEARGLE = 235;
 
   /**
    * What a species can learn in a run:
@@ -105,6 +106,12 @@ G.Lab = (() => {
   function labPool(mon) {
     if (poolCache[mon.dex]) return poolCache[mon.dex].slice();
     mon = G.DEX_BY[mon.dex] || mon;
+    // Smeargle learns only Sketch, which copies any move: it gets every move of every type (but other lines'
+    // signatures and the co-op moves, like every list), so its cards can offer any of them (TODO 123).
+    if (mon.dex === SMEARGLE) {
+      const types = new Set(Object.keys(G.Moves.POOL).concat(G.LabMoves.map(m => m.type)));
+      return (poolCache[mon.dex] = [...new Set([...types].flatMap(ofType))]).slice();
+    }
     const L = learnOf(mon.dex), r = rng(mon.dex);
     const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const ownAll = [...new Set(mon.types.flatMap(ofType))];

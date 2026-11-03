@@ -3,8 +3,9 @@
   "days": [
     {
       "d": "2026-11-03",
-      "title": "Shield moves can't stay up all the time, Ogerpon's Ivy Cudgel follows its mask",
+      "title": "Shield moves can't stay up all the time, Ogerpon's Ivy Cudgel follows its mask, Smeargle can learn every move",
       "items": [
+        { "k": "buff", "s": "all", "a": "Pokémon", "t": "Smeargle can learn every move: its level-up cards and starting move can be any move in the game, of any type, as if it had Sketched them all (other Pokémon's signature moves and the co-op moves aside). It only learns Sketch in the games, so it was offered Normal-type moves alone.", "n": "Smeargle's moves: 6 (Normal) -> 213 (all 18 types)" },
         { "k": "change", "s": "all", "a": "Moves", "t": "Ogerpon's Ivy Cudgel (its evolved Wood Hammer) takes the type of the mask it wears, as in the games: Water with the Wellspring Mask, Fire with the Hearthflame Mask, Rock with the Cornerstone Mask, with that type's look. Grass again without a mask.", "n": "Ivy Cudgel under a mask: Grass -> the mask's type" },
         { "k": "nerf", "s": "all", "a": "Moves", "t": "Shield moves (Protect, Detect, Spiky Shield, King's Shield, Baneful Bunker, Counter, Mirror Coat, Metal Burst and their evolutions) can't be kept up all the time: a shield's cooldown starts when it drops, Reflexes and cooldown stats no longer shorten it, and only one shield is up at a time. A fully upgraded Protect was up all the time.", "n": "fully upgraded Protect: up ~100% -> ~60%; plain Protect with x0.5 cooldown: 0.7 s -> 3.2 s between shields; two shields: up ~100% -> ~75%" }
       ]
