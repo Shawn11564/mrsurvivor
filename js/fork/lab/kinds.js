@@ -685,11 +685,15 @@ G.LabKinds = (() => {
       const act = grp === pl.activeGroup();
       for (const m of grp) {
         if (!PASSIVE.has(m.kind) || (act && m.kind !== 'guard')) continue;
-        const k = m.kind === 'guard' ? '_gt' : 't';
+        const guard = m.kind === 'guard', k = guard ? '_gt' : 't';
+        // Shields: one up at a time, and every shield's clock waits while one is up, so a cooldown
+        // starts when the shield drops (a fully upgraded Protect was up all the time, TODO 121).
+        if (guard && pl._labGuard && pl._labGuard.t > 0) continue;
         m[k] = (m[k] || 0) - dt;
         if (m[k] > 0) continue;
-        if (m.kind === 'guard' && !threat(pl)) { m[k] = 0.05; continue; }
-        m[k] = Math.max(0.05, m.cd * pl.cdMul);
+        if (guard && !threat(pl)) { m[k] = 0.05; continue; }
+        // A shield's cooldown is its own: Reflexes and cooldown stats don't shorten it.
+        m[k] = Math.max(0.05, guard ? m.cd : m.cd * pl.cdMul);
         if (act) pl.cast(m);
         if (G.Coop.active) G.Coop.cast(pl, m);
         m.castAt = now();

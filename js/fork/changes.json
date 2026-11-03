@@ -2,6 +2,13 @@
   "about": "MrSurvivor's change log, read by the admin's Change Log (js/fork/change-log.js, admin menu). One entry per player-facing change, newest day first. k: new | buff | nerf | change | fix | removed (buff/nerf: the thing named got stronger/weaker). s: all (everyone) | lab (Lab runs or the Lab setting) | admin (admin and tools). a: area. t: what changed. n: the numbers, was -> now (optional). c: the commit(s), when known. A commit that changes the game adds its lines here (CLAUDE.local.md); node fork/test-changes.cjs checks it. skip: game-file commits with nothing a player would notice.",
   "days": [
     {
+      "d": "2026-11-03",
+      "title": "Shield moves can't stay up all the time",
+      "items": [
+        { "k": "nerf", "s": "all", "a": "Moves", "t": "Shield moves (Protect, Detect, Spiky Shield, King's Shield, Baneful Bunker, Counter, Mirror Coat, Metal Burst and their evolutions) can't be kept up all the time: a shield's cooldown starts when it drops, Reflexes and cooldown stats no longer shorten it, and only one shield is up at a time. A fully upgraded Protect was up all the time.", "n": "fully upgraded Protect: up ~100% -> ~60%; plain Protect with x0.5 cooldown: 0.7 s -> 3.2 s between shields; two shields: up ~100% -> ~75%" }
+      ]
+    },
+    {
       "d": "2026-10-29",
       "title": "New radiants from the artist (Rattata, Mankey, the Ralts line, the Dreepy line and more)",
       "items": [
